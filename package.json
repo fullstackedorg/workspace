@@ -1,0 +1,24 @@
+{
+  "name": "fullstacked",
+  "version": "0.0.0",
+  "description": "A fullstack webapp bundler and development kit",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CPLepage/fullstacked.git"
+  },
+  "keywords": [
+    "webapp",
+    "typescript",
+    "fullstack",
+    "bundler"
+  ],
+  "author": "CP Lepage",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CPLepage/fullstacked/issues"
+  },
+  "homepage": "https://github.com/CPLepage/fullstacked#readme"
+}
