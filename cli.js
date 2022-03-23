@@ -1,14 +1,27 @@
 #!/usr/bin/env node
-let sourceRoot = "";
+const scripts = {
+    "build": require("./Scripts/build"),
+    "watch": require("./Scripts/watch")
+};
+let script = "build"
 
-const srcArg = "--src=";
+let config = {}
+const args = {
+    "--src=": value => config.src = value,
+    "--out=": value => config.out = value,
+    "--silent": () => config.silent = true
+};
+
 process.argv.forEach(arg => {
+    Object.keys(scripts).forEach(availableScript => {
+        if(availableScript === arg)
+            script = availableScript;
+    });
 
-    if(arg.startsWith(srcArg))
-        sourceRoot = arg.slice(srcArg.length);
-
+    Object.keys(args).forEach(anchor => {
+        if(arg.startsWith(anchor))
+            args[anchor](arg.slice(anchor.length));
+    });
 });
 
-require("./Build/build")({
-    src: sourceRoot
-});
+scripts[script](require("./Scripts/config")(config));
