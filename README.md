@@ -73,7 +73,7 @@ The idea is to create a package that includes all the basic tools and setup we a
    2. Docker-Compose templates
    3. Maybe systemd or pm2 kind of deployments
 
-Down the road
+Down the road<br />
 4. Develop the same concept with stronger tools
    1. NestJS (Server)<sup>1</sup>
    2. Svelte (WebApp)
