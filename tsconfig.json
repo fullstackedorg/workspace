@@ -10,5 +10,9 @@
             "dom"
         ],
         "jsx": "react"
-    }
+    },
+    "exclude": [
+        "Tests",
+        "utils.ts"
+    ]
 }
