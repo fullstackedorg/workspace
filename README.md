@@ -74,7 +74,7 @@ The idea is to create a package that includes all the basic tools and setup we a
    3. Maybe systemd or pm2 kind of deployments
 
 Down the road<br />
-4. Develop the same concept with alternative tools
+6. Develop the same concept with alternative tools
    1. NestJS (Server)<sup>1</sup>
    2. Svelte (WebApp)
    3. VueJS (WebApp)
