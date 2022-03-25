@@ -1,11 +1,16 @@
 # FullStacked
 A fullstack webapp bundler and development kit.
 
-A complete setup for a Typescript full stack applications.
-It includes all the Server(Backend) setup and the WebApp(Frontend) setup :
+A complete setup for a Typescript full stack application.
+It has all the Server(Backend) setup and the WebApp(Frontend) setup including features like :
 * Build
+  * w/ Code Splitting
 * Watch
-* Test
+  * w/ WebApp auto reload & Server auto restart
+* Tests<sup>1</sup>
+  * w/ Code Coverage
+
+> <sup>1</sup>Work in progress
 
 ### Built with
 * react
@@ -75,10 +80,10 @@ The idea is to create a package that includes all the basic tools and setup we a
 
 Down the road<br />
 6. Develop the same concept with alternative tools
-   1. NestJS (Server)<sup>1</sup>
+   1. NestJS (Server)<sup>2</sup>
    2. Svelte (WebApp)
    3. VueJS (WebApp)
-> <sup>1</sup>currently has problem with esbuild since decorators aren't parsed.
+> <sup>2</sup>currently has problem with esbuild since decorators aren't parsed.
 > A workaround exists with [@anatine/esbuild-decorators](https://github.com/anatine/esbuildnx/tree/main/packages/esbuild-decorators) 
 > but it is making the code coverage irrelevant since 
 > it uses `tsc` before going through esbuild which generates the source maps...
