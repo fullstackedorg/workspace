@@ -22,5 +22,3 @@ setInterval(() => {
             lastBootTime = timestamp;
         });
 }, 500);
-
-// this is a test line
