@@ -1,6 +1,6 @@
 {
   "name": "fullstacked",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A fullstack webapp bundler and development kit",
   "main": "Build/build.js",
   "scripts": {
