@@ -1,11 +1,11 @@
 {
   "name": "fullstacked",
-  "version": "0.0.0",
+  "version": "0.0.7",
   "description": "A fullstack webapp bundler and development kit",
   "main": "Build/build.js",
   "scripts": {
     "pretest": "node Scripts/test.js",
-    "test": "mocha \"Tests/**/test.js\" --timeout 5000",
+    "test": "mocha \"tests/**/test.js\" --timeout 5000",
     "coverage": "npx nyc --reporter text-summary npm test",
     "prepublish": "npx tsc --declaration --declarationDir . --outDir temp && rm -rf temp"
   },

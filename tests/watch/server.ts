@@ -1,4 +1,4 @@
-import Server from "Server";
+import Server from "fullstacked/server";
 
 (() => {
     const bootTime = Date.now();

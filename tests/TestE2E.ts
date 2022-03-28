@@ -1,8 +1,7 @@
 import child_process from "child_process";
-import puppeteer, {Page} from "puppeteer";
+import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-
 
 export default class {
     dir;
@@ -12,7 +11,9 @@ export default class {
 
     constructor(dir) {
         this.dir = dir;
-        console.log(child_process.execSync(`fullstacked --src=${dir} --out=${dir} --silent`).toString());
+        const logMessage = child_process.execSync(`fullstacked --src=${dir} --out=${dir} --silent`).toString();
+        if(logMessage)
+            console.log(logMessage);
     }
 
     async start(){
