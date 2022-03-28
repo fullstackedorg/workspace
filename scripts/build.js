@@ -14,10 +14,11 @@ async function buildServer(config){
         bundle: true,
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
+        plugins: [],
 
         watch: config.watcher ? {
             onRebuild: async function(error, result){
-                if (error) console.error('WebApp build failed:', error)
+                if (error) console.error('Server build failed:', error)
                 config.watcher();
             }
         } : false
@@ -57,7 +58,7 @@ async function buildWebApp(config){
     if(result.errors.length > 0)
         return;
 
-    const indexHTML = path.resolve(__dirname, "../WebApp/index.html");
+    const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});
     const indexHTMLContentUpdated = indexHTMLContent.replace("{TITLE}", "FullStacked");
     fs.mkdirSync(publicDir, {recursive: true});

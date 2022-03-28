@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 const scripts = {
-    "build": require("./Scripts/build"),
-    "watch": require("./Scripts/watch")
+    "create": require("./scripts/create"),
+    "build" : require("./scripts/build"),
+    "watch" : require("./scripts/watch")
 };
 let script = "build"
 
@@ -24,4 +25,4 @@ process.argv.forEach(arg => {
     });
 });
 
-scripts[script](require("./Scripts/config")(config));
+scripts[script](require("./scripts/config")(config));

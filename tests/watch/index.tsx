@@ -1,5 +1,5 @@
 import React from 'React';
-import webapp from "WebApp";
+import webapp from "fullstacked/webapp";
 
 const key = "reloadCount";
 const reloadCountStr = window.localStorage.getItem(key);

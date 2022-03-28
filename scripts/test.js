@@ -2,7 +2,7 @@ const esbuild = require("esbuild");
 const glob = require("glob");
 const path = require("path");
 
-const tests = glob.sync(path.resolve(__dirname, "../Tests/**/test.ts"));
+const tests = glob.sync(path.resolve(__dirname, "../tests/**/test.ts"));
 
 async function buildTest(entrypoint){
     const options = {

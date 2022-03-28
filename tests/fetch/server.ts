@@ -1,4 +1,4 @@
-import Server from "Server"
+import Server from "fullstacked/server"
 
 const server = new Server();
 

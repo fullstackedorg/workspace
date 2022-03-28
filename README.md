@@ -18,6 +18,8 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup including fe
 * esbuild
 
 ## Getting Started
+This should not take you more than a minute! Give it a try!
+
 Setup your npm project
 ```shell
 mkdir MyAwesomeProject
@@ -28,29 +30,24 @@ Install FullStacked
 ```shell
 npm i fullstacked
 ```
-Start with the basic files
-```ts
-//server.ts
-import Server from "fullstacked/Server";
-
-new Server().start();
-```
-```tsx
-//index.tsx
-import * as React from 'react';
-import webapp from "fullstacked/WebApp";
-
-webapp(<div>Welcome to FullStacked!</div>);
-```
-Start developping!
+Create the default starter files
 ```shell
-fullstacked watch
+fullstacked create
+```
+Make your first build! (or use the `watch` command)
+```shell
+fullstacked build
+```
+Start your app like any other node project
+```shell
+node dist/index
 ```
 
 ## Commands
 
 | command | uses |
 | --- | --- |
+| fullstacked create | Create the basic `index.tsx` and `server.ts` files |
 | fullstacked build | Build your app to your `dist` folder |
 | fullstacked watch | Rebuilds your app on changes.<br />On WebApp rebuild, the webpage reloads.<br />On Server rebuild, the server restarts.|
 
@@ -63,17 +60,21 @@ ReactDOM.render(<App />, document.getElementById("root"));
 
 const app = express();
 
-express.listen(8000);
+app.use(express.static('public'));
+
+app.listen(8000);
 ```
 The idea is to create a package that includes all the basic tools and setup we always use as JS/TS web developers.
 
 ## Roadmap
-1. Improvements
+1. Website + Guide/Documentation 📚
+2. Improvements ⚙️
    1. WebApp watcher with a socket instead of a http request
-2. Guides
-3. Built-in tests command including code coverage
-4. More debugging tools
-5. Deployment command
+   2. React-router automatically registering route in express
+   3. Registering multiple apps to different subdomains or paths
+3. Built-in tests command including code coverage 🛠
+4. More debugging tools 💻 like [morgan](https://github.com/expressjs/morgan)
+5. Deployment command 🚀
    1. Docker templates
    2. Docker-Compose templates
    3. Maybe systemd or pm2 kind of deployments
