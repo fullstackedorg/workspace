@@ -1,6 +1,7 @@
 .idea
 node_modules
 dist
-/.nyc_output/
-/coverage/
+.nyc_output
+coverage
 tests/*/**
+website

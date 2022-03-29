@@ -45,6 +45,11 @@ async function buildWebApp(config){
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
 
+        publicPath: "/",
+        loader: {
+            ".png": "file"
+        },
+
         watch: config.watcher ? {
             onRebuild: async function(error, result){
                 if (error) console.error('WebApp build failed:', error)

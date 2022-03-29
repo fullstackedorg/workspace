@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 
-const publicDir = path.resolve(__dirname, './public');
+export const publicDir = path.resolve(__dirname, './public');
 
 export default class Server {
     express = express();

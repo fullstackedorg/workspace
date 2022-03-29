@@ -68,7 +68,7 @@ describe("Watch Test", function(){
     after(async function(){
         await browser.close();
         watchProcess.kill();
-        // todo: this is violent
+        // todo: this is violent and wont work on windows
         child_process.execSync("kill -9 $(lsof -t -i:8000)");
 
         clearTestLine(indexFile);
