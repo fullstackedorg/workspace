@@ -1,5 +1,5 @@
 # FullStacked
-A fullstack webapp tool and development kit.
+A fullstack webapp build tool and development kit.
 
 A complete setup for a Typescript full stack application.
 It has all the Server(Backend) setup and the WebApp(Frontend) setup including features like :
