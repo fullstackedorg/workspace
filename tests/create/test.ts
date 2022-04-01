@@ -4,7 +4,7 @@ import child_process from "child_process";
 import fs from "fs";
 import path from "path";
 import TestE2E from "tests/TestE2E";
-import {sleep} from "utils";
+import {sleep} from "tests/utils";
 
 describe("Create Test", function(){
     const webAppFile = path.resolve(__dirname, "index.tsx");

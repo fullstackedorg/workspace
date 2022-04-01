@@ -1,5 +1,6 @@
 {
   "name": "fullstacked",
+  "title": "FullStacked",
   "version": "0.0.11",
   "description": "A fullstack webapp bundler and development kit",
   "scripts": {
@@ -24,6 +25,10 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/CPLepage/fullstacked/issues"
+  },
+  "funding": {
+    "type" : "patreon",
+    "url" : "https://www.patreon.com/fullstacked"
   },
   "homepage": "https://fullstacked.org",
   "bin": "./cli.js",
