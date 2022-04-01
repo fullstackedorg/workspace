@@ -1,5 +1,5 @@
 import build from "./build";
-import child_process from "child_process";
+import {exec} from "child_process";
 
 let watchProcess, outdir;
 
@@ -16,7 +16,11 @@ function watcher(isWebApp){
 function restartServer(){
     if(watchProcess?.kill)
         watchProcess.kill();
-    watchProcess = child_process.exec("node " + outdir + "/index.js");
+
+    watchProcess = exec("node " + outdir + "/index.js --development");
+    watchProcess.stdout.pipe(process.stdout);
+    watchProcess.stderr.pipe(process.stderr);
+    process.stdin.pipe(watchProcess.stdin);
 }
 
 export default async function(config) {

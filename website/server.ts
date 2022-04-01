@@ -21,6 +21,7 @@ server.express.get("/subscribe", async (req, res) => {
         });
 
     res.json({success: response.data.data});
+    
 });
 
 server.start();
