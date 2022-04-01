@@ -5,6 +5,7 @@
         "target": "ES6",
         "esModuleInterop": true,
         "moduleResolution": "node",
+        "declaration": true,
         "lib": [
             "ES2020",
             "dom"
@@ -15,8 +16,8 @@
             "fullstacked/webapp": ["./webapp/index.tsx"]
         }
     },
-    "exclude": [
-        "Tests",
-        "utils.ts"
+    "include": [
+        "webapp",
+        "server"
     ]
 }

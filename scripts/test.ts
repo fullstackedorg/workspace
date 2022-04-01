@@ -1,6 +1,6 @@
-const esbuild = require("esbuild");
-const glob = require("glob");
-const path = require("path");
+import esbuild, {Platform} from "esbuild"
+import glob from "glob";
+import path from "path";
 
 const tests = glob.sync(path.resolve(__dirname, "../tests/**/test.ts"));
 
@@ -8,7 +8,7 @@ async function buildTest(entrypoint){
     const options = {
         entryPoints: [ entrypoint ],
         outfile: entrypoint.replace(/.ts$/, ".js"),
-        platform: "node",
+        platform: "node" as Platform,
         bundle: true,
         minify: false,
         sourcemap: true,

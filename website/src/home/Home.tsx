@@ -10,14 +10,14 @@ import Hero from "website/src/home/Hero";
 
 export default function () {
     return <><Container>
-        <Row className={"my-10 justify-content-center"} style={{position: "relative", zIndex: 1}}>
-            <Col className={"text-center align-self-center"} lg={"12"} xl={"8"}>
-                <h1 className={"display-3"}>
-                    A fullstack webapp bundler and development kit.
+        <Row className={"my-10"} style={{position: "relative", zIndex: 1}}>
+            <Col style={{width: "100%", maxWidth: 1100, margin: "0 auto"}}>
+                <h1 id={"quote"} className={"display-3"}>
+                    The only tool you need to build webapps in TypeScript.
                 </h1>
                 <div className={"mt-5"}>
-                    <Button className={"me-2"}>The Story</Button>
-                    <Button variant={"secondary"} as={"a"} href={"/docs"}>Get Started</Button>
+                    <Button className={"me-2"} size={"lg"}>The Story</Button>
+                    <Button variant={"secondary"} as={"a"} href={"/docs"} size={"lg"}>Get Started</Button>
                 </div>
             </Col>
             <div id={"hero"}><Hero /></div>
@@ -86,23 +86,23 @@ export default function () {
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://www.typescriptlang.org/"} target={"_blank"}>
                             <img style={{height: 40, marginTop: 5, marginBottom: 5}} src={tsLogo} alt={"typescript logo"}/>
                             <div className={"my-2"}><b>Typescript</b></div>
-                            <p>
-                                Essential for any JS project to scale and collaborate on a larger level. If you never used it before,
-                                it really not a big learning curve and trust me, you won't regret it.
-                            </p>
                         </a>
+                        <p>
+                            Essential for any JS project to scale and collaborate on a larger level. If you never used it before,
+                            it is really not a big learning curve and trust me, you won't regret it.
+                        </p>
                     </Col>
                     <Col className={"mb-5"} lg={4}>
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://reactjs.org/"} target={"_blank"}>
                             <img style={{height: 50}} src={reactLogo} alt={"React logo"}/>
                             <div className={"my-2"}><b>React</b></div>
-                            <p>
-                                One of the most used frontend library. A lot of documentation and resources available.
-                                In the near future, we will add the support of alternative tools like&nbsp;
-                                <a href={"https://vuejs.org/"} target={"_blank"}>VueJS</a> and&nbsp;
-                                <a href={"https://svelte.dev/"} target={"_blank"}>Svelte</a>.
-                            </p>
                         </a>
+                        <p>
+                            One of the most used frontend library. A lot of documentation and resources available.
+                            In the near future, we will add the support of alternative tools like&nbsp;
+                            <a href={"https://vuejs.org/"} target={"_blank"}>VueJS</a> and&nbsp;
+                            <a href={"https://svelte.dev/"} target={"_blank"}>Svelte</a>.
+                        </p>
                     </Col>
                 </Row>
                 <Row className={"text-center justify-content-evenly"}>
@@ -110,23 +110,23 @@ export default function () {
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://expressjs.com/"} target={"_blank"}>
                             <img id={"express-logo"} style={{height: 30, marginTop: 10, marginBottom: 10}} src={expressLogo} alt={"Express logo"} />
                             <div className={"my-2"}><b>Express</b></div>
-                            <p>
-                                A light and easy to use web server framework. Fast to learn and allows to create beautiful Rest APIs.
-                                Eventually, we will add the support of alternative tools like&nbsp;
-                                <a href={"https://nestjs.com/"} target={"_blank"}>NestJS</a>&nbsp;
-                                for projects that needs something more robust.
-                            </p>
                         </a>
+                        <p>
+                            A light and easy to use web server framework. Fast to learn and allows to create beautiful Rest APIs.
+                            Eventually, we will add the support of alternative tools like&nbsp;
+                            <a href={"https://nestjs.com/"} target={"_blank"}>NestJS</a>&nbsp;
+                            for projects that needs something more robust.
+                        </p>
                     </Col>
                     <Col className={"mb-5"} lg={4}>
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://esbuild.github.io/"} target={"_blank"}>
                             <img style={{height: 45, marginTop: 2.5, marginBottom: 2.5}} src={esbuildLogo} alt={"esbuild logo"} />
                             <div className={"my-2"}><b>esbuild</b></div>
-                            <p>
-                                The glue that sticks everything together. The most powerful bundler out there. At this point, you won't
-                                interact with this, but if you start doing unconventional stuff, you might have to override a few build configs.
-                            </p>
                         </a>
+                        <p>
+                            The glue that sticks everything together. The most powerful bundler out there. At this point, you won't
+                            interact with this, but if you start doing unconventional stuff, you might have to override a few build configs.
+                        </p>
                     </Col>
                 </Row>
                 <div className={"text-center text-muted"}><em>and more...</em></div>
@@ -136,10 +136,11 @@ export default function () {
             <Row className={"my-10 text-center mx-auto"} style={{maxWidth: 600}}>
                 <Col>
                     <div className={"display-4"}>Replace this</div>
-                    <div className={"code box p-3 my-4"}>npm i react react-dom @types/react @types/react-dom webpack webpack-html-plugin copy-webpack-plugin express body-parser @types/express morgan mocha nyc ...</div>
+                    <div className={"code box p-3 my-4"} style={{whiteSpace: "normal"}}>npm i react react-dom @types/react @types/react-dom webpack webpack-html-plugin
+                        copy-webpack-plugin express body-parser @types/express morgan mocha nyc ...</div>
                     <div><b>for this</b></div>
                     <div className={"code box p-3 my-4"}>npm i fullstacked</div>
-                    <Button className={"me-2"}>Get started</Button>
+                    <Button className={"me-2"} as={"a"} href={"/docs/"}>Get started</Button>
                     <Button variant={"secondary"} as={"a"} target={"_blank"}
                             href={"https://github.com/CPLepage/fullstacked"}>View Code <FontAwesomeIcon icon={faGithub} /></Button>
                 </Col>
@@ -150,13 +151,27 @@ export default function () {
     <Container>
         <Row className={"my-5 justify-content-center"}>
             <Col lg={6}>
-                <Form>
-                    <div className={"mb-2"}><b>Subscribe</b></div>
+                <Form onSubmit={async e => {
+                    e.preventDefault();
+                    const email =(document.querySelector("#email") as HTMLInputElement).value;
+                    const name =(document.querySelector("#name") as HTMLInputElement).value;
+                    if(!email || !name)
+                        return;
+
+                    const container = e.currentTarget;
+                    container.innerHTML = `<div class="my-4 text-center">Subscribing...</div>`;
+
+                    const request = await fetch("/subscribe?email=" + email + "&name=" + name);
+                    const response = await request.json();
+
+                    if(response.success)
+                        container.innerHTML = `<div class="my-4 text-center">Thanks for subscribing!</div>`;
+                }}>
+                    <div className={"mb-2"}><b>Stay informed.</b></div>
                     <InputGroup>
-                        <FormControl placeholder="Email address" type={"email"}/>
-                        <Button>
-                            Subscribe
-                        </Button>
+                        <FormControl id={"email"} placeholder="Email address" type={"email"}/>
+                        <FormControl id={"name"} placeholder="Name" type={"text"}/>
+                        <Button as={"input"} type={"submit"} value={"Subscribe"} />
                     </InputGroup>
                     <div className={"text-muted"}><small>Stay up to date with the latest news and release.</small></div>
                 </Form>

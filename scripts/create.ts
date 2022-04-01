@@ -1,19 +1,22 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path"
+import defaultConfig from "./config";
 
 const serverTemplate = `import Server from "fullstacked/server";
 
-new Server().start();
+const server = new Server();
+
+server.start();
 `;
 
 const webappTemplate = `import * as React from 'react';
-import webapp from "fullstacked/webapp";
+import Webapp from "fullstacked/webapp";
 
-webapp(<div>Welcome to FullStacked!</div>);
+Webapp(<div>Welcome to FullStacked!</div>);
 `;
 
-module.exports = function(config){
-    config = require("./config")(config);
+export default function(config) {
+    config = defaultConfig(config);
 
     fs.writeFileSync(path.resolve(config.src, "server.ts"), serverTemplate);
     fs.writeFileSync(path.resolve(config.src, "index.tsx"), webappTemplate);

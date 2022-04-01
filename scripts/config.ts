@@ -1,10 +1,13 @@
-const defaultConfig = {
+const defaultConfig: Config = {
     src: process.cwd(),
     out: process.cwd(),
-    watcher: false
+    port: "8000",
+    publicPath: "./",
+    watcher: false,
+    root: process.cwd()
 }
 
-module.exports = (config) => {
+export default function(config) {
     config = {
         ...defaultConfig,
         ...config

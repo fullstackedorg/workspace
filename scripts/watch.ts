@@ -1,5 +1,5 @@
-const build = require("./build");
-const child_process = require("child_process");
+import build from "./build";
+import child_process from "child_process";
 
 let watchProcess, outdir;
 
@@ -19,8 +19,7 @@ function restartServer(){
     watchProcess = child_process.exec("node " + outdir + "/index.js");
 }
 
-
-module.exports = async function(config) {
+export default async function(config) {
     config.watcher = watcher;
     await build(config);
 
