@@ -1,3 +1,4 @@
+import "./global-react";
 import React, {ReactElement} from "react";
 import {render} from "react-dom";
 

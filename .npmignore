@@ -5,3 +5,16 @@ dist
 coverage
 tests
 website
+
+scripts/**/*.ts
+scripts/**/*.js.map
+
+config.d.ts
+utils.ts
+
+build.ts
+build.js
+build.js.map
+
+cli.ts
+cli.js.map

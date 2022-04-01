@@ -1,11 +1,6 @@
-import React from "react";
 import {Button, Col, Container, Form, FormControl, InputGroup, Row} from "react-bootstrap";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faGithub} from "@fortawesome/free-brands-svg-icons/faGithub";
-import tsLogo from "website/src/images/ts-logo.png"
-import reactLogo from "website/src/images/react-logo.png"
-import expressLogo from "website/src/images/express-logo.png"
-import esbuildLogo from "website/src/images/esbuild-logo.png"
 import Hero from "website/src/home/Hero";
 
 export default function () {
@@ -84,7 +79,8 @@ export default function () {
                 <Row className={"text-center justify-content-evenly"}>
                     <Col className={"mb-5"} lg={4}>
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://www.typescriptlang.org/"} target={"_blank"}>
-                            <img style={{height: 40, marginTop: 5, marginBottom: 5}} src={tsLogo} alt={"typescript logo"}/>
+                            <img style={{height: 40, marginTop: 5, marginBottom: 5}}
+                                 src={require("website/src/images/ts-logo.png")} alt={"typescript logo"}/>
                             <div className={"my-2"}><b>Typescript</b></div>
                         </a>
                         <p>
@@ -94,7 +90,7 @@ export default function () {
                     </Col>
                     <Col className={"mb-5"} lg={4}>
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://reactjs.org/"} target={"_blank"}>
-                            <img style={{height: 50}} src={reactLogo} alt={"React logo"}/>
+                            <img style={{height: 50}} src={require("website/src/images/react-logo.png")} alt={"React logo"}/>
                             <div className={"my-2"}><b>React</b></div>
                         </a>
                         <p>
@@ -108,7 +104,8 @@ export default function () {
                 <Row className={"text-center justify-content-evenly"}>
                     <Col className={"mb-5"} lg={4}>
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://expressjs.com/"} target={"_blank"}>
-                            <img id={"express-logo"} style={{height: 30, marginTop: 10, marginBottom: 10}} src={expressLogo} alt={"Express logo"} />
+                            <img id={"express-logo"} style={{height: 30, marginTop: 10, marginBottom: 10}}
+                                 src={require("website/src/images/express-logo.png")} alt={"Express logo"} />
                             <div className={"my-2"}><b>Express</b></div>
                         </a>
                         <p>
@@ -120,7 +117,8 @@ export default function () {
                     </Col>
                     <Col className={"mb-5"} lg={4}>
                         <a style={{textDecoration: "none", color: "currentColor"}} href={"https://esbuild.github.io/"} target={"_blank"}>
-                            <img style={{height: 45, marginTop: 2.5, marginBottom: 2.5}} src={esbuildLogo} alt={"esbuild logo"} />
+                            <img style={{height: 45, marginTop: 2.5, marginBottom: 2.5}}
+                                 src={require("website/src/images/esbuild-logo.png")} alt={"esbuild logo"} />
                             <div className={"my-2"}><b>esbuild</b></div>
                         </a>
                         <p>

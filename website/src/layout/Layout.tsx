@@ -1,5 +1,5 @@
-import React, {ReactElement} from "react";
-import {Container, Nav, Navbar, Form, Collapse} from "react-bootstrap";
+import {Component, ReactElement} from "react";
+import {Container, Nav, Navbar, Form} from "react-bootstrap";
 import {NavLink} from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {faMoon} from "@fortawesome/free-solid-svg-icons/faMoon";
@@ -7,8 +7,6 @@ import {faSun} from "@fortawesome/free-solid-svg-icons/faSun";
 import {faGithub} from "@fortawesome/free-brands-svg-icons/faGithub";
 import {faPatreon} from "@fortawesome/free-brands-svg-icons/faPatreon";
 import {faTwitter} from "@fortawesome/free-brands-svg-icons/faTwitter";
-import logoLight from "website/src/images/logo-light.png";
-import logoDark from "website/src/images/logo-dark.png";
 
 const darkThemeCSS = `
     html, body {
@@ -50,7 +48,7 @@ const darkThemeCSS = `
    }
 `;
 
-export default class Layout extends React.Component {
+export default class Layout extends Component {
     props: {children: ReactElement}
     state: {darkTheme: boolean, menuExpanded: boolean} = {darkTheme: true, menuExpanded: false}
 
@@ -205,7 +203,9 @@ export default class Layout extends React.Component {
             <Navbar expand="md" fixed={"top"} expanded={this.state.menuExpanded}>
                 <Container className={"py-2"}>
                     <Navbar.Brand style={{opacity: 1}} href="/">
-                        <img src={this.state.darkTheme ? logoLight : logoDark} alt={"logo"} height={40}/>
+                        <img alt={"logo"} height={40} src={this.state.darkTheme ?
+                            require("website/src/images/logo-light.png") :
+                            require("website/src/images/logo-dark.png")} />
                     </Navbar.Brand>
                     <Navbar.Toggle onClick={() => this.setState({menuExpanded: !this.state.menuExpanded})} />
                     <Navbar.Collapse className="justify-content-end">

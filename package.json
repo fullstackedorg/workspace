@@ -1,14 +1,13 @@
 {
   "name": "fullstacked",
-  "version": "0.0.8",
+  "version": "0.0.11",
   "description": "A fullstack webapp bundler and development kit",
-  "main": "Build/build.js",
   "scripts": {
     "build": "esbuild build.ts --outfile=build.js --format=cjs && node build",
     "pretest": "npm run build && node scripts/test.js",
     "test": "mocha \"tests/**/test.js\" --timeout 5000",
     "coverage": "npx nyc --reporter text-summary --reporter html npm test",
-    "prepublish": "npm run build && tsc --emitDeclarationOnly"
+    "prepublishOnly": "npm run build && tsc --emitDeclarationOnly"
   },
   "repository": {
     "type": "git",

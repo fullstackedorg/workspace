@@ -10,7 +10,7 @@
             "ES2020",
             "dom"
         ],
-        "jsx": "react",
+        "jsx": "react-jsx",
         "paths": {
             "fullstacked/server": ["./server/index.ts"],
             "fullstacked/webapp": ["./webapp/index.tsx"]

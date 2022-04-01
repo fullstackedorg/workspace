@@ -9,8 +9,7 @@ const server = new Server();
 server.start();
 `;
 
-const webappTemplate = `import * as React from 'react';
-import Webapp from "fullstacked/webapp";
+const webappTemplate = `import Webapp from "fullstacked/webapp";
 
 Webapp(<div>Welcome to FullStacked!</div>);
 `;
