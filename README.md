@@ -75,14 +75,15 @@ The idea is to create a package that includes all the basic tools and setup we a
    2. React-router automatically registering route in express
    3. Registering multiple apps to different subdomains or paths
 3. Built-in tests command including code coverage 🛠
-4. More debugging tools 💻 like [morgan](https://github.com/expressjs/morgan)
+4. More debugging tools 💻 
+   1. [morgan](https://github.com/expressjs/morgan) ✅
 5. Deployment command 🚀
    1. Docker templates
    2. Docker-Compose templates
    3. Maybe systemd or pm2 kind of deployments
 
 Down the road<br />
-6. Develop the same concept with alternative tools
+6. Alternative tools
    1. NestJS (Server)<sup>2</sup>
    2. Svelte (WebApp)
    3. VueJS (WebApp)

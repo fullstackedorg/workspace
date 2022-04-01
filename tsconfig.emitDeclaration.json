@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "declaration": true
+    },
+    "include": [
+        "webapp",
+        "server"
+    ]
+}
