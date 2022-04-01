@@ -1,8 +1,8 @@
-import React from "react";
+import {Component} from "react";
 import {NavLink, Route, Routes} from "react-router-dom";
 import Introduction from "website/src/docs/pages/Introduction";
 import GettingStarted from "website/src/docs/pages/GettingStarted";
-import {Button, Container, Form, FormControl} from "react-bootstrap";
+import {Button, Container} from "react-bootstrap";
 import {faBars} from "@fortawesome/free-solid-svg-icons/faBars";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DefaultFiles from "website/src/docs/pages/DefaultFiles";
@@ -26,7 +26,7 @@ const docsPages = {
     }
 }
 
-export default class extends React.Component {
+export default class extends Component {
     componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{}>, snapshot?: any) {
         window.scrollTo({top: 0, left: 0, behavior: "smooth"});
     }

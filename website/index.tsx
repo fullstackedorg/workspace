@@ -1,4 +1,3 @@
-import * as React from 'react';
 import Webapp from "fullstacked/webapp";
 import App from "./src/App";
 

@@ -1,4 +1,3 @@
-import React from "react";
 import {Container} from "react-bootstrap";
 
 export default function (){
@@ -27,8 +26,10 @@ export default function (){
             This is your <b>Server</b>(backend) entrypoint. No need register your public static folder. It's all taken care of
         </p>
         <div className={"box code"}>
-            <del>const app = require("express");<br />
-                app.use(express.static("public"));</del>
+            <del>const express = require("express");<br />
+                const app = express();<br /><br />
+                app.use(express.static("public"));<br /><br />
+                app.listen();</del>
         </div>
         <p>
             You can always access the express instance to register routes under your server instance like this :
@@ -40,7 +41,6 @@ export default function (){
 
         <h3>index.tsx</h3>
         <div className={"box code"}>
-            import * as React from 'react';<br />
             import Webapp from "fullstacked/webapp";<br />
             <br />
             Webapp(&lt;div&gt;Welcome to FullStacked!&lt;/div&gt;);
@@ -50,7 +50,8 @@ export default function (){
             it's all take care of
         </p>
         <div className={"box code"}>
-            <del>const reactDOM = require("react-dom");<br />
+            <del>import React from "react"<br />
+                import reactDOM from "react-dom"<br /><br />
                 reactDOM.render(&lt;App/&gt;, document.getElementById("#root"));</del>
         </div>
         <p>

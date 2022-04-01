@@ -1,4 +1,3 @@
-import React from "react";
 import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import Home from "website/src/home/Home";
 import Docs from "website/src/docs/Docs";

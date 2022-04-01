@@ -3,12 +3,14 @@ A fullstack webapp build tool and development kit.
 
 A complete setup for a Typescript full stack application.
 It has all the Server(Backend) setup and the WebApp(Frontend) setup including features like :
+* Create
 * Build
   * w/ Code Splitting
 * Watch
   * w/ WebApp auto reload & Server auto restart
-* Tests<sup>1</sup>
+* Test<sup>1</sup>
   * w/ Code Coverage
+* Deploy<sup>1</sup>
 
 > <sup>1</sup>Work in progress
 
@@ -34,7 +36,7 @@ Create the default starter files
 ```shell
 fullstacked create
 ```
-Make your first build! (or use the `watch` command)
+Make your first build! (or use the `watch` command and skip the next step)
 ```shell
 fullstacked build
 ```
@@ -47,12 +49,12 @@ node dist/index
 
 | command | uses |
 | --- | --- |
-| fullstacked create | Create the basic `index.tsx` and `server.ts` files |
+| fullstacked create | Generate the basic `index.tsx` and `server.ts` files |
 | fullstacked build | Build your app to your `dist` folder |
 | fullstacked watch | Rebuilds your app on changes.<br />On WebApp rebuild, the webpage reloads.<br />On Server rebuild, the server restarts.|
 
 ## Motivation
-As any web developer, I have changed my toolset many times and typed way too many time this :
+As any web developer, I have changed my toolset many times and typed way too many times this :
 ```js
 ReactDOM.render(<App />, document.getElementById("root"));
 
