@@ -3,5 +3,5 @@ node_modules
 dist
 .nyc_output
 coverage
-tests/*/**
+tests
 website

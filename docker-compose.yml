@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  node:
+    image: node:15-alpine
+    working_dir: /dist
+    command: [ "node", "index" ]
+    ports:
+      - "${PORT}:8000"
+    volumes:
+      - ./:/dist

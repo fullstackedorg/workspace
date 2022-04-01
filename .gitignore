@@ -1,5 +1,11 @@
+.DS_Store
 .idea
 node_modules
 dist
-/.nyc_output
+.nyc_output
 coverage
+.env
+**/*.js
+**/*.js.map
+webapp/**/*.d.ts
+server/**/*.d.ts

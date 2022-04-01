@@ -1,6 +1,26 @@
-const path = require("path");
-const esbuild = require("esbuild");
-const fs = require("fs");
+import path from "path"
+import esbuild, {Format, Loader, Platform} from "esbuild";
+import fs from "fs";
+
+function loadEnvVars(){
+    const pathENV = path.resolve(process.cwd() + "/.env");
+
+    if(!fs.existsSync(pathENV))
+        return
+
+    require('dotenv').config({
+        path: pathENV
+    });
+}
+
+function getProcessEnv(){
+    let processEnv = {};
+    Object.keys(process.env).forEach(envKey => {
+        processEnv['process.env.' + envKey] = "'" + escape(process.env[envKey].trim()) + "'";
+    });
+
+    return processEnv;
+}
 
 function cleanOutDir(dir){
     fs.rmSync(dir, {force: true, recursive: true});
@@ -10,11 +30,13 @@ async function buildServer(config){
     const options = {
         entryPoints: [ config.src + "/server.ts" ],
         outfile: config.out + "/index.js",
-        platform: "node",
+        platform: "node" as Platform,
         bundle: true,
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
         plugins: [],
+
+        define: getProcessEnv(),
 
         watch: config.watcher ? {
             onRebuild: async function(error, result){
@@ -39,15 +61,17 @@ async function buildWebApp(config){
     const options = {
         entryPoints: [ config.src + "/index.tsx" ],
         outdir: publicDir,
-        format: "esm",
+        format: "esm" as Format,
         splitting: true,
         bundle: true,
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
 
-        publicPath: "/",
+        define: getProcessEnv(),
+
+        publicPath: config.publicPath,
         loader: {
-            ".png": "file"
+            ".png": "file" as Loader
         },
 
         watch: config.watcher ? {
@@ -73,12 +97,11 @@ async function buildWebApp(config){
         console.log('\x1b[32m%s\x1b[0m', "WebApp Built");
 }
 
-async function build(config) {
+export default async function(config) {
+    loadEnvVars();
     cleanOutDir(config.out);
     await Promise.all([
         buildServer(config),
         buildWebApp(config)
     ]);
 }
-
-module.exports = build;

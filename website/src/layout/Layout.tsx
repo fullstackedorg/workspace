@@ -1,5 +1,5 @@
 import React, {ReactElement} from "react";
-import {Container, Nav, Navbar, Form} from "react-bootstrap";
+import {Container, Nav, Navbar, Form, Collapse} from "react-bootstrap";
 import {NavLink} from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {faMoon} from "@fortawesome/free-solid-svg-icons/faMoon";
@@ -14,6 +14,12 @@ const darkThemeCSS = `
     html, body {
         background-color: #212529;
         color: #f8f9fa;
+    }
+    a {
+        color: #01b0de;
+    }
+    a:hover {
+        color: #0a85b5;
     }
     .navbar-toggler{
         filter: invert(1);
@@ -46,7 +52,7 @@ const darkThemeCSS = `
 
 export default class Layout extends React.Component {
     props: {children: ReactElement}
-    state: {darkTheme: boolean} = {darkTheme: true}
+    state: {darkTheme: boolean, menuExpanded: boolean} = {darkTheme: true, menuExpanded: false}
 
     constructor(props: any) {
         super(props);
@@ -54,6 +60,18 @@ export default class Layout extends React.Component {
         const savedTheme = window.localStorage.getItem("dark");
         if(savedTheme !== null)
             this.state.darkTheme = savedTheme === "true";
+
+        window.addEventListener('click', (e) => {
+            if(!this.state.menuExpanded)
+                return;
+
+            const clickedElement = e.target as HTMLElement;
+            const nav = document.querySelector("nav");
+            if(nav.contains(clickedElement))
+                return;
+
+            this.setState({menuExpanded: false});
+        });
     }
 
     render(){
@@ -63,9 +81,33 @@ export default class Layout extends React.Component {
                     html, body {
                         overflow-x: hidden;
                     }
+                    .form-check-input{
+                        cursor: pointer;
+                    }
+                    .form-check-input:checked,
+                    .btn-primary{
+                        background-color: #01b0de;
+                        border-color: #01b0de;
+                    }
+                    .btn-primary:hover,
+                    .btn-primary:focus{
+                        background-color: #0a85b5;
+                        border-color: #0a85b5;
+                    }
+                    .btn-primary:focus,
+                    .form-check-input:focus{
+                        box-shadow: 0 0 0 0.25rem rgb(10 133 181 / 50%);
+                    }
                     .display-3,
                     .display-4{
                         font-weight: 700!important;
+                    }
+                    a {
+                        color: #0a85b5;
+                        text-decoration: none;
+                    }
+                    a:hover {
+                        color: #01b0de;
                     }
                     nav{
                         background-color: white
@@ -74,6 +116,9 @@ export default class Layout extends React.Component {
                         text-decoration: none;
                         color: #212529;
                     }
+                    nav hr {
+                        display: none;
+                    }
                     nav a.active {
                         color: #05afde;
                         opacity: 1;
@@ -81,6 +126,9 @@ export default class Layout extends React.Component {
                     .nav-link{
                         color: black;
                         opacity: 0.7;
+                    }
+                    .nav-link a {
+                        display: block;
                     }
                     .nav-link:hover{
                         opacity: 1;
@@ -94,6 +142,8 @@ export default class Layout extends React.Component {
                         font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
                         font-size: smaller;
                         text-align: left;
+                        white-space: nowrap;
+                        overflow: auto;
                     }
                     .box {
                         background-color: #d7dfe1;
@@ -101,17 +151,23 @@ export default class Layout extends React.Component {
                     }
                     #hero{
                         position: absolute;
-                        height: 600px;
-                        width: 600px;
+                        height: 800px;
+                        width: 800px;
                         right: 0;
                         bottom: 0;
                         z-index: -1;
                         transform: translate(30%, 50%);
                     }
+                    @media (max-width: 1200px){
+                        #hero{
+                            height: 600px;
+                            width: 600px;
+                        }
+                    }
                     @media (max-width: 960px){
                         #hero{
-                            height: 400px;
-                            width: 400px;
+                            height: 450px;
+                            width: 450px;
                         }
                     }
                     @media (max-width: 450px){
@@ -120,36 +176,67 @@ export default class Layout extends React.Component {
                             width: 300px;
                         }
                     }
+                    @media (max-width: 768px){
+                        nav hr {
+                            display: block;
+                        }
+                    }
+                    
+                    #quote{
+                        max-width: 660px;
+                    }
+                    @media (max-width: 1020px){
+                        #quote{
+                            max-width: 600px;
+                        }
+                    }
+                    @media (max-width: 630px){
+                        #quote{
+                            max-width: 470px;
+                        }
+                    }@media (max-width: 420px){
+                        #quote{
+                            font-size: calc(1.325rem + 3.3vw);
+                        }
+                    }
+                    
                 `}
             </style>
-            <Navbar expand="md" fixed={"top"}>
+            <Navbar expand="md" fixed={"top"} expanded={this.state.menuExpanded}>
                 <Container className={"py-2"}>
                     <Navbar.Brand style={{opacity: 1}} href="/">
                         <img src={this.state.darkTheme ? logoLight : logoDark} alt={"logo"} height={40}/>
                     </Navbar.Brand>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                    <Navbar.Toggle onClick={() => this.setState({menuExpanded: !this.state.menuExpanded})} />
                     <Navbar.Collapse className="justify-content-end">
-                        <Nav.Link as={"span"} className={window.location.pathname.startsWith("/docs") ? "" : "active"}>
+                        <Nav.Link as={"span"} className={window.location.pathname.startsWith("/docs") ? "" : "active"}
+                                  onClick={() => this.setState({menuExpanded: false})} >
                             <NavLink to="/">Home</NavLink>
                         </Nav.Link>
-                        <Nav.Link as={"span"} className={window.location.pathname.startsWith("/docs") ? "active" : ""}>
+                        <Nav.Link as={"span"} className={window.location.pathname.startsWith("/docs") ? "active" : ""}
+                                  onClick={() => this.setState({menuExpanded: false})} >
                             <NavLink to="/docs">Docs</NavLink>
                         </Nav.Link>
-                        <div className={"d-flex align-items-center ms-3 me-2"}>
-                            <div className={"me-2 mt-1"} style={{opacity: 0.7}}><FontAwesomeIcon icon={faSun}/></div>
-                            <Form.Check
-                                type="switch"
-                                defaultChecked={this.state.darkTheme}
-                                onChange={(e) => {
-                                    window.localStorage.setItem("dark", e.currentTarget.checked.toString());
-                                    this.setState({darkTheme: e.currentTarget.checked})
-                                }}
-                            />
-                            <div className={"mt-1"} style={{opacity: 0.7}}><FontAwesomeIcon icon={faMoon}/></div>
+                        <hr />
+                        <div style={{display: "flex"}}>
+                            <div id={"appearance"} className={"d-flex align-items-center ms-3 me-2"}>
+                                <div className={"me-2 mt-1"} style={{opacity: 0.7}}><FontAwesomeIcon icon={faSun}/></div>
+                                <Form.Check
+                                    type="switch"
+                                    defaultChecked={this.state.darkTheme}
+                                    onChange={(e) => {
+                                        window.localStorage.setItem("dark", e.currentTarget.checked.toString());
+                                        this.setState({darkTheme: e.currentTarget.checked})
+                                    }}
+                                />
+                                <div className={"mt-1"} style={{opacity: 0.7}}><FontAwesomeIcon icon={faMoon}/></div>
+                            </div>
+                            <div id="socials" style={{display: "flex"}}>
+                                <a className={"nav-link"} href={"https://github.com/CPLepage/fullstacked"} target={"_blank"}><FontAwesomeIcon icon={faGithub} /></a>
+                                <a className={"nav-link"} href={"https://twitter.com/cp_lepage"} target={"_blank"}><FontAwesomeIcon icon={faTwitter} /></a>
+                                <a className={"nav-link"} href={"https://www.patreon.com/fullstacked"} target={"_blank"}><FontAwesomeIcon icon={faPatreon} /></a>
+                            </div>
                         </div>
-                        <a className={"nav-link"} href={"https://github.com/CPLepage/fullstacked"} target={"_blank"}><FontAwesomeIcon icon={faGithub} /></a>
-                        <a className={"nav-link"} href={""}><FontAwesomeIcon icon={faTwitter} /></a>
-                        <a className={"nav-link"} href={""}><FontAwesomeIcon icon={faPatreon} /></a>
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
