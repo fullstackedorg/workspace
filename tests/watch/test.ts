@@ -2,7 +2,7 @@ import {before, describe} from "mocha";
 import child_process from "child_process";
 import puppeteer from "puppeteer";
 import assert from "assert";
-import {sleep} from "utils";
+import {sleep} from "tests/utils";
 import fs from "fs";
 
 describe("Watch Test", function(){

@@ -1,6 +1,10 @@
 import path from "path"
 import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
+import {execSync} from "child_process";
+import {getPackageJSON} from "./utils";
+import crypto from "crypto";
+import {glob} from "glob";
 
 function loadEnvVars(){
     const pathENV = path.resolve(process.cwd() + "/.env");
@@ -87,9 +91,34 @@ async function buildWebApp(config){
     if(result.errors.length > 0)
         return;
 
+    const packageConfigs = getPackageJSON(config.root);
+
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});
-    const indexHTMLContentUpdated = indexHTMLContent.replace("{TITLE}", "FullStacked");
+    let indexHTMLContentUpdated = indexHTMLContent.replace("{TITLE}",
+        packageConfigs.title ?? packageConfigs.name ?? "New Webapp");
+
+    const versionString = (packageConfigs.version ?? "") + "-" +
+        crypto.randomBytes(4).toString('hex').toUpperCase();
+    indexHTMLContentUpdated = indexHTMLContentUpdated.replace("{VERSION}", versionString);
+
+    if(config.watcher){
+        const watcherScript = execSync(`esbuild ${path.resolve(__dirname, "../webapp/watcher.ts")} --minify`).toString();
+        const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
+        const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
+        const postHTML = indexHTMLContentUpdated.slice(closingBodyIndex, indexHTMLContentUpdated.length);
+        indexHTMLContentUpdated = preHTML + `<script>${watcherScript}</script>` + postHTML;
+    }
+
+    const faviconFiles = glob.sync(config.src + "**/favicon.png");
+    if(faviconFiles.length){
+        fs.copyFileSync(faviconFiles[0], publicDir + "/favicon.png");
+        const closingHeadIndex = indexHTMLContentUpdated.indexOf("</head>");
+        const preHTML = indexHTMLContentUpdated.slice(0, closingHeadIndex);
+        const postHTML = indexHTMLContentUpdated.slice(closingHeadIndex, indexHTMLContentUpdated.length);
+        indexHTMLContentUpdated = preHTML + `<link rel="icon" href="/favicon.png">` + postHTML;
+    }
+
     fs.mkdirSync(publicDir, {recursive: true});
     fs.writeFileSync(publicDir + "/index.html", indexHTMLContentUpdated);
 

@@ -1,5 +1,5 @@
 import {Button, Col, Container, Form, FormControl, InputGroup, Row} from "react-bootstrap";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faGithub} from "@fortawesome/free-brands-svg-icons/faGithub";
 import Hero from "website/src/home/Hero";
 

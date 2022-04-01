@@ -1,4 +1,4 @@
-import {sleep} from "utils"
+import {sleep} from "tests/utils"
 import * as assert from "assert";
 import {before, describe} from "mocha";
 import TestE2E from "Tests/TestE2E";

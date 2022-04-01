@@ -6,5 +6,8 @@
     "include": [
         "webapp",
         "server"
+    ],
+    "exclude": [
+        "webapp/watcher.ts"
     ]
 }

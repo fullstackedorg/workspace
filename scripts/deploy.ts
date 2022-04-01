@@ -4,6 +4,7 @@ import fs from "fs";
 import rlp from "readline";
 import glob from "glob";
 import build from "./build";
+import { getPackageJSON } from "./utils";
 
 function askToContinue(question) {
     const rl = rlp.createInterface({
@@ -18,27 +19,6 @@ function askToContinue(question) {
             resolve(input === "y" || input === "Y" || input === "yes");
         });
     });
-}
-
-function getPackageJSON(projectRoot){
-    const possibleLocation = [
-        path.resolve(projectRoot, "package.json"),
-        path.resolve(process.cwd(), projectRoot, "package.json"),
-        path.resolve(process.cwd(), projectRoot)
-    ];
-
-    let packageJSONFile = "";
-    for (let i = 0; i < possibleLocation.length; i++) {
-        if(fs.existsSync(possibleLocation[i]) && possibleLocation[i] !== "/package.json") {
-            packageJSONFile = possibleLocation[i];
-            break;
-        }
-    }
-
-    if(!packageJSONFile)
-        return false;
-
-    return JSON.parse(fs.readFileSync(packageJSONFile, {encoding: "utf-8"}));
 }
 
 function setupDockerComposeFile(config){
@@ -88,8 +68,8 @@ function printProgress(progress){
 
 export default async function (config) {
     const packageConfigs = getPackageJSON(config.root);
-    if(!packageConfigs) {
-        console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file");
+    if(Object.keys(packageConfigs).length === 0) {
+        console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
         return;
     }
 
