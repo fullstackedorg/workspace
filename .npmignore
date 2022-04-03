@@ -2,6 +2,7 @@
 node_modules
 dist
 .nyc_output
+.tests
 coverage
 tests
 website

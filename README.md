@@ -1,6 +1,8 @@
 # FullStacked
 A fullstack webapp build tool and development kit.
 
+[![code coverage](https://fullstacked.org/badge/coverage.svg)](https://fullstacked.org/coverage/)
+
 A complete setup for a Typescript full stack application.
 It has all the Server(Backend) setup and the WebApp(Frontend) setup including features like :
 * Create
