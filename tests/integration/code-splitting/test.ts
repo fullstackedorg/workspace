@@ -1,7 +1,7 @@
-import {sleep} from "tests/utils"
+import {sleep} from "utils"
 import * as assert from "assert";
 import {before, describe} from "mocha";
-import TestE2E from "Tests/TestE2E";
+import Helper from "tests/integration/Helper"
 import {glob} from "glob";
 import * as path from "path";
 
@@ -9,7 +9,7 @@ describe("Code Splitting", function(){
     let test;
 
     before(async function (){
-        test = new TestE2E(__dirname);
+        test = new Helper(__dirname);
         await test.start()
         await sleep(1000);
     })
@@ -22,7 +22,7 @@ describe("Code Splitting", function(){
     });
 
     it('Should have more than 1 js file in public', async function(){
-        const jsFiles = glob.sync("*.js", {cwd: path.resolve(__dirname, "dist/public")});
+        const jsFiles = glob.sync("*.js", {cwd: path.resolve(__dirname.replace("/.tests", ""), "dist/public")});
         assert.ok(jsFiles.length > 1);
     });
 

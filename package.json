@@ -6,8 +6,8 @@
   "scripts": {
     "build": "esbuild build.ts --outfile=build.js --format=cjs && node build",
     "pretest": "npm run build && node scripts/test.js",
-    "test": "mocha \"tests/**/test.js\" --timeout 5000",
-    "coverage": "npx nyc --reporter text-summary --reporter html npm test",
+    "test": "mocha \".tests/**/test.js\" --timeout 5000",
+    "coverage": "npx nyc --report-dir website/dist/public/coverage --reporter text-summary --reporter html npm test",
     "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly"
   },
   "repository": {
@@ -27,8 +27,8 @@
     "url": "https://github.com/CPLepage/fullstacked/issues"
   },
   "funding": {
-    "type" : "patreon",
-    "url" : "https://www.patreon.com/fullstacked"
+    "type": "patreon",
+    "url": "https://www.patreon.com/fullstacked"
   },
   "homepage": "https://fullstacked.org",
   "bin": "./cli.js",

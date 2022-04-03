@@ -2,16 +2,17 @@ import {before, describe} from "mocha";
 import child_process from "child_process";
 import puppeteer from "puppeteer";
 import assert from "assert";
-import {sleep} from "tests/utils";
+import {sleep} from "utils";
 import fs from "fs";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
-    const indexFile = __dirname + "/index.tsx";
-    const serverFile = __dirname + "/server.ts";
+    const fixedDirName = __dirname.replace("/.tests", "");
+    const indexFile = fixedDirName + "/index.tsx";
+    const serverFile = fixedDirName + "/server.ts";
 
     before(async function (){
-        watchProcess = child_process.exec(`fullstacked watch --src=${__dirname} --out=${__dirname} --silent`);
+        watchProcess = child_process.exec(`fullstacked watch --src=${fixedDirName} --out=${fixedDirName} --silent`);
         await sleep(2000);
         browser = await puppeteer.launch();
         page = await browser.newPage();

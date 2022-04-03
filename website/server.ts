@@ -1,10 +1,36 @@
 import Server, {publicDir} from "fullstacked/server";
 import express from "express";
 import axios from "axios";
+import fs from "fs";
+import path from "path";
 
 const server = new Server();
 
 server.express.use("/docs*", express.static(publicDir));
+
+server.express.use("/badge/coverage.svg", async (req, res) => {
+    const coverageIndexHTML = fs.readFileSync(path.resolve(__dirname, "public/coverage/index.html"), {encoding: "utf8"});
+    const digitsSpan = coverageIndexHTML.match(/<span class="strong">.*<\/span>/g);
+    const coverage = parseFloat(digitsSpan[0].slice(`<span class="strong">`.length, -`</span>`.length));
+
+    let color;
+    if(coverage === 1000)
+        color = "brightgreen";
+    else if(coverage > 90)
+        color = "green";
+    else if(coverage > 80)
+        color = "yellowgreen"
+    else if(coverage > 70)
+        color = "yellow";
+    else if(coverage > 60)
+        color = "orange";
+    else
+        color = "red";
+
+    const badge = await axios.get(`https://img.shields.io/badge/coverage-${coverage.toFixed(2)}%25-${color}`);
+    res.set('Content-Type', 'image/svg+xml');
+    res.send(badge.data);
+});
 
 server.express.get("/subscribe", async (req, res) => {
     const response = await axios
@@ -21,7 +47,7 @@ server.express.get("/subscribe", async (req, res) => {
         });
 
     res.json({success: response.data.data});
-    
+
 });
 
 server.start();

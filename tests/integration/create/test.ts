@@ -3,16 +3,17 @@ import {describe} from "mocha";
 import child_process from "child_process";
 import fs from "fs";
 import path from "path";
-import TestE2E from "tests/TestE2E";
-import {sleep} from "tests/utils";
+import Helper from "tests/integration/Helper"
+import {sleep} from "utils";
 
 describe("Create Test", function(){
-    const webAppFile = path.resolve(__dirname, "index.tsx");
-    const serverFile = path.resolve(__dirname, "server.ts");
+    const fixedDirName = __dirname.replace("/.tests", "");
+    const webAppFile = path.resolve(fixedDirName, "index.tsx");
+    const serverFile = path.resolve(fixedDirName, "server.ts");
     let test;
 
     it('Should create the default starter file', function(){
-        const logMessage = child_process.execSync(`fullstacked create --src=${__dirname} --silent`).toString();
+        const logMessage = child_process.execSync(`fullstacked create --src=${fixedDirName} --silent`).toString();
         if(logMessage)
             console.log(logMessage);
 
@@ -21,7 +22,7 @@ describe("Create Test", function(){
     });
 
     it('Should display the default starter app', async function (){
-        test = new TestE2E(__dirname);
+        test = new Helper(__dirname);
         await test.start();
         await sleep(500);
         const root = await test.page.$("#root");

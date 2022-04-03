@@ -2,10 +2,12 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import morgan from "morgan";
+import http from "http";
 
 export const publicDir = path.resolve(__dirname, './public');
 
 export default class Server {
+    httpServer: http.Server;
     express = express();
 
     private initDevTools(){
@@ -19,7 +21,7 @@ export default class Server {
         });
     }
 
-    start(){
+    start(silent: boolean = false){
         if(process.argv.includes("--development")) {
             this.initDevTools();
         }
@@ -27,8 +29,13 @@ export default class Server {
         this.express.use(express.static(publicDir));
 
         const port = 8000;
-        this.express.listen(port);
+        this.httpServer = this.express.listen(port);
 
-        console.log("Listening at http://localhost:" + port);
+        if(!silent)
+            console.log("Listening at http://localhost:" + port);
+    }
+
+    stop(){
+        this.httpServer.close();
     }
 }

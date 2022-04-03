@@ -10,8 +10,8 @@ export default class {
     page;
 
     constructor(dir) {
-        this.dir = dir;
-        const logMessage = child_process.execSync(`fullstacked --src=${dir} --out=${dir} --silent`).toString();
+        this.dir = dir.replace("/.tests", "");
+        const logMessage = child_process.execSync(`fullstacked --src=${this.dir} --out=${this.dir} --silent`).toString();
         if(logMessage)
             console.log(logMessage);
     }

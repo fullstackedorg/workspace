@@ -1,13 +1,13 @@
-import {sleep} from "tests/utils"
+import {sleep} from "utils"
 import * as assert from "assert";
 import {before, describe} from "mocha";
-import TestE2E from "Tests/TestE2E";
+import Helper from "tests/integration/Helper"
 
 describe("Basic Test", function(){
     let test;
 
     before(async function (){
-        test = new TestE2E(__dirname);
+        test = new Helper(__dirname);
         await test.start()
         await sleep(1000);
     })

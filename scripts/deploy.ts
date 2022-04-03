@@ -86,8 +86,8 @@ export default async function (config) {
     console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + packageConfigs.name + " v" + packageConfigs.version);
     if(!await askToContinue("Continue"))
         return;
-
-    await build(config);
+    //
+    // await build(config);
 
     const sftp = new SFTP();
     await sftp.connect({
