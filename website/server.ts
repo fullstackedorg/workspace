@@ -8,7 +8,7 @@ const server = new Server();
 
 server.express.use("/docs*", express.static(publicDir));
 
-server.express.use("/badge/coverage.svg", async (req, res) => {
+server.express.use("/coverage/badge.svg", async (req, res) => {
     const coverageIndexHTML = fs.readFileSync(path.resolve(__dirname, "public/coverage/index.html"), {encoding: "utf8"});
     const digitsSpan = coverageIndexHTML.match(/<span class="strong">.*<\/span>/g);
     const coverage = parseFloat(digitsSpan[0].slice(`<span class="strong">`.length, -`</span>`.length));
@@ -20,10 +20,8 @@ server.express.use("/badge/coverage.svg", async (req, res) => {
         color = "green";
     else if(coverage > 80)
         color = "yellowgreen"
-    else if(coverage > 70)
-        color = "yellow";
     else if(coverage > 60)
-        color = "orange";
+        color = "yellow";
     else
         color = "red";
 
