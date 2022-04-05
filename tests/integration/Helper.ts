@@ -16,7 +16,7 @@ export default class {
             console.log(logMessage);
     }
 
-    async start(){
+    async start(path: string = ""){
         this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
         this.browser = await puppeteer.launch();
         this.page = await this.browser.newPage();
@@ -24,7 +24,7 @@ export default class {
             includeRawScriptCoverage: true,
             resetOnNavigation: false
         });
-        await this.page.goto("http://localhost:8000");
+        await this.page.goto("http://localhost:8000" + path);
 
         process.on('uncaughtException', err => {
             if(this.serverProcess?.kill)

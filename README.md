@@ -1,3 +1,4 @@
+![FullStacked Logo](https://raw.githubusercontent.com/CPLepage/fullstacked/main/website/favicon.png)
 # FullStacked
 A fullstack webapp build tool and development kit.
 

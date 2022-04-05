@@ -27,7 +27,7 @@ const darkThemeCSS = `
     }
     nav a,
     .nav-link,
-    .docs-navigation a {
+    #docs-navigation a {
         color: white;
         opacity: 0.7;
     }
@@ -35,7 +35,7 @@ const darkThemeCSS = `
         opacity: 1;
         color: white;
     }
-   .docs-navigation,
+   #docs-navigation,
     .box {
         background-color: #293033;
    }
@@ -240,7 +240,7 @@ export default class Layout extends Component {
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
-            <div style={{height: 90}} />
+            <div style={{height: 82}} />
             {this.props.children}
             {this.state.darkTheme ? <style>{darkThemeCSS}</style> : <></>}
         </>
