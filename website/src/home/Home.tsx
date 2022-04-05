@@ -8,7 +8,7 @@ export default function () {
         <Row className={"my-10"} style={{position: "relative", zIndex: 1}}>
             <Col style={{width: "100%", maxWidth: 1100, margin: "0 auto"}}>
                 <h1 id={"quote"} className={"display-3"}>
-                    The only tool you need to build webapps in TypeScript.
+                    The only tool you need to build web apps in TypeScript.
                 </h1>
                 <div className={"mt-5"}>
                     <Button className={"me-2"} size={"lg"}>The Story</Button>
