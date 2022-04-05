@@ -1,5 +1,5 @@
 # FullStacked
-A full stack webapp build tool and development kit.
+A full stack web app build tool and development kit.
 
 <img src="https://raw.githubusercontent.com/CPLepage/fullstacked/main/website/favicon.png" alt="FullStacked Logo" width="75px" />
 
