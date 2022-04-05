@@ -231,7 +231,7 @@ export default class Layout extends Component {
                                 />
                                 <div className={"mt-1"} style={{opacity: 0.7}}><FontAwesomeIcon icon={faMoon}/></div>
                             </div>
-                            <div id="socials" style={{display: "flex"}}>
+                            <div id="socials" style={{display: "flex", paddingTop: 4}}>
                                 <a className={"nav-link"} href={"https://github.com/CPLepage/fullstacked"} target={"_blank"}><FontAwesomeIcon icon={faGithub} /></a>
                                 <a className={"nav-link"} href={"https://twitter.com/cp_lepage"} target={"_blank"}><FontAwesomeIcon icon={faTwitter} /></a>
                                 <a className={"nav-link"} href={"https://www.patreon.com/fullstacked"} target={"_blank"}><FontAwesomeIcon icon={faPatreon} /></a>
