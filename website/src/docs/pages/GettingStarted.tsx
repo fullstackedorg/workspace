@@ -7,7 +7,7 @@ export default function(){
         <ol>
             <li>
                 <p>
-                    Create a folder were you will develop your awesome webapp.
+                    Create a folder were you will develop your awesome web app.
                 </p>
                 <div className={"code box"}>
                     mkdir my-awesome-project<br />

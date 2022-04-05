@@ -16,7 +16,7 @@ describe("Website", function(){
         const root = await test.page.$("#quote");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        assert.equal(value, "The only tool you need to build webapps in TypeScript.");
+        assert.equal(value, "The only tool you need to build web apps in TypeScript.");
     });
 
     async function getDocsTitle(){

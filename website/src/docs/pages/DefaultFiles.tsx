@@ -12,7 +12,7 @@ export default function (){
         </div>
         <p>
             This create two files : <span className={"code"}>server.ts</span> and <span className={"code"}>index.tsx</span>.
-            These files are your entrypoints for your server and webapp respectively.
+            These files are your entrypoints for your server and web app respectively.
         </p>
         <h3>server.ts</h3>
         <div className={"box code"}>

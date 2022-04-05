@@ -11,12 +11,12 @@ export default function(){
         </div>
         <h3>Welcome to FullStacked!</h3>
         <p>
-            FullStacked is a npm package that helps with all the development setup for a complete webapp built with
+            FullStacked is a npm package that helps with all the development setup for a complete web app built with
             typescript. You can skip most of the setup and configuration phase of a typical project to rapidly start developing!
         </p>
         <h3>Concept</h3>
         <p>
-            The idea is to provide all the setup needed for the development of a complete webapp. In line with that, simple
+            The idea is to provide all the setup needed for the development of a complete web app. In line with that, simple
             commands allows to have everything up and running in a record time. No need to think about environments, watcher
             tools or npm scripts to achieve your goals.
         </p>
