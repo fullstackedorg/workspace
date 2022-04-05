@@ -1,7 +1,9 @@
 # FullStacked
 A fullstack webapp build tool and development kit.
 
-[![code coverage](https://fullstacked.org/coverage/badge.svg)](https://fullstacked.org/coverage/)
+[![version](https://fullstacked.org/version/badge.svg)](https://www.npmjs.com/package/fullstacked)
+[![dependencies](https://fullstacked.org/dependencies/badge.svg)](https://fullstacked.org/coverage/)
+[![code coverage](https://fullstacked.org/coverage/badge.svg)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
 
 A complete setup for a Typescript full stack application.
 It has all the Server(Backend) setup and the WebApp(Frontend) setup including features like :

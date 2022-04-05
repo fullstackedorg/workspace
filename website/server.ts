@@ -8,13 +8,17 @@ const server = new Server();
 
 server.express.use("/docs*", express.static(publicDir));
 
-server.express.use("/coverage/badge.svg", async (req, res) => {
-    const coverageIndexHTML = fs.readFileSync(path.resolve(__dirname, "public/coverage/index.html"), {encoding: "utf8"});
-    const digitsSpan = coverageIndexHTML.match(/<span class="strong">.*<\/span>/g);
-    const coverage = parseFloat(digitsSpan[0].slice(`<span class="strong">`.length, -`</span>`.length));
+server.express.get("/coverage/badge.svg", async (req, res) => {
+    const coverageFile = path.resolve(__dirname, "public/coverage/index.html");
+    let coverage = 0;
+    if(fs.existsSync(coverageFile)){
+        const coverageIndexHTML = fs.readFileSync(coverageFile, {encoding: "utf8"});
+        const digitsSpan = coverageIndexHTML.match(/<span class="strong">.*<\/span>/g);
+        coverage = parseFloat(digitsSpan[0].slice(`<span class="strong">`.length, -`</span>`.length));
+    }
 
     let color;
-    if(coverage === 1000)
+    if(coverage > 98)
         color = "brightgreen";
     else if(coverage > 90)
         color = "green";
@@ -25,10 +29,33 @@ server.express.use("/coverage/badge.svg", async (req, res) => {
     else
         color = "red";
 
-    const badge = await axios.get(`https://img.shields.io/badge/coverage-${coverage.toFixed(2)}%25-${color}`);
     res.set('Content-Type', 'image/svg+xml');
-    res.send(badge.data);
+    const badge = await axios.get(`https://img.shields.io/badge/coverage-${coverage.toFixed(2)}%25-${color}`,
+        {responseType: 'stream'});
+    badge.data.pipe(res);
 });
+
+server.express.get("/version/badge.svg", async (req, res) => {
+    const npmJSData = (await axios.get("https://registry.npmjs.org/fullstacked")).data;
+    const lastVersion = Object.keys(npmJSData.time).pop();
+
+    res.set('Content-Type', 'image/svg+xml');
+    const badge = await axios.get(`https://img.shields.io/badge/version-${lastVersion}-05afdd`,
+        {responseType: 'stream'});
+    badge.data.pipe(res);
+})
+
+server.express.get("/dependencies/badge.svg", async (req, res) => {
+    const npmJSData = (await axios.get("https://registry.npmjs.org/fullstacked")).data;
+    const lastVersion = Object.keys(npmJSData.time).pop();
+    const dependencies = npmJSData.versions[lastVersion].dependencies;
+    console.log(dependencies)
+
+    res.set('Content-Type', 'image/svg+xml');
+    const badge = await axios.get(`https://img.shields.io/badge/dependencies-${Object.keys(dependencies).length}-782175`,
+        {responseType: 'stream'});
+    badge.data.pipe(res);
+})
 
 server.express.get("/subscribe", async (req, res) => {
     const response = await axios

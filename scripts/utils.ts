@@ -10,7 +10,7 @@ export function getPackageJSON(projectRoot){
 
     let packageJSONFile = "";
     for (let i = 0; i < possibleLocation.length; i++) {
-        if(fs.existsSync(possibleLocation[i]) && possibleLocation[i] !== "/package.json") {
+        if(fs.existsSync(possibleLocation[i]) && possibleLocation[i] !== "/package.json" && possibleLocation[i].endsWith("package.json")) {
             packageJSONFile = possibleLocation[i];
             break;
         }
