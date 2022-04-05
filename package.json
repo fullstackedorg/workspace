@@ -2,7 +2,7 @@
   "name": "fullstacked",
   "title": "FullStacked",
   "version": "0.0.12",
-  "description": "A fullstack webapp build tool and development kit",
+  "description": "A full stack webapp build tool and development kit",
   "scripts": {
     "build": "esbuild build.ts --outfile=build.js --format=cjs && node build",
     "pretest": "npm run build && node scripts/test.js",

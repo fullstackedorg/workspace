@@ -1,6 +1,7 @@
-![FullStacked Logo](https://raw.githubusercontent.com/CPLepage/fullstacked/main/website/favicon.png)
 # FullStacked
-A fullstack webapp build tool and development kit.
+A full stack webapp build tool and development kit.
+
+<img src="https://raw.githubusercontent.com/CPLepage/fullstacked/main/website/favicon.png" alt="FullStacked Logo" width="75px" />
 
 [![version](https://fullstacked.org/version/badge.svg)](https://www.npmjs.com/package/fullstacked)
 [![dependencies](https://fullstacked.org/dependencies/badge.svg)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
