@@ -46,31 +46,31 @@ export default class extends Component {
         });
         return <>
             <style>{`
-            .docs-navigation {
+            #docs-navigation {
                 width: 300px;
                 position: fixed;
                 height: calc(100% - 90px);
                 top: 90px;
                 background-color: #d7dfe1;
             }
-            .docs-navigation > .inner {
+            #docs-navigation > .inner {
                 width: 100%;
                 height: 100%;
                 max-width: 300px;
             }
-            .docs-navigation a {
+            #docs-navigation a {
                 color: black;
                 text-decoration: none;
                 opacity: 0.7;
             }
-            .docs-navigation a.active{
+            #docs-navigation a.active{
                 color: #05afde;
                 opacity: 1;
             }
             .docs-navigation-toggle {
                 background-color: #d7dfe1;
             }
-            .docs-navigation a:hover{
+            #docs-navigation a:hover{
                 opacity: 1;
             }
             .docs-content {
@@ -109,17 +109,17 @@ export default class extends Component {
                 width: 100%;
             }
             @media (max-width: 960px){
-                .docs-navigation {
+                #docs-navigation {
                     left: -300px;
                     top: 0;
                     z-index: 9999;
                     height: 100%;
                     transition: 0.3s left;
                 }
-                .docs-navigation.open{
+                #docs-navigation.open{
                     left: 0;
                 }
-                .docs-navigation.open + .docs-navigation-overlay {
+                #docs-navigation.open + .docs-navigation-overlay {
                     display: block;
                 }
                 .docs-navigation-toggle {
@@ -131,7 +131,7 @@ export default class extends Component {
                 }
             }
             @media (min-width: 1400px){
-                .docs-navigation {
+                #docs-navigation {
                     left:0;
                     right: calc(50% + 360px);
                     width: auto;
@@ -147,7 +147,7 @@ export default class extends Component {
             }
         `}</style>
             <div style={{width: "100%", maxWidth: 1320, margin: "0 auto"}}>
-                <div className={"docs-navigation p-4"}>
+                <div id={"docs-navigation"} className={"p-4"}>
                     <div className={"inner"}>
                         <div className={"mb-3"} style={{height: 38}}>
                             <Typeahead
@@ -162,20 +162,20 @@ export default class extends Component {
                         </div>
                         <div className={"mb-2"}><b>References</b></div>
                         {Object.keys(docsPages).map((page, index) => <div><NavLink onClick={() => {
-                                document.querySelector(".docs-navigation").classList.remove("open");
+                                document.querySelector("#docs-navigation").classList.remove("open");
                                 this.forceUpdate();
                             }} to={"/docs" + page} className={index === activeIndex ? "active" : ""}>{docsPages[page].title}</NavLink></div>
                         )}
                     </div>
                 </div>
                 <div className={"docs-navigation-overlay"} onClick={() =>
-                    document.querySelector(".docs-navigation").classList.remove("open")}/>
+                    document.querySelector("#docs-navigation").classList.remove("open")}/>
                 <div className={"docs-navigation-toggle mb-3"}>
                     <Container className={"py-2"}>
                         <Button
                             className={"me-2"}
                             onClick={() => {
-                                document.querySelector(".docs-navigation").classList.add("open");
+                                document.querySelector("#docs-navigation").classList.add("open");
                             }}
                         ><FontAwesomeIcon icon={faBars} /></Button>
                         <b>Navigation</b>
