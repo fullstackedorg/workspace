@@ -11,7 +11,7 @@ export default class {
 
     constructor(dir) {
         this.dir = dir.replace("/.tests", "");
-        const logMessage = child_process.execSync(`fullstacked --src=${this.dir} --out=${this.dir} --silent`).toString();
+        const logMessage = child_process.execSync(`fullstacked --root=${process.env.ROOT}  --src=${this.dir} --out=${this.dir} --silent`).toString();
         if(logMessage)
             console.log(logMessage);
     }
