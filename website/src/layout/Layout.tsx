@@ -50,7 +50,11 @@ const darkThemeCSS = `
 
 export default class Layout extends Component {
     props: {children: ReactElement}
-    state: {darkTheme: boolean, menuExpanded: boolean} = {darkTheme: true, menuExpanded: false}
+    state: {darkTheme: boolean, menuExpanded: boolean} = {
+        // thanks to source : https://medium.com/@tapajyoti-bose/7-killer-one-liners-in-javascript-33db6798f5bf#4603
+        darkTheme: window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches,
+        menuExpanded: false
+    }
 
     constructor(props: any) {
         super(props);

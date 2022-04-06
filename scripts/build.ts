@@ -91,7 +91,7 @@ async function buildWebApp(config){
     if(result.errors.length > 0)
         return;
 
-    const packageConfigs = getPackageJSON(config.root);
+    const packageConfigs = await getPackageJSON(config.root);
 
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});

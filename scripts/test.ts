@@ -11,8 +11,6 @@ fs.rmSync(tmpDir, {recursive: true, force: true});
 const fullstackedRoot = path.resolve(__dirname, "..");
 const tsConfig = JSON.parse(fs.readFileSync(fullstackedRoot + "/tsconfig.json", {encoding: "utf8"}));
 
-console.log(tsConfig);
-
 async function buildTest(entrypoint){
     const relativePath = entrypoint.slice(process.cwd().length);
     const pathComponents = relativePath.split("/")
@@ -20,7 +18,6 @@ async function buildTest(entrypoint){
     const relativeDir = pathComponents.join("/");
 
     const outdir = tmpDir + relativeDir;
-    fs.mkdirSync(tmpDir + relativeDir, {recursive: true});
 
     let outfile = outdir + "/" + fileName.replace(/.ts$/, ".js");
     if(!outfile.endsWith(".js"))
@@ -73,7 +70,11 @@ async function buildTest(entrypoint){
         }],
         bundle: true,
         minify: false,
-        sourcemap: true
+        sourcemap: true,
+
+        define: {
+            "process.env.ROOT": "\"" + fullstackedRoot + "\""
+        }
     }
 
     const result = await esbuild.build(options);
@@ -81,7 +82,7 @@ async function buildTest(entrypoint){
     if(result.errors.length > 0)
         return;
 
-    console.log('\x1b[32m%s\x1b[0m', "Built Test :", entrypoint);
+    console.log('\x1b[32m%s\x1b[0m', "Built File for Tests :", entrypoint);
 }
 
 tests.forEach(buildTest);

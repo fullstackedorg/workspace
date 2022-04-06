@@ -1,25 +1,8 @@
 import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
-import rlp from "readline";
 import glob from "glob";
-import build from "./build";
-import { getPackageJSON } from "./utils";
-
-function askToContinue(question) {
-    const rl = rlp.createInterface({
-        input: process.stdin,
-        output: process.stdout
-
-    });
-
-    return new Promise((resolve, reject) => {
-        rl.question(question + ' (y/n): ', (input) => {
-            rl.close();
-            resolve(input === "y" || input === "Y" || input === "yes");
-        });
-    });
-}
+import {askToContinue, getPackageJSON} from "./utils";
 
 function setupDockerComposeFile(config){
     const outFile = config.out + "/docker-compose.yml";
@@ -67,7 +50,7 @@ function printProgress(progress){
 }
 
 export default async function (config) {
-    const packageConfigs = getPackageJSON(config.root);
+    const packageConfigs = await getPackageJSON();
     if(Object.keys(packageConfigs).length === 0) {
         console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
         return;

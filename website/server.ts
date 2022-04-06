@@ -43,19 +43,41 @@ server.express.get("/version/badge.svg", async (req, res) => {
     const badge = await axios.get(`https://img.shields.io/badge/version-${lastVersion}-05afdd`,
         {responseType: 'stream'});
     badge.data.pipe(res);
-})
+});
 
-server.express.get("/dependencies/badge.svg", async (req, res) => {
-    const npmJSData = (await axios.get("https://registry.npmjs.org/fullstacked")).data;
+async function getDependenciesRecursively(packageName: string, deps: Set<string>): Promise<Set<string>>{
+    const npmJSData = (await axios.get("https://registry.npmjs.org/" + packageName)).data;
     const lastVersion = Object.keys(npmJSData.time).pop();
     const dependencies = npmJSData.versions[lastVersion].dependencies;
-    console.log(dependencies)
+    if(dependencies) {
+        const depsArr = Object.keys(dependencies);
+        depsArr.forEach(dep => deps.add(dep));
+        await Promise.all(depsArr.map(dep => getDependenciesRecursively(dep, deps)));
+    }
+    return deps;
+}
+
+server.express.get("/dependencies/badge.svg", async (req, res) => {
+    const dependencies = new Set<string>();
+    await getDependenciesRecursively("fullstacked", dependencies);
+
+    let color;
+    if(dependencies.size < 50)
+        color = "brightgreen";
+    else if(dependencies.size < 100)
+        color = "green";
+    else if(dependencies.size < 200)
+        color = "yellowgreen"
+    else if(dependencies.size > 300)
+        color = "yellow";
+    else
+        color = "red";
 
     res.set('Content-Type', 'image/svg+xml');
-    const badge = await axios.get(`https://img.shields.io/badge/dependencies-${Object.keys(dependencies).length}-782175`,
+    const badge = await axios.get(`https://img.shields.io/badge/module deps-${dependencies.size}-${color}`,
         {responseType: 'stream'});
     badge.data.pipe(res);
-})
+});
 
 server.express.get("/subscribe", async (req, res) => {
     const response = await axios
