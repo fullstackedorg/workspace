@@ -30,25 +30,28 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup including fe
 ## Getting Started
 This should not take you more than a minute! Give it a try!
 
-Setup your npm project
+1. Create a folder were you will develop your awesome web app
 ```shell
-mkdir MyAwesomeProject
-cd MyAwesomeProject
-npm init
+mkdir my-awesome-project
+cd my-awesome-project
 ```
-Install FullStacked
+2. Init npm
+```shell
+npm init -y
+```
+3. Install FullStacked
 ```shell
 npm i fullstacked
 ```
-Create the default starter files
+4. Create the default starter files
 ```shell
-fullstacked create
+npx fullstacked create
 ```
-Make your first build! (or use the `watch` command and skip the next step)
+5. Make your first build! (or use the `watch` command and skip the next step)
 ```shell
-fullstacked build
+npx fullstacked build
 ```
-Start your app like any other node project
+6. Start your app like any other node project
 ```shell
 node dist/index
 ```
@@ -57,9 +60,9 @@ node dist/index
 
 | command | uses |
 | --- | --- |
-| fullstacked create | Generate the basic `index.tsx` and `server.ts` files |
-| fullstacked build | Build your app to your `dist` folder |
-| fullstacked watch | Rebuilds your app on changes.<br />On WebApp rebuild, the webpage reloads.<br />On Server rebuild, the server restarts.|
+| npx fullstacked create | Generate the basic `index.tsx` and `server.ts` files |
+| npx fullstacked build | Build your app to your `dist` folder |
+| npx fullstacked watch | Rebuilds your app on changes.<br />On WebApp rebuild, the webpage reloads.<br />On Server rebuild, the server restarts.|
 
 ## Motivation
 As any web developer, I have changed my toolset many times and typed way too many times this :

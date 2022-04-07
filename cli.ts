@@ -1,15 +1,11 @@
 #!/usr/bin/env node
-import create from "./scripts/create";
-import build from "./scripts/build";
-import watch from "./scripts/watch";
-import deploy from "./scripts/deploy";
 import defaultConfig from "./scripts/config";
 
 const scripts = {
-    "create": create,
-    "build" : build,
-    "watch" : watch,
-    "deploy": deploy
+    "create": "./scripts/create",
+    "build" : "./scripts/build",
+    "watch" : "./scripts/watch",
+    "deploy": "./scripts/deploy"
 };
 let script = "build"
 
@@ -39,4 +35,4 @@ process.argv.forEach(arg => {
     });
 });
 
-scripts[script](defaultConfig(config));
+require(scripts[script]).default(defaultConfig(config));

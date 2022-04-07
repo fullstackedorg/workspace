@@ -3,6 +3,10 @@ import {Container} from "react-bootstrap";
 export default function(){
     return <Container>
         <h1>Getting Started</h1>
+        <br />
+        <p>
+            It will not take more than a minute to setup you up!
+        </p>
         <h3>Starting your project</h3>
         <ol>
             <li>
@@ -16,10 +20,10 @@ export default function(){
             </li>
             <li>
                 <p>
-                    Init npm and enter your project details
+                    Init npm
                 </p>
                 <div className={"code box"}>
-                    npm init
+                    npm init -y
                 </div>
             </li>
             <li>
@@ -35,19 +39,19 @@ export default function(){
                     Generate the default files
                 </p>
                 <div className={"code box"}>
-                    fullstacked create
+                    npx fullstacked create
                 </div>
             </li>
             <li>
                 <p>
-                    Start the watcher and open <a href={"http://localhost:8000/"} target={"_blank"}>http://localhost:8000/</a>
+                    Start the watcher
                 </p>
                 <div className={"code box"}>
-                    fullstacked watch
+                    npx fullstacked watch
                 </div>
             </li>
             <li>
-                <p>Start developing!</p>
+                <p>Open <a href={"http://localhost:8000/"} target={"_blank"}>http://localhost:8000/</a> and start developing!</p>
             </li>
         </ol>
 
