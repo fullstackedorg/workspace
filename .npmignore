@@ -13,9 +13,12 @@ scripts/**/*.js.map
 config.d.ts
 utils.ts
 
-build.ts
-build.js
-build.js.map
+build-cli.ts
+build-cli.js
+build-cli.js.map
 
 cli.ts
 cli.js.map
+
+scripts/deploy.js
+scripts/test.js

@@ -20,6 +20,9 @@ function loadEnvVars(){
 function getProcessEnv(){
     let processEnv = {};
     Object.keys(process.env).forEach(envKey => {
+        if(envKey.includes("(") || envKey.includes(")"))
+            return;
+
         processEnv['process.env.' + envKey] = "'" + escape(process.env[envKey].trim()) + "'";
     });
 

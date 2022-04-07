@@ -1,10 +1,10 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.0.12",
+  "version": "0.0.18",
   "description": "A full stack web app build tool and development kit",
   "scripts": {
-    "build": "esbuild build.ts --outfile=build.js --format=cjs && node build",
+    "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
     "pretest": "npm run build && node scripts/test.js",
     "test": "mocha \".tests/**/test.js\" --timeout 5000",
     "coverage": "npx nyc --reporter text-summary --reporter html npm test",
