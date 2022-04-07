@@ -1,5 +1,6 @@
 import build from "./build";
-import {exec} from "child_process";
+import {exec, spawn} from "child_process";
+import * as os from "os";
 
 let watchProcess, outdir;
 
@@ -14,8 +15,14 @@ function watcher(isWebApp){
 }
 
 function restartServer(){
-    if(watchProcess?.kill)
-        watchProcess.kill();
+    if(watchProcess) {
+        if(os.platform() === 'win32' && watchProcess.pid){
+            spawn("taskkill", ["/pid", watchProcess.pid, '/f', '/t']);
+        }else{
+            watchProcess.kill();
+        }
+
+    }
 
     watchProcess = exec("node " + outdir + "/index.js --development");
     watchProcess.stdout.pipe(process.stdout);
