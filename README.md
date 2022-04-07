@@ -4,7 +4,8 @@ A full stack web app build tool and development kit.
 <img src="https://raw.githubusercontent.com/CPLepage/fullstacked/main/website/favicon.png" alt="FullStacked Logo" width="75px" />
 
 [![version](https://fullstacked.org/version/badge.svg)](https://www.npmjs.com/package/fullstacked)
-[![module dependencies](https://fullstacked.org/dependencies/badge.svg)](https://npmgraph.js.org/?q=fullstacked)
+[![dependencies](https://fullstacked.org/dependencies/badge.svg)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
+[![module dependencies](https://fullstacked.org/dependencies/all/badge.svg)](https://npmgraph.js.org/?q=fullstacked)
 [![code coverage](https://fullstacked.org/coverage/badge.svg)](https://fullstacked.org/coverage/)
 
 

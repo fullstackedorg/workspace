@@ -8,7 +8,30 @@ const server = new Server();
 
 server.express.use("/docs*", express.static(publicDir));
 
+const badges: Map<string, string> = new Map();
+
+function sendCachedBadge(res, title): boolean{
+    res.set('Content-Type', 'image/svg+xml');
+    const cachedBadge = badges.get(title);
+    if(cachedBadge) {
+        res.send(cachedBadge);
+        return true;
+    }
+
+    return false;
+}
+
+async function sendBadge(res, title, data, color){
+    res.set('Content-Type', 'image/svg+xml');
+    const badge = (await axios.get(`https://img.shields.io/badge/${title}-${data}-${color}`)).data;
+    badges.set(title, badge);
+    res.send(badge)
+}
+
 server.express.get("/coverage/badge.svg", async (req, res) => {
+    const badgeTitle = "coverage";
+    if(sendCachedBadge(res, badgeTitle)) return;
+
     const coverageFile = path.resolve(__dirname, "public/coverage/index.html");
     let coverage = 0;
     if(fs.existsSync(coverageFile)){
@@ -29,26 +52,27 @@ server.express.get("/coverage/badge.svg", async (req, res) => {
     else
         color = "red";
 
-    res.set('Content-Type', 'image/svg+xml');
-    const badge = await axios.get(`https://img.shields.io/badge/coverage-${coverage.toFixed(2)}%25-${color}`,
-        {responseType: 'stream'});
-    badge.data.pipe(res);
+    await sendBadge(res, badgeTitle, coverage.toFixed(2) + "%25", color);
 });
 
 server.express.get("/version/badge.svg", async (req, res) => {
+    const badgeTitle = "version";
+    if(sendCachedBadge(res, badgeTitle)) return;
+
     const npmJSData = (await axios.get("https://registry.npmjs.org/fullstacked")).data;
     const lastVersion = Object.keys(npmJSData.time).pop();
 
-    res.set('Content-Type', 'image/svg+xml');
-    const badge = await axios.get(`https://img.shields.io/badge/version-${lastVersion}-05afdd`,
-        {responseType: 'stream'});
-    badge.data.pipe(res);
+    await sendBadge(res, badgeTitle, lastVersion, "05afdd");
 });
 
-async function getDependenciesRecursively(packageName: string, deps: Set<string>): Promise<Set<string>>{
+async function getDependencies(packageName): Promise<string[]> {
     const npmJSData = (await axios.get("https://registry.npmjs.org/" + packageName)).data;
     const lastVersion = Object.keys(npmJSData.time).pop();
-    const dependencies = npmJSData.versions[lastVersion].dependencies;
+    return npmJSData.versions[lastVersion].dependencies;
+}
+
+async function getDependenciesRecursively(packageName: string, deps: Set<string>): Promise<Set<string>>{
+    const dependencies = await getDependencies(packageName);
     if(dependencies) {
         const depsArr = Object.keys(dependencies);
         depsArr.forEach(dep => deps.add(dep));
@@ -58,6 +82,30 @@ async function getDependenciesRecursively(packageName: string, deps: Set<string>
 }
 
 server.express.get("/dependencies/badge.svg", async (req, res) => {
+    const badgeTitle = "dependencies";
+    if(sendCachedBadge(res, badgeTitle)) return;
+
+    const dependencies = await getDependencies("fullstacked");
+
+    let color;
+    if(dependencies.length < 5)
+        color = "brightgreen";
+    else if(dependencies.length < 15)
+        color = "green";
+    else if(dependencies.length < 30)
+        color = "yellowgreen"
+    else if(dependencies.length > 50)
+        color = "yellow";
+    else
+        color = "red";
+
+    await sendBadge(res, badgeTitle, dependencies.length, color);
+});
+
+server.express.get("/dependencies/all/badge.svg", async (req, res) => {
+    const badgeTitle = "module deps";
+    if(sendCachedBadge(res, badgeTitle)) return;
+
     const dependencies = new Set<string>();
     await getDependenciesRecursively("fullstacked", dependencies);
 
@@ -73,10 +121,7 @@ server.express.get("/dependencies/badge.svg", async (req, res) => {
     else
         color = "red";
 
-    res.set('Content-Type', 'image/svg+xml');
-    const badge = await axios.get(`https://img.shields.io/badge/module deps-${dependencies.size}-${color}`,
-        {responseType: 'stream'});
-    badge.data.pipe(res);
+    await sendBadge(res, badgeTitle, dependencies.size, color);
 });
 
 server.express.get("/subscribe", async (req, res) => {
