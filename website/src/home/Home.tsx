@@ -72,7 +72,7 @@ export default function () {
 
             <div className={"my-10"}>
                 <div className={"display-4 text-center mb-5"}>
-                    <div>Lean and straight-forward.</div>
+                    <div>Lean and straightforward.</div>
                     <div style={{fontSize: "smaller"}} className={"text-muted"}>Currently using:</div>
                 </div>
 
