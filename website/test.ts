@@ -9,7 +9,7 @@ describe("Website", function(){
     before(async function (){
         test = new Helper(__dirname);
         await test.start()
-        await sleep(1000);
+        await sleep(2000);
     });
 
     it('Should load Home and display quote', async function(){
