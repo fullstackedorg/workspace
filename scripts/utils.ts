@@ -2,6 +2,8 @@ import path from "path";
 import fs from "fs";
 import rlp from "readline";
 import glob from "glob";
+import os from "os";
+import {execSync, spawn} from "child_process";
 
 export function askToContinue(question) {
     const rl = rlp.createInterface({
@@ -69,4 +71,25 @@ export async function getPackageJSON(expectedPath: string = ""): Promise<{[key:s
     }
 
     return {};
+}
+
+export async function killProcess(process, port: number = 0){
+    if(!process)
+        return;
+
+    if(os.platform() === 'win32' && process.pid)
+        return spawn("taskkill", ["/pid", process.pid, '/f', '/t']);
+
+    if(process.kill)
+        process.kill();
+
+    if(!port)
+        return;
+
+    let processAtPort;
+    try{
+        processAtPort = execSync(`lsof -t -i:${port}`);
+    }catch (e) {}
+    if(processAtPort)
+        execSync(`kill -9 ${processAtPort.toString()}`);
 }

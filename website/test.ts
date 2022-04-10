@@ -2,8 +2,11 @@ import {sleep} from "utils"
 import * as assert from "assert";
 import {before, describe} from "mocha";
 import Helper from "tests/integration/Helper"
+import axios from "axios";
+import Server from "fullstacked/server";
+import {registerBadgesRoutes} from "website/server/badges";
 
-describe("Website", function(){
+describe("Website Integration", function(){
     let test;
 
     before(async function (){
@@ -40,5 +43,43 @@ describe("Website", function(){
 
     after(async function(){
         await test.stop();
+    });
+});
+
+describe("Website e2e", function(){
+    let server, responseTime;
+
+    before(async function (){
+        server = new Server();
+        registerBadgesRoutes(server.express);
+        server.start(true);
+    });
+
+    it('Should return version badge', async function(){
+        const response = await axios.get("http://localhost:8000/version/badge.svg");
+        assert.ok(response.data.startsWith("<svg"));
+    });
+
+    it('Should return dependencies badge', async function(){
+        const now = Date.now();
+        const response = await axios.get("http://localhost:8000/dependencies/badge.svg");
+        assert.ok(response.data.startsWith("<svg"));
+        responseTime = Date.now() - now;
+    });
+
+    it('Should return cached badge', async function(){
+        const now = Date.now();
+        const response = await axios.get("http://localhost:8000/dependencies/badge.svg");
+        assert.ok(response.data.startsWith("<svg"));
+        assert.ok(Date.now() - now < responseTime);
+    });
+
+    it('Should return coverage badge', async function(){
+        const response = await axios.get("http://localhost:8000/coverage/badge.svg");
+        assert.ok(response.data.startsWith("<svg"));
+    });
+
+    after(function(){
+        server.stop();
     });
 });
