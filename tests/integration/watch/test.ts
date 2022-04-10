@@ -4,6 +4,7 @@ import puppeteer from "puppeteer";
 import assert from "assert";
 import {sleep} from "utils";
 import fs from "fs";
+import {killProcess} from "scripts/utils";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
@@ -42,6 +43,13 @@ describe("Watch Test", function(){
     });
 
     async function getBootTime(){
+        if(!browser.isConnected()) {
+            await browser.close();
+            browser = await puppeteer.launch();
+            page = await browser.newPage();
+            await page.goto("http://localhost:8000");
+            await sleep(500);
+        }
         const root = await page.$("#bootTime");
         const innerHTML = await root.getProperty('innerHTML');
         const value = Number(await innerHTML.jsonValue());
@@ -68,9 +76,7 @@ describe("Watch Test", function(){
 
     after(async function(){
         await browser.close();
-        watchProcess.kill();
-        // todo: this is violent and wont work on windows
-        child_process.execSync("kill -9 $(lsof -t -i:8000)");
+        await killProcess(watchProcess, 8000);
 
         clearTestLine(indexFile);
         clearTestLine(serverFile);

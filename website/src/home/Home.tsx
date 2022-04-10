@@ -11,7 +11,9 @@ export default function () {
                     The only tool you need to build web apps in TypeScript.
                 </h1>
                 <div className={"mt-5"}>
-                    <Button className={"me-2"} size={"lg"}>The Story</Button>
+                    <Button className={"me-2"} size={"lg"} as={"a"}
+                            href={"https://cp-lepage.medium.com/creating-web-apps-the-tale-of-a-millennial-js-developper-667e4b90589a"}
+                            target={"_blank"}>The Story</Button>
                     <Button variant={"secondary"} as={"a"} href={"/docs"} size={"lg"}>Get Started</Button>
                 </div>
             </Col>

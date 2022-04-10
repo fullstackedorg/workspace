@@ -1,6 +1,6 @@
 import build from "./build";
-import {exec, spawn} from "child_process";
-import * as os from "os";
+import {exec} from "child_process";
+import {killProcess} from "./utils";
 
 let watchProcess, outdir;
 
@@ -11,18 +11,11 @@ function watcher(isWebApp){
     }
 
     console.log('\x1b[32m%s\x1b[0m', "Server Rebuilt");
-    restartServer();
+    return restartServer();
 }
 
-function restartServer(){
-    if(watchProcess) {
-        if(os.platform() === 'win32' && watchProcess.pid){
-            spawn("taskkill", ["/pid", watchProcess.pid, '/f', '/t']);
-        }else{
-            watchProcess.kill();
-        }
-
-    }
+async function restartServer(){
+    await killProcess(watchProcess, 8000);
 
     watchProcess = exec("node " + outdir + "/index.js --development");
     watchProcess.stdout.pipe(process.stdout);
@@ -35,5 +28,5 @@ export default async function(config) {
     await build(config);
 
     outdir = config.out;
-    restartServer();
+    return restartServer();
 }

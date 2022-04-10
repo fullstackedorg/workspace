@@ -11,6 +11,8 @@ fs.rmSync(tmpDir, {recursive: true, force: true});
 const fullstackedRoot = path.resolve(__dirname, "..");
 const tsConfig = JSON.parse(fs.readFileSync(fullstackedRoot + "/tsconfig.json", {encoding: "utf8"}));
 
+const builtFiles: string[] = [];
+
 async function buildTest(entrypoint){
     const relativePath = entrypoint.slice(process.cwd().length);
     const pathComponents = relativePath.split("/")
@@ -58,13 +60,20 @@ async function buildTest(entrypoint){
                         importRelativePath = args.path;
                     }
 
-                    await buildTest(path.resolve(importAbsolutePath));
 
                     importRelativePath = importRelativePath.replace(/.ts$/, ".js");
                     if(!importRelativePath.endsWith(".js"))
                         importRelativePath += ".js";
 
-                    return { path: path.resolve(tmpDir, importRelativePath), external: true };
+                    const updatedImportPath = { path: path.resolve(tmpDir, importRelativePath), external: true };
+
+                    if(builtFiles.includes(importAbsolutePath))
+                        return updatedImportPath;
+
+                    builtFiles.push(importAbsolutePath);
+                    await buildTest(path.resolve(importAbsolutePath));
+
+                    return updatedImportPath;
                 });
             }
         }],
