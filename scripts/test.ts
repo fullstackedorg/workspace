@@ -30,6 +30,7 @@ async function buildTest(entrypoint){
         outfile: outfile,
         platform: "node" as Platform,
         plugins: [{
+            // build import to the .tests output
             name: "crawler",
             setup(build: PluginBuild) {
                 build.onResolve({filter:/.*/}, async (args) => {
