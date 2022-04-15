@@ -23,8 +23,9 @@ export function registerBadgesRoutes(app: Application){
         return false;
     }
 
-    async function sendBadge(res, title, data, color){
+    async function sendBadge(res, title, data: string, color){
         res.set('Content-Type', 'image/svg+xml');
+        data = data.replace(/-/g, "--");
         const badge = (await axios.get(`https://img.shields.io/badge/${title}-${data}-${color}`)).data;
         badges.set(title, badge);
         res.send(badge)
@@ -103,7 +104,7 @@ export function registerBadgesRoutes(app: Application){
         else
             color = "red";
 
-        await sendBadge(res, badgeTitle, dependencies.length, color);
+        await sendBadge(res, badgeTitle, dependencies.length.toString(), color);
     });
 
     app.get("/dependencies/all/badge.svg", async (req, res) => {
@@ -125,6 +126,6 @@ export function registerBadgesRoutes(app: Application){
         else
             color = "red";
 
-        await sendBadge(res, badgeTitle, dependencies.size, color);
+        await sendBadge(res, badgeTitle, dependencies.size.toString(), color);
     });
 }

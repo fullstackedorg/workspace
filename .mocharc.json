@@ -1,5 +1,0 @@
-{
-    "require": ["scripts/register"],
-    "timeout": 5000,
-    "enable-source-maps": true
-}

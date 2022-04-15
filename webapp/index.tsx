@@ -1,7 +1,7 @@
 import "./globalReact";
 import {ReactElement} from "react";
 import {render} from "react-dom";
-import {sleep} from "utils";
+import {sleep} from "../utils";
 
 export default function Webapp(app: ReactElement | string) {
     const rootElement = document.getElementById("root");

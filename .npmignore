@@ -21,4 +21,3 @@ cli.ts
 cli.js.map
 
 scripts/deploy.js
-scripts/test.js
