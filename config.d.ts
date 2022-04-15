@@ -3,6 +3,9 @@ declare type Config = {
     src?        : string,
     out?        : string,
 
+    // create without test file
+    noTest? : boolean,
+
     // listen
     port?       : string,
 

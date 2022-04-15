@@ -12,7 +12,8 @@
         "jsx": "react-jsx",
         "paths": {
             "fullstacked/server": ["./server/index.ts"],
-            "fullstacked/webapp": ["./webapp/index.tsx"]
+            "fullstacked/webapp": ["./webapp/index.tsx"],
+            "fullstacked/tests/integration/Helper": ["./tests/integration/Helper.ts"]
         }
     }
 }

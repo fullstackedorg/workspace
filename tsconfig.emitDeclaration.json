@@ -4,10 +4,8 @@
         "declaration": true
     },
     "include": [
-        "webapp",
-        "server"
-    ],
-    "exclude": [
-        "webapp/watcher.ts"
+        "webapp/index.tsx",
+        "server/index.ts",
+        "tests/integration/Helper.ts"
     ]
 }

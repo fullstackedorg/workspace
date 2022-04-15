@@ -91,5 +91,5 @@ export async function killProcess(process, port: number = 0){
         processAtPort = execSync(`lsof -t -i:${port}`);
     }catch (e) {}
     if(processAtPort)
-        execSync(`kill -9 ${processAtPort.toString()}`);
+        try{execSync(`kill -9 ${processAtPort.toString()}`)}catch(e){}
 }

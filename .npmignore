@@ -2,10 +2,16 @@
 node_modules
 dist
 .nyc_output
-.tests
 coverage
-tests
 website
+
+tests/e2e
+tests/unit
+tests/integration/*/*
+tests/integration/Helper.js
+tests/integration/Helper.js.map
+
+config.d.ts
 
 scripts/**/*.ts
 scripts/**/*.js.map
@@ -28,7 +34,5 @@ cli.js.map
 
 server/index.js
 server/index.js.map
-
-
 
 scripts/deploy.js

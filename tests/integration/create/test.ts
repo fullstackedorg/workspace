@@ -7,13 +7,12 @@ import Helper from "tests/integration/Helper"
 import {sleep} from "utils";
 
 describe("Create Test", function(){
-    const fixedDirName = __dirname.replace("/.tests", "");
-    const webAppFile = path.resolve(fixedDirName, "index.tsx");
-    const serverFile = path.resolve(fixedDirName, "server.ts");
+    const webAppFile = path.resolve(__dirname, "index.tsx");
+    const serverFile = path.resolve(__dirname, "server.ts");
     let test;
 
     it('Should create the default starter file', function(){
-        const logMessage = child_process.execSync(`fullstacked create --src=${fixedDirName} --silent`).toString();
+        const logMessage = child_process.execSync(`fullstacked create --src=${__dirname} --silent --no-test`).toString();
         if(logMessage)
             console.log(logMessage);
 
@@ -28,7 +27,7 @@ describe("Create Test", function(){
         const root = await test.page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        assert.equal(value, "<div>Welcome to FullStacked!</div>");
+        assert.equal(value, "Welcome to FullStacked!");
     });
 
     after(async () => {
