@@ -23,5 +23,8 @@ declare type Config = {
     watcher? (): void,
 
     // silence logs
-    silent?     : boolean
+    silent?     : boolean,
+
+    // tests options
+    coverage? : boolean
 }

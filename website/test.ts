@@ -31,6 +31,7 @@ describe("Website Integration", function(){
     it('Should display docs and navigate pages', async function(){
         await test.page.setViewport({ width: 1366, height: 768});
         await test.page.goto("http://localhost:8000/docs");
+        await sleep(500);
         const docPagesCount = (await test.page.$$("#docs-navigation a")).length;
         for (let i = 0; i < docPagesCount; i++) {
             const docPages = await test.page.$$("#docs-navigation a");

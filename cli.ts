@@ -5,7 +5,8 @@ const scripts = {
     "create": "./scripts/create",
     "build" : "./scripts/build",
     "watch" : "./scripts/watch",
-    "deploy": "./scripts/deploy"
+    "deploy": "./scripts/deploy",
+    "test": "./scripts/test"
 };
 let script = "build"
 
@@ -20,7 +21,8 @@ const args = {
     "--app-dir=": value => config.appDir = value,
     "--public-path=": value => config.publicPath = value,
     "--root=": value => config.root = value,
-    "--silent": () => config.silent = true
+    "--silent": () => config.silent = true,
+    "--coverage": () => config.coverage = true
 };
 
 process.argv.forEach(arg => {
