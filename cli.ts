@@ -23,7 +23,8 @@ const args = {
     "--root=": value => config.root = value,
     "--silent": () => config.silent = true,
     "--coverage": () => config.coverage = true,
-    "--headless": () => config.headless = true
+    "--headless": () => config.headless = true,
+    "--no-test": () => config.noTest = true
 };
 
 process.argv.forEach(arg => {

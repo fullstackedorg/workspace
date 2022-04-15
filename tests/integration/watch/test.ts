@@ -8,12 +8,11 @@ import {killProcess} from "scripts/utils";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
-    const fixedDirName = __dirname.replace("/.tests", "");
-    const indexFile = fixedDirName + "/index.tsx";
-    const serverFile = fixedDirName + "/server.ts";
+    const indexFile = __dirname + "/index.tsx";
+    const serverFile = __dirname + "/server.ts";
 
     before(async function (){
-        watchProcess = child_process.exec(`fullstacked watch --src=${fixedDirName} --out=${fixedDirName} --silent`);
+        watchProcess = child_process.exec(`fullstacked watch --src=${__dirname} --out=${__dirname} --silent`);
         await sleep(2000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();

@@ -11,4 +11,4 @@ coverage
 **/*.js.map
 webapp/**/*.d.ts
 server/**/*.d.ts
-
+tests/**/*.d.ts

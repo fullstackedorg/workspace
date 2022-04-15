@@ -8,7 +8,6 @@ process.env.FORCE_COLOR = true;
 export default function(config){
     const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
-
     let testCommand = "npx mocha \"./**/test.ts\" --config " + mochaConfigFile + " " +
         (config.headless ? "--headless" : "");
 
@@ -17,11 +16,12 @@ export default function(config){
 
 
     const testProcess = child_process.exec(testCommand);
+    testProcess.stderr.pipe(process.stderr)
     testProcess.stdout.on('data', (message) => {
         process.stdout.write(message);
 
-        if(message.includes("Error:"))
-            killProcess(testProcess);
+        if(message.toString().includes("Error:") || message.toString().includes("AssertionError")) {
+            killProcess(testProcess, 8000);
+        }
     })
-    testProcess.stderr.pipe(process.stderr)
 }

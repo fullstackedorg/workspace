@@ -3,8 +3,7 @@ import * as assert from "assert";
 import {before, describe} from "mocha";
 import Helper from "tests/integration/Helper"
 import axios from "axios";
-import Server from "fullstacked/server";
-import {registerBadgesRoutes} from "website/server/badges";
+import server from "website/server";
 
 describe("Website Integration", function(){
     let test;
@@ -48,12 +47,10 @@ describe("Website Integration", function(){
 });
 
 describe("Website e2e", function(){
-    let server, responseTime;
+    let responseTime;
 
     before(async function (){
-        server = new Server();
-        registerBadgesRoutes(server.express);
-        server.start(true);
+        server.start({silent: true, testing: true});
     });
 
     it('Should return version badge', async function(){

@@ -2,7 +2,7 @@ import child_process from "child_process";
 import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import {killProcess} from "scripts/utils";
+import {killProcess} from "../../scripts/utils";
 
 export default class {
     dir;

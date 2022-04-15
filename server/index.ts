@@ -21,7 +21,9 @@ export default class Server {
         });
     }
 
-    start(silent: boolean = false){
+    start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
+        if (require.main !== module && !args.testing) return;
+
         if(process.argv.includes("--development")) {
             this.initDevTools();
         }
@@ -29,9 +31,10 @@ export default class Server {
         this.express.use(express.static(publicDir));
 
         const port = 8000;
+
         this.httpServer = this.express.listen(port);
 
-        if(!silent)
+        if(!args.silent)
             console.log("Listening at http://localhost:" + port);
     }
 

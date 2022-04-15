@@ -9,7 +9,7 @@ describe("e2e Tests", function(){
         const responseString = "ok";
         server.express.get("/test", (req, res) =>
             res.send(responseString));
-        server.start(true);
+        server.start({silent: true, testing: true});
         const response = await axios.get("http://localhost:8000/test");
         assert.equal(response.data, responseString);
         server.stop();

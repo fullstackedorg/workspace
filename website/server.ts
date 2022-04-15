@@ -28,3 +28,4 @@ server.express.get("/subscribe", async (req, res) => {
 });
 
 server.start();
+export default server;
