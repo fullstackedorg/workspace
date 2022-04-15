@@ -1,0 +1,5 @@
+{
+    "require": ["tests/build"],
+    "timeout": 5000,
+    "enable-source-maps": true
+}

@@ -3,6 +3,7 @@ import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
 import {killProcess} from "scripts/utils";
+import {sleep} from "utils";
 
 export default class {
     dir;
@@ -11,15 +12,15 @@ export default class {
     page;
 
     constructor(dir) {
-        this.dir = dir.replace("/.tests", "");
-        const logMessage = child_process.execSync(`fullstacked --root=${process.env.ROOT}  --src=${this.dir} --out=${this.dir} --silent`).toString();
+        this.dir = dir
+        const logMessage = child_process.execSync(`fullstacked --src=${this.dir} --out=${this.dir} --silent`)
         if(logMessage)
-            console.log(logMessage);
+            console.log(logMessage.toString());
     }
 
     async start(path: string = ""){
         this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
-        this.browser = await puppeteer.launch();
+        this.browser = await puppeteer.launch({headless: false});
         this.page = await this.browser.newPage();
         await this.page.coverage.startJSCoverage({
             includeRawScriptCoverage: true,
@@ -35,7 +36,7 @@ export default class {
                 this.browser.close();
 
             console.error(err);
-            process.exit(1) //mandatory (as per the Node.js docs)
+            process.exit(1);
         });
     }
 
