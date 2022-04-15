@@ -15,7 +15,7 @@ describe("Watch Test", function(){
     before(async function (){
         watchProcess = child_process.exec(`fullstacked watch --src=${fixedDirName} --out=${fixedDirName} --silent`);
         await sleep(2000);
-        browser = await puppeteer.launch();
+        browser = await puppeteer.launch({headless: false});
         page = await browser.newPage();
         await page.coverage.startJSCoverage({
             includeRawScriptCoverage: true,
@@ -45,10 +45,10 @@ describe("Watch Test", function(){
     async function getBootTime(){
         if(!browser.isConnected()) {
             await browser.close();
-            browser = await puppeteer.launch();
+            browser = await puppeteer.launch({headless: false});
             page = await browser.newPage();
             await page.goto("http://localhost:8000");
-            await sleep(500);
+            await sleep(1000);
         }
         const root = await page.$("#bootTime");
         const innerHTML = await root.getProperty('innerHTML');
@@ -57,13 +57,14 @@ describe("Watch Test", function(){
     }
 
     it('Should reload server', async function(){
-        await sleep(1000);
         const timeBefore = await getBootTime();
+        assert.ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
         await sleep(1500);
         const timeAfter = await getBootTime();
 
+        assert.ok(timeAfter)
         assert.notEqual(timeBefore, timeAfter);
     });
 

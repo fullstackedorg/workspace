@@ -207,9 +207,9 @@ export default class Layout extends Component {
             <Navbar expand="md" fixed={"top"} expanded={this.state.menuExpanded}>
                 <Container className={"py-2"}>
                     <Navbar.Brand style={{opacity: 1}} href="/">
-                        <img alt={"logo"} height={40} src={this.state.darkTheme ?
+                        <img alt={"logo"} height={40} src={(this.state.darkTheme ?
                             require("website/src/images/logo-light.png") :
-                            require("website/src/images/logo-dark.png")} />
+                            require("website/src/images/logo-dark.png")).replace("./", "/")} />
                     </Navbar.Brand>
                     <Navbar.Toggle onClick={() => this.setState({menuExpanded: !this.state.menuExpanded})} />
                     <Navbar.Collapse className="justify-content-end">
