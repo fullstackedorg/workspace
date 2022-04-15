@@ -16,8 +16,8 @@ Module.prototype.require = function(){
     if(filePath.endsWith(".ts") && fs.existsSync(filePath))
         mustBeBuilt = true;
 
-    if(!mustBeBuilt && !this.id.includes("node_modules") && fs.existsSync(path.resolve(fullstackedRoot, filePath + ".ts"))) {
-        filePath = path.resolve(fullstackedRoot, filePath + ".ts");
+    if(!mustBeBuilt && !this.id.includes("node_modules") && fs.existsSync(path.resolve(process.cwd(), filePath + ".ts"))){
+        filePath = path.resolve(process.cwd(), filePath + ".ts");
         mustBeBuilt = true;
     }
 

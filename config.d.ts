@@ -27,4 +27,5 @@ declare type Config = {
 
     // tests options
     coverage? : boolean
+    headless? : boolean
 }

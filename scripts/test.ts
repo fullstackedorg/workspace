@@ -9,7 +9,8 @@ export default function(config){
     const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
 
-    let testCommand = "npx mocha \"./**/test.ts\" --config " + mochaConfigFile;
+    let testCommand = "npx mocha \"./**/test.ts\" --config " + mochaConfigFile + " " +
+        (config.headless ? "--headless" : "");
 
     if(config.coverage)
         testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand

@@ -10,14 +10,25 @@ website
 scripts/**/*.ts
 scripts/**/*.js.map
 
-config.d.ts
 utils.ts
+utils.d.ts
+utils.js.map
 
 build-cli.ts
 build-cli.js
 build-cli.js.map
 
+tsconfig.emitDeclaration.json
+
+.mocharc.ts
+.mocharc.js.map
+
 cli.ts
 cli.js.map
+
+server/index.js
+server/index.js.map
+
+
 
 scripts/deploy.js
