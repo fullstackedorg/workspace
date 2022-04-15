@@ -6,8 +6,8 @@
   "scripts": {
     "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
     "pretest": "npm run build",
-    "test": "mocha \"!(scripts)/**/test.ts\"",
-    "coverage": "npx nyc --reporter text-summary --reporter html npm test",
+    "test": "fullstacked test --headless",
+    "coverage": "npm test -- --coverage",
     "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly"
   },
   "repository": {

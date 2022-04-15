@@ -3,7 +3,6 @@ import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
 import {killProcess} from "scripts/utils";
-import {sleep} from "utils";
 
 export default class {
     dir;
@@ -20,7 +19,7 @@ export default class {
 
     async start(path: string = ""){
         this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
-        this.browser = await puppeteer.launch({headless: false});
+        this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
         await this.page.coverage.startJSCoverage({
             includeRawScriptCoverage: true,

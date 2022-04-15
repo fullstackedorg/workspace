@@ -15,7 +15,7 @@ describe("Watch Test", function(){
     before(async function (){
         watchProcess = child_process.exec(`fullstacked watch --src=${fixedDirName} --out=${fixedDirName} --silent`);
         await sleep(2000);
-        browser = await puppeteer.launch({headless: false});
+        browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
         await page.coverage.startJSCoverage({
             includeRawScriptCoverage: true,
@@ -45,7 +45,7 @@ describe("Watch Test", function(){
     async function getBootTime(){
         if(!browser.isConnected()) {
             await browser.close();
-            browser = await puppeteer.launch({headless: false});
+            browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
             page = await browser.newPage();
             await page.goto("http://localhost:8000");
             await sleep(1000);

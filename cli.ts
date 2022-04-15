@@ -22,7 +22,8 @@ const args = {
     "--public-path=": value => config.publicPath = value,
     "--root=": value => config.root = value,
     "--silent": () => config.silent = true,
-    "--coverage": () => config.coverage = true
+    "--coverage": () => config.coverage = true,
+    "--headless": () => config.headless = true
 };
 
 process.argv.forEach(arg => {
