@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import morgan from "morgan";
 import http from "http";
-import {registerBadgesRoutes} from "server/Badges/badges";
+import {registerBadgesRoutes} from "./Badges/badges";
 
 export const publicDir = path.resolve(__dirname, './public');
 
