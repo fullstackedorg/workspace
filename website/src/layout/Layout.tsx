@@ -36,6 +36,7 @@ const darkThemeCSS = `
         color: white;
     }
    #docs-navigation,
+   .code,
     .box {
         background-color: #293033;
    }
@@ -146,6 +147,9 @@ export default class Layout extends Component {
                         text-align: left;
                         white-space: nowrap;
                         overflow: auto;
+                        background-color: #d7dfe1;
+                        border-radius: 3px;
+                        padding: 3px 6px;
                     }
                     .box {
                         background-color: #d7dfe1;

@@ -34,6 +34,8 @@ function cleanOutDir(dir){
 }
 
 async function buildServer(config){
+    const packageConfigs = await getPackageJSON(config.root);
+
     const options = {
         entryPoints: [ config.src + "/server.ts" ],
         outfile: config.out + "/index.js",
@@ -43,7 +45,11 @@ async function buildServer(config){
         sourcemap: process.env.NODE_ENV !== 'production',
         plugins: [],
 
-        define: getProcessEnv(),
+        define: {
+            ...getProcessEnv(),
+            'process.env.VERSION': JSON.stringify(packageConfigs.version),
+            'process.env.DEPENDENCIES': JSON.stringify(packageConfigs.dependencies)
+        },
 
         watch: config.watcher ? {
             onRebuild: async function(error, result){

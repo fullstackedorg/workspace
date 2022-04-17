@@ -9,6 +9,4 @@ coverage
 .packagePath
 **/*.js
 **/*.js.map
-webapp/**/*.d.ts
-server/**/*.d.ts
-tests/**/*.d.ts
+**/*.d.ts

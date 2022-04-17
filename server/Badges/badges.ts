@@ -1,14 +1,11 @@
-import {Application} from "express";
+import {Router} from "express";
 import axios from "axios";
 import path from "path";
 import fs from "fs";
 
-/*
-* All these routes should be built in FulLStacked
-* since they display the health of the project
- */
+export function registerBadgesRoutes(){
 
-export function registerBadgesRoutes(app: Application){
+    const router = Router();
 
     const badges: Map<string, string> = new Map();
 
@@ -31,7 +28,7 @@ export function registerBadgesRoutes(app: Application){
         res.send(badge)
     }
 
-    app.get("/coverage/badge.svg", async (req, res) => {
+    router.get("/coverage.svg", async (req, res) => {
         const badgeTitle = "coverage";
         if(sendCachedBadge(res, badgeTitle)) return;
 
@@ -58,23 +55,20 @@ export function registerBadgesRoutes(app: Application){
         await sendBadge(res, badgeTitle, coverage.toFixed(2) + "%25", color);
     });
 
-    app.get("/version/badge.svg", async (req, res) => {
+    router.get("/version.svg", async (req, res) => {
         const badgeTitle = "version";
         if(sendCachedBadge(res, badgeTitle)) return;
-
-        const npmJSData = (await axios.get("https://registry.npmjs.org/fullstacked")).data;
-        const lastVersion = Object.keys(npmJSData.time).pop();
-
-        await sendBadge(res, badgeTitle, lastVersion, "05afdd");
+        await sendBadge(res, badgeTitle, process.env.VERSION ?? "undefined", "05afdd");
     });
 
     async function getDependencies(packageName): Promise<string[]> {
         const npmJSData = (await axios.get("https://registry.npmjs.org/" + packageName)).data;
         const lastVersion = Object.keys(npmJSData.time).pop();
-        return npmJSData.versions[lastVersion].dependencies;
+        return npmJSData.versions[lastVersion] ? npmJSData.versions[lastVersion].dependencies : [];
     }
 
     async function getDependenciesRecursively(packageName: string, deps: Set<string>): Promise<Set<string>>{
+        console.log(packageName);
         const dependencies = await getDependencies(packageName);
         if(dependencies) {
             const depsArr = Object.keys(dependencies);
@@ -85,12 +79,11 @@ export function registerBadgesRoutes(app: Application){
     }
 
 
-    // TODO: these two should be based on the package.json, not npmjs
-    app.get("/dependencies/badge.svg", async (req, res) => {
+    router.get("/dependencies.svg", async (req, res) => {
         const badgeTitle = "dependencies";
         if(sendCachedBadge(res, badgeTitle)) return;
 
-        const dependencies = Object.keys(await getDependencies("fullstacked"));
+        const dependencies = Object.keys(process.env.DEPENDENCIES ?? {});
 
         let color;
         if(dependencies.length < 5)
@@ -107,12 +100,14 @@ export function registerBadgesRoutes(app: Application){
         await sendBadge(res, badgeTitle, dependencies.length.toString(), color);
     });
 
-    app.get("/dependencies/all/badge.svg", async (req, res) => {
+    router.get("/dependencies/all.svg", async (req, res) => {
         const badgeTitle = "module deps";
         if(sendCachedBadge(res, badgeTitle)) return;
 
-        const dependencies = new Set<string>();
-        await getDependenciesRecursively("fullstacked", dependencies);
+        const initialDependencies = Object.keys(process.env.DEPENDENCIES ?? {});
+
+        const dependencies = new Set<string>(initialDependencies);
+        await Promise.all(initialDependencies.map(dep => getDependenciesRecursively(dep, dependencies)));
 
         let color;
         if(dependencies.size < 50)
@@ -121,11 +116,13 @@ export function registerBadgesRoutes(app: Application){
             color = "green";
         else if(dependencies.size < 200)
             color = "yellowgreen"
-        else if(dependencies.size > 300)
+        else if(dependencies.size > 200)
             color = "yellow";
         else
             color = "red";
 
         await sendBadge(res, badgeTitle, dependencies.size.toString(), color);
     });
+
+    return router;
 }
