@@ -3,10 +3,10 @@ A full stack web app build tool and development kit.
 
 <img src="https://raw.githubusercontent.com/CPLepage/fullstacked/main/website/favicon.png" alt="FullStacked Logo" width="75px" />
 
-[![version](https://fullstacked.org/version/badge.svg)](https://www.npmjs.com/package/fullstacked)
-[![dependencies](https://fullstacked.org/dependencies/badge.svg)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
-[![module dependencies](https://fullstacked.org/dependencies/all/badge.svg)](https://npmgraph.js.org/?q=fullstacked)
-[![code coverage](https://fullstacked.org/coverage/badge.svg)](https://fullstacked.org/coverage/)
+[![version](https://fullstacked.org/badges/version.svg)](https://www.npmjs.com/package/fullstacked)
+[![dependencies](https://fullstacked.org/badges/dependencies.svg)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
+[![module dependencies](https://fullstacked.org/badges/dependencies/all.svg)](https://npmgraph.js.org/?q=fullstacked)
+[![code coverage](https://fullstacked.org/badges/coverage.svg)](https://fullstacked.org/coverage/)
 
 
 A complete setup for a Typescript full stack application.
