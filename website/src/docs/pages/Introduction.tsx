@@ -1,8 +1,5 @@
-import {Container} from "react-bootstrap";
-
 export default function(){
-    return <Container>
-        <h1>Introduction</h1>
+    return <>
         <div className={"box p-4 my-4"}>
             This is the first version of FullStacked's documentation and references. The project is still in very early phase
             so please be kind. If you have an unresolved or undocumented issue, I will try to responds as fast as possible to
@@ -34,5 +31,5 @@ export default function(){
             My dream would be to have a cloud based one with an efficient types indexer and autocompletion helper,
             but at this point, I didn't find anything that suits my needs. Let me know if you ever used a good one!
         </p>
-    </Container>
+    </>
 }

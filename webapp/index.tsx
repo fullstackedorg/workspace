@@ -1,4 +1,4 @@
-import "./globalReact";
+import "./GlobalReact";
 import {ReactElement} from "react";
 import {render} from "react-dom";
 import {sleep} from "../utils";

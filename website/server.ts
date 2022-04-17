@@ -1,13 +1,10 @@
 import Server, {publicDir} from "fullstacked/server";
 import express from "express";
 import axios from "axios";
-import {registerBadgesRoutes} from "website/server/badges";
 
 const server = new Server();
 
 server.express.use("/docs*", express.static(publicDir));
-
-registerBadgesRoutes(server.express);
 
 server.express.get("/subscribe", async (req, res) => {
     const response = await axios

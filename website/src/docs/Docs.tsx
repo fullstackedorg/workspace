@@ -1,4 +1,4 @@
-import {Component} from "react";
+import {Component, createRef, ReactElement} from "react";
 import {NavLink, Route, Routes} from "react-router-dom";
 import Introduction from "website/src/docs/pages/Introduction";
 import GettingStarted from "website/src/docs/pages/GettingStarted";
@@ -10,8 +10,17 @@ import {faAngleRight} from "@fortawesome/free-solid-svg-icons/faAngleRight";
 import {faAngleLeft} from "@fortawesome/free-solid-svg-icons/faAngleLeft";
 import { Typeahead } from 'react-bootstrap-typeahead';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
+import Testing from "website/src/docs/pages/Testing";
+import Deploying from "website/src/docs/pages/Deploying";
+import DocsNavigation from "website/src/docs/DocsNavigation";
 
-const docsPages = {
+export type docPages = {[path: string]: {
+    title: string,
+    component: ReactElement
+}};
+
+
+const docsPages: docPages = {
     "/": {
         title: "Introduction",
         component: <Introduction />
@@ -23,16 +32,38 @@ const docsPages = {
     "/default-files": {
         title: "Default Files",
         component: <DefaultFiles />
+    },
+    "/testing": {
+        title: "Testing",
+        component: <Testing />
+    },
+    "/deploying": {
+        title: "Deploying",
+        component: <Deploying />
     }
 }
 
 export default class extends Component {
+    navigationRef = createRef<DocsNavigation>();
+
     componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{}>, snapshot?: any) {
         window.scrollTo({top: 0, left: 0, behavior: "smooth"});
+        this.updateNavigation();
     }
 
     componentDidMount() {
         window.scrollTo({top: 0, left: 0, behavior: "smooth"});
+        this.updateNavigation();
+    }
+
+    updateNavigation() {
+        this.navigationRef.current.setState({
+            sections: Array.from(document.querySelectorAll("h3")).map(sectionTitle => {
+                const title = sectionTitle.innerText;
+                sectionTitle.setAttribute("id", title.toLowerCase().replace(/ /g, "-"));
+                return title;
+            })
+        });
     }
 
     render(){
@@ -97,7 +128,8 @@ export default class extends Component {
                 margin: 0 auto;
             }
             .docs-content h3 {
-                margin-top: 3rem;
+                padding-top: 90px;
+                margin-top: calc(3rem - 90px);
             }
             .docs-content .box {
                 padding: 1.5rem;
@@ -151,6 +183,7 @@ export default class extends Component {
                     <div className={"inner"}>
                         <div className={"mb-3"} style={{height: 38}}>
                             <Typeahead
+                                id={"docs-search"}
                                 placeholder={"Search"}
                                 onChange={(selected) => {
                                     const pageIndex = Object.values(docsPages).map(page => page.title).indexOf(selected[0] as string);
@@ -158,14 +191,16 @@ export default class extends Component {
                                     window.location.href = "/docs" + path;
                                 }}
                                 options={Object.values(docsPages).map(page => page.title)}
+
                             />
                         </div>
                         <div className={"mb-2"}><b>References</b></div>
-                        {Object.keys(docsPages).map((page, index) => <div><NavLink onClick={() => {
-                                document.querySelector("#docs-navigation").classList.remove("open");
-                                this.forceUpdate();
-                            }} to={"/docs" + page} className={index === activeIndex ? "active" : ""}>{docsPages[page].title}</NavLink></div>
-                        )}
+                        <DocsNavigation
+                            ref={this.navigationRef}
+                            pages={docsPages}
+                            active={activeIndex}
+                            didNavigate={this.forceUpdate.bind(this)}
+                        />
                     </div>
                 </div>
                 <div className={"docs-navigation-overlay"} onClick={() =>
@@ -183,8 +218,11 @@ export default class extends Component {
                 </div>
                 <div className={"docs-content"}>
                     <Routes>
-                        {Object.keys(docsPages).map(page =>
-                            <Route path={page} element={docsPages[page].component} />)}
+                        {Object.keys(docsPages).map((page, index) =>
+                            <Route key={"page-"+index} path={page}
+                                   element={<Container><h1>{docsPages[page].title}</h1>
+                                       {docsPages[page].component}
+                                   </Container>} />)}
                     </Routes>
                     <Container className={"my-4 docs-buttons d-flex justify-content-between"} style={{
                         width: "100%",

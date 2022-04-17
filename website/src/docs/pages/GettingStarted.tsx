@@ -1,11 +1,8 @@
-import {Container} from "react-bootstrap";
-
 export default function(){
-    return <Container>
-        <h1>Getting Started</h1>
+    return <>
         <br />
         <p>
-            It will not take more than a minute to setup you up!
+            It will take less than a minute to setup you up! Give it a try!
         </p>
         <h3>Starting your project</h3>
         <ol>
@@ -56,5 +53,5 @@ export default function(){
         </ol>
 
 
-    </Container>
+    </>
 }

@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import morgan from "morgan";
 import http from "http";
+import {registerBadgesRoutes} from "server/Badges/badges";
 
 export const publicDir = path.resolve(__dirname, './public');
 
@@ -22,6 +23,8 @@ export default class Server {
     }
 
     start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
+        this.express.use("/badges", registerBadgesRoutes());
+
         if (require.main !== module && !args.testing) return;
 
         if(process.argv.includes("--development")) {
