@@ -1,10 +1,10 @@
 import {before, describe} from "mocha";
 import child_process from "child_process";
 import puppeteer from "puppeteer";
-import assert from "assert";
 import {sleep} from "utils";
 import fs from "fs";
 import {killProcess} from "scripts/utils";
+import {equal, ok, notEqual} from "assert";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
@@ -12,6 +12,12 @@ describe("Watch Test", function(){
     const serverFile = __dirname + "/server.ts";
 
     before(async function (){
+        if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
+        if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+
+        await fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
+        await fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
+
         watchProcess = child_process.exec(`fullstacked watch --src=${__dirname} --out=${__dirname} --silent`);
         await sleep(2000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
@@ -38,7 +44,7 @@ describe("Watch Test", function(){
         await sleep(1500);
 
         const countAfter = await getReloadCount();
-        assert.equal(countAfter - countBefore, 1);
+        equal(countAfter - countBefore, 1);
     });
 
     async function getBootTime(){
@@ -57,28 +63,21 @@ describe("Watch Test", function(){
 
     it('Should reload server', async function(){
         const timeBefore = await getBootTime();
-        assert.ok(timeBefore)
+        ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
         await sleep(1500);
         const timeAfter = await getBootTime();
 
-        assert.ok(timeAfter)
-        assert.notEqual(timeBefore, timeAfter);
+        ok(timeAfter)
+        notEqual(timeBefore, timeAfter);
     });
-
-    function clearTestLine(file){
-        const content = fs.readFileSync(file, {encoding: "utf8"});
-        const contentLines = content.split("\n");
-        contentLines.pop();
-        fs.writeFileSync(file, contentLines.join("\n"));
-    }
 
     after(async function(){
         await browser.close();
         await killProcess(watchProcess, 8000);
 
-        clearTestLine(indexFile);
-        clearTestLine(serverFile);
+        if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
+        if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
     });
 });

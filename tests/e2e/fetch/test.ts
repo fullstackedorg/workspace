@@ -1,7 +1,7 @@
 import {sleep} from "utils"
-import * as assert from "assert";
 import {before, describe} from "mocha";
-import Helper from "tests/integration/Helper"
+import Helper from "tests/e2e/Helper"
+import {equal} from "assert";
 
 describe("Fetch Test", function(){
     let test;
@@ -16,7 +16,7 @@ describe("Fetch Test", function(){
         const root = await test.page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        assert.equal(value, "<div>test</div>");
+        equal(value, "<div>test</div>");
     });
 
     after(async function(){

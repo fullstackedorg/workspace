@@ -21,11 +21,25 @@ Webapp(<>Welcome to FullStacked!</>);
 
 const testsTemplate = `import * as assert from "assert";
 import {before, describe} from "mocha";
-import Helper from "fullstacked/tests/integration/Helper"
+import Helper from "fullstacked/tests/e2e/Helper"
 import server from "./server";
 import axios from "axios";
 
 describe("Integration", function(){
+    before(async function (){
+        server.start({silent: true, testing: true});
+    });
+
+    it('Should hit endpoint', async function(){
+        assert.equal("Hello World", (await axios.get("http://localhost:8000/hello-world")).data)
+    });
+
+    after(async function (){
+        server.stop();
+    });
+});
+
+describe("End-2-End", function(){
     let test;
 
     before(async function (){
@@ -42,20 +56,6 @@ describe("Integration", function(){
 
     after(async function(){
         await test.stop();
-    });
-});
-
-describe("End-to-End", function(){
-    before(async function (){
-        server.start({silent: true, testing: true});
-    });
-
-    it('Should hit endpoint', async function(){
-        assert.equal("Hello World", (await axios.get("http://localhost:8000/hello-world")).data)
-    });
-
-    after(async function (){
-        server.stop();
     });
 });`;
 

@@ -4,35 +4,33 @@ dist
 .nyc_output
 coverage
 website
+**/*.js.map
 
-tests/e2e
+tests/e2e/*/*
+tests/e2e/Helper.js
+tests/integration
 tests/unit
-tests/integration/*/*
-tests/integration/Helper.js
-tests/integration/Helper.js.map
 
 config.d.ts
 
 scripts/**/*.ts
-scripts/**/*.js.map
 
 utils.ts
 utils.d.ts
-utils.js.map
 
 build-cli.ts
 build-cli.js
-build-cli.js.map
 
 tsconfig.emitDeclaration.json
 
 .mocharc.ts
-.mocharc.js.map
 
 cli.ts
-cli.js.map
+
+postinstall.ts
+
+webapp/GlobalReact.d.ts
 
 server/index.js
-server/index.js.map
-
-scripts/deploy.js
+server/Badges/badges.d.ts
+server/Badges/badges.js

@@ -13,7 +13,7 @@
         "paths": {
             "fullstacked/server": ["./server/index.ts"],
             "fullstacked/webapp": ["./webapp/index.tsx"],
-            "fullstacked/tests/integration/Helper": ["./tests/integration/Helper.ts"]
+            "fullstacked/tests/e2e/Helper": ["./tests/e2e/Helper.ts"]
         }
     }
 }

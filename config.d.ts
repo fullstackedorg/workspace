@@ -8,11 +8,14 @@ declare type Config = {
 
     // listen
     port?       : string,
+    portHTTPS?  : string,
 
     // ssh credentials
     host?       : string,
     user?       : string,
     pass?       : string,
+    privateKey? : string,
+
     // directory in server
     appDir?     : string,
 
@@ -23,7 +26,7 @@ declare type Config = {
     root?       : string,
 
     // on rebuild method
-    watcher? (): void,
+    watcher?: (() => void) | boolean,
 
     // silence logs
     silent?     : boolean,

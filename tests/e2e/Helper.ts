@@ -12,19 +12,21 @@ export default class {
 
     constructor(dir) {
         this.dir = dir
-        const logMessage = child_process.execSync(`fullstacked --src=${this.dir} --out=${this.dir} --silent`)
-        if(logMessage)
-            console.log(logMessage.toString());
+        process.stdout.write(child_process.execSync(`fullstacked --src=${this.dir} --out=${this.dir} --silent`));
     }
 
     async start(path: string = ""){
         this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
-        await this.page.coverage.startJSCoverage({
-            includeRawScriptCoverage: true,
-            resetOnNavigation: false
-        });
+
+        if(process.argv.includes("--coverage")){
+            await this.page.coverage.startJSCoverage({
+                includeRawScriptCoverage: true,
+                resetOnNavigation: false
+            });
+        }
+
         await this.page.goto("http://localhost:8000" + path);
 
         process.on('uncaughtException', err => {
@@ -39,7 +41,7 @@ export default class {
         });
     }
 
-    async stop(){
+    private async outputCoverage(){
         const jsCoverage = (await this.page.coverage.stopJSCoverage()).map(({rawScriptCoverage: coverage}) => {
             const file = (new URL(coverage.url)).pathname;
             if(!file.endsWith(".js"))
@@ -50,13 +52,23 @@ export default class {
             }
         }).filter(Boolean);
 
+        const outFolder = process.cwd() + "/.nyc_output";
+        if(!fs.existsSync(outFolder))
+            fs.mkdirSync(outFolder);
+
         for (let i = 0; i < jsCoverage.length; i++) {
             const script = v8toIstanbul(jsCoverage[i].url);
             await script.load();
             script.applyCoverage(jsCoverage[i].functions);
-            fs.writeFileSync(process.cwd() + "/.nyc_output/webapp-" +
+            fs.writeFileSync(outFolder + "/webapp-" +
                 Math.floor(Math.random() * 10000) + "-" + Date.now() + ".json", JSON.stringify(script.toIstanbul()))
             script.destroy();
+        }
+    }
+
+    async stop(){
+        if(process.argv.includes("--coverage")){
+            await this.outputCoverage();
         }
 
         await this.browser.close();
