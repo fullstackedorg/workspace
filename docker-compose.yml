@@ -5,7 +5,9 @@ services:
     image: node:15-alpine
     working_dir: /dist
     command: [ "node", "index" ]
+    restart: always
     ports:
       - "${PORT}:8000"
+      - "${PORT_HTTPS}:8443"
     volumes:
       - ./:/dist

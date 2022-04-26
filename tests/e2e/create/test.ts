@@ -1,10 +1,10 @@
-import * as assert from "assert";
 import {describe} from "mocha";
 import child_process from "child_process";
 import fs from "fs";
 import path from "path";
-import Helper from "tests/integration/Helper"
+import Helper from "tests/e2e/Helper"
 import {sleep} from "utils";
+import {equal, ok} from "assert";
 
 describe("Create Test", function(){
     const webAppFile = path.resolve(__dirname, "index.tsx");
@@ -16,8 +16,8 @@ describe("Create Test", function(){
         if(logMessage)
             console.log(logMessage);
 
-        assert.ok(fs.existsSync(webAppFile));
-        assert.ok(fs.existsSync(serverFile));
+        ok(fs.existsSync(webAppFile));
+        ok(fs.existsSync(serverFile));
     });
 
     it('Should display the default starter app', async function (){
@@ -27,7 +27,7 @@ describe("Create Test", function(){
         const root = await test.page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        assert.equal(value, "Welcome to FullStacked!");
+        equal(value, "Welcome to FullStacked!");
     });
 
     after(async () => {

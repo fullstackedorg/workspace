@@ -6,8 +6,8 @@ import fs from "fs";
 const fullstackedRoot = path.resolve(__dirname, "..");
 const tsConfig = JSON.parse(fs.readFileSync(fullstackedRoot + "/tsconfig.json", {encoding: "utf8"}));
 
+// source: https://stackoverflow.com/a/34186494
 const originalRequire = Module.prototype.require;
-
 //@ts-ignore
 Module.prototype.require = function(){
     let filePath = arguments["0"];
@@ -16,9 +16,16 @@ Module.prototype.require = function(){
     if(filePath.endsWith(".ts") && fs.existsSync(filePath))
         mustBeBuilt = true;
 
-    if(!mustBeBuilt && !this.id.includes("node_modules") && fs.existsSync(path.resolve(process.cwd(), filePath + ".ts"))){
-        filePath = path.resolve(process.cwd(), filePath + ".ts");
-        mustBeBuilt = true;
+    if(!mustBeBuilt && !this.id.includes("node_modules")){
+        const possibleLocation = [
+            path.resolve(process.cwd(), filePath + ".ts"),
+            path.resolve(this.path, filePath + ".ts")
+        ].filter(file => fs.existsSync(file));
+
+        if(possibleLocation.length){
+            filePath = possibleLocation[0];
+            mustBeBuilt = true;
+        }
     }
 
     if(Object.keys(tsConfig.compilerOptions.paths).includes(filePath)){

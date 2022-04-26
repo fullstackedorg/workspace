@@ -1,9 +1,9 @@
 import {sleep} from "utils"
 import * as assert from "assert";
 import {before, describe} from "mocha";
-import Helper from "tests/integration/Helper"
+import Helper from "tests/e2e/Helper"
 
-describe("Website Integration", function(){
+describe("Website End-2-End", function(){
     let test;
 
     before(async function (){

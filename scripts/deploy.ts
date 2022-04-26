@@ -3,26 +3,48 @@ import path from "path";
 import fs from "fs";
 import glob from "glob";
 import {askToContinue, getPackageJSON} from "./utils";
+import build from "./build";
 
 function setupDockerComposeFile(config){
     const outFile = config.out + "/docker-compose.yml";
     fs.copyFileSync(path.resolve(__dirname, "../docker-compose.yml"), outFile);
 
-    const content = fs.readFileSync(outFile, {encoding: "utf-8"});
+    let content = fs.readFileSync(outFile, {encoding: "utf-8"});
 
-    fs.writeFileSync(outFile, content.replace("${PORT}", config.port));
+    content = content.replace("${PORT}", config.port ?? 80);
+    content = content.replace("${PORT_HTTPS}", config.portHTTPS ?? 443);
+
+    fs.writeFileSync(outFile, content);
 }
 
 function execSSH(ssh2, cmd){
     return new Promise(resolve => {
+        let message = "";
         ssh2.exec(cmd, (err, stream) => {
-
             if (err) throw err;
 
-            stream.on('data', console.log);
-            stream.on('close', resolve);
+            stream.on('data', data => {
+                process.stdout.write(data);
+                message += data.toString();
+            });
+            stream.on('close', () => resolve(message));
         });
     });
+}
+
+async function isDockerInstalled(ssh2): Promise<boolean>{
+    const dockerVersion = await execSSH(ssh2, "docker -v");
+    return dockerVersion !== "";
+}
+
+async function installDocker(ssh2){
+    await execSSH(ssh2, "sudo yum install docker -y");
+    await execSSH(ssh2, "sudo wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)");
+    await execSSH(ssh2, "sudo mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose");
+    await execSSH(ssh2, "sudo chmod -v +x /usr/local/bin/docker-compose");
+    await execSSH(ssh2, "sudo systemctl enable docker.service");
+    await execSSH(ssh2, "sudo systemctl start docker.service");
+    await execSSH(ssh2, "sudo chmod 666 /var/run/docker.sock");
 }
 
 async function launchDockerCompose(sftp, packageConfigs, serverPath, serverDistPath){
@@ -51,33 +73,47 @@ function printProgress(progress){
 
 export default async function (config) {
     const packageConfigs = await getPackageJSON();
-    if(Object.keys(packageConfigs).length === 0) {
-        console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
-        return;
-    }
+    if(Object.keys(packageConfigs).length === 0)
+        return console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
 
-    if(!packageConfigs.version) {
-        console.log('\x1b[31m%s\x1b[0m', "No \"version\" in package.json");
-        return;
-    }
+    if(!packageConfigs.version)
+        return console.log('\x1b[31m%s\x1b[0m', "No \"version\" in package.json");
 
-    if(!packageConfigs.name) {
-        console.log('\x1b[31m%s\x1b[0m', "No \"name\" in package.json");
-        return;
-    }
+    if(!packageConfigs.name)
+        return console.log('\x1b[31m%s\x1b[0m', "No \"name\" in package.json");
 
     console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + packageConfigs.name + " v" + packageConfigs.version);
     if(!await askToContinue("Continue"))
         return;
-    //
-    // await build(config);
 
     const sftp = new SFTP();
-    await sftp.connect({
+
+    let connectionConfig: any = {
         host: config.host,
-        username: config.user,
-        password: config.pass
-    });
+        username: config.user
+    }
+
+    if(config.pass)
+        connectionConfig.password = config.pass;
+
+    if(config.privateKey)
+        connectionConfig.privateKey = fs.readFileSync(path.resolve(process.cwd(), config.privateKey));
+
+    await sftp.connect(connectionConfig);
+
+    const dockerInstalled = await isDockerInstalled(sftp.client);
+
+    if(!dockerInstalled) {
+        console.log('\x1b[33m%s\x1b[0m', "You are about to install Docker on your remote host");
+        if(!await askToContinue("Continue"))
+            return;
+
+        await installDocker(sftp.client);
+        if(!await isDockerInstalled(sftp.client))
+            return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
+    }
+
+    await build(config);
 
     const serverPath = config.appDir + "/" + packageConfigs.name ;
     const serverPathDist = serverPath + "/" + packageConfigs.version;
@@ -109,6 +145,8 @@ export default async function (config) {
         printProgress("Progress: " + (i + 1) + "/" + files.length);
     }
     console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
+
+    await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`)
 
     await launchDockerCompose(sftp, packageConfigs, serverPath, serverPathDist);
 

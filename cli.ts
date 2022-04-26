@@ -18,6 +18,7 @@ const args = {
     "--host=": value => config.host = value,
     "--user=": value => config.user = value,
     "--pass=": value => config.pass = value,
+    "--private-key=": value => config.privateKey = value,
     "--app-dir=": value => config.appDir = value,
     "--public-path=": value => config.publicPath = value,
     "--root=": value => config.root = value,
