@@ -16,16 +16,14 @@ Module.prototype.require = function(){
     if(filePath.endsWith(".ts") && fs.existsSync(filePath))
         mustBeBuilt = true;
 
-    if(!mustBeBuilt && !this.id.includes("node_modules")){
-        const possibleLocation = [
-            path.resolve(process.cwd(), filePath + ".ts"),
-            path.resolve(this.path, filePath + ".ts")
-        ].filter(file => fs.existsSync(file));
+    if(!mustBeBuilt && filePath.startsWith("./") && fs.existsSync(path.resolve(this.path, filePath + ".ts"))){
+        filePath = path.resolve(this.path, filePath + ".ts");
+        mustBeBuilt = true;
+    }
 
-        if(possibleLocation.length){
-            filePath = possibleLocation[0];
-            mustBeBuilt = true;
-        }
+    if(!mustBeBuilt && !this.id.includes("node_modules") && fs.existsSync(path.resolve(process.cwd(), filePath + ".ts"))){
+        filePath = path.resolve(process.cwd(), filePath + ".ts");
+        mustBeBuilt = true;
     }
 
     if(Object.keys(tsConfig.compilerOptions.paths).includes(filePath)){
