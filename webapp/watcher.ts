@@ -1,13 +1,18 @@
-setInterval(() => {
-    fetch("/dev").then(res => res.json()).then(timestamp => {
-        const lastBuildTimeStr = window.localStorage.getItem("buildTime")
-        if(!lastBuildTimeStr)
-            return window.localStorage.setItem("buildTime", timestamp.toString());
-
-        const lastBuildTime = Number(lastBuildTimeStr);
-        if(lastBuildTime < timestamp) {
-            window.localStorage.setItem("buildTime", timestamp.toString());
-            window.location.reload();
+let lastBuildTime, webSocket;
+function connectWebsocket(){
+    webSocket = new WebSocket('ws://localhost:8001');
+    webSocket.onmessage = function(message){
+        const buildTime = Number(message.data);
+        if(!lastBuildTime){
+            lastBuildTime = buildTime;
+            return;
         }
-    });
-}, 1000);
+
+        if(lastBuildTime < buildTime)
+            window.location.reload();
+    }
+    webSocket.onclose = function(){
+        document.body.innerText = "Lost watcher connection. Reload page...";
+    }
+}
+connectWebsocket();

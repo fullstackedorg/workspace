@@ -64,6 +64,11 @@ async function buildServer(config){
     if(result.errors.length > 0)
         return;
 
+    if(config.watcher) {
+        const watcherScript = execSync(`npx esbuild ${path.resolve(__dirname, "../server/watcher.ts")} --minify --format=cjs`);
+        fs.writeFileSync(config.out + "/watcher.js", watcherScript);
+    }
+
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "Server Built");
 }
@@ -112,7 +117,7 @@ async function buildWebApp(config){
     indexHTMLContentUpdated = indexHTMLContentUpdated.replace("{VERSION}", versionString);
 
     if(config.watcher){
-        const watcherScript = execSync(`esbuild ${path.resolve(__dirname, "../webapp/watcher.ts")} --minify`).toString();
+        const watcherScript = execSync(`npx esbuild ${path.resolve(__dirname, "../webapp/watcher.ts")} --minify`).toString();
         const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
         const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
         const postHTML = indexHTMLContentUpdated.slice(closingBodyIndex, indexHTMLContentUpdated.length);

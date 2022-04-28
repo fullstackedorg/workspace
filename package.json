@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.0.22-beta27",
+  "version": "0.0.22-beta29",
   "description": "A full stack web app build tool and development kit",
   "scripts": {
     "postinstall": "node postinstall",
@@ -48,7 +48,8 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "ssh2-sftp-client": "^7.2.3",
-    "v8-to-istanbul": "^8.1.1"
+    "v8-to-istanbul": "^8.1.1",
+    "ws": "^8.5.0"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
@@ -56,6 +57,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.1.18",
     "@types/glob": "^7.2.0",
+    "@types/ws": "^8.5.3",
     "react-bootstrap": "^2.2.2",
     "react-bootstrap-typeahead": "^6.0.0-alpha.10",
     "react-router-dom": "^6.2.2",

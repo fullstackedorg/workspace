@@ -13,26 +13,13 @@ export default class Server {
     serverHTTPS: https.Server;
     express = express();
 
-    private initDevTools(){
-        this.express.use(morgan('dev', {
-            skip: function (req, res) { return req.path === "/dev" }
-        }));
-
-        this.express.get("/dev", (req, res) => {
-            const stats = fs.statSync(publicDir + "/index.js");
-            res.json(stats.mtimeMs);
-        });
-    }
-
     start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
-        this.express.use("/badges", registerBadgesRoutes());
-
         // source: https://stackoverflow.com/a/6398335
         if (require.main !== module && !args.testing) return;
 
-        if(process.argv.includes("--development")) {
-            this.initDevTools();
-        }
+        if(process.argv.includes("--development")) this.express.use(morgan('dev'));
+
+        this.express.use("/badges", registerBadgesRoutes());
 
         this.express.use(express.static(publicDir));
 

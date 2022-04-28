@@ -86,10 +86,13 @@ export async function killProcess(process, port: number = 0){
     if(!port)
         return;
 
-    let processAtPort;
+    let processesAtPort;
     try{
-        processAtPort = execSync(`lsof -t -i:${port}`);
+        processesAtPort = execSync(`lsof -t -i:${port}`);
     }catch (e) {}
-    if(processAtPort)
-        try{execSync(`kill -9 ${processAtPort.toString()}`)}catch(e){}
+    if(processesAtPort) {
+        processesAtPort.toString().split("\n").filter(e => e !== "").forEach(processAtPort => {
+            try {execSync(`kill -9 ${processAtPort.toString()}`)} catch (e) {}
+        });
+    }
 }

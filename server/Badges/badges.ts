@@ -68,7 +68,6 @@ export function registerBadgesRoutes(){
     }
 
     async function getDependenciesRecursively(packageName: string, deps: Set<string>): Promise<Set<string>>{
-        console.log(packageName);
         const dependencies = await getDependencies(packageName);
         if(dependencies) {
             const depsArr = Object.keys(dependencies);
