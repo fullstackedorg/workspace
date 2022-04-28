@@ -1,8 +1,9 @@
 import build from "./build";
 import {exec} from "child_process";
 import {killProcess} from "./utils";
+import path from "path";
 
-let watchProcess, outdir;
+let watcherProcess, serverProcess, outdir;
 
 function watcher(isWebApp){
     if(isWebApp) {
@@ -15,12 +16,12 @@ function watcher(isWebApp){
 }
 
 async function restartServer(){
-    await killProcess(watchProcess, 8000);
+    await killProcess(serverProcess);
 
-    watchProcess = exec("node " + outdir + "/index.js --development");
-    watchProcess.stdout.pipe(process.stdout);
-    watchProcess.stderr.pipe(process.stderr);
-    process.stdin.pipe(watchProcess.stdin);
+    serverProcess = exec("node " + outdir + "/index.js --development");
+    serverProcess.stdout.pipe(process.stdout);
+    serverProcess.stderr.pipe(process.stderr);
+    process.stdin.pipe(serverProcess.stdin);
 }
 
 export default async function(config) {
@@ -28,5 +29,8 @@ export default async function(config) {
     await build(config);
 
     outdir = config.out;
+    watcherProcess = exec("node " + outdir + "/watcher.js");
+    watcherProcess.stdout.pipe(process.stdout);
+    watcherProcess.stderr.pipe(process.stderr);
     return restartServer();
 }

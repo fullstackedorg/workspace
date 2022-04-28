@@ -82,15 +82,15 @@ The idea is to create a package that includes all the basic tools and setup we a
 ## Roadmap
 1. Website + Guide/Documentation 📚
 2. Improvements ⚙️
-   1. WebApp watcher with a socket instead of a http request
+   1. WebApp watcher with a socket instead of a http request ✅
    2. React-router automatically registering route in express
    3. Registering multiple apps to different subdomains or paths
-3. Built-in tests command including code coverage 🛠
+3. Built-in tests command including code coverage 🚧
 4. More debugging tools 💻 
    1. [morgan](https://github.com/expressjs/morgan) ✅
 5. Deployment command 🚀
    1. Docker templates
-   2. Docker-Compose templates
+   2. Docker-Compose templates 🚧
    3. Maybe systemd or pm2 kind of deployments
 
 Down the road<br />

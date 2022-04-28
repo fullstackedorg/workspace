@@ -12,14 +12,16 @@ describe("Watch Test", function(){
     const serverFile = __dirname + "/server.ts";
 
     before(async function (){
+        await killProcess(1, 8001);
+
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
 
-        await fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
-        await fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
+        fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
+        fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
 
-        watchProcess = child_process.exec(`fullstacked watch --src=${__dirname} --out=${__dirname} --silent`);
-        await sleep(2000);
+        watchProcess = child_process.exec(`npx fullstacked watch --src=${__dirname} --out=${__dirname} --silent`);
+        await sleep(1500);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
         await page.coverage.startJSCoverage({
@@ -27,6 +29,7 @@ describe("Watch Test", function(){
             resetOnNavigation: false
         });
         await page.goto("http://localhost:8000");
+        await sleep(500);
     });
 
     async function getReloadCount(){
@@ -48,7 +51,7 @@ describe("Watch Test", function(){
     });
 
     async function getBootTime(){
-        if(!browser.isConnected()) {
+        if(browser && !browser.isConnected()) {
             await browser.close();
             browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
             page = await browser.newPage();
@@ -76,6 +79,7 @@ describe("Watch Test", function(){
     after(async function(){
         await browser.close();
         await killProcess(watchProcess, 8000);
+        await killProcess(watchProcess, 8001);
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
