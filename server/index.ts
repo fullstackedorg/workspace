@@ -15,6 +15,8 @@ export default class Server {
     express = express();
 
     constructor() {
+        if(process.argv.includes("--development")) this.express.use(morgan('dev'));
+
         this.express.use("*/assets/:assetFile", (req, res, next) => {
             const filePath = assetsDir + "/" + req.params.assetFile;
             if(fs.existsSync(filePath))
@@ -27,8 +29,6 @@ export default class Server {
     start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
         // source: https://stackoverflow.com/a/6398335
         if (require.main !== module && !args.testing) return;
-
-        if(process.argv.includes("--development")) this.express.use(morgan('dev'));
 
         this.express.use("/badges", registerBadgesRoutes());
 
