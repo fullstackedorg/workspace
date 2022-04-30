@@ -7,11 +7,22 @@ import https from "https";
 import {registerBadgesRoutes} from "./Badges/badges";
 
 export const publicDir = path.resolve(__dirname, './public');
+export const assetsDir = publicDir + "/assets";
 
 export default class Server {
     serverHTTP: http.Server;
     serverHTTPS: https.Server;
     express = express();
+
+    constructor() {
+        this.express.use("*/assets/:assetFile", (req, res, next) => {
+            const filePath = assetsDir + "/" + req.params.assetFile;
+            if(fs.existsSync(filePath))
+                return res.sendFile(filePath);
+
+            next();
+        });
+    }
 
     start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
         // source: https://stackoverflow.com/a/6398335

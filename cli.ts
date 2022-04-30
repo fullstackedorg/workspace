@@ -20,7 +20,6 @@ const args = {
     "--pass=": value => config.pass = value,
     "--private-key=": value => config.privateKey = value,
     "--app-dir=": value => config.appDir = value,
-    "--public-path=": value => config.publicPath = value,
     "--root=": value => config.root = value,
     "--silent": () => config.silent = true,
     "--coverage": () => config.coverage = true,

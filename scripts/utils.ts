@@ -77,8 +77,22 @@ export async function killProcess(process, port: number = 0){
     if(!process)
         return;
 
-    if(os.platform() === 'win32' && process.pid)
-        return spawn("taskkill", ["/pid", process.pid, '/f', '/t']);
+    if(os.platform() === 'win32' && process.pid){
+        if(process.pid)
+            execSync(`taskkill /pid ${process.pid} /f`);
+
+        const processesAtPort = new Set(execSync("netstat -ano | findstr :8000").toString()
+            .split("\r\n")
+            .filter(processLine => processLine.includes("LISTENING"))
+            .map(processLine => processLine.match(/\d*$/))
+            .filter(processMatch => processMatch && processMatch[0] !== "0")
+            .map(processMatch => processMatch[0]));
+
+        processesAtPort.forEach(processID => execSync(`taskkill /pid ${processID} /f`));
+
+        return;
+    }
+
 
     if(process.kill)
         process.kill();

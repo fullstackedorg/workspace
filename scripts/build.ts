@@ -33,7 +33,7 @@ function cleanOutDir(dir){
     fs.rmSync(dir, {force: true, recursive: true});
 }
 
-async function buildServer(config){
+async function buildServer(config, watcher){
     const packageConfigs = await getPackageJSON(config.root);
 
     const options = {
@@ -51,10 +51,10 @@ async function buildServer(config){
             'process.env.DEPENDENCIES': JSON.stringify(packageConfigs.dependencies)
         },
 
-        watch: config.watcher ? {
+        watch: watcher ? {
             onRebuild: async function(error, result){
                 if (error) console.error('Server build failed:', error)
-                config.watcher();
+                watcher();
             }
         } : false
     }
@@ -64,7 +64,7 @@ async function buildServer(config){
     if(result.errors.length > 0)
         return;
 
-    if(config.watcher) {
+    if(watcher) {
         const watcherScript = execSync(`npx esbuild ${path.resolve(__dirname, "../server/watcher.ts")} --minify --format=cjs`);
         fs.writeFileSync(config.out + "/watcher.js", watcherScript);
     }
@@ -73,7 +73,7 @@ async function buildServer(config){
         console.log('\x1b[32m%s\x1b[0m', "Server Built");
 }
 
-async function buildWebApp(config){
+async function buildWebApp(config, watcher){
     const publicDir = config.out + "/public";
 
     const options = {
@@ -87,15 +87,15 @@ async function buildWebApp(config){
 
         define: getProcessEnv(),
 
-        publicPath: config.publicPath,
+        assetNames: "assets/[name]-[hash]",
         loader: {
             ".png": "file" as Loader
         },
 
-        watch: config.watcher ? {
+        watch: watcher ? {
             onRebuild: async function(error, result){
                 if (error) console.error('WebApp build failed:', error)
-                config.watcher(true);
+                watcher(true);
             }
         } : false
     }
@@ -116,7 +116,7 @@ async function buildWebApp(config){
         crypto.randomBytes(4).toString('hex').toUpperCase();
     indexHTMLContentUpdated = indexHTMLContentUpdated.replace("{VERSION}", versionString);
 
-    if(config.watcher){
+    if(watcher){
         const watcherScript = execSync(`npx esbuild ${path.resolve(__dirname, "../webapp/watcher.ts")} --minify`).toString();
         const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
         const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
@@ -140,11 +140,11 @@ async function buildWebApp(config){
         console.log('\x1b[32m%s\x1b[0m', "WebApp Built");
 }
 
-export default async function(config) {
+export default async function(config, watcher: (isWebApp: boolean) => void = null) {
     loadEnvVars();
     cleanOutDir(config.out);
     await Promise.all([
-        buildServer(config),
-        buildWebApp(config)
+        buildServer(config, watcher),
+        buildWebApp(config, watcher)
     ]);
 }
