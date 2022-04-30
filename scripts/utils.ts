@@ -3,7 +3,7 @@ import fs from "fs";
 import rlp from "readline";
 import glob from "glob";
 import os from "os";
-import {execSync, spawn} from "child_process";
+import {exec, execSync, spawn} from "child_process";
 
 export function askToContinue(question) {
     const rl = rlp.createInterface({
@@ -79,16 +79,20 @@ export async function killProcess(process, port: number = 0){
 
     if(os.platform() === 'win32' && process.pid){
         if(process.pid)
-            execSync(`taskkill /pid ${process.pid} /f`);
+            try{exec(`taskkill /pid ${process.pid} /f`)} catch (e) {}
 
-        const processesAtPort = new Set(execSync("netstat -ano | findstr :8000").toString()
-            .split("\r\n")
-            .filter(processLine => processLine.includes("LISTENING"))
-            .map(processLine => processLine.match(/\d*$/))
-            .filter(processMatch => processMatch && processMatch[0] !== "0")
-            .map(processMatch => processMatch[0]));
+        if(port){
+            const processesAtPort = new Set(execSync(`netstat -ano | findstr :${port}`).toString()
+                .split("\r\n")
+                .filter(processLine => processLine.includes("LISTENING"))
+                .map(processLine => processLine.match(/\d*$/))
+                .filter(processMatch => processMatch && processMatch[0] !== "0")
+                .map(processMatch => processMatch[0]));
 
-        processesAtPort.forEach(processID => execSync(`taskkill /pid ${processID} /f`));
+            processesAtPort.forEach(processID => {
+                try{exec(`taskkill /pid ${processID} /f`)} catch (e) {}
+            });
+        }
 
         return;
     }
