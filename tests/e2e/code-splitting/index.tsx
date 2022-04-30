@@ -1,4 +1,3 @@
-import React from 'React';
 import webapp from "fullstacked/webapp";
 
 (async () => {

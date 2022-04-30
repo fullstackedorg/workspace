@@ -10,9 +10,9 @@ export default class {
     browser;
     page;
 
-    constructor(dir) {
-        this.dir = dir
-        process.stdout.write(child_process.execSync(`fullstacked --src=${this.dir} --out=${this.dir} --silent`));
+    constructor(appDir: string) {
+        this.dir = appDir
+        process.stdout.write(child_process.execSync(`npx fullstacked --src=${this.dir} --out=${this.dir} --silent`));
     }
 
     async start(path: string = ""){

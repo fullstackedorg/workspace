@@ -1,37 +1,34 @@
-declare type Config = {
-    // in/out folders
-    src?        : string,
-    out?        : string,
+declare type ConfigCreate = {
+    noTest? : boolean // create without test setup
+}
 
-    // create without test file
-    noTest? : boolean,
+declare type ConfigBuild = {
+    src? : string, // in folders
+    out?: string // out folders
+    root? : string // project root
+}
 
-    // listen
+declare type ConfigWatch = {
+    // listen port
     port?       : string,
     portHTTPS?  : string,
+}
 
+declare type ConfigTest = {
+    coverage? : boolean
+    headless? : boolean
+}
+
+declare type ConfigDeploy = {
     // ssh credentials
     host?       : string,
     user?       : string,
     pass?       : string,
     privateKey? : string,
 
-    // directory in server
-    appDir?     : string,
+    appDir?     : string // directory in server
+}
 
-    // webapp public path
-    publicPath? : string,
-
-    // project root
-    root?       : string,
-
-    // on rebuild method
-    watcher?: (() => void) | boolean,
-
-    // silence logs
-    silent?     : boolean,
-
-    // tests options
-    coverage? : boolean
-    headless? : boolean
+declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {
+    silent? : boolean // silence logging
 }

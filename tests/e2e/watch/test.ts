@@ -13,6 +13,7 @@ describe("Watch Test", function(){
 
     before(async function (){
         await killProcess(1, 8001);
+        await killProcess(1, 8000);
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
@@ -20,16 +21,17 @@ describe("Watch Test", function(){
         fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
         fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
 
-        watchProcess = child_process.exec(`npx fullstacked watch --src=${__dirname} --out=${__dirname} --silent`);
-        await sleep(1500);
+        watchProcess = child_process.exec(`npx fullstacked watch --src=${__dirname} --out=${__dirname}`);
+        watchProcess.stderr.pipe(process.stderr);
+        await sleep(2000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
         await page.coverage.startJSCoverage({
             includeRawScriptCoverage: true,
             resetOnNavigation: false
         });
-        await page.goto("http://localhost:8000");
         await sleep(500);
+        await page.goto("http://localhost:8000");
     });
 
     async function getReloadCount(){
@@ -80,6 +82,8 @@ describe("Watch Test", function(){
         await browser.close();
         await killProcess(watchProcess, 8000);
         await killProcess(watchProcess, 8001);
+
+        await sleep(1000);
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);

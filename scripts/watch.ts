@@ -1,7 +1,6 @@
 import build from "./build";
 import {exec} from "child_process";
 import {killProcess} from "./utils";
-import path from "path";
 
 let watcherProcess, serverProcess, outdir;
 
@@ -25,8 +24,7 @@ async function restartServer(){
 }
 
 export default async function(config) {
-    config.watcher = watcher;
-    await build(config);
+    await build(config, watcher);
 
     outdir = config.out;
     watcherProcess = exec("node " + outdir + "/watcher.js");

@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.0.22-beta29",
+  "version": "0.0.22-beta30",
   "description": "A full stack web app build tool and development kit",
   "scripts": {
     "postinstall": "node postinstall",

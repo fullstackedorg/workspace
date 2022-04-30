@@ -18,8 +18,9 @@ export default class extends Component{
                 {index === this.props.active ? <div style={{
                     marginLeft: 20
                 }}>
-                    {this.state.sections.map(sectionTitle => <div>
-                        <a href={"#" + sectionTitle.toLowerCase().replace(/ /g, "-")}>
+                    {this.state.sections.map((sectionTitle, index) => <div key={"section-"+index}>
+                        <a onClick={() => document.querySelector("#docs-navigation").classList.remove("open")}
+                           href={"#" + sectionTitle.toLowerCase().replace(/ /g, "-")}>
                             {sectionTitle}
                         </a>
                     </div>)}
