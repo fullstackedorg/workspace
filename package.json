@@ -7,8 +7,8 @@
     "postinstall": "node postinstall",
     "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
     "pretest": "npm run build",
-    "test": "fullstacked test --headless",
-    "coverage": "npm test -- --coverage",
+    "test": "node -e \"require('./scripts/test').default({headless: true})\"",
+    "coverage": "node -e \"require('./scripts/test').default({headless: true, coverage: true})\"",
     "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly"
   },
   "repository": {
