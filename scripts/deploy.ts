@@ -113,7 +113,7 @@ export default async function (config) {
             return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
     }
 
-    // await build(config);
+    await build(config);
 
     const serverPath = config.appDir + "/" + packageConfigs.name ;
     const serverPathDist = serverPath + "/" + packageConfigs.version;

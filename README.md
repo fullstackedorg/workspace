@@ -80,6 +80,9 @@ sharing development environments for the purpose of testing and reviewing.
 
 ## Roadmap & Thoughts
 
+* Add testing in deployment script
+  * Stop deployment if tests fails
+* Save command line args to skip the typing afterwards
 * Allow *pre* and *post* scripts on different events
 * Manage to create a simple and efficient way to test frontend component/class individually
 * Switch to [Deno](https://github.com/denoland/deno)
