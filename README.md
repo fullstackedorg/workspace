@@ -80,6 +80,8 @@ sharing development environments for the purpose of testing and reviewing.
 
 ## Roadmap & Thoughts
 
+* Allow *pre* and *post* scripts on different events
+* Manage to create a simple and efficient way to test frontend component/class individually
 * Switch to [Deno](https://github.com/denoland/deno)
   * ✅ No transpiling needed (no even from TS!)
   * ✅ No *node_modules* installation needed
