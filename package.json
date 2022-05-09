@@ -1,8 +1,8 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.1.0",
-  "description": "A full stack web app build tool and development kit",
+  "version": "0.1.3",
+  "description": "A full stack web app tool and development kit",
   "scripts": {
     "postinstall": "node postinstall",
     "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
@@ -20,7 +20,6 @@
     "webapp",
     "typescript",
     "fullstack",
-    "build",
     "tool"
   ],
   "author": "CP Lepage",
