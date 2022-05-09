@@ -35,9 +35,11 @@ const darkThemeCSS = `
         opacity: 1;
         color: white;
     }
+   .code{
+        background-color: #535f64;
+   }
    #docs-navigation,
-   .code,
-    .box {
+   .box {
         background-color: #293033;
    }
    .docs-navigation-toggle {
@@ -50,19 +52,17 @@ const darkThemeCSS = `
 `;
 
 export default class Layout extends Component {
+    // source : https://medium.com/@tapajyoti-bose/7-killer-one-liners-in-javascript-33db6798f5bf#4603
+    static darkTheme: boolean = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     props: {children: ReactElement}
-    state: {darkTheme: boolean, menuExpanded: boolean} = {
-        // thanks to source : https://medium.com/@tapajyoti-bose/7-killer-one-liners-in-javascript-33db6798f5bf#4603
-        darkTheme: window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches,
-        menuExpanded: false
-    }
+    state: {menuExpanded: boolean} = {menuExpanded: false}
 
     constructor(props: any) {
         super(props);
 
         const savedTheme = window.localStorage.getItem("dark");
         if(savedTheme !== null)
-            this.state.darkTheme = savedTheme === "true";
+            Layout.darkTheme = savedTheme === "true";
 
         window.addEventListener('click', (e) => {
             if(!this.state.menuExpanded)
@@ -150,6 +150,7 @@ export default class Layout extends Component {
                         background-color: #d7dfe1;
                         border-radius: 3px;
                         padding: 3px 6px;
+                        line-height: 1.5;
                     }
                     .box {
                         background-color: #d7dfe1;
@@ -211,7 +212,7 @@ export default class Layout extends Component {
             <Navbar expand="md" fixed={"top"} expanded={this.state.menuExpanded}>
                 <Container className={"py-2"}>
                     <Navbar.Brand style={{opacity: 1}} href="/">
-                        <img alt={"logo"} height={40} src={this.state.darkTheme ?
+                        <img alt={"logo"} height={40} src={Layout.darkTheme ?
                             require("website/src/images/logo-light.png") :
                             require("website/src/images/logo-dark.png")} />
                     </Navbar.Brand>
@@ -231,10 +232,11 @@ export default class Layout extends Component {
                                 <div className={"me-2 mt-1"} style={{opacity: 0.7}}><FontAwesomeIcon icon={faSun}/></div>
                                 <Form.Check
                                     type="switch"
-                                    defaultChecked={this.state.darkTheme}
+                                    defaultChecked={Layout.darkTheme}
                                     onChange={(e) => {
                                         window.localStorage.setItem("dark", e.currentTarget.checked.toString());
-                                        this.setState({darkTheme: e.currentTarget.checked})
+                                        Layout.darkTheme = e.currentTarget.checked;
+                                        this.forceUpdate();
                                     }}
                                 />
                                 <div className={"mt-1"} style={{opacity: 0.7}}><FontAwesomeIcon icon={faMoon}/></div>
@@ -249,8 +251,8 @@ export default class Layout extends Component {
                 </Container>
             </Navbar>
             <div style={{height: 82}} />
-            {this.props.children}
-            {this.state.darkTheme ? <style>{darkThemeCSS}</style> : <></>}
+            <div key={Layout.darkTheme ? "dark" : "light"}>{this.props.children}</div>
+            {Layout.darkTheme ? <style>{darkThemeCSS}</style> : <></>}
         </>
     }
 }

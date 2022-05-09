@@ -43,9 +43,12 @@ export default class {
 
     private async outputCoverage(){
         const jsCoverage = (await this.page.coverage.stopJSCoverage()).map(({rawScriptCoverage: coverage}) => {
-            const file = (new URL(coverage.url)).pathname;
-            if(!file.endsWith(".js"))
+            const url = new URL(coverage.url)
+            const file = url.pathname;
+            const origin = url.origin;
+            if(!file.endsWith(".js") || origin !== "http://localhost:8000")
                 return false;
+
             return {
                 ...coverage,
                 url: this.dir + "/dist/public" + file

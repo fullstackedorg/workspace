@@ -8,6 +8,6 @@ const possibleLocation = [
 
 module.exports = {
     require: possibleLocation,
-    timeout: 5000,
+    timeout: 20000,
     "enable-source-maps": true
 }

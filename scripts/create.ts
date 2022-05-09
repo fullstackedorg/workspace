@@ -31,7 +31,7 @@ describe("Integration", function(){
     });
 
     it('Should hit endpoint', async function(){
-        assert.equal("Hello World", (await axios.get("http://localhost:8000/hello-world")).data)
+        assert.equal((await axios.get("/hello-world")).data, "Hello World")
     });
 
     after(async function (){

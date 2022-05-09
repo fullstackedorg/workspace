@@ -2,7 +2,7 @@ export default function (){
     return <>
         <h3>Command</h3>
         <p>
-            To generate the default starter files, simply run the following command:
+            It generates the default starter files, simply run the following command:
         </p>
         <div className={"box code"}>
             npx fullstacked create
@@ -12,7 +12,8 @@ export default function (){
             , <span className={"code"}>index.tsx</span> and <span className={"code"}>test.ts</span>.
             These files are your entrypoints for your server, web app and tests respectively.
         </p>
-        <h3>server.ts</h3>
+        <h3>Default Files</h3>
+        <h6>server.ts</h6>
         <div className={"box code"}>
             import Server from "fullstacked/server";<br />
             <br />
@@ -29,7 +30,7 @@ export default function (){
             This is your <b>Server</b>(backend) entrypoint. No need register your public static folder. It's all taken care of
         </p>
 
-        <h3>index.tsx</h3>
+        <h6>index.tsx</h6>
         <div className={"box code"}>
             import Webapp from "fullstacked/webapp";<br />
             <br />
@@ -39,7 +40,7 @@ export default function (){
             This is your <b>Webapp</b>(frontend) entrypoint. No need to use render from react-dom or setup an HTML file. Once again,
             it's all take care of.
         </p>
-        <h3>test.ts</h3>
+        <h6>test.ts</h6>
         <div className={"box code"} dangerouslySetInnerHTML={{__html:
                 `import * as assert from "assert";<br>
             import {before, describe} from "mocha";<br>
@@ -55,11 +56,8 @@ export default function (){
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;await test.start()<br>
             &nbsp;&nbsp;&nbsp;&nbsp;});<br>
             <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;it('Should load default page', async function(){<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const root = await test.page.$("#root");<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const innerHTML = await root.getProperty('innerHTML');<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const value = await innerHTML.jsonValue();<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert.equal(value, "Welcome to FullStacked!");<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;it('Should hit endpoint', async function(){<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert.equal((await axios.get("/hello-world")).data, "Hello World")<br>
             &nbsp;&nbsp;&nbsp;&nbsp;});<br>
             <br>
             &nbsp;&nbsp;&nbsp;&nbsp;after(async function(){<br>
@@ -72,8 +70,11 @@ export default function (){
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;server.start({silent: true, testing: true});<br>
             &nbsp;&nbsp;&nbsp;&nbsp;});<br>
             <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;it('Should hit endpoint', async function(){<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert.equal("Hello World", (await axios.get("http://localhost:8000/hello-world")).data)<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;it('Should load default page', async function(){<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const root = await test.page.$("#root");<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const innerHTML = await root.getProperty('innerHTML');<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const value = await innerHTML.jsonValue();<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert.equal(value, "Welcome to FullStacked!");<br>
             &nbsp;&nbsp;&nbsp;&nbsp;});<br>
             <br>
             &nbsp;&nbsp;&nbsp;&nbsp;after(async function (){<br>
