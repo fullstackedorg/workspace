@@ -80,6 +80,7 @@ sharing development environments for the purpose of testing and reviewing.
 
 ## Roadmap & Thoughts
 
+* Create tests for `deploy` and `test` commands
 * Add testing in deployment script
   * Stop deployment if tests fails
 * Save command line args to skip the typing afterwards
