@@ -8,6 +8,5 @@ services:
     restart: always
     ports:
       - "${PORT}:8000"
-      - "${PORT_HTTPS}:8443"
     volumes:
       - ./:/dist
