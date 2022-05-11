@@ -3,11 +3,14 @@ import Module from "module";
 import path from "path";
 import fs from "fs";
 import axios from "axios";
+import {getProjectRoot} from "./utils";
 
 axios.defaults.baseURL = 'http://localhost:8000';
 
 const fullstackedRoot = path.resolve(__dirname, "..");
 const tsConfig = JSON.parse(fs.readFileSync(fullstackedRoot + "/tsconfig.json", {encoding: "utf8"}));
+
+const projectRoot = getProjectRoot();
 
 // source: https://stackoverflow.com/a/34186494
 const originalRequire = Module.prototype.require;
@@ -24,8 +27,8 @@ Module.prototype.require = function(){
         mustBeBuilt = true;
     }
 
-    if(!mustBeBuilt && !this.id.includes("node_modules") && fs.existsSync(path.resolve(process.cwd(), filePath + ".ts"))){
-        filePath = path.resolve(process.cwd(), filePath + ".ts");
+    if(!mustBeBuilt && !this.id.includes("node_modules") && fs.existsSync(path.resolve(projectRoot, filePath + ".ts"))){
+        filePath = path.resolve(projectRoot, filePath + ".ts");
         mustBeBuilt = true;
     }
 

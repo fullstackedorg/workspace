@@ -1,9 +1,8 @@
 import {before, describe} from "mocha";
 import child_process from "child_process";
 import puppeteer from "puppeteer";
-import {sleep} from "utils";
 import fs from "fs";
-import {killProcess} from "scripts/utils";
+import {killProcess, sleep} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
 
 describe("Watch Test", function(){

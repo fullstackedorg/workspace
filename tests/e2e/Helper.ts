@@ -2,7 +2,7 @@ import child_process from "child_process";
 import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import {killProcess} from "../../scripts/utils";
+import {getProjectRoot, killProcess} from "../../scripts/utils";
 
 export default class {
     dir;
@@ -55,7 +55,7 @@ export default class {
             }
         }).filter(Boolean);
 
-        const outFolder = process.cwd() + "/.nyc_output";
+        const outFolder = getProjectRoot() + "/.nyc_output";
         if(!fs.existsSync(outFolder))
             fs.mkdirSync(outFolder);
 

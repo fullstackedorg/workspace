@@ -1,9 +1,9 @@
-import {sleep} from "utils"
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
 import {glob} from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";
+import {sleep} from "../../../scripts/utils";
 
 describe("Code Splitting", function(){
     let test;

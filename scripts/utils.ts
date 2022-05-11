@@ -3,7 +3,7 @@ import fs from "fs";
 import rlp from "readline";
 import glob from "glob";
 import os from "os";
-import {exec, execSync, spawn} from "child_process";
+import {exec, execSync} from "child_process";
 
 export function askToContinue(question) {
     const rl = rlp.createInterface({
@@ -113,4 +113,19 @@ export async function killProcess(process, port: number = 0){
             try {execSync(`kill -9 ${processAtPort.toString()}`)} catch (e) {}
         });
     }
+}
+
+export function getProjectRoot(){
+    let projectRoot = process.cwd();
+    process.argv.forEach((arg, index) => {
+        if(arg === "--root")
+            projectRoot = path.resolve(projectRoot, process.argv[index + 1])
+    });
+    return projectRoot;
+}
+
+export function sleep(ms: number){
+    return new Promise<void>(resolve => {
+        setTimeout(resolve, ms);
+    });
 }

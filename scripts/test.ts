@@ -8,13 +8,15 @@ process.env.FORCE_COLOR = true;
 export default function(config){
     const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
-    let testCommand = "npx mocha \"./**/test.ts\" --config " + mochaConfigFile + " " +
+    const testFiles = path.resolve(process.cwd(), (config.root ?? ""), "**/test.ts");
+
+    let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
         (config.headless ? "--headless" : "") + " " +
-        (config.coverage ? "--coverage" : "");
+        (config.coverage ? "--coverage" : "") + " " +
+        (config.root ? "--root=" + config.root : "");
 
     if(config.coverage)
         testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand
-
 
     const testProcess = child_process.exec(testCommand);
     testProcess.stderr.pipe(process.stderr)

@@ -4,6 +4,7 @@ import fs from "fs";
 import glob from "glob";
 import {askToContinue, getPackageJSON} from "./utils";
 import build from "./build";
+import {exec} from "child_process";
 
 function setupDockerComposeFile(config){
     const outFile = config.out + "/docker-compose.yml";
@@ -71,7 +72,23 @@ function printProgress(progress){
     process.stdout.write(progress);
 }
 
-export default async function (config) {
+function runTests(rootDir){
+    return new Promise((resolve) => {
+        let testCommand = "npx fullstacked test --headless --coverage";
+        if(rootDir)
+            testCommand += " --root=" + rootDir
+
+        const testProcess = exec(testCommand);
+        testProcess.stdout.pipe(process.stdout);
+        testProcess.stderr.on("data", (data) => {
+            console.error(data);
+            resolve(false);
+        });
+        testProcess.on("exit", () => resolve(true));
+    });
+}
+
+export default async function (config: Config) {
     const packageConfigs = await getPackageJSON();
     if(Object.keys(packageConfigs).length === 0)
         return console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
@@ -84,6 +101,9 @@ export default async function (config) {
 
     console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + packageConfigs.name + " v" + packageConfigs.version);
     if(!await askToContinue("Continue"))
+        return;
+
+    if(!config.skipTest && !await runTests(config.root))
         return;
 
     const sftp = new SFTP();
@@ -113,7 +133,7 @@ export default async function (config) {
             return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
     }
 
-    // await build(config);
+    await build(config);
 
     const serverPath = config.appDir + "/" + packageConfigs.name ;
     const serverPathDist = serverPath + "/" + packageConfigs.version;
