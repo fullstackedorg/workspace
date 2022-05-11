@@ -27,6 +27,8 @@ declare type ConfigDeploy = {
     privateKey? : string,
 
     appDir?     : string // directory in server
+
+    skipTest?   : boolean // skip testing
 }
 
 declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {

@@ -1,14 +1,14 @@
-import {sleep} from "utils"
 import * as assert from "assert";
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
+import {sleep} from "../scripts/utils";
 
 describe("Website End-2-End", function(){
     let test;
 
     before(async function (){
         test = new Helper(__dirname);
-        await test.start()
+        await test.start();
         await sleep(2000);
     });
 
