@@ -7,10 +7,11 @@
     "postinstall": "node postinstall",
     "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
     "pretest": "npm run build",
-    "test": "node -e \"require('./scripts/test').default({headless: true})\"",
+    "test": "node cli test --headless",
     "precoverage": "npm run build",
-    "coverage": "node -e \"require('./scripts/test').default({headless: true, coverage: true})\"",
-    "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly"
+    "coverage": "node cli test --headless --coverage",
+    "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly",
+    "website": "node cli watch --src=website"
   },
   "repository": {
     "type": "git",
@@ -49,7 +50,8 @@
     "react-dom": "^18.1.0",
     "ssh2-sftp-client": "^7.2.3",
     "v8-to-istanbul": "^8.1.1",
-    "ws": "^8.5.0"
+    "ws": "^8.5.0",
+    "yaml": "^2.0.1"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.1.1",

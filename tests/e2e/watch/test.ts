@@ -4,6 +4,7 @@ import puppeteer from "puppeteer";
 import fs from "fs";
 import {killProcess, sleep} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
+import path from "path";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
@@ -20,7 +21,7 @@ describe("Watch Test", function(){
         fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
         fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
 
-        watchProcess = child_process.exec(`npx fullstacked watch --src=${__dirname} --out=${__dirname}`);
+        watchProcess = child_process.exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname}`);
         watchProcess.stderr.pipe(process.stderr);
         await sleep(2000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});

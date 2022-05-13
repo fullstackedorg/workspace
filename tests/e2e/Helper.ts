@@ -2,7 +2,8 @@ import child_process from "child_process";
 import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import {getProjectRoot, killProcess} from "../../scripts/utils";
+import {killProcess} from "../../scripts/utils";
+import path from "path";
 
 export default class {
     dir;
@@ -10,12 +11,18 @@ export default class {
     browser;
     page;
 
-    constructor(appDir: string) {
-        this.dir = appDir
-        process.stdout.write(child_process.execSync(`npx fullstacked --src=${this.dir} --out=${this.dir} --silent`));
+    constructor(dir: string) {
+        this.dir = dir
+        try{
+            process.stdout.write(child_process.execSync(`node ${path.resolve(__dirname, "../../cli")} build --src=${this.dir} --out=${this.dir} --silent`));
+        }catch (e){
+            this.rmDir();
+            throw e;
+        }
     }
 
     async start(path: string = ""){
+        await killProcess(1, 8000)
         this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
@@ -36,6 +43,8 @@ export default class {
             if(this.browser?.close)
                 this.browser.close();
 
+            this.rmDir();
+
             console.error(err);
             process.exit(1);
         });
@@ -55,7 +64,7 @@ export default class {
             }
         }).filter(Boolean);
 
-        const outFolder = getProjectRoot() + "/.nyc_output";
+        const outFolder = process.cwd() + "/.nyc_output";
         if(!fs.existsSync(outFolder))
             fs.mkdirSync(outFolder);
 
@@ -76,6 +85,12 @@ export default class {
 
         await this.browser.close();
         this.serverProcess.kill();
-        await killProcess(this.serverProcess, 8000)
+        await killProcess(this.serverProcess, 8000);
+        this.rmDir();
+    }
+
+    rmDir(){
+        if(fs.existsSync(this.dir + "/dist"))
+            fs.rmSync(this.dir + "/dist", {force: true, recursive: true});
     }
 }
