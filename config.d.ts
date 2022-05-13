@@ -5,7 +5,6 @@ declare type ConfigCreate = {
 declare type ConfigBuild = {
     src? : string, // in folders
     out?: string // out folders
-    root? : string // project root
 }
 
 declare type ConfigWatch = {
@@ -22,15 +21,22 @@ declare type ConfigTest = {
 declare type ConfigDeploy = {
     // ssh credentials
     host?       : string,
+    sshPort?    : number,
     user?       : string,
     pass?       : string,
     privateKey? : string,
 
-    appDir?     : string // directory in server
+    rootless? : boolean,
+
+    dockerExtraFlags? : string,
+    dockerCompose? : boolean,
+
+    appDir?     : string, // directory in server
 
     skipTest?   : boolean // skip testing
 }
 
 declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {
-    silent? : boolean // silence logging
+    silent? : boolean, // silence logging
+    allYes? : boolean
 }

@@ -1,7 +1,8 @@
 const defaultConfig: Config = {
     src: process.cwd(),
     out: process.cwd(),
-    root: process.cwd()
+    appDir: "/home",
+    dockerExtraFlags: ""
 }
 
 export default function(config) {

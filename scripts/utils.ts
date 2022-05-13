@@ -5,7 +5,7 @@ import glob from "glob";
 import os from "os";
 import {exec, execSync} from "child_process";
 
-export function askToContinue(question) {
+export function askToContinue(question): Promise<boolean> {
     const rl = rlp.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -13,6 +13,7 @@ export function askToContinue(question) {
     });
 
     return new Promise((resolve, reject) => {
+        if(process.argv.includes("--y")) return resolve(true);
         rl.question(question + ' (y/n): ', (input) => {
             rl.close();
             resolve(input === "y" || input === "Y" || input === "yes");
@@ -115,17 +116,13 @@ export async function killProcess(process, port: number = 0){
     }
 }
 
-export function getProjectRoot(){
-    let projectRoot = process.cwd();
-    process.argv.forEach((arg, index) => {
-        if(arg === "--root")
-            projectRoot = path.resolve(projectRoot, process.argv[index + 1])
-    });
-    return projectRoot;
-}
-
 export function sleep(ms: number){
     return new Promise<void>(resolve => {
         setTimeout(resolve, ms);
     });
+}
+
+export async function isDockerInstalled(): Promise<boolean>{
+    const dockerVersion = execSync("docker -v").toString();
+    return dockerVersion !== "";
 }

@@ -12,7 +12,7 @@ describe("Create Test", function(){
     let test;
 
     it('Should create the default starter file', function(){
-        const logMessage = child_process.execSync(`fullstacked create --src=${__dirname} --silent --no-test`).toString();
+        const logMessage = child_process.execSync(`node ${path.resolve(__dirname, "../../../cli")} create --src=${__dirname} --silent --no-test`).toString();
         if(logMessage)
             console.log(logMessage);
 

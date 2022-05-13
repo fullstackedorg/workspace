@@ -68,6 +68,11 @@ export default function() {
             top: 90px;
             background-color: #d7dfe1;
         }
+        @media (min-width: 960px){
+            #docs-navigation {
+                border-top-right-radius: 10px;
+            }
+        }
         #docs-navigation > .inner {
             width: 100%;
             height: 100%;
@@ -146,7 +151,7 @@ export default function() {
                 margin-left: 0;
             }
         }
-        @media (min-width: 1400px){
+        @media (min-width: 1320px){
             #docs-navigation {
                 left:0;
                 right: calc(50% + 360px);

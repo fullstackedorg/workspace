@@ -15,17 +15,22 @@ const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
     "--port=": value => config.port = value,
+    "--port-https=": value => config.portHTTPS = value,
     "--host=": value => config.host = value,
+    "--ssh-port=": value => config.sshPort = parseInt(value),
     "--user=": value => config.user = value,
     "--pass=": value => config.pass = value,
     "--private-key=": value => config.privateKey = value,
     "--app-dir=": value => config.appDir = value,
-    "--root=": value => config.root = value,
     "--silent": () => config.silent = true,
     "--coverage": () => config.coverage = true,
     "--headless": () => config.headless = true,
     "--no-test": () => config.noTest = true,
-    "--skip-test": () => config.skipTest = true
+    "--skip-test": () => config.skipTest = true,
+    "--y": () => config.allYes = true,
+    "--rootless": () => config.rootless = true,
+    "--docker-compose": () => config.dockerCompose = true,
+    "--docker-extra-flags=": value => config.dockerExtraFlags = value
 };
 
 process.argv.forEach(arg => {
