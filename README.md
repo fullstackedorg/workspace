@@ -86,6 +86,7 @@ sharing development environments for the purpose of testing and reviewing.
 * Save command line args to skip the typing afterwards
 * Allow *pre* and *post* scripts on different events
 * Manage to create a simple and efficient way to test frontend component/class individually
+* Add integration with [PWABuilder](https://github.com/pwa-builder/PWABuilder) to generate iOS and Android App
 * Switch to [Deno](https://github.com/denoland/deno)
   * ✅ No transpiling needed (no even from TS!)
   * ✅ No *node_modules* installation needed
