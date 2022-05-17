@@ -44,6 +44,8 @@ async function installDocker(ssh2, sudo: boolean) {
 }
 
 function runTests(){
+    console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
+
     return new Promise((resolve) => {
         let testCommand = `node ${path.resolve(__dirname, "../cli")} test --headless --coverage`;
 
@@ -111,7 +113,7 @@ function buildDockerImage(config: Config, dockerfileOutDir, appName){
         }
         dockerBuildProcess.on('close', resolve);
         dockerBuildProcess.on('exit', resolve);
-    })
+    });
 }
 
 async function deployDocker(config: Config, sftp, serverPath: string, serverPathDist: string, appName: string){
@@ -122,10 +124,10 @@ async function deployDocker(config: Config, sftp, serverPath: string, serverPath
 
     const dockerfileOutDir = path.resolve(config.out, "..");
     await buildDockerImage(config, dockerfileOutDir, appName);
-    console.log("Uploading Built Docker image");
+    console.log('\x1b[32m%s\x1b[0m', "Uploading Built Docker image");
     await sftp.put(dockerfileOutDir + "/out.tar", serverPathDist + "/out.tar");
     fs.rmSync(dockerfileOutDir + "/out.tar");
-    console.log("Loading Docker Image on remote host");
+    console.log('\x1b[33m%s\x1b[0m', "Loading Docker Image on remote host");
     await execSSH(sftp.client, `cat ${serverPathDist}/out.tar | docker ${config.dockerExtraFlags} import - ${appName}`);
 
     let ports = `-p ${config.port ?? 80}:8000`;
@@ -147,7 +149,7 @@ async function startDeployment(config: Config, cmdUP, cmdDOWN, sftp, serverPath,
     }
 
     if(config.portHTTPS)
-        await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`)
+        await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`);
 
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
     await execSSH(sftp.client, cmdUP);
@@ -169,8 +171,6 @@ export default async function (config: Config) {
     if(!await askToContinue("Continue"))
         return;
 
-    if(!config.skipTest && !await runTests())
-        return;
 
     const sftp = new SFTP();
 
@@ -190,6 +190,23 @@ export default async function (config: Config) {
 
     await sftp.connect(connectionConfig);
 
+    const serverPath = config.appDir + "/" + packageConfigs.name ;
+    const serverPathDist = serverPath + "/" + packageConfigs.version;
+
+    let mustOverWriteCurrentVersion = false;
+    if(await sftp.exists(serverPathDist)){
+        console.log('\x1b[33m%s\x1b[0m', "Version " + packageConfigs.version + " is already deployed");
+        if(!await askToContinue("Overwrite [" + serverPathDist + "]")) {
+            await sftp.end();
+            return;
+        }
+
+        mustOverWriteCurrentVersion = true;
+    }
+
+    if(!config.skipTest && !await runTests())
+        return;
+
     const dockerInstalled = await isDockerInstalledOnRemote(sftp.client);
 
     if(!dockerInstalled) {
@@ -204,18 +221,8 @@ export default async function (config: Config) {
 
     await build(config);
 
-    const serverPath = config.appDir + "/" + packageConfigs.name ;
-    const serverPathDist = serverPath + "/" + packageConfigs.version;
-
-    if(await sftp.exists(serverPathDist)){
-        console.log('\x1b[33m%s\x1b[0m', "Version " + packageConfigs.version + " is already deployed");
-        if(!await askToContinue("Overwrite [" + serverPathDist + "]")) {
-            await sftp.end();
-            return;
-        }
-
+    if(mustOverWriteCurrentVersion)
         await sftp.rmdir(serverPathDist, true);
-    }
 
     await sftp.mkdir(serverPathDist, true);
 
