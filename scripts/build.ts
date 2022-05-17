@@ -2,7 +2,7 @@ import path from "path"
 import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {execSync} from "child_process";
-import {getPackageJSON} from "./utils";
+import {copyRecursiveSync, getPackageJSON} from "./utils";
 import crypto from "crypto";
 import {glob} from "glob";
 
@@ -135,6 +135,10 @@ async function buildWebApp(config, watcher){
 
     fs.mkdirSync(publicDir, {recursive: true});
     fs.writeFileSync(publicDir + "/index.html", indexHTMLContentUpdated);
+
+    const coverageHTMLDir = path.resolve(process.cwd(), "coverage");
+    if(fs.existsSync(coverageHTMLDir))
+        copyRecursiveSync(coverageHTMLDir, publicDir + "/coverage");
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "WebApp Built");
