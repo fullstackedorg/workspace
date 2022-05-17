@@ -2,7 +2,7 @@ import path from "path"
 import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {execSync} from "child_process";
-import {getPackageJSON} from "./utils";
+import {copyRecursiveSync, getPackageJSON} from "./utils";
 import crypto from "crypto";
 import {glob} from "glob";
 
@@ -34,7 +34,7 @@ function cleanOutDir(dir){
 }
 
 async function buildServer(config, watcher){
-    const packageConfigs = await getPackageJSON(config.root);
+    const packageConfigs = getPackageJSON();
 
     const options = {
         entryPoints: [ config.src + "/server.ts" ],
@@ -105,7 +105,7 @@ async function buildWebApp(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    const packageConfigs = await getPackageJSON(config.root);
+    const packageConfigs = getPackageJSON();
 
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});
@@ -135,6 +135,10 @@ async function buildWebApp(config, watcher){
 
     fs.mkdirSync(publicDir, {recursive: true});
     fs.writeFileSync(publicDir + "/index.html", indexHTMLContentUpdated);
+
+    const coverageHTMLDir = path.resolve(process.cwd(), "coverage");
+    if(fs.existsSync(coverageHTMLDir))
+        copyRecursiveSync(coverageHTMLDir, publicDir + "/coverage");
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "WebApp Built");

@@ -42,16 +42,23 @@ export default class Server {
             console.log("Listening at http://localhost:" + portHTTP);
 
 
-        if(fs.existsSync('./key.pem') && fs.existsSync('./cert.pem')) {
+        const keysLocationBasePath = [".", "/keys"];
+        for (let i = 0; i < keysLocationBasePath.length; i++) {
+            const basePath = keysLocationBasePath[i];
+            if(!fs.existsSync(basePath + '/key.pem') || !fs.existsSync(basePath + '/cert.pem'))
+                continue;
+
             const options = {
-                key: fs.readFileSync('./key.pem'),
-                cert: fs.readFileSync('./cert.pem')
+                key: fs.readFileSync(basePath + '/key.pem'),
+                cert: fs.readFileSync(basePath + '/cert.pem')
             };
 
             this.serverHTTPS = https.createServer(options, this.express).listen(portHTTPS);
 
             if(!args.silent)
                 console.log("Listening at https://localhost:" + portHTTPS);
+
+            break;
         }
     }
 
