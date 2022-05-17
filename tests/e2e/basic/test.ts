@@ -1,7 +1,7 @@
-import {sleep} from "utils"
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
 import {equal} from "assert";
+import {sleep} from "../../../scripts/utils";
 
 describe("Basic Test", function(){
     let test;

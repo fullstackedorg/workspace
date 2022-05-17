@@ -1,10 +1,10 @@
 import {before, describe} from "mocha";
 import child_process from "child_process";
 import puppeteer from "puppeteer";
-import {sleep} from "utils";
 import fs from "fs";
-import {killProcess} from "scripts/utils";
+import {killProcess, sleep} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
+import path from "path";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
@@ -21,7 +21,7 @@ describe("Watch Test", function(){
         fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
         fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
 
-        watchProcess = child_process.exec(`npx fullstacked watch --src=${__dirname} --out=${__dirname}`);
+        watchProcess = child_process.exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname}`);
         watchProcess.stderr.pipe(process.stderr);
         await sleep(2000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
@@ -87,5 +87,7 @@ describe("Watch Test", function(){
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+        const distDir = path.resolve(__dirname, "dist");
+        if(fs.existsSync(distDir)) fs.rmSync(distDir, {recursive: true, force: true});
     });
 });
