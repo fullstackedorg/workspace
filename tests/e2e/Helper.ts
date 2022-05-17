@@ -2,7 +2,7 @@ import child_process from "child_process";
 import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import {killProcess} from "../../scripts/utils";
+import {killProcess, sleep} from "../../scripts/utils";
 import path from "path";
 
 export default class {
@@ -22,7 +22,8 @@ export default class {
     }
 
     async start(path: string = ""){
-        await killProcess(1, 8000)
+        await sleep(500);
+        await killProcess(1, 8000);
         this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
@@ -33,12 +34,11 @@ export default class {
                 resetOnNavigation: false
             });
         }
-
+        await sleep(500);
         await this.page.goto("http://localhost:8000" + path);
 
         process.on('uncaughtException', err => {
-            if(this.serverProcess?.kill)
-                this.serverProcess.kill();
+            killProcess(this.serverProcess, 8000);
 
             if(this.browser?.close)
                 this.browser.close();

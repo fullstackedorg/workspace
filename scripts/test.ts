@@ -8,12 +8,11 @@ process.env.FORCE_COLOR = true;
 export default function(config){
     const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
-    const testFiles = path.resolve(process.cwd(), (config.root ?? ""), "**/test.ts");
+    const testFiles = path.resolve(process.cwd(), "**/test.ts");
 
     let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
         (config.headless ? "--headless" : "") + " " +
-        (config.coverage ? "--coverage" : "") + " " +
-        (config.root ? "--root=" + config.root : "");
+        (config.coverage ? "--coverage" : "");
 
     if(config.coverage)
         testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand
@@ -26,5 +25,5 @@ export default function(config){
         if(message.toString().includes("Error:") || message.toString().includes("AssertionError")) {
             killProcess(testProcess, 8000);
         }
-    })
+    });
 }

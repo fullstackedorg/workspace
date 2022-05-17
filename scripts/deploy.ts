@@ -2,7 +2,7 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, getPackageJSON, isDockerInstalled} from "./utils";
+import {askToContinue, getPackageJSON, isDockerInstalled, printLine} from "./utils";
 import build from "./build";
 import {exec} from "child_process";
 import yaml from "yaml";
@@ -27,7 +27,7 @@ async function isDockerInstalledOnRemote(ssh2): Promise<boolean>{
     return dockerVersion !== "";
 }
 
-async function installDocker(ssh2, sudo: boolean){
+async function installDocker(ssh2, sudo: boolean) {
     let commands = [
         "yum install docker -y",
         "wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)",
@@ -41,12 +41,6 @@ async function installDocker(ssh2, sudo: boolean){
     for (let i = 0; i < commands.length; i++) {
         await execSSH(ssh2, (sudo ? "sudo " : "") + commands[i]);
     }
-}
-
-function printProgress(progress){
-    process.stdout.clearLine(-1);
-    process.stdout.cursorTo(0);
-    process.stdout.write(progress);
 }
 
 function runTests(){
@@ -93,7 +87,7 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
         else
             await sftp.put(localFilePaths[i], serverPathDist + "/" + files[i]);
 
-        printProgress("Progress: " + (i + 1) + "/" + files.length);
+        printLine("Progress: " + (i + 1) + "/" + files.length);
     }
     console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
 
@@ -161,7 +155,7 @@ async function startDeployment(config: Config, cmdUP, cmdDOWN, sftp, serverPath,
 }
 
 export default async function (config: Config) {
-    const packageConfigs = await getPackageJSON();
+    const packageConfigs = getPackageJSON();
     if(Object.keys(packageConfigs).length === 0)
         return console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
 

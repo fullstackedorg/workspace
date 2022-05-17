@@ -87,5 +87,7 @@ describe("Watch Test", function(){
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+        const distDir = path.resolve(__dirname, "dist");
+        if(fs.existsSync(distDir)) fs.rmSync(distDir, {recursive: true, force: true});
     });
 });
