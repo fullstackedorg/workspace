@@ -34,7 +34,7 @@ function cleanOutDir(dir){
 }
 
 async function buildServer(config, watcher){
-    const packageConfigs = await getPackageJSON(config.root);
+    const packageConfigs = getPackageJSON();
 
     const options = {
         entryPoints: [ config.src + "/server.ts" ],
@@ -105,7 +105,7 @@ async function buildWebApp(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    const packageConfigs = await getPackageJSON(config.root);
+    const packageConfigs = getPackageJSON();
 
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});
