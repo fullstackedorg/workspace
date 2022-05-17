@@ -171,7 +171,6 @@ export default async function (config: Config) {
     if(!await askToContinue("Continue"))
         return;
 
-
     const sftp = new SFTP();
 
     let connectionConfig: any = {
