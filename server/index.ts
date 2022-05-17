@@ -5,7 +5,6 @@ import morgan from "morgan";
 import http from "http";
 import https from "https";
 import {registerBadgesRoutes} from "./Badges/badges";
-import base = Mocha.reporters.base;
 
 export const publicDir = path.resolve(__dirname, './public');
 export const assetsDir = publicDir + "/assets";
