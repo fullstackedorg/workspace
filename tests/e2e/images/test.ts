@@ -6,28 +6,27 @@ import Helper from "fullstacked/tests/e2e/Helper";
 
 
 describe("Images Format Tests", function(){
-    const format = ["jpg", "png", "svg"];
-    let testCount = 0, test;
-
-    beforeEach(async function (){
-        test = new Helper(__dirname + "/" + format[testCount]);
-        await test.start();
-        testCount++;
-    });
+    let test;
 
     it('Should display a JPG', async function(){
+        test = new Helper(__dirname + "/jpg");
+        await test.start();
         const root = await test.page.$("img");
         const imageSrc = await root.getProperty('src');
         ok((await imageSrc.jsonValue()).endsWith(".jpg"));
     });
 
     it('Should display a PNG', async function(){
+        test = new Helper(__dirname + "/png");
+        await test.start();
         const root = await test.page.$("img");
         const imageSrc = await root.getProperty('src');
         ok((await imageSrc.jsonValue()).endsWith(".png"));
     });
 
     it('Should display a SVG', async function(){
+        test = new Helper(__dirname + "/svg");
+        await test.start();
         const root = await test.page.$("img");
         const imageSrc = await root.getProperty('src');
         ok((await imageSrc.jsonValue()).endsWith(".svg"));
