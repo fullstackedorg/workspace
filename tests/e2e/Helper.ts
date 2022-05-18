@@ -34,7 +34,7 @@ export default class {
                 resetOnNavigation: false
             });
         }
-        await sleep(500);
+        await sleep(1000);
         await this.page.goto("http://localhost:8000" + path);
 
         process.on('uncaughtException', err => {

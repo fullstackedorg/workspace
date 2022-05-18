@@ -2,7 +2,7 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, getPackageJSON, isDockerInstalled, printLine} from "./utils";
+import {askToContinue, execScript, getPackageJSON, isDockerInstalled, printLine} from "./utils";
 import build from "./build";
 import {exec} from "child_process";
 import yaml from "yaml";
@@ -189,6 +189,8 @@ export default async function (config: Config) {
 
     await sftp.connect(connectionConfig);
 
+    await execScript("predeploy.ts");
+
     const serverPath = config.appDir + "/" + packageConfigs.name ;
     const serverPathDist = serverPath + "/" + packageConfigs.version;
 
@@ -234,6 +236,8 @@ export default async function (config: Config) {
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', packageConfigs.name + " v" + packageConfigs.version + " deployed!");
+
+    await execScript("postdeploy.ts");
 
     process.exit(0);
 }
