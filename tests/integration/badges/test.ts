@@ -4,20 +4,12 @@ import axios from "axios";
 import {equal, ok} from "assert";
 
 
-describe("Integration Tests", function(){
+describe("Badges Tests", function(){
     let server, responseTime;
 
     before(async function (){
         server = new Server();
         server.start({silent: true, testing: true});
-    });
-
-    it('Should register route and return expected data', async function(){
-        const responseString = "ok";
-        server.express.get("/test", (req, res) =>
-            res.send(responseString));
-        const response = await axios.get("/test");
-        equal(response.data, responseString);
     });
 
     it('Should return version badge', async function(){

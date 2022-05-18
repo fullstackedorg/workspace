@@ -89,7 +89,9 @@ async function buildWebApp(config, watcher){
 
         assetNames: "assets/[name]-[hash]",
         loader: {
-            ".png": "file" as Loader
+            ".png": "file" as Loader,
+            ".jpg": "file" as Loader,
+            ".svg": "file" as Loader
         },
 
         watch: watcher ? {
