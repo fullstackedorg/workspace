@@ -1,8 +1,8 @@
 import path from "path"
-import esbuild, {Format, Loader, Platform} from "esbuild";
+import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {execSync} from "child_process";
-import {copyRecursiveSync, getPackageJSON} from "./utils";
+import {exec, execSync} from "child_process";
+import {copyRecursiveSync, defaultEsbuildConfig, execScript, getPackageJSON} from "./utils";
 import crypto from "crypto";
 import {glob} from "glob";
 
@@ -147,8 +147,13 @@ async function buildWebApp(config, watcher){
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
     loadEnvVars();
     cleanOutDir(config.out);
+
+    await execScript(path.resolve(process.cwd(), "prebuild.ts"));
+
     await Promise.all([
         buildServer(config, watcher),
         buildWebApp(config, watcher)
     ]);
+
+    await execScript(path.resolve(process.cwd(), "postbuild.ts"));
 }

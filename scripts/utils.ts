@@ -3,6 +3,7 @@ import fs from "fs";
 import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
 import {exec, execSync} from "child_process";
+import {BuildOptions, buildSync} from "esbuild";
 
 export function askToContinue(question): Promise<boolean> {
     const rl = createInterface({
@@ -107,4 +108,41 @@ export function copyRecursiveSync(src, dest) {
     } else {
         fs.copyFileSync(src, dest);
     }
+}
+
+export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
+    return {
+        entryPoints: [entrypoint],
+        outfile: entrypoint.slice(0, -2) + "js",
+        format: "cjs",
+        sourcemap: true
+    }
+}
+
+export function execScript(filePath: string): Promise<void> {
+    return new Promise(resolve => {
+        if(!fs.existsSync(filePath))
+            return resolve();
+
+        const config = defaultEsbuildConfig(filePath);
+        buildSync(config);
+
+        if(process.argv.includes("--test")) {
+            const fileContent = fs.readFileSync(config.outfile, {encoding: "utf8"});
+            fs.writeFileSync(config.outfile, `/* istanbul ignore file */
+${fileContent}`);
+        }
+
+        const scriptProcess = exec(`node ${config.outfile}`);
+        scriptProcess.stdout.pipe(process.stdout);
+        scriptProcess.stderr.pipe(process.stderr);
+        scriptProcess.on("exit", resolve);
+        scriptProcess.on("close", resolve);
+    });
+}
+
+export function deleteBuiltTSFile(filePath: string){
+    if(fs.existsSync(filePath)) fs.rmSync(filePath);
+    if(fs.existsSync(filePath.slice(0, -2) + "js")) fs.rmSync(filePath.slice(0, -2) + "js");
+    if(fs.existsSync(filePath.slice(0, -2) + "js.map")) fs.rmSync(filePath.slice(0, -2) + "js.map");
 }

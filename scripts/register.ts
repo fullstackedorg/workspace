@@ -3,6 +3,7 @@ import Module from "module";
 import path from "path";
 import fs from "fs";
 import axios from "axios";
+import {defaultEsbuildConfig} from "./utils";
 
 axios.defaults.baseURL = 'http://localhost:8000';
 
@@ -35,12 +36,7 @@ Module.prototype.require = function(){
     }
 
     if(mustBeBuilt) {
-        buildSync({
-            entryPoints: [filePath],
-            outfile: filePath.slice(0, -2) + "js",
-            format: "cjs",
-            sourcemap: true
-        });
+        buildSync(defaultEsbuildConfig(filePath));
 
         arguments["0"] = filePath.slice(0, -2) + "js";
     }
