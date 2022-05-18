@@ -11,19 +11,14 @@ describe("Deploy test", function(){
     const sshPort = "2222";
     let browser;
 
-    const predeployFile = path.resolve(process.cwd(), "predeploy.ts");
-    const predeployOutputFile = path.resolve(process.cwd(), "predeploy.txt");
-    const postdeployFile = path.resolve(process.cwd(), "postdeploy.ts");
-    const postdeployOutputFile = path.resolve(process.cwd(), "postdeploy.txt");
+    const predeployOutputFile = path.resolve(__dirname, "predeploy.txt");
+    const postdeployOutputFile = path.resolve(__dirname, "postdeploy.txt");
 
     before(async function (){
         this.timeout(50000);
 
         if(!await isDockerInstalled())
             throw Error("Deploy test needs Docker");
-
-        fs.copyFileSync(__dirname + "/predeploy.ts", predeployFile);
-        fs.copyFileSync(__dirname + "/postdeploy.ts", postdeployFile);
 
         printLine("Setting up docker container centos");
         execSync(`docker run --privileged -d -t -p ${sshPort}:22 -p 8000:8000 --name ${containerName} centos`);
@@ -82,9 +77,9 @@ describe("Deploy test", function(){
         fs.rmSync(path.resolve(__dirname, "Dockerfile"), {force: true});
         fs.rmSync(path.resolve(__dirname, "out.tar"), {force: true});
 
-        deleteBuiltTSFile(predeployFile);
+        deleteBuiltTSFile(path.resolve(__dirname, "predeploy.ts"));
         fs.rmSync(predeployOutputFile);
-        deleteBuiltTSFile(postdeployFile);
+        deleteBuiltTSFile(path.resolve(__dirname, "postdeploy.ts"));
         fs.rmSync(postdeployOutputFile);
 
         execSync(`docker rm -f ${containerName}`);

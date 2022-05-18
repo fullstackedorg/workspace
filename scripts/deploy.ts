@@ -189,7 +189,7 @@ export default async function (config: Config) {
 
     await sftp.connect(connectionConfig);
 
-    await execScript("predeploy.ts");
+    await execScript(path.resolve(config.src, "predeploy.ts"));
 
     const serverPath = config.appDir + "/" + packageConfigs.name ;
     const serverPathDist = serverPath + "/" + packageConfigs.version;
@@ -237,7 +237,7 @@ export default async function (config: Config) {
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', packageConfigs.name + " v" + packageConfigs.version + " deployed!");
 
-    await execScript("postdeploy.ts");
+    await execScript(path.resolve(config.src, "postdeploy.ts"));
 
     process.exit(0);
 }
