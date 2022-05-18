@@ -150,12 +150,12 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
     loadEnvVars();
     cleanOutDir(config.out);
 
-    await execScript(path.resolve(process.cwd(), "prebuild.ts"));
+    await execScript(path.resolve(config.src, "prebuild.ts"));
 
     await Promise.all([
         buildServer(config, watcher),
         buildWebApp(config, watcher)
     ]);
 
-    await execScript(path.resolve(process.cwd(), "postbuild.ts"));
+    await execScript(path.resolve(config.src, "postbuild.ts"));
 }

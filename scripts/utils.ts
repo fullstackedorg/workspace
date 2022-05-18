@@ -142,7 +142,6 @@ ${fileContent}`);
 }
 
 export function deleteBuiltTSFile(filePath: string){
-    if(fs.existsSync(filePath)) fs.rmSync(filePath);
     if(fs.existsSync(filePath.slice(0, -2) + "js")) fs.rmSync(filePath.slice(0, -2) + "js");
     if(fs.existsSync(filePath.slice(0, -2) + "js.map")) fs.rmSync(filePath.slice(0, -2) + "js.map");
 }
