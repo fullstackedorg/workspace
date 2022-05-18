@@ -2,9 +2,9 @@ import build from "./build";
 import {exec} from "child_process";
 import {killProcess} from "./utils";
 
-let watcherProcess, serverProcess, outdir;
+let serverProcess, outdir;
 
-function watcher(isWebApp){
+function watcher(isWebApp: boolean){
     if(isWebApp) {
        console.log('\x1b[32m%s\x1b[0m', "WebApp Rebuilt");
        return;
@@ -24,11 +24,16 @@ async function restartServer(){
 }
 
 export default async function(config) {
+    // build with the watcher defined
     await build(config, watcher);
 
     outdir = config.out;
-    watcherProcess = exec("node " + outdir + "/watcher.js");
+
+    // start the mini watch server
+    const watcherProcess = exec("node " + outdir + "/watcher.js");
     watcherProcess.stdout.pipe(process.stdout);
     watcherProcess.stderr.pipe(process.stderr);
+
+    // start app server
     return restartServer();
 }

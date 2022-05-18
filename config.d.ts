@@ -1,5 +1,5 @@
 declare type ConfigCreate = {
-    noTest? : boolean // create without test setup
+    skipTest? : boolean // create without test setup
 }
 
 declare type ConfigBuild = {

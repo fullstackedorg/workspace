@@ -25,7 +25,6 @@ const args = {
     "--silent": () => config.silent = true,
     "--coverage": () => config.coverage = true,
     "--headless": () => config.headless = true,
-    "--no-test": () => config.noTest = true,
     "--skip-test": () => config.skipTest = true,
     "--y": () => config.allYes = true,
     "--rootless": () => config.rootless = true,
