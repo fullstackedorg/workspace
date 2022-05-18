@@ -7,6 +7,7 @@ import build from "./build";
 import {exec} from "child_process";
 import yaml from "yaml";
 
+// exec command on remote host over ssh
 function execSSH(ssh2, cmd){
     return new Promise(resolve => {
         let message = "";
@@ -22,11 +23,13 @@ function execSSH(ssh2, cmd){
     });
 }
 
+// check if docker is installed on remote host
 async function isDockerInstalledOnRemote(ssh2): Promise<boolean>{
     const dockerVersion = await execSSH(ssh2, "docker -v");
     return dockerVersion !== "";
 }
 
+// install docker on remote host
 async function installDocker(ssh2, sudo: boolean) {
     let commands = [
         "yum install docker -y",
@@ -59,6 +62,8 @@ function runTests(){
     });
 }
 
+// prepare docker compose file for deployment
+// TODO: merge with docker-compose.yml file at project src
 function setupDockerComposeFile(config){
     const outFile = config.out + "/docker-compose.yml";
     fs.copyFileSync(path.resolve(__dirname, "../docker-compose.yml"), outFile);
@@ -76,12 +81,14 @@ function setupDockerComposeFile(config){
     fs.writeFileSync(outFile, content);
 }
 
+// deploy app using docker compose
 async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist, appName){
     setupDockerComposeFile(config);
 
     const files = glob.sync("**/*", {cwd: config.out})
     const localFilePaths = files.map(file => path.resolve(process.cwd(), config.out, file));
 
+    // upload all files
     for (let i = 0; i < files.length; i++) {
         const fileInfo = fs.statSync(localFilePaths[i]);
         if(fileInfo.isDirectory())
@@ -116,6 +123,7 @@ function buildDockerImage(config: Config, dockerfileOutDir, appName){
     });
 }
 
+// deploy app using a Docker image
 async function deployDocker(config: Config, sftp, serverPath: string, serverPathDist: string, appName: string){
     if(!await isDockerInstalled()) {
         throw new Error("Docker is not installed on local machine. Consider using " +
@@ -124,9 +132,11 @@ async function deployDocker(config: Config, sftp, serverPath: string, serverPath
 
     const dockerfileOutDir = path.resolve(config.out, "..");
     await buildDockerImage(config, dockerfileOutDir, appName);
+
     console.log('\x1b[32m%s\x1b[0m', "Uploading Built Docker image");
     await sftp.put(dockerfileOutDir + "/out.tar", serverPathDist + "/out.tar");
     fs.rmSync(dockerfileOutDir + "/out.tar");
+
     console.log('\x1b[33m%s\x1b[0m', "Loading Docker Image on remote host");
     await execSSH(sftp.client, `cat ${serverPathDist}/out.tar | docker ${config.dockerExtraFlags} import - ${appName}`);
 
@@ -141,6 +151,7 @@ async function deployDocker(config: Config, sftp, serverPath: string, serverPath
 }
 
 async function startDeployment(config: Config, cmdUP, cmdDOWN, sftp, serverPath, serverPathDist){
+    // check if there is a command to down current app
     const savedDown = serverPath + "/down.txt";
     if(await sftp.exists(savedDown)){
         const command = (await sftp.get(savedDown)).toString().trim();
@@ -148,11 +159,14 @@ async function startDeployment(config: Config, cmdUP, cmdDOWN, sftp, serverPath,
         await execSSH(sftp.client, command);
     }
 
+    // create some self-signed certificate
     if(config.portHTTPS)
         await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`);
 
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
+    // exec start command
     await execSSH(sftp.client, cmdUP);
+    // save down command for next deployment
     await execSSH(sftp.client, `echo "${cmdDOWN}" > ${savedDown}`);
 }
 
@@ -173,6 +187,7 @@ export default async function (config: Config) {
 
     const sftp = new SFTP();
 
+    // setup ssh connection
     let connectionConfig: any = {
         host: config.host,
         username: config.user
@@ -189,11 +204,29 @@ export default async function (config: Config) {
 
     await sftp.connect(connectionConfig);
 
+    // predeploy script
     await execScript(path.resolve(config.src, "predeploy.ts"));
 
+    // path where the build app files with be
     const serverPath = config.appDir + "/" + packageConfigs.name ;
+    // add to that the version number as directory
     const serverPathDist = serverPath + "/" + packageConfigs.version;
+    /*
+    * e.g.,
+    * /home
+    * |_ /project
+    *    |_ /0.0.1
+    *    |  |_ index.js
+    *    |  |_ /public
+    *    |     |_ ...
+    *    |_ /0.0.2
+    *    |  |_ index.js
+    *    |  |_ /public
+    *    |     |_ ...
+    * ...
+     */
 
+    // check if version was already deployed
     let mustOverWriteCurrentVersion = false;
     if(await sftp.exists(serverPathDist)){
         console.log('\x1b[33m%s\x1b[0m', "Version " + packageConfigs.version + " is already deployed");
@@ -208,9 +241,8 @@ export default async function (config: Config) {
     if(!config.skipTest && !await runTests())
         return;
 
-    const dockerInstalled = await isDockerInstalledOnRemote(sftp.client);
-
-    if(!dockerInstalled) {
+    // check if docker is installed on remote
+    if(!await isDockerInstalledOnRemote(sftp.client)) {
         console.log('\x1b[33m%s\x1b[0m', "You are about to install Docker on your remote host");
         if(!await askToContinue("Continue"))
             return;
@@ -220,6 +252,7 @@ export default async function (config: Config) {
             return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
     }
 
+    // clean build
     await build(config);
 
     if(mustOverWriteCurrentVersion)
@@ -237,6 +270,7 @@ export default async function (config: Config) {
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', packageConfigs.name + " v" + packageConfigs.version + " deployed!");
 
+    // post deploy script
     await execScript(path.resolve(config.src, "postdeploy.ts"));
 
     process.exit(0);

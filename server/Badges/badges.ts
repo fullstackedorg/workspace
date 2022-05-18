@@ -9,6 +9,7 @@ export function registerBadgesRoutes(){
 
     const badges: Map<string, string> = new Map();
 
+    // send previously saved badge
     function sendCachedBadge(res, title): boolean{
         res.set('Content-Type', 'image/svg+xml');
         const cachedBadge = badges.get(title);
@@ -20,6 +21,7 @@ export function registerBadgesRoutes(){
         return false;
     }
 
+    // send and save badge in memory
     async function sendBadge(res, title, data: string, color){
         res.set('Content-Type', 'image/svg+xml');
         data = data.replace(/-/g, "--");
@@ -28,6 +30,7 @@ export function registerBadgesRoutes(){
         res.send(badge)
     }
 
+    // display coverage percentage
     router.get("/coverage.svg", async (req, res) => {
         const badgeTitle = "coverage";
         if(sendCachedBadge(res, badgeTitle)) return;
@@ -55,6 +58,7 @@ export function registerBadgesRoutes(){
         await sendBadge(res, badgeTitle, coverage.toFixed(2) + "%25", color);
     });
 
+    // display current version from package.json
     router.get("/version.svg", async (req, res) => {
         const badgeTitle = "version";
         if(sendCachedBadge(res, badgeTitle)) return;
@@ -76,7 +80,6 @@ export function registerBadgesRoutes(){
         }
         return deps;
     }
-
 
     router.get("/dependencies.svg", async (req, res) => {
         const badgeTitle = "dependencies";

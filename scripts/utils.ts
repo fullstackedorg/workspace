@@ -20,6 +20,7 @@ export function askToContinue(question): Promise<boolean> {
     });
 }
 
+// get package json data from package.json at project root
 export function getPackageJSON():{[key:string]: any} {
     const packageJSONPath = path.resolve(process.cwd(), "package.json");
     if(!fs.existsSync(packageJSONPath))
@@ -144,4 +145,8 @@ ${fileContent}`);
 export function deleteBuiltTSFile(filePath: string){
     if(fs.existsSync(filePath.slice(0, -2) + "js")) fs.rmSync(filePath.slice(0, -2) + "js");
     if(fs.existsSync(filePath.slice(0, -2) + "js.map")) fs.rmSync(filePath.slice(0, -2) + "js.map");
+}
+
+export function cleanOutDir(dir){
+    fs.rmSync(dir, {force: true, recursive: true});
 }

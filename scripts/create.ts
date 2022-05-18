@@ -62,11 +62,14 @@ describe("End-2-End", function(){
 export default function(config) {
     config = defaultConfig(config);
 
+    // output template files at project src
     fs.writeFileSync(path.resolve(config.src, "server.ts"), serverTemplate);
     fs.writeFileSync(path.resolve(config.src, "index.tsx"), webappTemplate);
 
-    if(!config.noTest) {
+    if(!config.skipTest) {
         fs.writeFileSync(path.resolve(config.src, "test.ts"), testsTemplate);
+
+        // copy this files for to enable JetBrain WebStorm IDE test panel
         fs.cpSync(path.resolve(__dirname, "../.mocharc.js"), process.cwd() + "/.mocharc.js");
     }
 
