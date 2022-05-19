@@ -12,7 +12,7 @@ describe("Create Test", function(){
     let test;
 
     it('Should create the default starter file', function(){
-        const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} create --src=${__dirname} --silent --no-test`).toString();
+        const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} create --src=${__dirname} --silent --skip-test`).toString();
         if(logMessage)
             console.log(logMessage);
 

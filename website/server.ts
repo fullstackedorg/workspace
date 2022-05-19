@@ -1,8 +1,11 @@
 import Server, {publicDir} from "fullstacked/server";
 import express from "express";
 import axios from "axios";
+import {registerBadgesRoutes} from "./Badges/badges";
 
 const server = new Server();
+
+server.express.use("/badges", registerBadgesRoutes());
 
 server.express.use("/docs*", express.static(publicDir));
 

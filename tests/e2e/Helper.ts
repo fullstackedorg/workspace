@@ -1,9 +1,9 @@
-import child_process from "child_process";
 import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
 import {killProcess, sleep} from "../../scripts/utils";
 import path from "path";
+import {exec, execSync} from "child_process";
 
 export default class {
     dir;
@@ -14,7 +14,7 @@ export default class {
     constructor(dir: string) {
         this.dir = dir
         try{
-            process.stdout.write(child_process.execSync(`node ${path.resolve(__dirname, "../../cli")} build --src=${this.dir} --out=${this.dir} --silent`));
+            process.stdout.write(execSync(`node ${path.resolve(__dirname, "../../cli")} build --src=${this.dir} --out=${this.dir} --silent`));
         }catch (e){
             this.rmDir();
             throw e;
@@ -24,7 +24,7 @@ export default class {
     async start(path: string = ""){
         await sleep(500);
         await killProcess(1, 8000);
-        this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
+        this.serverProcess = exec("node " + this.dir + "/dist/index.js");
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
 

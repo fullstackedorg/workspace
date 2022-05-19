@@ -12,7 +12,9 @@ describe("Deploy test", function(){
     let browser;
 
     const predeployOutputFile = path.resolve(__dirname, "predeploy.txt");
+    const predeployAsyncOutputFile = path.resolve(__dirname, "predeploy-2.txt");
     const postdeployOutputFile = path.resolve(__dirname, "postdeploy.txt");
+    const postdeployAsyncOutputFile = path.resolve(__dirname, "postdeploy-2.txt");
 
     before(async function (){
         this.timeout(50000);
@@ -56,6 +58,11 @@ describe("Deploy test", function(){
         equal(fs.readFileSync(predeployOutputFile, {encoding: "utf8"}), "predeploy");
     });
 
+    it("Should have awaited default export predeploy", function(){
+        ok(fs.existsSync(predeployAsyncOutputFile));
+        equal(fs.readFileSync(predeployAsyncOutputFile, {encoding: "utf8"}), "predeploy async");
+    });
+
     it("Should access deployed app", async function(){
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         const page = await browser.newPage();
@@ -71,16 +78,21 @@ describe("Deploy test", function(){
         equal(fs.readFileSync(postdeployOutputFile, {encoding: "utf8"}), "postdeploy");
     });
 
+    it("Should have awaited default export postdeploy", function(){
+        ok(fs.existsSync(postdeployAsyncOutputFile));
+        equal(fs.readFileSync(postdeployAsyncOutputFile, {encoding: "utf8"}), "postdeploy async");
+    });
+
     after(function(){
         browser.close();
         fs.rmSync(path.resolve(__dirname, "dist"), {force: true, recursive: true});
         fs.rmSync(path.resolve(__dirname, "Dockerfile"), {force: true});
         fs.rmSync(path.resolve(__dirname, "out.tar"), {force: true});
 
-        deleteBuiltTSFile(path.resolve(__dirname, "predeploy.ts"));
         fs.rmSync(predeployOutputFile);
-        deleteBuiltTSFile(path.resolve(__dirname, "postdeploy.ts"));
+        fs.rmSync(predeployAsyncOutputFile);
         fs.rmSync(postdeployOutputFile);
+        fs.rmSync(postdeployAsyncOutputFile);
 
         execSync(`docker rm -f ${containerName}`);
     });

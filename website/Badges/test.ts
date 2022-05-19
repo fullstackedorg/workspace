@@ -1,14 +1,13 @@
 import {before, describe} from "mocha";
-import Server from "fullstacked/server";
+import server from "website/server";
 import axios from "axios";
-import {equal, ok} from "assert";
+import {ok} from "assert";
 
 
 describe("Badges Tests", function(){
-    let server, responseTime;
+    let responseTime;
 
     before(async function (){
-        server = new Server();
         server.start({silent: true, testing: true});
     });
 
