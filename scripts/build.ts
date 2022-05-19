@@ -4,7 +4,6 @@ import fs from "fs";
 import {execSync} from "child_process";
 import {cleanOutDir, copyRecursiveSync, execScript, getPackageJSON} from "./utils";
 import crypto from "crypto";
-import {glob} from "glob";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -43,7 +42,6 @@ async function buildServer(config, watcher){
         bundle: true,
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
-        plugins: [],
 
         define: {
             ...getProcessedEnv(),
@@ -167,7 +165,7 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
     cleanOutDir(config.out);
 
     // prebuild script
-    await execScript(path.resolve(config.src, "prebuild.ts"));
+    await execScript(path.resolve(config.src, "prebuild.ts"), config);
 
     // build server and webapp
     await Promise.all([
@@ -176,5 +174,5 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
     ]);
 
     // prebuild script
-    await execScript(path.resolve(config.src, "postbuild.ts"));
+    await execScript(path.resolve(config.src, "postbuild.ts"), config);
 }

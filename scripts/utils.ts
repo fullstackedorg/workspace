@@ -120,8 +120,8 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
     }
 }
 
-export function execScript(filePath: string): Promise<void> {
-    return new Promise(resolve => {
+export function execScript(filePath: string, args: any = null): Promise<void> {
+    return new Promise(async resolve => {
         if(!fs.existsSync(filePath))
             return resolve();
 
@@ -134,11 +134,14 @@ export function execScript(filePath: string): Promise<void> {
 ${fileContent}`);
         }
 
-        const scriptProcess = exec(`node ${config.outfile}`);
-        scriptProcess.stdout.pipe(process.stdout);
-        scriptProcess.stderr.pipe(process.stderr);
-        scriptProcess.on("exit", resolve);
-        scriptProcess.on("close", resolve);
+        const importedScript = require(config.outfile);
+        if(typeof importedScript.default === 'function'){
+            const functionReturn = importedScript.default(args);
+            if(functionReturn instanceof Promise)
+                await functionReturn;
+        }
+        deleteBuiltTSFile(filePath);
+        resolve();
     });
 }
 

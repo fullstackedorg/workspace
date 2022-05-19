@@ -66,7 +66,8 @@ function runTests(){
 // TODO: merge with docker-compose.yml file at project src
 function setupDockerComposeFile(config){
     const outFile = config.out + "/docker-compose.yml";
-    fs.copyFileSync(path.resolve(__dirname, "../docker-compose.yml"), outFile);
+    const composeFileTemplate = path.resolve(__dirname, "../docker-compose.yml");
+    fs.copyFileSync(composeFileTemplate, outFile);
 
     let content = fs.readFileSync(outFile, {encoding: "utf-8"});
 
@@ -204,9 +205,6 @@ export default async function (config: Config) {
 
     await sftp.connect(connectionConfig);
 
-    // predeploy script
-    await execScript(path.resolve(config.src, "predeploy.ts"));
-
     // path where the build app files with be
     const serverPath = config.appDir + "/" + packageConfigs.name ;
     // add to that the version number as directory
@@ -255,6 +253,9 @@ export default async function (config: Config) {
     // clean build
     await build(config);
 
+    // predeploy script
+    await execScript(path.resolve(config.src, "predeploy.ts"), config);
+
     if(mustOverWriteCurrentVersion)
         await sftp.rmdir(serverPathDist, true);
 
@@ -271,7 +272,7 @@ export default async function (config: Config) {
         console.log('\x1b[32m%s\x1b[0m', packageConfigs.name + " v" + packageConfigs.version + " deployed!");
 
     // post deploy script
-    await execScript(path.resolve(config.src, "postdeploy.ts"));
+    await execScript(path.resolve(config.src, "postdeploy.ts"), config);
 
     process.exit(0);
 }

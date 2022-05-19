@@ -4,7 +4,6 @@ import fs from "fs";
 import morgan from "morgan";
 import http from "http";
 import https from "https";
-import {registerBadgesRoutes} from "./Badges/badges";
 
 export const publicDir = path.resolve(__dirname, './public');
 export const assetsDir = publicDir + "/assets";
@@ -27,10 +26,10 @@ export default class Server {
     }
 
     start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
+        // prevent starting server by import
+        // e.g.,
         // source: https://stackoverflow.com/a/6398335
         if (require.main !== module && !args.testing) return;
-
-        this.express.use("/badges", registerBadgesRoutes());
 
         this.express.use(express.static(publicDir));
 

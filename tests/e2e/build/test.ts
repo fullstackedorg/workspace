@@ -7,7 +7,9 @@ import {deleteBuiltTSFile} from "../../../scripts/utils";
 
 describe("Build Test", function(){
     const prebuildOutputFile = path.resolve(__dirname, "prebuild.txt");
+    const prebuildAsyncOutputFile = path.resolve(__dirname, "prebuild-2.txt");
     const postbuildOutputFile = path.resolve(__dirname, "postbuild.txt");
+    const postbuildAsyncOutputFile = path.resolve(__dirname, "postbuild-2.txt");
 
     before(function(){
         const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} build --src=${__dirname} --out=${__dirname} --silent --test`).toString();
@@ -20,16 +22,26 @@ describe("Build Test", function(){
         equal(fs.readFileSync(prebuildOutputFile, {encoding: "utf8"}), "prebuild");
     });
 
+    it('Should have awaited default export prebuild', function(){
+        ok(fs.existsSync(prebuildAsyncOutputFile));
+        equal(fs.readFileSync(prebuildAsyncOutputFile, {encoding: "utf8"}), "prebuild async");
+    });
+
     it('Should have executed postbuild',  function (){
         ok(fs.existsSync(postbuildOutputFile));
         equal(fs.readFileSync(postbuildOutputFile, {encoding: "utf8"}), "postbuild");
     });
 
+    it('Should have awaited default export postbuild', function(){
+        ok(fs.existsSync(postbuildAsyncOutputFile));
+        equal(fs.readFileSync(postbuildAsyncOutputFile, {encoding: "utf8"}), "postbuild async");
+    });
+
     after( function() {
-        deleteBuiltTSFile(path.resolve(__dirname, "prebuild.ts"));
         fs.rmSync(prebuildOutputFile);
-        deleteBuiltTSFile(path.resolve(__dirname, "postbuild.ts"));
+        fs.rmSync(prebuildAsyncOutputFile);
         fs.rmSync(postbuildOutputFile);
+        fs.rmSync(postbuildAsyncOutputFile);
         fs.rmSync(__dirname + "/dist", {force: true, recursive: true});
     });
 });

@@ -22,7 +22,8 @@ export default function(config){
     testProcess.stdout.on('data', (message) => {
         process.stdout.write(message);
 
-        if(message.toString().includes("Error:") || message.toString().includes("AssertionError")) {
+        const msgStr = message.toString();
+        if(msgStr.includes("Error:") || msgStr.includes("AssertionError")) {
             killProcess(testProcess, 8000);
         }
     });

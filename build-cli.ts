@@ -3,13 +3,16 @@ import glob from "glob";
 import path from "path";
 
 (async function() {
-    const cli = path.resolve(__dirname, "./cli.ts");
     const scripts = glob.sync(path.resolve(__dirname, "./scripts") + "/**/*.ts")
-        .concat([path.resolve(__dirname, "./postinstall.ts")])
-        .concat([path.resolve(__dirname, "./.mocharc.ts")])
         .filter(file => !file.endsWith(".d.ts"));
 
-    const buildPromises = [cli].concat(scripts).map(file => {
+    const otherScripts = [
+        path.resolve(__dirname, "./cli.ts"),
+        path.resolve(__dirname, "./postinstall.ts"),
+        path.resolve(__dirname, "./.mocharc.ts")
+    ]
+
+    const buildPromises = scripts.concat(otherScripts).map(file => {
         return esbuild.build({
             entryPoints: [file],
             outfile: file.slice(0, -2) + "js",
