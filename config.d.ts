@@ -3,6 +3,7 @@ declare type ConfigCreate = {
 }
 
 declare type ConfigBuild = {
+    title?: string,
     src? : string, // in folders
     out?: string // out folders
 }
@@ -26,12 +27,17 @@ declare type ConfigDeploy = {
     pass?       : string,
     privateKey? : string,
 
+    serverName? : string,
+
     appDir?     : string, // directory in server
 
     skipTest?   : boolean // skip testing
 }
 
 declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {
+    name? : string,
+    version? : string,
+
     silent? : boolean, // silence logging
     allYes? : boolean
 }

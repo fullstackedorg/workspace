@@ -81,9 +81,8 @@ function runTests(){
 function setupDockerComposeFile(config, version){
     const outFile = path.resolve(config.out, "docker-compose.yml");
     const composeFileTemplate = path.resolve(__dirname, "../docker-compose.yml");
-    fs.copyFileSync(composeFileTemplate, outFile);
 
-    let content = fs.readFileSync(outFile, {encoding: "utf-8"});
+    let content = fs.readFileSync(composeFileTemplate, {encoding: "utf-8"});
 
     content = content.replace("8000:8000", `${config.port ?? 8000}:8000`);
     content = content.replace("./dist:/dist", `./${version}:/dist`);
@@ -98,19 +97,28 @@ function setupDockerComposeFile(config, version){
     return outFile;
 }
 
-function setupNginxFile(config){
+function setupNginxFile(config: Config){
     const outFile = config.out + "/nginx.conf";
     const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
-    fs.copyFileSync(nginxFileTemplate, outFile);
+    let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
+
+    const port = config.port ?? "8000";
+    content = content.replace("{PORT}", port);
+    content = content.replace("{SERVER_NAME}", config.serverName ?? "localhost");
+
+    fs.writeFileSync(outFile, content);
+    return outFile;
 }
 
 // deploy app using docker compose
-async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist, packageConfigs){
-    const dockerComposeFilePath = setupDockerComposeFile(config, packageConfigs.version);
+async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
+    const dockerComposeFilePath = setupDockerComposeFile(config, config.version);
     await sftp.put(dockerComposeFilePath, serverPath + "/docker-compose.yml");
     fs.rmSync(dockerComposeFilePath);
 
-    setupNginxFile(config);
+    const nginxFilePath = setupNginxFile(config);
+    await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
+    fs.rmSync(nginxFilePath);
 
     const files = glob.sync("**/*", {cwd: config.out})
     const localFilePaths = files.map(file => path.resolve(process.cwd(), config.out, file));
@@ -129,31 +137,11 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
 
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
     // exec start command
-    await execSSH(sftp.client, `docker-compose -p ${packageConfigs.name} -f ${serverPath}/docker-compose.yml up -d`);
+    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
 }
 
 export default async function (config: Config) {
-    // thanks to : https://patorjk.com/software/taag
-    // for the ascii art
-    console.log(`
-  ______     _ _  _____ _             _            _ 
- |  ____|   | | |/ ____| |           | |          | |
- | |__ _   _| | | (___ | |_ __ _  ___| | _____  __| |
- |  __| | | | | |\\___ \\| __/ _\` |/ __| |/ / _ \\/ _\` |
- | |  | |_| | | |____) | || (_| | (__|   <  __/ (_| |
- |_|   \\__,_|_|_|_____/ \\__\\__,_|\\___|_|\\_\\___|\\__,_|`);
-
-    const packageConfigs = getPackageJSON();
-    if(Object.keys(packageConfigs).length === 0)
-        return console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
-
-    if(!packageConfigs.version)
-        return console.log('\x1b[31m%s\x1b[0m', "No \"version\" in package.json");
-
-    if(!packageConfigs.name)
-        return console.log('\x1b[31m%s\x1b[0m', "No \"name\" in package.json");
-
-    console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + packageConfigs.name + " v" + packageConfigs.version);
+    console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + config.name + " v" + config.version);
     if(!await askToContinue("Continue"))
         return;
 
@@ -177,9 +165,9 @@ export default async function (config: Config) {
     await sftp.connect(connectionConfig);
 
     // path where the build app files will be
-    const serverPath = config.appDir + "/" + packageConfigs.name ;
+    const serverPath = config.appDir + "/" + config.name ;
     // add to that the version number as directory
-    const serverPathDist = serverPath + "/" + packageConfigs.version;
+    const serverPathDist = serverPath + "/" + config.version;
     /*
     * e.g.,
     * /home
@@ -198,7 +186,7 @@ export default async function (config: Config) {
     // check if version was already deployed
     let mustOverWriteCurrentVersion = false;
     if(await sftp.exists(serverPathDist)){
-        console.log('\x1b[33m%s\x1b[0m', "Version " + packageConfigs.version + " is already deployed");
+        console.log('\x1b[33m%s\x1b[0m', "Version " + config.version + " is already deployed");
         if(!await askToContinue("Overwrite [" + serverPathDist + "]")) {
             await sftp.end();
             return;
@@ -242,14 +230,15 @@ export default async function (config: Config) {
 
     await sftp.mkdir(serverPathDist, true);
 
-    await deployDockerCompose(config, sftp, serverPath, serverPathDist, packageConfigs);
+    await deployDockerCompose(config, sftp, serverPath, serverPathDist);
 
     await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
+    await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
 
     await sftp.end();
 
     if(!config.silent)
-        console.log('\x1b[32m%s\x1b[0m', packageConfigs.name + " v" + packageConfigs.version + " deployed!");
+        console.log('\x1b[32m%s\x1b[0m', config.name + " v" + config.version + " deployed!");
 
     // post deploy script
     await execScript(path.resolve(config.src, "postdeploy.ts"), config);

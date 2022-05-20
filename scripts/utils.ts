@@ -24,7 +24,7 @@ export function askToContinue(question): Promise<boolean> {
 export function getPackageJSON():{[key:string]: any} {
     const packageJSONPath = path.resolve(process.cwd(), "package.json");
     if(!fs.existsSync(packageJSONPath))
-        throw new Error("Cannot find package.json file. Please run fullstacked commands at your project root");
+        throw Error("Cannot find package.json file. Please run fullstacked commands at your project root");
 
     return JSON.parse(fs.readFileSync(packageJSONPath, {encoding: "utf-8"}));
 }
@@ -128,7 +128,7 @@ export function execScript(filePath: string, args: any = null): Promise<void> {
         const config = defaultEsbuildConfig(filePath);
         buildSync(config);
 
-        if(process.argv.includes("--test")) {
+        if(process.argv.includes("--test-mode")) {
             const fileContent = fs.readFileSync(config.outfile, {encoding: "utf8"});
             fs.writeFileSync(config.outfile, `/* istanbul ignore file */
 ${fileContent}`);

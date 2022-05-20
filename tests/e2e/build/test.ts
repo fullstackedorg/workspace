@@ -12,7 +12,7 @@ describe("Build Test", function(){
     const postbuildAsyncOutputFile = path.resolve(__dirname, "postbuild-2.txt");
 
     before(function(){
-        const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} build --src=${__dirname} --out=${__dirname} --silent --test`).toString();
+        const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} build --src=${__dirname} --out=${__dirname} --silent --test-mode`).toString();
         if(logMessage)
             console.log(logMessage);
     });

@@ -1,20 +1,33 @@
 import {before, describe} from "mocha";
 import {execSync} from "child_process";
 import puppeteer from "puppeteer";
-import {equal, ok} from "assert";
+import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path from "path";
-import {clearLine, isDockerInstalled, printLine} from "../../../scripts/utils";
+import {clearLine, isDockerInstalled, printLine, sleep} from "../../../scripts/utils";
 
 describe("Deploy test", function(){
     const containerName = "dind";
     const sshPort = "2222";
-    let browser;
 
     const predeployOutputFile = path.resolve(__dirname, "predeploy.txt");
     const predeployAsyncOutputFile = path.resolve(__dirname, "predeploy-2.txt");
     const postdeployOutputFile = path.resolve(__dirname, "postdeploy.txt");
     const postdeployAsyncOutputFile = path.resolve(__dirname, "postdeploy-2.txt");
+
+    function executeDeployment(args: string){
+        args += `
+        --silent
+        --y
+        --skip-test
+        --test-mode
+        --host=localhost
+        --ssh-port=${sshPort}
+        --user=root
+        --pass=docker
+        --test-mode`;
+        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.replace(/\n/g, ' ')}`);
+    }
 
     before(async function (){
         this.timeout(50000);
@@ -22,7 +35,8 @@ describe("Deploy test", function(){
         if(!await isDockerInstalled())
             throw Error("Deploy test needs Docker");
 
-        printLine("Setting up docker container centos");
+        execSync(`docker rm -f ${containerName} >/dev/null 2>&1`);
+        printLine("Setting up docker container container");
         execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:80 --name ${containerName} docker:dind`);
         printLine("Installing ssh server");
         execSync(`docker exec ${containerName} apk add --update --no-cache openssh`);
@@ -32,19 +46,10 @@ describe("Deploy test", function(){
         execSync(`docker exec -d ${containerName} sh -c "echo -n \\\"root:docker\\\" | chpasswd"`);
         execSync(`docker exec -d ${containerName} /usr/sbin/sshd -D`);
         printLine("Running deployment command");
-        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy
-            --silent
+        executeDeployment(`
             --port=8000
             --src=${__dirname}
-            --out=${__dirname}
-            --skip-test
-            --y
-            --host=localhost
-            --ssh-port=${sshPort}
-            --user=root
-            --pass=docker
-            --test
-        `.replace(/\n/g, ' '));
+            --out=${__dirname}`);
         clearLine();
     });
 
@@ -59,13 +64,16 @@ describe("Deploy test", function(){
     });
 
     it("Should access deployed app", async function(){
-        browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
-        const root = await page.$("#root");
-        const innerHTML = await root.getProperty('innerHTML');
+        const title = await page.$("h1");
+        const innerHTML = await title.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        equal(value, "<div>Deploy Test</div>");
+
+        equal(value, "Deploy Test");
+
+        await browser.close();
     });
 
     it("Should have executed postdeploy", function(){
@@ -78,14 +86,94 @@ describe("Deploy test", function(){
         equal(fs.readFileSync(postdeployAsyncOutputFile, {encoding: "utf8"}), "postdeploy async");
     });
 
+    it("Should overwrite current app", async function(){
+        this.timeout(50000);
+        printLine("Running deployment command for updated app");
+        const updatedAppSrc = path.resolve(__dirname, "updated-app");
+        executeDeployment(`
+            --port=8000
+            --src=${updatedAppSrc}
+            --out=${updatedAppSrc}`);
+        clearLine();
+
+        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const page = await browser.newPage();
+        await page.goto("http://localhost:8000");
+        const title = await page.$("h1");
+        const innerHTML = await title.getProperty('innerHTML');
+        const value = await innerHTML.jsonValue();
+
+        equal(value, "Deploy Test 2");
+
+        await browser.close();
+        fs.rmSync(path.resolve(updatedAppSrc, "dist"), {force: true, recursive: true});
+    });
+
+    it("Should re-deploy with new app version", async function(){
+        this.timeout(50000);
+        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const page = await browser.newPage();
+        await page.goto("http://localhost:8000");
+        const version = await page.$("#version");
+        const innerHTML = await version.getProperty('innerHTML');
+
+        const currentAppVersion = await innerHTML.jsonValue();
+
+        printLine("Running deployment command with new version");
+        executeDeployment(`
+            --port=8000
+            --src=${__dirname}
+            --out=${__dirname}
+            --version=0.0.0`);
+        clearLine();
+
+        await sleep(1000);
+
+        await page.reload();
+
+        const versionUpdated = await page.$("#version");
+
+        const innerHTML2 = await versionUpdated.getProperty('innerHTML');
+        const updatedAppVersion = await innerHTML2.jsonValue();
+        notEqual(updatedAppVersion, currentAppVersion);
+        equal(updatedAppVersion, "0.0.0");
+
+        await browser.close();
+    });
+
+    it("Should run another app", async function(){
+        this.timeout(50000);
+        printLine("Running deployment command with another app");
+        executeDeployment(`
+            --src=${__dirname}
+            --out=${__dirname}
+            --port=8001
+            --server-name=test.localhost
+            --name=test
+            --title=Test`);
+        clearLine();
+
+        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const page = await browser.newPage();
+        await page.goto("http://localhost:8000");
+        const currentTitle = await page.title();
+
+        await page.goto("http://test.localhost:8000");
+        const secondTitle = await page.title();
+
+        notEqual(secondTitle, currentTitle);
+        equal(secondTitle, "Test");
+
+        await browser.close();
+    });
+
     after(function(){
-        browser.close();
         fs.rmSync(path.resolve(__dirname, "dist"), {force: true, recursive: true});
 
-        fs.rmSync(predeployOutputFile);
-        fs.rmSync(predeployAsyncOutputFile);
-        fs.rmSync(postdeployOutputFile);
-        fs.rmSync(postdeployAsyncOutputFile);
+        fs.rmSync(predeployOutputFile, {force: true});
+        fs.rmSync(predeployAsyncOutputFile, {force: true});
+        fs.rmSync(postdeployOutputFile, {force: true});
+        fs.rmSync(postdeployAsyncOutputFile, {force: true});
 
         execSync(`docker rm -f ${containerName}`);
     });
