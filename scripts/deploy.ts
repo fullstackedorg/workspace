@@ -63,7 +63,6 @@ function runTests(){
 }
 
 // prepare docker compose file for deployment
-// TODO: merge with docker-compose.yml file at project src
 function setupDockerComposeFile(config){
     const outFile = config.out + "/docker-compose.yml";
     const composeFileTemplate = path.resolve(__dirname, "../docker-compose.yml");
@@ -104,50 +103,6 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     const cmdUP = `docker-compose -p ${appName} -f ${serverPathDist}/docker-compose.yml up -d`;
     const cmdDOWN = `docker-compose -p ${appName} -f ${serverPathDist}/docker-compose.yml down -v`;
 
-    await startDeployment(config, cmdUP, cmdDOWN, sftp, serverPath, serverPathDist);
-}
-
-function buildDockerImage(config: Config, dockerfileOutDir, appName){
-    const dockerfileSrc = path.resolve(__dirname, "../Dockerfile");
-
-    if(dockerfileSrc !== dockerfileOutDir + "/Dockerfile")
-        fs.cpSync(dockerfileSrc, dockerfileOutDir + "/Dockerfile");
-
-    return new Promise(resolve => {
-        const dockerBuildProcess = exec(`docker build --output type=tar,dest=${dockerfileOutDir}/out.tar ${dockerfileOutDir} -t ${appName}`);
-        if(!config.silent){
-            dockerBuildProcess.stdout.pipe(process.stdout);
-            dockerBuildProcess.stderr.pipe(process.stderr);
-        }
-        dockerBuildProcess.on('close', resolve);
-        dockerBuildProcess.on('exit', resolve);
-    });
-}
-
-// deploy app using a Docker image
-async function deployDocker(config: Config, sftp, serverPath: string, serverPathDist: string, appName: string){
-    if(!await isDockerInstalled()) {
-        throw new Error("Docker is not installed on local machine. Consider using " +
-            "\"npx fullstacked deploy --docker-compose\" to deploy using docker compose or install Docker.");
-    }
-
-    const dockerfileOutDir = path.resolve(config.out, "..");
-    await buildDockerImage(config, dockerfileOutDir, appName);
-
-    console.log('\x1b[32m%s\x1b[0m', "Uploading Built Docker image");
-    await sftp.put(dockerfileOutDir + "/out.tar", serverPathDist + "/out.tar");
-    fs.rmSync(dockerfileOutDir + "/out.tar");
-
-    console.log('\x1b[33m%s\x1b[0m', "Loading Docker Image on remote host");
-    await execSSH(sftp.client, `cat ${serverPathDist}/out.tar | docker ${config.dockerExtraFlags} import - ${appName}`);
-
-    let ports = `-p ${config.port ?? 80}:8000`;
-
-    if(config.portHTTPS)
-        ports += ` -p ${config.portHTTPS}:8443 -v ${serverPathDist}:/keys`;
-
-    const cmdUP = `docker run ${ports} --name ${appName} -d ${config.dockerExtraFlags} ${appName} node index`;
-    const cmdDOWN = `docker rm -f ${appName}`;
     await startDeployment(config, cmdUP, cmdDOWN, sftp, serverPath, serverPathDist);
 }
 
@@ -261,10 +216,7 @@ export default async function (config: Config) {
 
     await sftp.mkdir(serverPathDist, true);
 
-    if(config.dockerCompose)
-        await deployDockerCompose(config, sftp, serverPath, serverPathDist, packageConfigs.name);
-    else
-        await deployDocker(config, sftp, serverPath, serverPathDist, packageConfigs.name);
+    await deployDockerCompose(config, sftp, serverPath, serverPathDist, packageConfigs.name);
 
     await sftp.end();
 

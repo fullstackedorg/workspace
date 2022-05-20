@@ -27,9 +27,7 @@ const args = {
     "--headless": () => config.headless = true,
     "--skip-test": () => config.skipTest = true,
     "--y": () => config.allYes = true,
-    "--rootless": () => config.rootless = true,
-    "--docker-compose": () => config.dockerCompose = true,
-    "--docker-extra-flags=": value => config.dockerExtraFlags = value
+    "--rootless": () => config.rootless = true
 };
 
 process.argv.forEach(arg => {

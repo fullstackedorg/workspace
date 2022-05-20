@@ -7,7 +7,7 @@ import path from "path";
 import {clearLine, deleteBuiltTSFile, isDockerInstalled, printLine} from "../../../scripts/utils";
 
 describe("Deploy test", function(){
-    const containerName = "centos";
+    const containerName = "dind";
     const sshPort = "2222";
     let browser;
 
@@ -23,14 +23,13 @@ describe("Deploy test", function(){
             throw Error("Deploy test needs Docker");
 
         printLine("Setting up docker container centos");
-        execSync(`docker run --privileged -d -t -p ${sshPort}:22 -p 8000:8000 --name ${containerName} centos`);
-        execSync(`docker exec ${containerName} bash -c "sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*"`);
-        execSync(`docker exec ${containerName} bash -c "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*"`);
+        execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:8000 --name ${containerName} docker:dind`);
         printLine("Installing ssh server");
-        execSync(`docker exec ${containerName} yum install openssh-server -q -y > /dev/null 2>&1`);
-        execSync(`docker exec ${containerName} bash -c "echo \"PasswordAuthentication yes\" >> /etc/ssh/sshd_config"`);
+        execSync(`docker exec ${containerName} apk add --update --no-cache openssh`);
+        execSync(`docker exec ${containerName} sh -c "echo \\\"PasswordAuthentication yes\\\" >> /etc/ssh/sshd_config"`);
+        execSync(`docker exec ${containerName} sh -c "echo \\\"PermitRootLogin yes\\\" >> /etc/ssh/sshd_config"`);
         execSync(`docker exec ${containerName} ssh-keygen -A`);
-        execSync(`docker exec ${containerName} bash -c "echo \"root:centos\" | chpasswd"`);
+        execSync(`docker exec -d ${containerName} sh -c "echo -n \\\"root:docker\\\" | chpasswd"`);
         execSync(`docker exec -d ${containerName} /usr/sbin/sshd -D`);
         printLine("Running deployment command");
         execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy
@@ -43,12 +42,10 @@ describe("Deploy test", function(){
             --host=localhost
             --ssh-port=${sshPort}
             --user=root
-            --pass=centos
+            --pass=docker
             --app-dir=/home
-            --rootless
-            --silent
             --test
-            --docker-extra-flags="--storage-opt mount_program=/usr/bin/fuse-overlayfs"
+            --docker-compose
         `.replace(/\n/g, ' '));
         clearLine();
     });
@@ -86,8 +83,6 @@ describe("Deploy test", function(){
     after(function(){
         browser.close();
         fs.rmSync(path.resolve(__dirname, "dist"), {force: true, recursive: true});
-        fs.rmSync(path.resolve(__dirname, "Dockerfile"), {force: true});
-        fs.rmSync(path.resolve(__dirname, "out.tar"), {force: true});
 
         fs.rmSync(predeployOutputFile);
         fs.rmSync(predeployAsyncOutputFile);
