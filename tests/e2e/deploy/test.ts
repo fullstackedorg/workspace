@@ -4,7 +4,7 @@ import puppeteer from "puppeteer";
 import {equal, ok} from "assert";
 import fs from "fs";
 import path from "path";
-import {clearLine, deleteBuiltTSFile, isDockerInstalled, printLine} from "../../../scripts/utils";
+import {clearLine, isDockerInstalled, printLine} from "../../../scripts/utils";
 
 describe("Deploy test", function(){
     const containerName = "dind";
@@ -23,7 +23,7 @@ describe("Deploy test", function(){
             throw Error("Deploy test needs Docker");
 
         printLine("Setting up docker container centos");
-        execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:8000 --name ${containerName} docker:dind`);
+        execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:80 --name ${containerName} docker:dind`);
         printLine("Installing ssh server");
         execSync(`docker exec ${containerName} apk add --update --no-cache openssh`);
         execSync(`docker exec ${containerName} sh -c "echo \\\"PasswordAuthentication yes\\\" >> /etc/ssh/sshd_config"`);
@@ -43,9 +43,7 @@ describe("Deploy test", function(){
             --ssh-port=${sshPort}
             --user=root
             --pass=docker
-            --app-dir=/home
             --test
-            --docker-compose
         `.replace(/\n/g, ' '));
         clearLine();
     });

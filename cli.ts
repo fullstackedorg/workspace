@@ -26,8 +26,7 @@ const args = {
     "--coverage": () => config.coverage = true,
     "--headless": () => config.headless = true,
     "--skip-test": () => config.skipTest = true,
-    "--y": () => config.allYes = true,
-    "--rootless": () => config.rootless = true
+    "--y": () => config.allYes = true
 };
 
 process.argv.forEach(arg => {

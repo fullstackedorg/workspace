@@ -2,10 +2,25 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, execScript, getPackageJSON, isDockerInstalled, printLine} from "./utils";
+import {askToContinue, execScript, getPackageJSON, printLine} from "./utils";
 import build from "./build";
 import {exec} from "child_process";
 import yaml from "yaml";
+
+/*
+*
+* 1. check requirements (package.json [name, version, etc])
+* 2. try to connect to remote host
+* 3. check if app at version already deployed
+* 3. check if docker and docker-compose is installed
+* 4. run tests
+* 5. ship nginx docker-compose and nginx.conf
+* 6. ship built app
+* 7. up built app
+* 8. up nginx
+* 9. save relevant stuff for next deployment
+*
+ */
 
 // exec command on remote host over ssh
 function execSSH(ssh2, cmd){
@@ -30,7 +45,7 @@ async function isDockerInstalledOnRemote(ssh2): Promise<boolean>{
 }
 
 // install docker on remote host
-async function installDocker(ssh2, sudo: boolean) {
+async function installDocker(ssh2) {
     let commands = [
         "yum install docker -y",
         "wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)",
@@ -42,7 +57,7 @@ async function installDocker(ssh2, sudo: boolean) {
     ]
 
     for (let i = 0; i < commands.length; i++) {
-        await execSSH(ssh2, (sudo ? "sudo " : "") + commands[i]);
+        await execSSH(ssh2, "sudo " + commands[i]);
     }
 }
 
@@ -63,14 +78,15 @@ function runTests(){
 }
 
 // prepare docker compose file for deployment
-function setupDockerComposeFile(config){
-    const outFile = config.out + "/docker-compose.yml";
+function setupDockerComposeFile(config, version){
+    const outFile = path.resolve(config.out, "docker-compose.yml");
     const composeFileTemplate = path.resolve(__dirname, "../docker-compose.yml");
     fs.copyFileSync(composeFileTemplate, outFile);
 
     let content = fs.readFileSync(outFile, {encoding: "utf-8"});
 
-    content = content.replace("${PORT}", config.port ?? 80);
+    content = content.replace("8000:8000", `${config.port ?? 8000}:8000`);
+    content = content.replace("./dist:/dist", `./${version}:/dist`);
 
     if(config.portHTTPS){
         let yamlContent = yaml.parse(content);
@@ -79,11 +95,22 @@ function setupDockerComposeFile(config){
     }
 
     fs.writeFileSync(outFile, content);
+    return outFile;
+}
+
+function setupNginxFile(config){
+    const outFile = config.out + "/nginx.conf";
+    const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
+    fs.copyFileSync(nginxFileTemplate, outFile);
 }
 
 // deploy app using docker compose
-async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist, appName){
-    setupDockerComposeFile(config);
+async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist, packageConfigs){
+    const dockerComposeFilePath = setupDockerComposeFile(config, packageConfigs.version);
+    await sftp.put(dockerComposeFilePath, serverPath + "/docker-compose.yml");
+    fs.rmSync(dockerComposeFilePath);
+
+    setupNginxFile(config);
 
     const files = glob.sync("**/*", {cwd: config.out})
     const localFilePaths = files.map(file => path.resolve(process.cwd(), config.out, file));
@@ -100,30 +127,9 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     }
     console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
 
-    const cmdUP = `docker-compose -p ${appName} -f ${serverPathDist}/docker-compose.yml up -d`;
-    const cmdDOWN = `docker-compose -p ${appName} -f ${serverPathDist}/docker-compose.yml down -v`;
-
-    await startDeployment(config, cmdUP, cmdDOWN, sftp, serverPath, serverPathDist);
-}
-
-async function startDeployment(config: Config, cmdUP, cmdDOWN, sftp, serverPath, serverPathDist){
-    // check if there is a command to down current app
-    const savedDown = serverPath + "/down.txt";
-    if(await sftp.exists(savedDown)){
-        const command = (await sftp.get(savedDown)).toString().trim();
-        console.log('\x1b[33m%s\x1b[0m', "Stopping current running app");
-        await execSSH(sftp.client, command);
-    }
-
-    // create some self-signed certificate
-    if(config.portHTTPS)
-        await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`);
-
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
     // exec start command
-    await execSSH(sftp.client, cmdUP);
-    // save down command for next deployment
-    await execSSH(sftp.client, `echo "${cmdDOWN}" > ${savedDown}`);
+    await execSSH(sftp.client, `docker-compose -p ${packageConfigs.name} -f ${serverPath}/docker-compose.yml up -d`);
 }
 
 export default async function (config: Config) {
@@ -160,7 +166,7 @@ export default async function (config: Config) {
 
     await sftp.connect(connectionConfig);
 
-    // path where the build app files with be
+    // path where the build app files will be
     const serverPath = config.appDir + "/" + packageConfigs.name ;
     // add to that the version number as directory
     const serverPathDist = serverPath + "/" + packageConfigs.version;
@@ -191,19 +197,29 @@ export default async function (config: Config) {
         mustOverWriteCurrentVersion = true;
     }
 
-    if(!config.skipTest && !await runTests())
-        return;
-
     // check if docker is installed on remote
     if(!await isDockerInstalledOnRemote(sftp.client)) {
         console.log('\x1b[33m%s\x1b[0m', "You are about to install Docker on your remote host");
         if(!await askToContinue("Continue"))
             return;
 
-        await installDocker(sftp.client, !config.rootless);
+        await installDocker(sftp.client);
         if(!await isDockerInstalledOnRemote(sftp.client))
             return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
     }
+
+    if(!config.skipTest && !await runTests())
+        return;
+
+    if(!await sftp.exists(config.appDir))
+        await sftp.mkdir(config.appDir, true);
+
+    await Promise.all([
+        sftp.put(path.resolve(__dirname, "../nginx/docker-compose.yml"), config.appDir + "/docker-compose.yml"),
+        sftp.put(path.resolve(__dirname, "../nginx/nginx.conf"), config.appDir + "/nginx.conf")
+    ]);
+
+    // await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${config.appDir}/key.pem -out ${config.appDir}/cert.pem -days 365`);
 
     // clean build
     await build(config);
@@ -216,7 +232,9 @@ export default async function (config: Config) {
 
     await sftp.mkdir(serverPathDist, true);
 
-    await deployDockerCompose(config, sftp, serverPath, serverPathDist, packageConfigs.name);
+    await deployDockerCompose(config, sftp, serverPath, serverPathDist, packageConfigs);
+
+    await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
 
     await sftp.end();
 

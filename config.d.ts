@@ -26,8 +26,6 @@ declare type ConfigDeploy = {
     pass?       : string,
     privateKey? : string,
 
-    rootless? : boolean,
-
     appDir?     : string, // directory in server
 
     skipTest?   : boolean // skip testing
