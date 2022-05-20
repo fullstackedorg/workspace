@@ -28,9 +28,6 @@ declare type ConfigDeploy = {
 
     rootless? : boolean,
 
-    dockerExtraFlags? : string,
-    dockerCompose? : boolean,
-
     appDir?     : string, // directory in server
 
     skipTest?   : boolean // skip testing
