@@ -5,6 +5,7 @@ dist
 coverage
 website
 **/*.js.map
+test.ts
 
 tests/e2e/*/*
 tests/e2e/Helper.js
