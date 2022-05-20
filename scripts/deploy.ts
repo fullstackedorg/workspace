@@ -133,6 +133,16 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
 }
 
 export default async function (config: Config) {
+    // thanks to : https://patorjk.com/software/taag
+    // for the ascii art
+    console.log(`
+  ______     _ _  _____ _             _            _ 
+ |  ____|   | | |/ ____| |           | |          | |
+ | |__ _   _| | | (___ | |_ __ _  ___| | _____  __| |
+ |  __| | | | | |\\___ \\| __/ _\` |/ __| |/ / _ \\/ _\` |
+ | |  | |_| | | |____) | || (_| | (__|   <  __/ (_| |
+ |_|   \\__,_|_|_|_____/ \\__\\__,_|\\___|_|\\_\\___|\\__,_|`);
+
     const packageConfigs = getPackageJSON();
     if(Object.keys(packageConfigs).length === 0)
         return console.log('\x1b[31m%s\x1b[0m', "Could not find package.json file or your package.json is empty");
