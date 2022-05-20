@@ -26,7 +26,11 @@ const args = {
     "--coverage": () => config.coverage = true,
     "--headless": () => config.headless = true,
     "--skip-test": () => config.skipTest = true,
-    "--y": () => config.allYes = true
+    "--y": () => config.allYes = true,
+    "--server-name=": value => config.serverName = value,
+    "--version=": value => config.version = value,
+    "--name=": value => config.name = value,
+    "--title=": value => config.title = value
 };
 
 process.argv.forEach(arg => {

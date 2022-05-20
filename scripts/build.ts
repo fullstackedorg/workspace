@@ -45,7 +45,7 @@ async function buildServer(config, watcher){
 
         define: {
             ...getProcessedEnv(),
-            'process.env.VERSION': JSON.stringify(packageConfigs.version),
+            'process.env.VERSION': JSON.stringify(config.version),
             'process.env.DEPENDENCIES': JSON.stringify(packageConfigs.dependencies)
         },
 
@@ -85,7 +85,10 @@ async function buildWebApp(config, watcher){
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
 
-        define: getProcessedEnv(),
+        define: {
+            ...getProcessedEnv(),
+            'process.env.VERSION': JSON.stringify(config.version)
+        },
 
         // assets like images are stored at dist/public/assets
         // and the server reroutes all asset request to this directory
@@ -110,18 +113,16 @@ async function buildWebApp(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    const packageConfigs = getPackageJSON();
-
     // set the index.html file
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});
     // add page title
     let indexHTMLContentUpdated = indexHTMLContent.replace("{TITLE}",
-        packageConfigs.title ?? packageConfigs.name ?? "New Webapp");
+        config.title ?? config.name ?? "New Webapp");
 
     // add js entrypoint with version and and random string as query param v
     // helps a lot for cache busting
-    const versionString = (packageConfigs.version ?? "") + "-" +
+    const versionString = (config.version ?? "") + "-" +
         crypto.randomBytes(4).toString('hex').toUpperCase();
     indexHTMLContentUpdated = indexHTMLContentUpdated.replace("{VERSION}", versionString);
 
