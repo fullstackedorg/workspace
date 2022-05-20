@@ -7,6 +7,6 @@ services:
     command: [ "node", "index" ]
     restart: always
     ports:
-      - "${PORT}:8000"
+      - "8000:8000"
     volumes:
-      - ./:/dist
+      - ./dist:/dist
