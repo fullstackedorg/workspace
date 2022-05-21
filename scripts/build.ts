@@ -4,6 +4,7 @@ import fs from "fs";
 import {execSync} from "child_process";
 import {cleanOutDir, copyRecursiveSync, execScript, getPackageJSON} from "./utils";
 import crypto from "crypto";
+import yaml from "yaml";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -62,11 +63,28 @@ async function buildServer(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    // attach watcher script in defined
+    // attach watcher script if defined
     if(watcher) {
         const watcherScript = execSync(`npx esbuild ${path.resolve(__dirname, "../server/watcher.ts")} --minify --format=cjs`);
         fs.writeFileSync(config.out + "/watcher.js", watcherScript);
     }
+
+    let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
+    const srcDockerComposeFilePath = config.src + "/docker-compose.yml";
+    if(fs.existsSync(srcDockerComposeFilePath)){
+        const templateDockerCompose = yaml.parse(dockerCompose);
+        const srcDockerCompose = yaml.parse(fs.readFileSync(srcDockerComposeFilePath, {encoding: "utf-8"}));
+        if(srcDockerCompose)
+            dockerCompose = yaml.stringify({
+                ...templateDockerCompose,
+                ...srcDockerCompose,
+                services: {
+                    ...templateDockerCompose.services,
+                    ...(srcDockerCompose.services ?? {})
+                }
+            });
+    }
+    fs.writeFileSync(config.out + "/docker-compose.yml", dockerCompose);
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "Server Built");

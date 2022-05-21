@@ -4,9 +4,10 @@ import defaultConfig from "./scripts/config";
 const scripts = {
     "create": "./scripts/create",
     "build" : "./scripts/build",
+    "run"   : "./scripts/run",
     "watch" : "./scripts/watch",
     "deploy": "./scripts/deploy",
-    "test": "./scripts/test"
+    "test"  : "./scripts/test"
 };
 let script = "build"
 

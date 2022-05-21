@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import {clearLine, isDockerInstalled, printLine, sleep} from "../../../scripts/utils";
 
-describe("Deploy test", function(){
+describe("Deploy Test", function(){
     const containerName = "dind";
     const sshPort = "2222";
 
