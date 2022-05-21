@@ -4,9 +4,9 @@ services:
   node:
     image: node:16-alpine
     working_dir: /dist
-    command: [ "node", "index" ]
+    command: [ "node", "index", "${FLAGS}" ]
     restart: always
     ports:
       - "8000:8000"
     volumes:
-      - ./dist:/dist
+      - ./:/dist

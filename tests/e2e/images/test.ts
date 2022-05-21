@@ -1,11 +1,9 @@
-import {before, describe} from "mocha";
-import Server from "fullstacked/server";
-import axios from "axios";
-import {equal, ok} from "assert";
+import {describe} from "mocha";
+import {ok} from "assert";
 import Helper from "fullstacked/tests/e2e/Helper";
 
 
-describe("Images Format Tests", function(){
+describe("Images Format Test", function(){
     let test;
 
     it('Should display a JPG', async function(){
