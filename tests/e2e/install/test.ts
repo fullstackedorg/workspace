@@ -1,5 +1,5 @@
 import {before, describe} from "mocha";
-import {clearLine, killProcess, printLine} from "../../../scripts/utils";
+import {clearLine, killProcess, printLine, sleep} from "../../../scripts/utils";
 import {exec, execSync} from "child_process";
 import fs from "fs";
 import path from "path";
@@ -22,10 +22,9 @@ describe("Install Test", function(){
         execSync(`npm i ${packageName}`, {cwd: outDir});
         printLine("Create");
         execSync(`npx fullstacked create`, {cwd: outDir});
-        printLine("Build");
-        execSync(`npx fullstacked build`, {cwd: outDir});
         printLine("Run");
-        appProcess = exec(`node dist/index`, {cwd: outDir});
+        appProcess = exec(`npx fullstacked run`, {cwd: outDir});
+        await sleep(3000);
         clearLine();
     })
 
@@ -40,8 +39,9 @@ describe("Install Test", function(){
     });
 
     after(async function(){
-        await browser.close()
-        await killProcess(appProcess, 8000);
+        await browser.close();
+        appProcess.kill("SIGINT");
+        await sleep(3000);
         fs.rmSync(outDir, {force: true, recursive: true});
     });
 });

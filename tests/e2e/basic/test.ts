@@ -9,7 +9,6 @@ describe("Basic Test", function(){
     before(async function (){
         test = new Helper(__dirname);
         await test.start();
-        await sleep(1000);
     })
 
     it('Should load a basic web page', async function(){

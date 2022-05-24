@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
 import {equal, ok} from "assert";
-import {deleteBuiltTSFile} from "../../../scripts/utils";
 
 describe("Build Test", function(){
     const prebuildOutputFile = path.resolve(__dirname, "prebuild.txt");

@@ -1,5 +1,5 @@
 import {before, describe} from "mocha";
-import child_process from "child_process";
+import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
 import {killProcess, sleep} from "scripts/utils";
@@ -13,7 +13,6 @@ describe("Watch Test", function(){
 
     before(async function (){
         await killProcess(1, 8001);
-        await killProcess(1, 8000);
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
@@ -21,16 +20,12 @@ describe("Watch Test", function(){
         fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
         fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
 
-        watchProcess = child_process.exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname}`);
-        watchProcess.stderr.pipe(process.stderr);
-        await sleep(2000);
+        watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);
+
+        await sleep(5000);
+
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
-        await page.coverage.startJSCoverage({
-            includeRawScriptCoverage: true,
-            resetOnNavigation: false
-        });
-        await sleep(500);
         await page.goto("http://localhost:8000");
     });
 
@@ -71,7 +66,7 @@ describe("Watch Test", function(){
         ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
-        await sleep(1500);
+        await sleep(3000);
         const timeAfter = await getBootTime();
 
         ok(timeAfter)
@@ -80,10 +75,11 @@ describe("Watch Test", function(){
 
     after(async function(){
         await browser.close();
-        await killProcess(watchProcess, 8000);
-        await killProcess(watchProcess, 8001);
+        watchProcess.kill("SIGINT");
 
-        await sleep(1000);
+        await sleep(3000);
+
+        await killProcess(watchProcess, 8001);
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);

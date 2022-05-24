@@ -24,8 +24,9 @@ server.express.get("/subscribe", async (req, res) => {
         });
 
     res.json({success: response.data.data});
-
 });
+
+server.express.get("/test", (req, res) => res.send("allo"));
 
 server.start();
 export default server;

@@ -3,15 +3,13 @@ import Helper from "tests/e2e/Helper"
 import {glob} from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";
-import {sleep} from "../../../scripts/utils";
 
 describe("Code Splitting", function(){
     let test;
 
     before(async function (){
         test = new Helper(__dirname);
-        await test.start()
-        await sleep(1000);
+        await test.start();
     })
 
     it('Should lazy load the component', async function(){

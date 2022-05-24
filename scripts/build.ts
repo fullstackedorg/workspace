@@ -52,7 +52,7 @@ async function buildServer(config, watcher){
 
         watch: watcher ? {
             onRebuild: async function(error, result){
-                if (error) console.error('Server build failed:', error)
+                if(error) return;
                 watcher();
             }
         } : false
@@ -120,7 +120,7 @@ async function buildWebApp(config, watcher){
 
         watch: watcher ? {
             onRebuild: async function(error, result){
-                if (error) console.error('WebApp build failed:', error)
+                if (error) return
                 watcher(true);
             }
         } : false
