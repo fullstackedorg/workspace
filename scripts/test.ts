@@ -19,12 +19,5 @@ export default function(config){
 
     const testProcess = child_process.exec(testCommand);
     testProcess.stderr.pipe(process.stderr)
-    testProcess.stdout.on('data', (message) => {
-        process.stdout.write(message);
-
-        const msgStr = message.toString();
-        if(msgStr.includes("Error:") || msgStr.includes("AssertionError")) {
-            killProcess(testProcess, 8000);
-        }
-    });
+    testProcess.stdout.pipe(process.stdout);
 }

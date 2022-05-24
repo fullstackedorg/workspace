@@ -85,7 +85,7 @@ function setupDockerComposeFile(config, version){
     let content = fs.readFileSync(composeFileTemplate, {encoding: "utf-8"});
 
     content = content.replace("8000:8000", `${config.port ?? 8000}:8000`);
-    content = content.replace("./dist:/dist", `./${version}:/dist`);
+    content = content.replace("./:/dist", `./${version}:/dist`);
 
     if(config.portHTTPS){
         let yamlContent = yaml.parse(content);
