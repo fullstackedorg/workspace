@@ -18,7 +18,7 @@ describe("Run Test", function(){
         await page.goto("http://localhost:8000");
     })
 
-    it('Should load a basic web page', async function(){
+    it('Should run a basic web page', async function(){
         const root = await page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();

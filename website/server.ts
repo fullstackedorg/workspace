@@ -1,32 +1,15 @@
-import Server, {publicDir} from "fullstacked/server";
+import Server from "fullstacked/server";
 import express from "express";
-import axios from "axios";
-import {registerBadgesRoutes} from "./Badges/badges";
+import {registerBadgesRoutes} from "./badges/badges";
+import {MailingRoutes} from "./mailing/mailing";
 
 const server = new Server();
 
 server.express.use("/badges", registerBadgesRoutes());
 
-server.express.use("/docs*", express.static(publicDir));
+server.express.use("/mailing", MailingRoutes.register());
 
-server.express.get("/subscribe", async (req, res) => {
-    const response = await axios
-        .post("https://" + process.env.MAILING_URL + "/api/subscribers",{
-            email: req.query.email,
-            name: req.query.name,
-            lists: [parseInt(process.env.MAILING_LIST_ID)]
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Basic ' +
-                    Buffer.from(process.env.MAILING_USER + ":" + process.env.MAILING_PASS).toString('base64')
-            }
-        });
-
-    res.json({success: response.data.data});
-});
-
-server.express.get("/test", (req, res) => res.send("allo"));
+server.express.use("/docs*", express.static(server.publicDir));
 
 server.start();
 export default server;

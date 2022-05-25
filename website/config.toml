@@ -1,0 +1,13 @@
+[db]
+host = "mailing_db"
+port = 5432
+user = "listmonk"
+password = "listmonk"
+database = "listmonk"
+ssl_mode = "disable"
+max_open = 25
+max_idle = 25
+max_lifetime = "300s"
+
+[app]
+address = "0.0.0.0:9989"

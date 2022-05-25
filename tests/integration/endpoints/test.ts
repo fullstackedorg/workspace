@@ -5,14 +5,14 @@ import {equal, ok} from "assert";
 
 
 describe("Endpoints Tests", function(){
-    let server, responseTime;
+    let server;
 
     before(async function (){
         server = new Server();
         server.start({silent: true, testing: true});
     });
 
-    it('Should register route and return expected data', async function(){
+    it('Should register route and respond expected data', async function(){
         const responseString = "ok";
         server.express.get("/test", (req, res) =>
             res.send(responseString));

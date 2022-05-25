@@ -9,7 +9,7 @@ export default async function(config: Config, build: boolean = true){
 
     if(!runner) {
         runner = new Runner(config);
-        runner.start();
+        await runner.start();
     }else{
         runner.restart();
     }

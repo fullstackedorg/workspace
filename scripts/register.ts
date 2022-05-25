@@ -23,7 +23,7 @@ Module.prototype.require = function(){
         mustBeBuilt = true;
 
     // if relative path and .ts file exist, then build
-    if(!mustBeBuilt && filePath.startsWith("./") && fs.existsSync(path.resolve(this.path, filePath + ".ts"))){
+    if(!mustBeBuilt && (filePath.startsWith("./") || filePath.startsWith("../")) && fs.existsSync(path.resolve(this.path, filePath + ".ts"))){
         filePath = path.resolve(this.path, filePath + ".ts");
         mustBeBuilt = true;
     }

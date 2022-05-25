@@ -2,6 +2,7 @@ import * as assert from "assert";
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
 import {sleep} from "../scripts/utils";
+import {equal, ok} from "assert";
 
 describe("Website End-2-End", function(){
     let test;
@@ -36,6 +37,37 @@ describe("Website End-2-End", function(){
             const pageTitle = await innerHTML.jsonValue();
             assert.equal(await getDocsTitle(), pageTitle);
         }
+    });
+
+    async function getSubscribersCount(){
+        await test.page.goto("http://localhost:8000/mailing/subscribers");
+        const body = await test.page.$("body > pre");
+        const innerHTML = await body.getProperty('innerHTML');
+        return parseInt(await innerHTML.jsonValue());
+    }
+
+    it('Should subscribe to mailing list', async function(){
+        const subscribersCountBefore = await getSubscribersCount();
+        ok(!isNaN(subscribersCountBefore));
+        ok(subscribersCountBefore);
+
+        await test.page.goto("http://localhost:8000/");
+        const inputEmail = await test.page.$('#email');
+        await inputEmail.type("hi@cplepage.com");
+
+        const inputName = await test.page.$('#name');
+        await inputName.type("cplepage");
+        await inputName.press('Enter');
+
+        await sleep(2000);
+
+        const successMsgContainer = await test.page.$("#success-msg");
+        const successMsg = await successMsgContainer.getProperty('innerHTML');
+        equal(await successMsg.jsonValue(), "Thanks for subscribing!");
+
+        const subscribersCountAfter = await getSubscribersCount();
+        ok(!isNaN(subscribersCountAfter));
+        ok(subscribersCountAfter > subscribersCountBefore);
     });
 
     after(async function(){

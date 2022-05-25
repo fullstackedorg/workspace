@@ -3,6 +3,34 @@ import axios from "axios";
 import path from "path";
 import fs from "fs";
 
+export function badgeColor(value, range : [number, number, number, number], operator: "<" | ">"){
+    const colors = ["brightgreen", "green", "yellowgreen", "yellow", "red"];
+
+    if(operator === ">"){
+        if(value > range[0])
+            return colors[0];
+        else if(value > range[1])
+            return colors[1];
+        else if(value > range[2])
+            return colors[2];
+        else if(value > range[3])
+            return colors[3];
+        else
+            return colors[4];
+    }
+
+    if(value < range[0])
+        return colors[0];
+    else if(value < range[1])
+        return colors[1];
+    else if(value < range[2])
+        return colors[2];
+    else if(value < range[3])
+        return colors[3];
+    else
+        return colors[4];
+}
+
 export function registerBadgesRoutes(){
 
     const router = Router();
@@ -43,17 +71,7 @@ export function registerBadgesRoutes(){
             coverage = parseFloat(digitsSpan[0].slice(`<span class="strong">`.length, -`</span>`.length));
         }
 
-        let color;
-        if(coverage > 98)
-            color = "brightgreen";
-        else if(coverage > 90)
-            color = "green";
-        else if(coverage > 80)
-            color = "yellowgreen"
-        else if(coverage > 60)
-            color = "yellow";
-        else
-            color = "red";
+        const color = badgeColor(coverage, [98, 90, 80, 60], ">");
 
         await sendBadge(res, badgeTitle, coverage.toFixed(2) + "%25", color);
     });
@@ -85,19 +103,11 @@ export function registerBadgesRoutes(){
         const badgeTitle = "dependencies";
         if(sendCachedBadge(res, badgeTitle)) return;
 
-        const dependencies = Object.keys(process.env.DEPENDENCIES ?? {});
+        const dependenciesJSONFilePath = path.resolve(__dirname, "dependencies.json");
+        const dependenciesJSON = JSON.parse(fs.readFileSync(dependenciesJSONFilePath, {encoding: "utf-8"}));
+        const dependencies = Object.keys(dependenciesJSON);
 
-        let color;
-        if(dependencies.length < 5)
-            color = "brightgreen";
-        else if(dependencies.length < 15)
-            color = "green";
-        else if(dependencies.length < 30)
-            color = "yellowgreen"
-        else if(dependencies.length > 50)
-            color = "yellow";
-        else
-            color = "red";
+        const color = badgeColor(dependencies.length, [5, 15, 30, 50], "<");
 
         await sendBadge(res, badgeTitle, dependencies.length.toString(), color);
     });
@@ -106,22 +116,14 @@ export function registerBadgesRoutes(){
         const badgeTitle = "module deps";
         if(sendCachedBadge(res, badgeTitle)) return;
 
-        const initialDependencies = Object.keys(process.env.DEPENDENCIES ?? {});
+        const dependenciesJSONFilePath = path.resolve(__dirname, "dependencies.json");
+        const dependenciesJSON = JSON.parse(fs.readFileSync(dependenciesJSONFilePath, {encoding: "utf-8"}));
+        const initialDependencies = Object.keys(dependenciesJSON);
 
         const dependencies = new Set<string>(initialDependencies);
         await Promise.all(initialDependencies.map(dep => getDependenciesRecursively(dep, dependencies)));
 
-        let color;
-        if(dependencies.size < 50)
-            color = "brightgreen";
-        else if(dependencies.size < 100)
-            color = "green";
-        else if(dependencies.size < 200)
-            color = "yellowgreen"
-        else if(dependencies.size > 200)
-            color = "yellow";
-        else
-            color = "red";
+        const color = badgeColor(dependencies.size, [50, 100, 200, 400], "<");
 
         await sendBadge(res, badgeTitle, dependencies.size.toString(), color);
     });

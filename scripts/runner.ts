@@ -1,4 +1,6 @@
 import {exec, execSync} from "child_process";
+import {execScript} from "./utils";
+import path from "path";
 
 export default class {
     config: Config;
@@ -8,11 +10,15 @@ export default class {
         this.config = config
     }
 
-    start(){
+    async start(){
+        await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
+
         let cmd = `docker-compose -p ${this.config.name} -f ${this.config.out + "/docker-compose.yml"} up -d`;
         if(this.config.silent)
             cmd += " >/dev/null 2>&1";
         execSync(cmd);
+
+        await execScript(path.resolve(this.config.src, "postrun.ts"), this.config);
     }
 
     restart(){
