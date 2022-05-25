@@ -1,6 +1,5 @@
 import path from "path";
 import child_process from "child_process";
-import {killProcess} from "./utils";
 
 //@ts-ignore
 process.env.FORCE_COLOR = true;

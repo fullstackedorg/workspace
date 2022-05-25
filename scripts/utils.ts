@@ -120,23 +120,39 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
     }
 }
 
-export function execScript(filePath: string, args: any = null): Promise<void> {
+// exec command on remote host over ssh
+export function execSSH(ssh2, cmd){
+    return new Promise(resolve => {
+        let message = "";
+        ssh2.exec(cmd, (err, stream) => {
+            if (err) throw err;
+
+            stream.on('data', data => {
+                process.stdout.write(data);
+                message += data.toString();
+            });
+            stream.on('close', () => resolve(message));
+        });
+    });
+}
+
+export function execScript(filePath: string, config: Config, ...args): Promise<void> {
     return new Promise(async resolve => {
         if(!fs.existsSync(filePath))
             return resolve();
 
-        const config = defaultEsbuildConfig(filePath);
-        buildSync(config);
+        const esbuildConfig = defaultEsbuildConfig(filePath);
+        buildSync(esbuildConfig);
 
         if(process.argv.includes("--test-mode")) {
-            const fileContent = fs.readFileSync(config.outfile, {encoding: "utf8"});
-            fs.writeFileSync(config.outfile, `/* istanbul ignore file */
+            const fileContent = fs.readFileSync(esbuildConfig.outfile, {encoding: "utf8"});
+            fs.writeFileSync(esbuildConfig.outfile, `/* istanbul ignore file */
 ${fileContent}`);
         }
 
-        const importedScript = require(config.outfile);
+        const importedScript = require(esbuildConfig.outfile);
         if(typeof importedScript.default === 'function'){
-            const functionReturn = importedScript.default(args);
+            const functionReturn = importedScript.default(config, ...args);
             if(functionReturn instanceof Promise)
                 await functionReturn;
         }

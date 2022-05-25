@@ -19,7 +19,7 @@ export default async function(config: Config, build: boolean = true){
     if(!didSetExitHook){
         process.on("SIGINT", () => {
             if(runner)
-                runner.stop();
+                runner.stop(process.argv.includes("--test-mode"));
         });
         didSetExitHook = true;
     }
