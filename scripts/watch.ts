@@ -1,8 +1,9 @@
 import build from "./build";
 import {exec} from "child_process";
-import {killProcess} from "./utils";
+import {execScript, killProcess} from "./utils";
 import fs from "fs";
 import Runner from "./runner";
+import path from "path";
 
 let runner = null, outdir;
 
@@ -33,11 +34,11 @@ export default async function(config: Config) {
     fs.writeFileSync(outdir + "/.env", "FLAGS=--development");
 
     runner = new Runner(config);
-    runner.start();
+    await runner.start();
     runner.attach(process.stdout);
 
     process.on("SIGINT", () => {
         if(runner)
-            runner.stop();
+            runner.stop(true);
     });
 }

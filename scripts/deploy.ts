@@ -2,10 +2,11 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, execScript, getPackageJSON, printLine} from "./utils";
+import {askToContinue, execScript, printLine} from "./utils";
 import build from "./build";
 import {exec} from "child_process";
 import yaml from "yaml";
+import test from "./test";
 
 /*
 *
@@ -61,28 +62,24 @@ async function installDocker(ssh2) {
     }
 }
 
-function runTests(){
+async function  runTests(config: Config){
     console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
 
-    return new Promise((resolve) => {
-        let testCommand = `node ${path.resolve(__dirname, "../cli")} test --headless --coverage`;
+    try{
+        await test(config);
+    }catch (e) {
+        throw e;
+    }
 
-        const testProcess = exec(testCommand);
-        testProcess.stdout.pipe(process.stdout);
-        testProcess.stderr.on("data", (data) => {
-            console.error(data);
-            resolve(false);
-        });
-        testProcess.on("exit", () => resolve(true));
-    });
+    return true;
 }
 
 // prepare docker compose file for deployment
 function setupDockerComposeFile(config, version){
     const outFile = path.resolve(config.out, "docker-compose.yml");
-    const composeFileTemplate = path.resolve(__dirname, "../docker-compose.yml");
+    const builtComposeFile = path.resolve(config.out, "docker-compose.yml");
 
-    let content = fs.readFileSync(composeFileTemplate, {encoding: "utf-8"});
+    let content = fs.readFileSync(builtComposeFile, {encoding: "utf-8"});
 
     content = content.replace("8000:8000", `${config.port ?? 8000}:8000`);
     content = content.replace("./:/dist", `./${version}:/dist`);
@@ -171,15 +168,20 @@ export default async function (config: Config) {
     /*
     * e.g.,
     * /home
-    * |_ /project
-    *    |_ /0.0.1
-    *    |  |_ index.js
-    *    |  |_ /public
-    *    |     |_ ...
-    *    |_ /0.0.2
-    *    |  |_ index.js
-    *    |  |_ /public
-    *    |     |_ ...
+    * |_ nginx.conf
+    * |_ /project-1
+    * |  |_ docker-compose.yml
+    * |  |_ nginx.conf
+    * |  |_ /0.0.1
+    * |  |  |_ index.js
+    * |  |  |_ /public
+    * |  |  |  |_ ...
+    * |  |_ /0.0.2
+    * |  |  |_ index.js
+    * |  |  |_ /public
+    * |  |  |  |_ ...
+    * |_ /project-2
+    * |  |_ ...
     * ...
      */
 
@@ -206,7 +208,7 @@ export default async function (config: Config) {
             return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
     }
 
-    if(!config.skipTest && !await runTests())
+    if(!config.skipTest && !await runTests(config))
         return;
 
     if(!await sftp.exists(config.appDir))

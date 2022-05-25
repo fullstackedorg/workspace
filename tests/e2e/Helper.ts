@@ -1,7 +1,6 @@
 import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import {sleep} from "../../scripts/utils";
 import Runner from "../../scripts/runner";
 import build from "../../scripts/build";
 import config from "../../scripts/config";
@@ -25,7 +24,7 @@ export default class {
         });
         await build(localConfig);
         this.runner = new Runner(localConfig);
-        this.runner.start();
+        await this.runner.start();
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
 
@@ -82,7 +81,7 @@ export default class {
         }
 
         await this.browser.close();
-        this.runner.stop();
+        this.runner.stop(true);
         this.rmDir();
     }
 

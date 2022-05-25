@@ -2,6 +2,7 @@ import {Button, Col, Container, Form, FormControl, InputGroup, Row} from "react-
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faGithub} from "@fortawesome/free-brands-svg-icons/faGithub";
 import Hero from "website/src/home/Hero";
+import axios from "axios";
 
 export default function () {
     return <>
@@ -189,17 +190,19 @@ export default function () {
                         const container = e.currentTarget;
                         container.innerHTML = `<div class="my-4 text-center">Subscribing...</div>`;
 
-                        const request = await fetch("/subscribe?email=" + email + "&name=" + name);
-                        const response = await request.json();
+                        const response = await axios.post("/mailing/subscribe", {
+                            name: name,
+                            email: email
+                        });
 
-                        if(response.success)
-                            container.innerHTML = `<div class="my-4 text-center">Thanks for subscribing!</div>`;
+                        if(response.data.success)
+                            container.innerHTML = `<div id="success-msg" class="my-4 text-center">Thanks for subscribing!</div>`;
                     }}>
                         <div className={"mb-2"}><b>Stay informed.</b></div>
                         <InputGroup>
                             <FormControl id={"email"} placeholder="Email address" type={"email"}/>
                             <FormControl id={"name"} placeholder="Name" type={"text"}/>
-                            <Button as={"input"} type={"submit"} value={"Subscribe"} />
+                            <Button id={"subscribe"} as={"input"} type={"submit"} value={"Subscribe"} />
                         </InputGroup>
                         <div className={"text-muted"}><small>Stay up to date with the latest news and release.</small></div>
                     </Form>

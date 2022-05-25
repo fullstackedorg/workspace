@@ -19,7 +19,7 @@ function loadEnvVars(srcDir: string){
 }
 
 // get all env variables in the form of an object
-function getProcessedEnv(){
+function getProcessedEnv(config: Config){
     let processEnv = {};
     Object.keys(process.env).forEach(envKey => {
         // keys with parenthesis causes problems
@@ -28,6 +28,8 @@ function getProcessedEnv(){
 
         processEnv['process.env.' + envKey] = "'" + escape(process.env[envKey].trim()) + "'";
     });
+
+    processEnv['process.env.VERSION'] = JSON.stringify(config.version)
 
     return processEnv;
 }
@@ -44,11 +46,7 @@ async function buildServer(config, watcher){
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
 
-        define: {
-            ...getProcessedEnv(),
-            'process.env.VERSION': JSON.stringify(config.version),
-            'process.env.DEPENDENCIES': JSON.stringify(packageConfigs.dependencies)
-        },
+        define: getProcessedEnv(config),
 
         watch: watcher ? {
             onRebuild: async function(error, result){
@@ -103,10 +101,7 @@ async function buildWebApp(config, watcher){
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
 
-        define: {
-            ...getProcessedEnv(),
-            'process.env.VERSION': JSON.stringify(config.version)
-        },
+        define: getProcessedEnv(config),
 
         // assets like images are stored at dist/public/assets
         // and the server reroutes all asset request to this directory

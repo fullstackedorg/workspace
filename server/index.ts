@@ -5,19 +5,18 @@ import morgan from "morgan";
 import http from "http";
 import https from "https";
 
-export const publicDir = path.resolve(__dirname, './public');
-export const assetsDir = publicDir + "/assets";
-
 export default class Server {
     serverHTTP: http.Server;
     serverHTTPS: https.Server;
     express = express();
+    publicDir = path.resolve(__dirname, './public');
+    assetsDir = this.publicDir + "/assets";
 
     constructor() {
         if(process.argv.includes("--development")) this.express.use(morgan('dev'));
 
         this.express.use("*/assets/:assetFile", (req, res, next) => {
-            const filePath = assetsDir + "/" + req.params.assetFile;
+            const filePath = this.assetsDir + "/" + req.params.assetFile;
             if(fs.existsSync(filePath))
                 return res.sendFile(filePath);
 
@@ -27,11 +26,10 @@ export default class Server {
 
     start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
         // prevent starting server by import
-        // e.g.,
         // source: https://stackoverflow.com/a/6398335
         if (require.main !== module && !args.testing) return;
 
-        this.express.use(express.static(publicDir));
+        this.express.use(express.static(this.publicDir));
 
         const portHTTP = 8000;
         const portHTTPS = 8443;
