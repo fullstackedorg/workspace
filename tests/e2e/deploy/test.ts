@@ -175,6 +175,6 @@ describe("Deploy Test", function(){
         fs.rmSync(postdeployOutputFile, {force: true});
         fs.rmSync(postdeployAsyncOutputFile, {force: true});
 
-        execSync(`docker rm -f ${containerName}`);
+        execSync(`docker rm -f ${containerName} -v`);
     });
 });

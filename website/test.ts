@@ -8,6 +8,7 @@ describe("Website End-2-End", function(){
     let test;
 
     before(async function (){
+        this.timeout(30000);
         test = new Helper(__dirname);
         await test.start();
     });

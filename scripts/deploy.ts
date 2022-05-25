@@ -2,9 +2,8 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, execScript, printLine} from "./utils";
+import {askToContinue, execScript, execSSH, printLine} from "./utils";
 import build from "./build";
-import {exec} from "child_process";
 import yaml from "yaml";
 import test from "./test";
 
@@ -22,22 +21,6 @@ import test from "./test";
 * 9. save relevant stuff for next deployment
 *
  */
-
-// exec command on remote host over ssh
-function execSSH(ssh2, cmd){
-    return new Promise(resolve => {
-        let message = "";
-        ssh2.exec(cmd, (err, stream) => {
-            if (err) throw err;
-
-            stream.on('data', data => {
-                process.stdout.write(data);
-                message += data.toString();
-            });
-            stream.on('close', () => resolve(message));
-        });
-    });
-}
 
 // check if docker is installed on remote host
 async function isDockerInstalledOnRemote(ssh2): Promise<boolean>{
@@ -225,7 +208,7 @@ export default async function (config: Config) {
     await build(config);
 
     // predeploy script
-    await execScript(path.resolve(config.src, "predeploy.ts"), config);
+    await execScript(path.resolve(config.src, "predeploy.ts"), config, sftp);
 
     if(mustOverWriteCurrentVersion)
         await sftp.rmdir(serverPathDist, true);
