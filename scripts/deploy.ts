@@ -58,20 +58,14 @@ async function  runTests(config: Config){
 }
 
 // prepare docker compose file for deployment
-function setupDockerComposeFile(config, version){
+function setupDockerComposeFile(config){
     const outFile = path.resolve(config.out, "docker-compose.yml");
     const builtComposeFile = path.resolve(config.out, "docker-compose.yml");
 
     let content = fs.readFileSync(builtComposeFile, {encoding: "utf-8"});
 
     content = content.replace("8000:8000", `${config.port ?? 8000}:8000`);
-    content = content.replace("./:/dist", `./${version}:/dist`);
-
-    if(config.portHTTPS){
-        let yamlContent = yaml.parse(content);
-        yamlContent.services.node.ports.push(config.portHTTPS + ":8443");
-        content = yaml.stringify(yamlContent);
-    }
+    content = content.replace("./:/dist", `./${config.version}:/dist`);
 
     fs.writeFileSync(outFile, content);
     return outFile;
@@ -83,8 +77,10 @@ function setupNginxFile(config: Config){
     let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
 
     const port = config.port ?? "8000";
-    content = content.replace("{PORT}", port);
-    content = content.replace("{SERVER_NAME}", config.serverName ?? "localhost");
+    content = content.replace(/\{PORT\}/g, port);
+    content = content.replace(/\{SERVER_NAME\}/g, config.serverName ?? "localhost");
+    content = content.replace(/\{APP_NAME\}/g, config.name);
+    content = content.replace(/\{VERSION\}/g, config.version);
 
     fs.writeFileSync(outFile, content);
     return outFile;
@@ -92,7 +88,7 @@ function setupNginxFile(config: Config){
 
 // deploy app using docker compose
 async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
-    const dockerComposeFilePath = setupDockerComposeFile(config, config.version);
+    const dockerComposeFilePath = setupDockerComposeFile(config);
     await sftp.put(dockerComposeFilePath, serverPath + "/docker-compose.yml");
     fs.rmSync(dockerComposeFilePath);
 
@@ -202,8 +198,6 @@ export default async function (config: Config) {
         sftp.put(path.resolve(__dirname, "../nginx/nginx.conf"), config.appDir + "/nginx.conf")
     ]);
 
-    // await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${config.appDir}/key.pem -out ${config.appDir}/cert.pem -days 365`);
-
     // clean build
     await build(config);
 
@@ -214,6 +208,8 @@ export default async function (config: Config) {
         await sftp.rmdir(serverPathDist, true);
 
     await sftp.mkdir(serverPathDist, true);
+
+    await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`);
 
     await deployDockerCompose(config, sftp, serverPath, serverPathDist);
 

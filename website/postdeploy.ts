@@ -1,6 +1,8 @@
 import axios from "axios";
 
 export default async function(config: Config){
+    console.log("Busting github cdn cache");
+
     const urls = [
         "https://camo.githubusercontent.com/87a6cd953578ae234d42264582a108ca79662aab5224aa586d884a2d1aa41249/68747470733a2f2f66756c6c737461636b65642e6f72672f6261646765732f76657273696f6e2e737667",
         "https://camo.githubusercontent.com/8e7cbb0a8559cac9e4b56252864888ce16f8ef1175493dd42d472f75d38344c4/68747470733a2f2f66756c6c737461636b65642e6f72672f6261646765732f646570656e64656e636965732e737667",
