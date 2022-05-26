@@ -10,8 +10,7 @@ declare type ConfigBuild = {
 
 declare type ConfigWatch = {
     // listen port
-    port?       : string,
-    portHTTPS?  : string,
+    port?       : string
 }
 
 declare type ConfigTest = {

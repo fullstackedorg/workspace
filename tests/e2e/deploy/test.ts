@@ -36,8 +36,8 @@ describe("Deploy Test", function(){
             throw Error("Deploy test needs Docker");
 
         execSync(`docker rm -f ${containerName} >/dev/null 2>&1`);
-        printLine("Setting up docker container container");
-        execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:80 --name ${containerName} docker:dind`);
+        printLine("Setting up docker container");
+        execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:80 -p 8443:443 --name ${containerName} docker:dind`);
         printLine("Installing ssh server");
         execSync(`docker exec ${containerName} apk add --update --no-cache openssh`);
         execSync(`docker exec ${containerName} sh -c "echo \\\"PasswordAuthentication yes\\\" >> /etc/ssh/sshd_config"`);
@@ -67,6 +67,22 @@ describe("Deploy Test", function(){
         const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
+        const title = await page.$("h1");
+        const innerHTML = await title.getProperty('innerHTML');
+        const value = await innerHTML.jsonValue();
+
+        equal(value, "Deploy Test");
+
+        await browser.close();
+    });
+
+    it("Should access deployed app over https", async function(){
+        const browser = await puppeteer.launch({
+            headless: process.argv.includes("--headless"),
+            ignoreHTTPSErrors: true
+        });
+        const page = await browser.newPage();
+        await page.goto("https://localhost:8443");
         const title = await page.$("h1");
         const innerHTML = await title.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();

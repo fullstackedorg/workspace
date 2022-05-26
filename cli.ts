@@ -16,7 +16,6 @@ const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
     "--port=": value => config.port = value,
-    "--port-https=": value => config.portHTTPS = value,
     "--host=": value => config.host = value,
     "--ssh-port=": value => config.sshPort = parseInt(value),
     "--user=": value => config.user = value,
