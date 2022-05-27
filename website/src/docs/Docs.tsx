@@ -20,6 +20,10 @@ const docsPages: docPages = {
         title: "Introduction",
         file: require("./pages/Introduction.md")
     },
+    "/requirements": {
+        title: "Requirements",
+        file: require("./pages/Requirements.md")
+    },
     "/quick-start": {
         title: "Quick Start",
         file: require("./pages/QuickStart.md")

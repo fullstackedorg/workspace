@@ -6,6 +6,7 @@
     "include": [
         "webapp/index.tsx",
         "server/index.ts",
-        "tests/integration/Helper.ts"
+        "tests/integration/Helper.ts",
+        "scripts/sleep.ts"
     ]
 }

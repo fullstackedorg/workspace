@@ -1,5 +1,5 @@
 # Quick Start
-It will take less than a minute to setup you up! Give it a try!
+
 
 ### Starting your project
 1. Create a folder were you will develop your awesome web app.

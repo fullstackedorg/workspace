@@ -1,10 +1,11 @@
 import {before, describe} from "mocha";
-import {clearLine, killProcess, printLine, sleep} from "../../../scripts/utils";
+import {clearLine, printLine} from "../../../scripts/utils";
 import {exec, execSync} from "child_process";
 import fs from "fs";
 import path from "path";
 import {equal} from "assert";
 import puppeteer from "puppeteer";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Install Test", function(){
     const outDir = path.resolve(__dirname, "dist");

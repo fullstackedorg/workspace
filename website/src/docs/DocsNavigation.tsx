@@ -1,4 +1,4 @@
-import {Component} from "React";
+import {Component} from "react";
 import {Location, NavLink} from "react-router-dom";
 import {docPages} from "website/src/docs/Docs";
 

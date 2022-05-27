@@ -1,7 +1,7 @@
 import {execSync} from "child_process";
 import fs from "fs";
 import path from "path";
-import {sleep} from "../scripts/utils";
+import sleep from "fullstacked/scripts/sleep";
 
 export default async function (config: Config){
     require('dotenv').config();

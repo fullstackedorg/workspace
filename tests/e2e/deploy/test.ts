@@ -4,7 +4,8 @@ import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path from "path";
-import {clearLine, isDockerInstalled, printLine, sleep} from "../../../scripts/utils";
+import {clearLine, isDockerInstalled, printLine} from "../../../scripts/utils";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Deploy Test", function(){
     const containerName = "dind";

@@ -36,8 +36,6 @@ function getProcessedEnv(config: Config){
 
 // bundles the server
 async function buildServer(config, watcher){
-    const packageConfigs = getPackageJSON();
-
     const options = {
         entryPoints: [ config.src + "/server.ts" ],
         outfile: config.out + "/index.js",
@@ -67,7 +65,10 @@ async function buildServer(config, watcher){
         fs.writeFileSync(config.out + "/watcher.js", watcherScript);
     }
 
+    // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
+
+    // merge with user defined docker-compose if existant
     const srcDockerComposeFilePath = config.src + "/docker-compose.yml";
     if(fs.existsSync(srcDockerComposeFilePath)){
         const templateDockerCompose = yaml.parse(dockerCompose);
@@ -82,6 +83,8 @@ async function buildServer(config, watcher){
                 }
             });
     }
+
+    // output docker-compose result to dist directory
     fs.writeFileSync(config.out + "/docker-compose.yml", dockerCompose);
 
     if(!config.silent)

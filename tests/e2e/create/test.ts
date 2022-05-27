@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import Helper from "tests/e2e/Helper"
 import {equal, ok} from "assert";
-import {sleep} from "../../../scripts/utils";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Create Test", function(){
     const webAppFile = path.resolve(__dirname, "index.tsx");

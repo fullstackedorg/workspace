@@ -1,6 +1,6 @@
 import {before, describe} from "mocha";
 import axios from "axios";
-import {equal, ok} from "assert";
+import {equal} from "assert";
 import path from "path";
 import fs from "fs";
 import server from "./server";

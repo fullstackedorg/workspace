@@ -1,7 +1,7 @@
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
 import {equal} from "assert";
-import {sleep} from "../../../scripts/utils";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Fetch Test", function(){
     let test;

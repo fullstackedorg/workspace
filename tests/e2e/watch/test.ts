@@ -2,9 +2,10 @@ import {before, describe} from "mocha";
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
-import {killProcess, sleep} from "scripts/utils";
+import {killProcess} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
 import path from "path";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;

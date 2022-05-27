@@ -5,18 +5,22 @@ import child_process from "child_process";
 process.env.FORCE_COLOR = true;
 
 export default function(config){
-    const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
+    return new Promise<void>(resolve => {
+        const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
-    const testFiles = path.resolve(process.cwd(), "**/test.ts");
+        const testFiles = path.resolve(process.cwd(), "**/test.ts");
 
-    let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
-        (config.headless ? "--headless" : "") + " " +
-        (config.coverage ? "--coverage" : "");
+        let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
+            (config.headless ? "--headless" : "") + " " +
+            (config.coverage ? "--coverage" : "");
 
-    if(config.coverage)
-        testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand
+        if(config.coverage)
+            testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand
 
-    const testProcess = child_process.exec(testCommand);
-    testProcess.stderr.pipe(process.stderr)
-    testProcess.stdout.pipe(process.stdout);
+        const testProcess = child_process.exec(testCommand);
+        testProcess.stderr.pipe(process.stderr)
+        testProcess.stdout.pipe(process.stdout);
+
+        testProcess.on("exit", resolve);
+    });
 }

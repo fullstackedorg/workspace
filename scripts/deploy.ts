@@ -48,7 +48,11 @@ async function  runTests(config: Config){
     console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
 
     try{
-        await test(config);
+        await test({
+            ...config,
+            headless: true,
+            coverage: true
+        });
     }catch (e) {
         throw e;
     }
@@ -113,6 +117,7 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
     // exec start command
     await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
+    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml restart`);
 }
 
 export default async function (config: Config) {
