@@ -52,6 +52,7 @@ const darkThemeCSS = `
     }
     blockquote {
         border-left: 5px solid #535f64;
+        color: #bfc0c1;
     }
 `;
 
@@ -225,9 +226,7 @@ export default class Layout extends Component {
                         padding: 0 20px;
                         margin-bottom: 20px;
                         border-left: 5px solid #d7dfe1;
-                    }
-                    table td{
-                        vertical-align: middle;
+                        color: #60676e;
                     }
                 `}
             </style>
