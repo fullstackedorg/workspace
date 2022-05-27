@@ -1,66 +1,63 @@
-import {ReactElement} from "react";
+import {createRef} from "react";
 import {Route, Routes, useLocation} from "react-router-dom";
-import Introduction from "website/src/docs/pages/Introduction";
 import {Button, Container} from "react-bootstrap";
 import {faBars} from "@fortawesome/free-solid-svg-icons/faBars";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Typeahead } from 'react-bootstrap-typeahead';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
-import Testing from "website/src/docs/pages/Testing";
-import Deploying from "website/src/docs/pages/Deploying";
 import DocsNavigation from "website/src/docs/DocsNavigation";
-import Creating from "./pages/Creating";
-import Developing from "./pages/Developing";
-import Building from "./pages/Building";
-import QuickStart from "./pages/QuickStart";
-import Commands from "./pages/Commands";
 import DocsNextPrev from "./DocsNextPrev";
+import DocsMarkdownRenderer from "./DocsMarkdownRenderer";
 
 export type docPages = {[path: string]: {
     title: string,
-    component: ReactElement
+    file: string
 }};
 
 
 const docsPages: docPages = {
     "/": {
         title: "Introduction",
-        component: <Introduction />
+        file: require("./pages/Introduction.md")
     },
     "/quick-start": {
         title: "Quick Start",
-        component: <QuickStart />
+        file: require("./pages/QuickStart.md")
     },
     "/commands": {
         title: "Commands",
-        component: <Commands />
+        file: require("./pages/Commands.md")
     },
     "/creating": {
         title: "Creating",
-        component: <Creating />
+        file: require("./pages/Creating.md")
     },
     "/developing": {
         title: "Developing",
-        component: <Developing />
+        file: require("./pages/Developing.md")
     },
     "/building": {
         title: "Building",
-        component: <Building />
+        file: require("./pages/Building.md")
     },
     "/testing": {
         title: "Testing",
-        component: <Testing />
+        file: require("./pages/Testing.md")
     },
     "/deploying": {
         title: "Deploying",
-        component: <Deploying />
+        file: require("./pages/Deploying.md")
     }
 }
 
 export default function() {
     const location = useLocation();
+    const navigationRef = createRef<DocsNavigation>();
     return <>
         <style>{`
+        h1{
+            margin-bottom: 25px;
+        }
         #docs-navigation {
             width: 300px;
             position: fixed;
@@ -120,7 +117,8 @@ export default function() {
             padding-top: 90px;
             margin-top: calc(3rem - 90px);
         }
-        .docs-content .box {
+        .docs-content .box,
+        .docs-content pre {
             padding: 1.5rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
@@ -184,7 +182,9 @@ export default function() {
                         />
                     </div>
                     <div className={"mb-2"}><b>References</b></div>
-                    <DocsNavigation location={location} pages={docsPages} />
+                    <DocsNavigation ref={navigationRef}
+                                    location={location}
+                                    pages={docsPages} />
                 </div>
             </div>
             <div className={"docs-navigation-overlay"} onClick={() =>
@@ -204,9 +204,14 @@ export default function() {
                 <Routes>
                     {Object.keys(docsPages).map((page, index) =>
                         <Route key={"page-"+index} path={page}
-                               element={<Container><h1>{docsPages[page].title}</h1>
-                                   {docsPages[page].component}
-                               </Container>} />)}
+                               element={<DocsMarkdownRenderer
+                                   mdFile={docsPages[page].file}
+                                   didUpdateContent={() => {
+                                       if(navigationRef.current)
+                                           navigationRef.current.checkForSections();
+                                   }}
+                               />}
+                        />)}
                 </Routes>
                 <DocsNextPrev pages={docsPages} location={location} />
             </div>

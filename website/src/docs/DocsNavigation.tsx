@@ -8,20 +8,8 @@ export default class extends Component{
     props: DocsNavigationProps;
     state: { sections: string[] } = { sections: [] };
 
-    componentDidMount() {
-        window.scrollTo({top: 0, left: 0, behavior: "smooth"});
-        this.checkForSections();
-    }
-
-    componentDidUpdate(prevProps: Readonly<DocsNavigationProps>, prevState: Readonly<{}>, snapshot?: any) {
-        if(prevProps.location.pathname === this.props.location.pathname)
-            return;
-
-        window.scrollTo({top: 0, left: 0, behavior: "smooth"});
-        this.checkForSections();
-    }
-
     checkForSections(){
+        window.scrollTo({top: 0, left: 0, behavior: "smooth"});
         const sections = Array.from(document.querySelectorAll("h3")).map(section => {
             const sectionTitle = section.innerText;
             section.setAttribute("id", this.slugishString(sectionTitle))

@@ -4,7 +4,6 @@ import fs from "fs";
 import glob from "glob";
 import {askToContinue, execScript, execSSH, printLine} from "./utils";
 import build from "./build";
-import yaml from "yaml";
 import test from "./test";
 
 /*
