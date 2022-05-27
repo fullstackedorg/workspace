@@ -49,14 +49,11 @@ npm i fullstacked
 ```shell
 npx fullstacked create
 ```
-5. Make your first build! (or use the `watch` command and skip the next step)
+5. Startup you project locally!
 ```shell
-npx fullstacked build
+npx fullstacked watch
 ```
-6. Start your app like any other node project
-```shell
-node dist/index
-```
+Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
 ## Commands
 

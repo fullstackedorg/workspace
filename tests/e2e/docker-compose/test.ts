@@ -1,11 +1,10 @@
 import {before, describe} from "mocha";
-import Helper from "tests/e2e/Helper"
 import {equal} from "assert";
-import {killProcess, sleep} from "../../../scripts/utils";
 import {exec} from "child_process";
 import path from "path";
 import puppeteer from "puppeteer";
 import fs from "fs";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Docker-Compose Test", function(){
     let runProcess, browser, page;

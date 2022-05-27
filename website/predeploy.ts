@@ -1,7 +1,8 @@
-import {execSSH, sleep} from "../scripts/utils";
+import {execSSH} from "../scripts/utils";
 import SFTP from "ssh2-sftp-client";
 import fs from "fs";
 import path from "path";
+import sleep from "fullstacked/scripts/sleep";
 
 export default async function (config: Config, sftp: SFTP) {
     const isListmonkVolumePresent = await execSSH(sftp.client, "docker volume ls -q | grep fullstacked_listmonk");

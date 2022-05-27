@@ -37,7 +37,7 @@ Module.prototype.require = function(){
     // check if there is a path alias
     if(Object.keys(tsConfig.compilerOptions.paths).includes(filePath)){
         filePath = path.resolve(fullstackedRoot, tsConfig.compilerOptions.baseUrl, tsConfig.compilerOptions.paths[filePath][0]);
-        mustBeBuilt = true
+        mustBeBuilt = true;
     }
 
     // build change .ts end for .js

@@ -71,12 +71,6 @@ export async function killProcess(process, port: number = 0){
     }
 }
 
-export function sleep(ms: number){
-    return new Promise<void>(resolve => {
-        setTimeout(resolve, ms);
-    });
-}
-
 export async function isDockerInstalled(): Promise<boolean>{
     const dockerVersion = execSync("docker -v").toString();
     return dockerVersion !== "";
@@ -115,6 +109,7 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
     return {
         entryPoints: [entrypoint],
         outfile: entrypoint.slice(0, -2) + "js",
+        platform: "node",
         format: "cjs",
         sourcemap: true
     }
@@ -141,7 +136,10 @@ export function execScript(filePath: string, config: Config, ...args): Promise<v
         if(!fs.existsSync(filePath))
             return resolve();
 
-        const esbuildConfig = defaultEsbuildConfig(filePath);
+        const esbuildConfig = {
+            ...defaultEsbuildConfig(filePath),
+            bundle: true
+        };
         buildSync(esbuildConfig);
 
         if(process.argv.includes("--test-mode")) {

@@ -1,9 +1,8 @@
 import build from "./build";
 import {exec} from "child_process";
-import {execScript, killProcess} from "./utils";
+import {killProcess} from "./utils";
 import fs from "fs";
 import Runner from "./runner";
-import path from "path";
 
 let runner = null, outdir;
 

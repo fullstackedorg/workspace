@@ -1,8 +1,8 @@
 import * as assert from "assert";
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
-import {sleep} from "../scripts/utils";
 import {equal, ok} from "assert";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Website End-2-End", function(){
     let test;
