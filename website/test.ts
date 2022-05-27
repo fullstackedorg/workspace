@@ -34,6 +34,7 @@ describe("Website End-2-End", function(){
         for (let i = 0; i < docPagesCount; i++) {
             const docPages = await test.page.$$("#docs-navigation > div > div > a");
             await docPages[i].click();
+            await sleep(200);
             const innerHTML = await docPages[i].getProperty('innerHTML');
             const pageTitle = await innerHTML.jsonValue();
             assert.equal(await getDocsTitle(), pageTitle);
