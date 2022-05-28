@@ -5,6 +5,7 @@ import path from "path";
 import puppeteer from "puppeteer";
 import fs from "fs";
 import sleep from "fullstacked/scripts/sleep";
+import {cleanOutDir} from "../../../scripts/utils";
 
 describe("Run Test", function(){
     let runProcess, browser, page;
@@ -28,9 +29,8 @@ describe("Run Test", function(){
         await browser.close();
         runProcess.kill("SIGINT");
 
-        await sleep(3000);
+        await sleep(1000);
 
-        const distDir = path.resolve(__dirname, "dist");
-        if(fs.existsSync(distDir)) fs.rmSync(distDir, {recursive: true, force: true});
+        cleanOutDir(path.resolve(__dirname, "dist"));
     });
 });

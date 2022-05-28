@@ -1,5 +1,5 @@
 import {before, describe} from "mocha";
-import {clearLine, printLine} from "../../../scripts/utils";
+import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import {exec, execSync} from "child_process";
 import fs from "fs";
 import path from "path";
@@ -43,6 +43,6 @@ describe("Install Test", function(){
         await browser.close();
         appProcess.kill("SIGINT");
         await sleep(3000);
-        fs.rmSync(outDir, {force: true, recursive: true});
+        cleanOutDir(outDir);
     });
 });

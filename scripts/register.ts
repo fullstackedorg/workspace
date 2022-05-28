@@ -11,7 +11,7 @@ const fullstackedRoot = path.resolve(__dirname, "..");
 const tsConfig = JSON.parse(fs.readFileSync(fullstackedRoot + "/tsconfig.json", {encoding: "utf8"}));
 
 // overriding require method
-// this allows to run .ts file with node by build them with esbuild on the fly
+// this allows to run .ts file with node by building them with esbuild on the fly
 // source: https://stackoverflow.com/a/34186494
 const originalRequire = Module.prototype.require;
 //@ts-ignore

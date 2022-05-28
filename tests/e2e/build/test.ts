@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
 import {equal, ok} from "assert";
+import {cleanOutDir} from "../../../scripts/utils";
 
 describe("Build Test", function(){
     const prebuildOutputFile = path.resolve(__dirname, "prebuild.txt");
@@ -41,6 +42,6 @@ describe("Build Test", function(){
         fs.rmSync(prebuildAsyncOutputFile);
         fs.rmSync(postbuildOutputFile);
         fs.rmSync(postbuildAsyncOutputFile);
-        fs.rmSync(__dirname + "/dist", {force: true, recursive: true});
+        cleanOutDir(__dirname + "/dist");
     });
 });

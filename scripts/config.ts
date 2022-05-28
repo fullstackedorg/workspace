@@ -7,15 +7,17 @@ const defaultConfig: Config = {
 }
 
 export default function(config) {
+    // spread defaults with values caught in flags
     config = {
         ...defaultConfig,
         ...config
     }
 
+    // always add dist to out dir
     config.out += "/dist"
 
+    // force to have a package.json
     const packageConfigs = getPackageJSON();
-
     if(Object.keys(packageConfigs).length === 0)
         throw Error("Could not find package.json file or your package.json is empty");
 
@@ -31,8 +33,6 @@ export default function(config) {
     optionalConfig.forEach(key => {
         config[key] = config[key] ?? packageConfigs[key];
     });
-
-
 
     return config;
 }

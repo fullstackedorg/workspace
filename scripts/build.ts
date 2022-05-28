@@ -2,7 +2,7 @@ import path from "path"
 import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {execSync} from "child_process";
-import {cleanOutDir, copyRecursiveSync, execScript, getPackageJSON} from "./utils";
+import {cleanOutDir, copyRecursiveSync, execScript} from "./utils";
 import crypto from "crypto";
 import yaml from "yaml";
 
