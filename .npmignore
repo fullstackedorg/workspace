@@ -28,11 +28,7 @@ tsconfig.emitDeclaration.json
 
 cli.ts
 
-postinstall.ts
-
 webapp/GlobalReact.d.ts
 
 server/index.js
 server/watcher.js
-server/Badges/badges.d.ts
-server/Badges/badges.js

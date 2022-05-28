@@ -8,7 +8,6 @@ import path from "path";
 
     const otherScripts = [
         path.resolve(__dirname, "./cli.ts"),
-        path.resolve(__dirname, "./postinstall.ts"),
         path.resolve(__dirname, "./.mocharc.ts")
     ]
 
