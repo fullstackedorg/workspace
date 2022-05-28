@@ -8,16 +8,17 @@ import test from "./test";
 
 /*
 *
-* 1. check requirements (package.json [name, version, etc])
-* 2. try to connect to remote host
-* 3. check if app at version already deployed
+* 1. try to connect to remote host
+* 2. check if app at version already deployed
 * 3. check if docker and docker-compose is installed
 * 4. run tests
-* 5. ship nginx docker-compose and nginx.conf
-* 6. ship built app
-* 7. up built app
-* 8. up nginx
-* 9. save relevant stuff for next deployment
+* 5. ship fullstacked-nginx config files
+* 6. build app production mode
+* 7. setup and ship project docker-compose file
+* 8. setup and ship project nginx.conf file
+* 9. ship built app
+* 10. up/restart built app
+* 11. up/restart fullstacked-nginx
 *
  */
 
@@ -44,7 +45,7 @@ async function installDocker(ssh2) {
     }
 }
 
-async function  runTests(config: Config){
+async function runTests(config: Config){
     console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
 
     try{
@@ -56,49 +57,50 @@ async function  runTests(config: Config){
     }catch (e) {
         throw e;
     }
-
-    return true;
 }
 
 // prepare docker compose file for deployment
-function setupDockerComposeFile(config){
-    const outFile = path.resolve(config.out, "docker-compose.yml");
-    const builtComposeFile = path.resolve(config.out, "docker-compose.yml");
+function setupDockerComposeFile(dockerComposeFilePath: string, port, version){
+    let content = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
 
-    let content = fs.readFileSync(builtComposeFile, {encoding: "utf-8"});
+    // switch port if defined
+    // TODO: maybe move this to build script
+    content = content.replace("8000:8000", `${port ?? 8000}:8000`);
 
-    content = content.replace("8000:8000", `${config.port ?? 8000}:8000`);
-    content = content.replace("./:/dist", `./${config.version}:/dist`);
+    // switch mounting current dir to ./{VERSION} dir
+    content = content.replace("./:/dist", `./${version}:/dist`);
 
-    fs.writeFileSync(outFile, content);
-    return outFile;
+    // overwrite file
+    fs.writeFileSync(dockerComposeFilePath, content);
 }
 
-function setupNginxFile(config: Config){
-    const outFile = config.out + "/nginx.conf";
+function setupNginxFile(nginxFilePath: string, port: string, serverName: string, name: string, version: string){
     const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
     let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
 
-    const port = config.port ?? "8000";
-    content = content.replace(/\{PORT\}/g, port);
-    content = content.replace(/\{SERVER_NAME\}/g, config.serverName ?? "localhost");
-    content = content.replace(/\{APP_NAME\}/g, config.name);
-    content = content.replace(/\{VERSION\}/g, config.version);
+    content = content.replace(/\{PORT\}/g, port ?? "8000");
+    content = content.replace(/\{SERVER_NAME\}/g, serverName ?? "localhost");
+    content = content.replace(/\{APP_NAME\}/g, name);
+    content = content.replace(/\{VERSION\}/g, version);
 
-    fs.writeFileSync(outFile, content);
-    return outFile;
+    fs.writeFileSync(nginxFilePath, content);
 }
 
 // deploy app using docker compose
 async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
-    const dockerComposeFilePath = setupDockerComposeFile(config);
-    await sftp.put(dockerComposeFilePath, serverPath + "/docker-compose.yml");
+    // setup and ship docker-compose file
+    const dockerComposeFilePath = path.resolve(config.out, "docker-compose.yml")
+    setupDockerComposeFile(dockerComposeFilePath, config.port, config.version);
+    await sftp.put(config.out + "/docker-compose.yml", serverPath + "/docker-compose.yml");
     fs.rmSync(dockerComposeFilePath);
 
-    const nginxFilePath = setupNginxFile(config);
+    // setup and ship nginx
+    const nginxFilePath = path.resolve(config.out, "nginx.conf");
+    setupNginxFile(nginxFilePath, config.port, config.serverName, config.name, config.version);
     await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
     fs.rmSync(nginxFilePath);
 
+    // gather all dist files
     const files = glob.sync("**/*", {cwd: config.out})
     const localFilePaths = files.map(file => path.resolve(process.cwd(), config.out, file));
 
@@ -115,7 +117,8 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
 
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
-    // exec start command
+
+    // start app
     await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
     await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml restart`);
 }
@@ -191,9 +194,11 @@ export default async function (config: Config) {
             return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
     }
 
-    if(!config.skipTest && !await runTests(config))
-        return;
+    if(!config.skipTest){
+        await runTests(config)
+    }
 
+    // send fullstacked-nginx files at appDir
     if(!await sftp.exists(config.appDir))
         await sftp.mkdir(config.appDir, true);
 
@@ -202,24 +207,29 @@ export default async function (config: Config) {
         sftp.put(path.resolve(__dirname, "../nginx/nginx.conf"), config.appDir + "/nginx.conf")
     ]);
 
-    // clean build
+    // build app
     await build(config);
 
     // predeploy script
     await execScript(path.resolve(config.src, "predeploy.ts"), config, sftp);
 
+    // clean and create directory
     if(mustOverWriteCurrentVersion)
         await sftp.rmdir(serverPathDist, true);
-
     await sftp.mkdir(serverPathDist, true);
 
+    // create self-signed certificate
+    // TODO: Allow to provide legit certificates
     await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`);
 
+    // deploy
     await deployDockerCompose(config, sftp, serverPath, serverPathDist);
 
+    // up/restart fullstacked-nginx
     await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
     await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
 
+    // close connection
     await sftp.end();
 
     if(!config.silent)

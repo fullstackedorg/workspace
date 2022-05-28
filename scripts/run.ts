@@ -16,10 +16,11 @@ export default async function(config: Config, build: boolean = true){
 
     runner.attach(process.stdout);
 
+    // set exit hook only once
     if(!didSetExitHook){
         process.on("SIGINT", () => {
             if(runner)
-                runner.stop(process.argv.includes("--test-mode"));
+                runner.stop();
         });
         didSetExitHook = true;
     }

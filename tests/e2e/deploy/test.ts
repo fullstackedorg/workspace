@@ -4,7 +4,7 @@ import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path from "path";
-import {clearLine, isDockerInstalled, printLine} from "../../../scripts/utils";
+import {cleanOutDir, clearLine, isDockerInstalled, printLine} from "../../../scripts/utils";
 import sleep from "fullstacked/scripts/sleep";
 
 describe("Deploy Test", function(){
@@ -33,7 +33,7 @@ describe("Deploy Test", function(){
     before(async function (){
         this.timeout(50000);
 
-        if(!await isDockerInstalled())
+        if(!isDockerInstalled())
             throw Error("Deploy test needs Docker");
 
         execSync(`docker rm -f ${containerName} >/dev/null 2>&1`);
@@ -123,7 +123,7 @@ describe("Deploy Test", function(){
         equal(value, "Deploy Test 2");
 
         await browser.close();
-        fs.rmSync(path.resolve(updatedAppSrc, "dist"), {force: true, recursive: true});
+        cleanOutDir(path.resolve(updatedAppSrc, "dist"))
     });
 
     it("Should re-deploy with new app version", async function(){
@@ -185,8 +185,7 @@ describe("Deploy Test", function(){
     });
 
     after(function(){
-        fs.rmSync(path.resolve(__dirname, "dist"), {force: true, recursive: true});
-
+        cleanOutDir(path.resolve(__dirname, "dist"))
         fs.rmSync(predeployOutputFile, {force: true});
         fs.rmSync(predeployAsyncOutputFile, {force: true});
         fs.rmSync(postdeployOutputFile, {force: true});

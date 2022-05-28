@@ -8,12 +8,15 @@ export default function(config){
     return new Promise<void>(resolve => {
         const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
+        // gather all test.ts files
+        // TODO: swap to **/*.test.ts maybe
         const testFiles = path.resolve(process.cwd(), "**/test.ts");
 
         let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
             (config.headless ? "--headless" : "") + " " +
             (config.coverage ? "--coverage" : "");
 
+        // use nyc for coverage
         if(config.coverage)
             testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand
 

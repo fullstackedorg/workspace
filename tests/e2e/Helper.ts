@@ -4,6 +4,7 @@ import fs from "fs";
 import Runner from "../../scripts/runner";
 import build from "../../scripts/build";
 import config from "../../scripts/config";
+import {cleanOutDir} from "../../scripts/utils";
 
 export default class {
     dir;
@@ -40,7 +41,7 @@ export default class {
             if(this.browser?.close)
                 this.browser.close();
 
-            this.rmDir();
+            cleanOutDir(this.dir + "/dist")
 
             console.error(err);
             process.exit(1);
@@ -82,11 +83,6 @@ export default class {
 
         await this.browser.close();
         this.runner.stop(true);
-        this.rmDir();
-    }
-
-    rmDir(){
-        if(fs.existsSync(this.dir + "/dist"))
-            fs.rmSync(this.dir + "/dist", {force: true, recursive: true});
+        cleanOutDir(this.dir + "/dist")
     }
 }

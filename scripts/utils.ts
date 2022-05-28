@@ -5,6 +5,7 @@ import os from "os";
 import {exec, execSync} from "child_process";
 import {BuildOptions, buildSync} from "esbuild";
 
+// simple y/n console input
 export function askToContinue(question): Promise<boolean> {
     const rl = createInterface({
         input: process.stdin,
@@ -29,6 +30,7 @@ export function getPackageJSON():{[key:string]: any} {
     return JSON.parse(fs.readFileSync(packageJSONPath, {encoding: "utf-8"}));
 }
 
+// harsh kill process at port
 export async function killProcess(process, port: number = 0){
     if(!process)
         return;
@@ -71,12 +73,19 @@ export async function killProcess(process, port: number = 0){
     }
 }
 
-export async function isDockerInstalled(): Promise<boolean>{
+// check if docker and docker-compose CLI is installed locally
+export function isDockerInstalled(): boolean{
     const dockerVersion = execSync("docker -v").toString();
-    return dockerVersion !== "";
+    if(dockerVersion === "")
+        return false;
+
+    const dockerComposeVersion = execSync("docker-compose -v").toString();
+    return dockerComposeVersion !== "";
 }
 
+// print line at current cursor
 export function printLine(line: string) {
+    // hack for JetBrain WebStorm to printout when using test panel
     if(process.argv.includes("--grep"))
         return console.log(line);
 
@@ -84,6 +93,7 @@ export function printLine(line: string) {
     process.stdout.write(line);
 }
 
+// clear line at cursor
 export function clearLine() {
     rlClearLine(process.stdout, 0);
     cursorTo(process.stdout, 0, null);
@@ -131,39 +141,43 @@ export function execSSH(ssh2, cmd){
     });
 }
 
-export function execScript(filePath: string, config: Config, ...args): Promise<void> {
-    return new Promise(async resolve => {
-        if(!fs.existsSync(filePath))
-            return resolve();
+// exec .ts file
+export async function execScript(filePath: string, config: Config, ...args): Promise<void> {
+    if(!fs.existsSync(filePath))
+        return;
 
-        const esbuildConfig = {
-            ...defaultEsbuildConfig(filePath),
-            bundle: true
-        };
-        buildSync(esbuildConfig);
+    // build file on the fly
+    const esbuildConfig = {
+        ...defaultEsbuildConfig(filePath),
+        bundle: true
+    };
+    buildSync(esbuildConfig);
 
-        if(process.argv.includes("--test-mode")) {
-            const fileContent = fs.readFileSync(esbuildConfig.outfile, {encoding: "utf8"});
-            fs.writeFileSync(esbuildConfig.outfile, `/* istanbul ignore file */
+    // with test-mode, add istanbul ignore so the code coverage wont fail to parse deleted files
+    if(process.argv.includes("--test-mode")) {
+        const fileContent = fs.readFileSync(esbuildConfig.outfile, {encoding: "utf8"});
+        fs.writeFileSync(esbuildConfig.outfile, `/* istanbul ignore file */
 ${fileContent}`);
-        }
+    }
 
-        const importedScript = require(esbuildConfig.outfile);
-        if(typeof importedScript.default === 'function'){
-            const functionReturn = importedScript.default(config, ...args);
-            if(functionReturn instanceof Promise)
-                await functionReturn;
-        }
-        deleteBuiltTSFile(filePath);
-        resolve();
-    });
+    const importedScript = require(esbuildConfig.outfile);
+    if(typeof importedScript.default === 'function'){
+        const functionReturn = importedScript.default(config, ...args);
+        if(functionReturn instanceof Promise)
+            await functionReturn;
+    }
+    deleteBuiltTSFile(filePath);
 }
 
+// delete .js and .js.map file
 export function deleteBuiltTSFile(filePath: string){
     if(fs.existsSync(filePath.slice(0, -2) + "js")) fs.rmSync(filePath.slice(0, -2) + "js");
     if(fs.existsSync(filePath.slice(0, -2) + "js.map")) fs.rmSync(filePath.slice(0, -2) + "js.map");
 }
 
+// simple rm -rf
 export function cleanOutDir(dir){
+    if(!fs.existsSync(dir))
+        return;
     fs.rmSync(dir, {force: true, recursive: true});
 }

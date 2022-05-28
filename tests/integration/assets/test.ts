@@ -4,6 +4,7 @@ import {equal} from "assert";
 import path from "path";
 import fs from "fs";
 import server from "./server";
+import {cleanOutDir} from "../../../scripts/utils";
 
 
 describe("Assets Tests", function(){
@@ -20,7 +21,7 @@ describe("Assets Tests", function(){
 
     after(function(){
         server.stop();
-        fs.rmSync(path.resolve(__dirname, "dist"), {force: true, recursive: true});
+        cleanOutDir(path.resolve(__dirname, "dist"));
     });
 
 });

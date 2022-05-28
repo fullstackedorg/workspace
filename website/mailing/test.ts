@@ -7,14 +7,14 @@ import prerun from "../prerun";
 import fs from "fs";
 import {execSync} from "child_process";
 import {equal, ok} from "assert";
+import {cleanOutDir} from "../../scripts/utils";
 
 
 describe("Website Integration Mailing Tests", function(){
     const outdir = path.resolve(__dirname, "dist");
 
     before(async function (){
-        if(fs.existsSync(outdir))
-            fs.rmSync(outdir, {force: true, recursive: true})
+        cleanOutDir(outdir)
         fs.mkdirSync(outdir);
         fs.cpSync(path.resolve(__dirname, "../docker-compose.yml"), outdir + "/docker-compose.yml");
         await prerun({
@@ -45,6 +45,6 @@ describe("Website Integration Mailing Tests", function(){
     after(async function(){
         server.stop();
         execSync(`docker-compose -p test -f ${outdir}/docker-compose.yml down -v -t 0 >/dev/null 2>&1`);
-        fs.rmSync(outdir, {force: true, recursive: true});
+        cleanOutDir(outdir)
     });
 });

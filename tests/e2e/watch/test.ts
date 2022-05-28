@@ -2,7 +2,7 @@ import {before, describe} from "mocha";
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
-import {killProcess} from "scripts/utils";
+import {cleanOutDir, killProcess} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
 import path from "path";
 import sleep from "fullstacked/scripts/sleep";
@@ -84,7 +84,6 @@ describe("Watch Test", function(){
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
-        const distDir = path.resolve(__dirname, "dist");
-        if(fs.existsSync(distDir)) fs.rmSync(distDir, {recursive: true, force: true});
+        cleanOutDir(path.resolve(__dirname, "dist"))
     });
 });

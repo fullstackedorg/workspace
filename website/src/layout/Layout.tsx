@@ -54,6 +54,9 @@ const darkThemeCSS = `
         border-left: 5px solid #535f64;
         color: #bfc0c1;
     }
+    .hljs-tag{
+        color: #ffeb3b;
+    }
 `;
 
 const hljsDark = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css";
@@ -227,6 +230,9 @@ export default class Layout extends Component {
                         margin-bottom: 20px;
                         border-left: 5px solid #d7dfe1;
                         color: #60676e;
+                    }
+                    .hljs-tag{
+                        color: #c1b335;
                     }
                 `}
             </style>
