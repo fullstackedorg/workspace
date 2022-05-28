@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import sleep from "fullstacked/scripts/sleep";
 
+// listmonk setup -_-
 export default async function (config: Config){
     require('dotenv').config();
 
