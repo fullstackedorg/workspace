@@ -6,13 +6,6 @@ npx fullstacked build
 ```
 This produce a production build in a dist directory at your project's root.
 
-### Run your Built App
-You can easily startup your app with a simple :
-```shell
-node dist/index
-```
-Just like any other node script!
-
 ### Flags
 | Flag | Description |
 | --- | --- |

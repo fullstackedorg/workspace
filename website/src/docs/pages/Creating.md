@@ -36,7 +36,7 @@ This is your Webapp(frontend) entrypoint. No need to use render from react-dom o
 ```ts
 import * as assert from "assert";
 import {before, describe} from "mocha";
-import Helper from "fullstacked/tests/e2e/Helper"
+import Helper from "fullstacked/tests/e2e/Helper";
 import server from "./server";
 import axios from "axios";
 
@@ -45,11 +45,11 @@ describe("Integration", function(){
 
     before(async function (){
         test = new Helper(__dirname);
-        await test.start()
+        await test.start();
     });
 
     it('Should hit endpoint', async function(){
-        assert.equal((await axios.get("/hello-world")).data, "Hello World")
+        assert.equal((await axios.get("/hello-world")).data, "Hello World");
     });
 
     after(async function(){
@@ -75,3 +75,8 @@ describe("End-to-End", function(){
 });
 ```
 This is your initial testing file. Tests written here are just good examples. You'll learn more about how to create and add some test in the next documentation page.
+
+### Flags
+| Flag | Description |
+| --- | --- |
+| *--skip-test=*  &nbsp;| Won't generate the default test file. |

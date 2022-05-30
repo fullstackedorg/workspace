@@ -15,7 +15,26 @@ export default class extends Component{
             section.setAttribute("id", this.slugishString(sectionTitle))
             return sectionTitle;
         });
-        this.setState({sections: sections});
+        this.setState({sections: sections}, this.checkForScroll.bind(this));
+    }
+
+    checkForScroll(){
+        const url = new URL(window.location.href);
+
+        if(!url.hash || !this.state.sections.length)
+            return;
+
+        const anchor = url.hash.substring(1);
+
+        this.state.sections.forEach(section => {
+            if(anchor === this.slugishString(section)) {
+                window.scrollTo({
+                    top: document.querySelector("#" + anchor).getBoundingClientRect().y + window.scrollY,
+                    left: 0,
+                    behavior: "smooth"
+                })
+            }
+        })
     }
 
     slugishString(str: string){

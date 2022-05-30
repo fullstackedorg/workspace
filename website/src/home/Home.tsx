@@ -92,7 +92,7 @@ export default function () {
                     </div>
 
                     <Row className={"text-center justify-content-evenly"}>
-                        <Col className={"mb-5"} lg={6}>
+                        <Col className={"mb-5"} lg={5}>
                             <a style={{textDecoration: "none", color: "currentColor"}} href={"https://www.typescriptlang.org/"} target={"_blank"}>
                                 <img style={{width: 60}}
                                      src={require("website/src/images/docker-logo.png")} alt={"typescript logo"}/>
@@ -101,8 +101,8 @@ export default function () {
                             <p>
                                 With FullStacked, your project will always run under a docker-compose to ensure the stability of the runtime environment.
                                 Nowadays, most of us uses third-parties app and software to provide a complete set of tools.
-                                FullStacked unleashes the use of docker-compose to efficiently setup your complete runtime environment and
-                                be able to reproduce anywhere.
+                                FullStacked unleashes the power of docker-compose to efficiently setup a complete runtime environment and
+                                be able to reproduce it anywhere.
                             </p>
                         </Col>
                     </Row>

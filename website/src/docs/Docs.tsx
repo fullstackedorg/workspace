@@ -36,13 +36,17 @@ const docsPages: docPages = {
         title: "Creating",
         file: require("./pages/Creating.md")
     },
-    "/developing": {
-        title: "Developing",
-        file: require("./pages/Developing.md")
-    },
     "/building": {
         title: "Building",
         file: require("./pages/Building.md")
+    },
+    "/running": {
+        title: "Running",
+        file: require("./pages/Running.md")
+    },
+    "/watching": {
+        title: "Watching",
+        file: require("./pages/Watching.md")
     },
     "/testing": {
         title: "Testing",
