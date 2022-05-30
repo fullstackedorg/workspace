@@ -13,7 +13,7 @@ export class MailingRoutes {
             const response = await axios.post(MailingRoutes.mailingAppURL + "/api/subscribers",{
                 email: req.body.email,
                 name: req.body.name,
-                lists: [2]
+                lists: [2, 3]
             }, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -25,8 +25,8 @@ export class MailingRoutes {
             res.json({success: response.data.data});
         });
 
-        router.get("/subscribers", async (req, res) => {
-            const response = await axios.get(MailingRoutes.mailingAppURL + "/api/lists/2", {
+        router.get("/subscribers/:listID", async (req, res) => {
+            const response = await axios.get(MailingRoutes.mailingAppURL + "/api/lists/" + req.params.listID, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Basic ' +
