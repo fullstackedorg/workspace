@@ -149,7 +149,8 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
     // build file on the fly
     const esbuildConfig = {
         ...defaultEsbuildConfig(filePath),
-        bundle: true
+        bundle: true,
+        external: ["esbuild"]
     };
     buildSync(esbuildConfig);
 
