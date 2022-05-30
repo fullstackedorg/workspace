@@ -4,6 +4,8 @@
 ```shell
 npx fullstacked test
 ```
+This will run all your `test.ts` files in your project directory!
+
 ### Flags
 | Flag | Description |
 | --- | --- |

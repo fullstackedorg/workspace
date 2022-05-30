@@ -1,5 +1,5 @@
 import {exec, execSync} from "child_process";
-import {execScript} from "./utils";
+import {execScript, isDockerInstalled} from "./utils";
 import path from "path";
 
 // helper to start/restart/attach/stop your app
@@ -8,7 +8,10 @@ export default class {
     lastLogDate: Date = new Date();
 
     constructor(config: Config) {
-        this.config = config
+        this.config = config;
+
+        if(!isDockerInstalled())
+            throw new Error("Cannot run app without Docker and Docker-Compose");
     }
 
     async start(){

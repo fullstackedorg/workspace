@@ -9,7 +9,7 @@ const scripts = {
     "deploy": "./scripts/deploy",
     "test"  : "./scripts/test"
 };
-let script = "build"
+let script = "run"
 
 let config: Config = {}
 const args = {
