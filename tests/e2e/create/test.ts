@@ -1,10 +1,10 @@
 import {describe} from "mocha";
-import child_process from "child_process";
+import {execSync} from "child_process";
 import fs from "fs";
 import path from "path";
 import Helper from "tests/e2e/Helper"
 import {equal, ok} from "assert";
-import {sleep} from "../../../scripts/utils";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Create Test", function(){
     const webAppFile = path.resolve(__dirname, "index.tsx");
@@ -12,7 +12,7 @@ describe("Create Test", function(){
     let test;
 
     it('Should create the default starter file', function(){
-        const logMessage = child_process.execSync(`node ${path.resolve(__dirname, "../../../cli")} create --src=${__dirname} --silent --no-test`).toString();
+        const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} create --src=${__dirname} --silent --skip-test`).toString();
         if(logMessage)
             console.log(logMessage);
 

@@ -35,27 +35,39 @@ const darkThemeCSS = `
         opacity: 1;
         color: white;
     }
-   .code{
+    code{
         background-color: #535f64;
-   }
-   #docs-navigation,
-   .box {
+    }
+    #docs-navigation,
+    .box,
+     pre {
         background-color: #293033;
-   }
-   .docs-navigation-toggle {
+    }
+    .docs-navigation-toggle {
         background-color: #293033B0;
-   }
-   #express-logo{
+    }
+    #express-logo{
        -webkit-filter: invert(1);
        filter: invert(1);
-   }
+    }
+    blockquote {
+        border-left: 5px solid #535f64;
+        color: #bfc0c1;
+    }
+    .hljs-tag{
+        color: #ffeb3b;
+    }
 `;
+
+const hljsDark = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github-dark.min.css";
+const hljsLight = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/github.min.css";
 
 export default class Layout extends Component {
     // source : https://medium.com/@tapajyoti-bose/7-killer-one-liners-in-javascript-33db6798f5bf#4603
     static darkTheme: boolean = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     props: {children: ReactElement}
     state: {menuExpanded: boolean} = {menuExpanded: false}
+    highlightjsCSS = document.createElement('link');
 
     constructor(props: any) {
         super(props);
@@ -75,6 +87,10 @@ export default class Layout extends Component {
 
             this.setState({menuExpanded: false});
         });
+
+        this.highlightjsCSS.href = (Layout.darkTheme ? hljsDark : hljsLight);
+        this.highlightjsCSS.rel = "stylesheet";
+        document.head.appendChild(this.highlightjsCSS);
     }
 
     render(){
@@ -141,18 +157,19 @@ export default class Layout extends Component {
                         margin-top: 100px;
                         margin-bottom: 100px;
                     }
-                    .code {
-                        font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
-                        font-size: smaller;
-                        text-align: left;
-                        white-space: nowrap;
-                        overflow: auto;
+                    code {
                         background-color: #d7dfe1;
                         border-radius: 3px;
                         padding: 3px 6px;
                         line-height: 1.5;
+                        color: inherit;
                     }
-                    .box {
+                    pre > code {
+                        padding: 0;
+                        background-color: unset;
+                    }
+                    .box,
+                     pre {
                         background-color: #d7dfe1;
                         border-radius: 12px;
                     }
@@ -207,6 +224,16 @@ export default class Layout extends Component {
                         }
                     }
                     
+                    
+                    blockquote {
+                        padding: 0 20px;
+                        margin-bottom: 20px;
+                        border-left: 5px solid #d7dfe1;
+                        color: #60676e;
+                    }
+                    .hljs-tag{
+                        color: #c1b335;
+                    }
                 `}
             </style>
             <Navbar expand="md" fixed={"top"} expanded={this.state.menuExpanded}>
@@ -236,6 +263,7 @@ export default class Layout extends Component {
                                     onChange={(e) => {
                                         window.localStorage.setItem("dark", e.currentTarget.checked.toString());
                                         Layout.darkTheme = e.currentTarget.checked;
+                                        this.highlightjsCSS.href = (Layout.darkTheme ? hljsDark : hljsLight);
                                         this.forceUpdate();
                                     }}
                                 />

@@ -1,3 +1,6 @@
 import webapp from "fullstacked/webapp";
 
-webapp(<div>Deploy Test</div>);
+webapp(<>
+    <h1>Deploy Test</h1>
+    <div id={"version"}>{process.env.VERSION}</div>
+</>);

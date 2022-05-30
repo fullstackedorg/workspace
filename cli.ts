@@ -4,18 +4,18 @@ import defaultConfig from "./scripts/config";
 const scripts = {
     "create": "./scripts/create",
     "build" : "./scripts/build",
+    "run"   : "./scripts/run",
     "watch" : "./scripts/watch",
     "deploy": "./scripts/deploy",
-    "test": "./scripts/test"
+    "test"  : "./scripts/test"
 };
-let script = "build"
+let script = "run"
 
 let config: Config = {}
 const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
     "--port=": value => config.port = value,
-    "--port-https=": value => config.portHTTPS = value,
     "--host=": value => config.host = value,
     "--ssh-port=": value => config.sshPort = parseInt(value),
     "--user=": value => config.user = value,
@@ -25,12 +25,13 @@ const args = {
     "--silent": () => config.silent = true,
     "--coverage": () => config.coverage = true,
     "--headless": () => config.headless = true,
-    "--no-test": () => config.noTest = true,
     "--skip-test": () => config.skipTest = true,
     "--y": () => config.allYes = true,
-    "--rootless": () => config.rootless = true,
-    "--docker-compose": () => config.dockerCompose = true,
-    "--docker-extra-flags=": value => config.dockerExtraFlags = value
+    "--server-name=": value => config.serverName = value,
+    "--version=": value => config.version = value,
+    "--name=": value => config.name = value,
+    "--title=": value => config.title = value,
+    "--no-nginx": () => config.noNginx = true
 };
 
 process.argv.forEach(arg => {

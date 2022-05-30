@@ -1,29 +1,29 @@
 import path from "path";
 import child_process from "child_process";
-import {killProcess} from "./utils";
 
 //@ts-ignore
 process.env.FORCE_COLOR = true;
 
 export default function(config){
-    const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
+    return new Promise<void>(resolve => {
+        const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
-    const testFiles = path.resolve(process.cwd(), "**/test.ts");
+        // gather all test.ts files
+        // TODO: swap to **/*.test.ts maybe
+        const testFiles = path.resolve(process.cwd(), "**/test.ts");
 
-    let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
-        (config.headless ? "--headless" : "") + " " +
-        (config.coverage ? "--coverage" : "");
+        let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
+            (config.headless ? "--headless" : "") + " " +
+            (config.coverage ? "--coverage" : "");
 
-    if(config.coverage)
-        testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand
+        // use nyc for coverage
+        if(config.coverage)
+            testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand
 
-    const testProcess = child_process.exec(testCommand);
-    testProcess.stderr.pipe(process.stderr)
-    testProcess.stdout.on('data', (message) => {
-        process.stdout.write(message);
+        const testProcess = child_process.exec(testCommand);
+        testProcess.stderr.pipe(process.stderr)
+        testProcess.stdout.pipe(process.stdout);
 
-        if(message.toString().includes("Error:") || message.toString().includes("AssertionError")) {
-            killProcess(testProcess, 8000);
-        }
+        testProcess.on("exit", resolve);
     });
 }

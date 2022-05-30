@@ -1,17 +1,18 @@
 import {before, describe} from "mocha";
-import {clearLine, killProcess, printLine} from "../../../scripts/utils";
+import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import {exec, execSync} from "child_process";
 import fs from "fs";
 import path from "path";
 import {equal} from "assert";
 import puppeteer from "puppeteer";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Install Test", function(){
     const outDir = path.resolve(__dirname, "dist");
     let packageName, appProcess, browser;
 
     before(async function (){
-        this.timeout(50000);
+        this.timeout(60000);
 
         fs.mkdirSync(outDir);
         printLine("Packing");
@@ -22,10 +23,9 @@ describe("Install Test", function(){
         execSync(`npm i ${packageName}`, {cwd: outDir});
         printLine("Create");
         execSync(`npx fullstacked create`, {cwd: outDir});
-        printLine("Build");
-        execSync(`npx fullstacked build`, {cwd: outDir});
         printLine("Run");
-        appProcess = exec(`node dist/index`, {cwd: outDir});
+        appProcess = exec(`npx fullstacked run`, {cwd: outDir});
+        await sleep(3000);
         clearLine();
     })
 
@@ -40,8 +40,9 @@ describe("Install Test", function(){
     });
 
     after(async function(){
-        await browser.close()
-        await killProcess(appProcess, 8000);
-        fs.rmSync(outDir, {force: true, recursive: true});
+        await browser.close();
+        appProcess.kill("SIGINT");
+        await sleep(3000);
+        cleanOutDir(outDir);
     });
 });
