@@ -31,6 +31,8 @@ declare type ConfigDeploy = {
     appDir?     : string, // directory in server
 
     skipTest?   : boolean // skip testing
+
+    noNginx?    : boolean // skip nginx setup
 }
 
 declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {
