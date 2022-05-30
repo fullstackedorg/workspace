@@ -42,7 +42,7 @@ describe("Website End-2-End", function(){
     });
 
     async function getSubscribersCount(){
-        await test.page.goto("http://localhost:8000/mailing/subscribers");
+        await test.page.goto("http://localhost:8000/mailing/subscribers/2");
         const body = await test.page.$("body > pre");
         const innerHTML = await body.getProperty('innerHTML');
         return parseInt(await innerHTML.jsonValue());

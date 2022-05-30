@@ -28,7 +28,7 @@ describe("Website Integration Mailing Tests", function(){
     });
 
     it('Should return subscribers count', async function(){
-        const response = await axios.get("/mailing/subscribers");
+        const response = await axios.get("/mailing/subscribers/2");
         equal(response.status, 200);
         ok(response.data)
     });
@@ -39,7 +39,7 @@ describe("Website Integration Mailing Tests", function(){
             email: "hi@cplepage.com"
         });
         equal(response.status, 200);
-        ok(response.data.success)
+        ok(response.data.success);
     });
 
     after(async function(){
