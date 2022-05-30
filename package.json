@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A full stack web app tool and development kit",
   "scripts": {
     "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",

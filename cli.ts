@@ -30,7 +30,8 @@ const args = {
     "--server-name=": value => config.serverName = value,
     "--version=": value => config.version = value,
     "--name=": value => config.name = value,
-    "--title=": value => config.title = value
+    "--title=": value => config.title = value,
+    "--no-nginx": () => config.noNginx = true
 };
 
 process.argv.forEach(arg => {

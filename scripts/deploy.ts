@@ -95,10 +95,12 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     fs.rmSync(dockerComposeFilePath);
 
     // setup and ship nginx
-    const nginxFilePath = path.resolve(config.out, "nginx.conf");
-    setupNginxFile(nginxFilePath, config.port, config.serverName, config.name, config.version);
-    await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
-    fs.rmSync(nginxFilePath);
+    if(!config.noNginx) {
+        const nginxFilePath = path.resolve(config.out, "nginx.conf");
+        setupNginxFile(nginxFilePath, config.port, config.serverName, config.name, config.version);
+        await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
+        fs.rmSync(nginxFilePath);
+    }
 
     // gather all dist files
     const files = glob.sync("**/*", {cwd: config.out})
@@ -202,10 +204,11 @@ export default async function (config: Config) {
     if(!await sftp.exists(config.appDir))
         await sftp.mkdir(config.appDir, true);
 
-    await Promise.all([
-        sftp.put(path.resolve(__dirname, "../nginx/docker-compose.yml"), config.appDir + "/docker-compose.yml"),
-        sftp.put(path.resolve(__dirname, "../nginx/nginx.conf"), config.appDir + "/nginx.conf")
-    ]);
+    await sftp.put(path.resolve(__dirname, "../nginx/docker-compose.yml"), config.appDir + "/docker-compose.yml");
+
+    if(!config.noNginx) {
+        await sftp.put(path.resolve(__dirname, "../nginx/nginx.conf"), config.appDir + "/nginx.conf");
+    }
 
     // build app
     await build(config);
@@ -226,8 +229,10 @@ export default async function (config: Config) {
     await deployDockerCompose(config, sftp, serverPath, serverPathDist);
 
     // up/restart fullstacked-nginx
-    await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
-    await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
+    if(!config.noNginx) {
+        await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
+        await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
+    }
 
     // close connection
     await sftp.end();
