@@ -2,6 +2,7 @@ import {Button, Col, Container, Form, FormControl, InputGroup, Row} from "react-
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faGithub} from "@fortawesome/free-brands-svg-icons/faGithub";
 import Hero from "website/src/home/Hero";
+import axios from "axios";
 
 export default function () {
     return <>
@@ -40,17 +41,17 @@ export default function () {
                         </p>
                     </Col>
                     <Col lg={4} className={"mb-2"}>
+                        <p><b>Run</b></p>
+                        <p>
+                            Startup your app with all the needed third-parties app and software you need.
+                            You won't need to install any local tools or database, everything will be taken care of.
+                        </p>
+                    </Col>
+                    <Col lg={4} className={"mb-2"}>
                         <p><b>Watch</b></p>
                         <p>
                             Don't waste time figuring out how to make your frontend and your backend listen to change and reload.
                             It's all taken care off! Start developing!
-                        </p>
-                    </Col>
-                    <Col lg={4} className={"mb-2"}>
-                        <p><b>Build</b></p>
-                        <p>
-                            When ready, build locally and deploy or setup your CI/CD to build and run
-                            the output file! No magic to understand, everything starts with a single <span className={"code"}>node dist/index</span>.
                         </p>
                     </Col>
                 </Row>
@@ -86,9 +87,32 @@ export default function () {
             <div>
                 <div className={"my-10"} id={"stack"}>
                     <div className={"display-4 text-center mb-5"}>
-                        <div>Lean and straightforward.</div>
+                        <div>Reproducible and trustworthy</div>
+                        <div style={{fontSize: "smaller"}} className={"text-muted"}>Docker in the spotlight</div>
+                    </div>
+
+                    <Row className={"text-center justify-content-evenly"}>
+                        <Col className={"mb-5"} lg={5}>
+                            <a style={{textDecoration: "none", color: "currentColor"}} href={"https://www.typescriptlang.org/"} target={"_blank"}>
+                                <img style={{width: 60}}
+                                     src={require("website/src/images/docker-logo.png")} alt={"typescript logo"}/>
+                                <div className={"my-2"}><b>Docker</b></div>
+                            </a>
+                            <p>
+                                With FullStacked, your project will always run under a docker-compose to ensure the stability of the runtime environment.
+                                Nowadays, most of us uses third-parties app and software to provide a complete set of tools.
+                                FullStacked unleashes the power of docker-compose to efficiently setup a complete runtime environment and
+                                be able to reproduce it anywhere.
+                            </p>
+                        </Col>
+                    </Row>
+
+
+                    <div className={"display-4 text-center mb-5"}>
+                        <div>Build with tools of confidence</div>
                         <div style={{fontSize: "smaller"}} className={"text-muted"}>Currently using :</div>
                     </div>
+
 
                     <Row className={"text-center justify-content-evenly"}>
                         <Col className={"mb-5"} lg={4}>
@@ -98,8 +122,8 @@ export default function () {
                                 <div className={"my-2"}><b>Typescript</b></div>
                             </a>
                             <p>
-                                Essential for any JS project that is going to scale.
-                                Also a must for collaboration and if you never used it before, it is really not a big learning curve.
+                                Essential to scale any JS project and to ease collaboration.
+                                If you never used TypeScript before, but are used to JS, it is really not a big learning curve.
                                 Trust me, you won't regret it.
                             </p>
                         </Col>
@@ -136,7 +160,7 @@ export default function () {
                                 <div className={"my-2"}><b>Mocha</b></div>
                             </a>
                             <p>
-                                Mocha is one of the most used JS test framework. Using <span className={"code"}>describe</span> and <span className={"code"}>it</span>,
+                                Mocha is one of the most used JS test framework. Using <code>describe</code> and <code>it</code>,
                                 writing tests is almost fun! The package <a href={"https://pptr.dev/"}>puppeteer</a> is built-in to create end-2-end tests
                                 easily. You can also pair it with <a href={"https://www.chaijs.com/"}>chai</a> if you want more assert methods.
                             </p>
@@ -152,8 +176,8 @@ export default function () {
                                 <div className={"my-2"}><b>esbuild</b></div>
                             </a>
                             <p>
-                                The glue that sticks everything together. The most powerful bundler out there. At this point, you won't
-                                interact with this, but if you start doing unconventional stuff, you might have to override a few build configs.
+                                The glue that sticks everything together. The most powerful bundler out there.
+                                Incredibly fast!
                             </p>
                         </Col>
                     </Row>
@@ -161,16 +185,18 @@ export default function () {
                 </div>
 
 
-                <Row className={"my-10 text-center mx-auto"} style={{maxWidth: 600}}>
+                <Row className={"my-10 mx-auto"} style={{maxWidth: 600}}>
                     <Col>
-                        <div className={"display-4"}>Replace this</div>
-                        <div className={"code box p-3 my-4"} style={{whiteSpace: "normal"}}>npm i react react-dom @types/react @types/react-dom webpack webpack-html-plugin
-                            copy-webpack-plugin express body-parser @types/express morgan mocha nyc ...</div>
-                        <div><b>for this</b></div>
-                        <div className={"code box p-3 my-4"}>npm i fullstacked</div>
-                        <Button className={"me-2"} as={"a"} href={"/docs/"}>Get started</Button>
-                        <Button variant={"secondary"} as={"a"} target={"_blank"}
-                                href={"https://github.com/CPLepage/fullstacked"}>View Code <FontAwesomeIcon icon={faGithub} /></Button>
+                        <div className={"display-4 text-center"}>Replace this</div>
+                        <pre className={"p-3 my-4"} style={{whiteSpace: "normal"}}><code>npm i react react-dom @types/react @types/react-dom webpack webpack-html-plugin
+                            copy-webpack-plugin express body-parser @types/express morgan mocha nyc ...</code></pre>
+                        <div className={"text-center"}><b>for this</b></div>
+                        <pre className={"p-3 my-4"}><code>npm i fullstacked</code></pre>
+                        <div className={"text-center"}>
+                            <Button className={"me-2"} as={"a"} href={"/docs/"}>Get started</Button>
+                            <Button variant={"secondary"} as={"a"} target={"_blank"}
+                                    href={"https://github.com/CPLepage/fullstacked"}>View Code <FontAwesomeIcon icon={faGithub} /></Button>
+                        </div>
                     </Col>
                 </Row>
             </div>
@@ -189,17 +215,19 @@ export default function () {
                         const container = e.currentTarget;
                         container.innerHTML = `<div class="my-4 text-center">Subscribing...</div>`;
 
-                        const request = await fetch("/subscribe?email=" + email + "&name=" + name);
-                        const response = await request.json();
+                        const response = await axios.post("/mailing/subscribe", {
+                            name: name,
+                            email: email
+                        });
 
-                        if(response.success)
-                            container.innerHTML = `<div class="my-4 text-center">Thanks for subscribing!</div>`;
+                        if(response.data.success)
+                            container.innerHTML = `<div id="success-msg" class="my-4 text-center">Thanks for subscribing!</div>`;
                     }}>
                         <div className={"mb-2"}><b>Stay informed.</b></div>
                         <InputGroup>
                             <FormControl id={"email"} placeholder="Email address" type={"email"}/>
                             <FormControl id={"name"} placeholder="Name" type={"text"}/>
-                            <Button as={"input"} type={"submit"} value={"Subscribe"} />
+                            <Button id={"subscribe"} as={"input"} type={"submit"} value={"Subscribe"} />
                         </InputGroup>
                         <div className={"text-muted"}><small>Stay up to date with the latest news and release.</small></div>
                     </Form>

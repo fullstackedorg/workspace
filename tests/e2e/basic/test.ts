@@ -1,15 +1,13 @@
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
 import {equal} from "assert";
-import {sleep} from "../../../scripts/utils";
 
 describe("Basic Test", function(){
     let test;
 
     before(async function (){
         test = new Helper(__dirname);
-        await test.start()
-        await sleep(1000);
+        await test.start();
     })
 
     it('Should load a basic web page', async function(){

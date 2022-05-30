@@ -1,6 +1,6 @@
 import {describe} from "mocha";
 import {ok} from "assert";
-import {sleep} from "../../scripts/utils";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Unit Tests", function(){
     it('Should sleep near 1 second', async function(){

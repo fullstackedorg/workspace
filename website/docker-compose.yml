@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  mailing_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_PASSWORD=listmonk
+      - POSTGRES_USER=listmonk
+      - POSTGRES_DB=listmonk
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U listmonk" ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    volumes:
+      - type: volume
+        source: listmonk-data
+        target: /var/lib/postgresql/data
+
+  mailing_app:
+    restart: unless-stopped
+    image: listmonk/listmonk:latest
+    ports:
+      - "9989:9989"
+    environment:
+      - TZ=Etc/UTC
+    depends_on:
+      - mailing_db
+    volumes:
+      - ./config.toml:/listmonk/config.toml
+
+volumes:
+  listmonk-data:

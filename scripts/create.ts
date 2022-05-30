@@ -21,7 +21,7 @@ Webapp(<>Welcome to FullStacked!</>);
 
 const testsTemplate = `import * as assert from "assert";
 import {before, describe} from "mocha";
-import Helper from "fullstacked/tests/e2e/Helper"
+import Helper from "fullstacked/tests/e2e/Helper";
 import server from "./server";
 import axios from "axios";
 
@@ -31,7 +31,7 @@ describe("Integration", function(){
     });
 
     it('Should hit endpoint', async function(){
-        assert.equal((await axios.get("/hello-world")).data, "Hello World")
+        assert.equal((await axios.get("/hello-world")).data, "Hello World");
     });
 
     after(async function (){
@@ -44,7 +44,7 @@ describe("End-2-End", function(){
 
     before(async function (){
         test = new Helper(__dirname);
-        await test.start()
+        await test.start();
     });
 
     it('Should load default page', async function(){
@@ -62,11 +62,14 @@ describe("End-2-End", function(){
 export default function(config) {
     config = defaultConfig(config);
 
+    // output template files at project src
     fs.writeFileSync(path.resolve(config.src, "server.ts"), serverTemplate);
     fs.writeFileSync(path.resolve(config.src, "index.tsx"), webappTemplate);
 
-    if(!config.noTest) {
+    if(!config.skipTest) {
         fs.writeFileSync(path.resolve(config.src, "test.ts"), testsTemplate);
+
+        // copy this files for to enable JetBrain WebStorm IDE test panel
         fs.cpSync(path.resolve(__dirname, "../.mocharc.js"), process.cwd() + "/.mocharc.js");
     }
 

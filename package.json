@@ -1,10 +1,9 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.1.5",
+  "version": "0.2.2",
   "description": "A full stack web app tool and development kit",
   "scripts": {
-    "postinstall": "node postinstall",
     "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
     "pretest": "npm run build",
     "test": "node cli test --headless",
@@ -62,6 +61,9 @@
     "@fortawesome/react-fontawesome": "^0.1.18",
     "@types/glob": "^7.2.0",
     "@types/ws": "^8.5.3",
+    "highlight.js": "^11.5.1",
+    "markdown-it": "^13.0.1",
+    "mongodb": "^4.6.0",
     "react-bootstrap": "^2.2.2",
     "react-bootstrap-typeahead": "^6.0.0-alpha.10",
     "react-router-dom": "^6.2.2",

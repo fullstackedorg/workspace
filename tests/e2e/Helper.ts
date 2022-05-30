@@ -1,30 +1,31 @@
-import child_process from "child_process";
 import puppeteer from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import {killProcess, sleep} from "../../scripts/utils";
-import path from "path";
+import Runner from "../../scripts/runner";
+import build from "../../scripts/build";
+import config from "../../scripts/config";
+import {cleanOutDir} from "../../scripts/utils";
 
 export default class {
     dir;
-    serverProcess;
+    runner;
     browser;
     page;
 
     constructor(dir: string) {
-        this.dir = dir
-        try{
-            process.stdout.write(child_process.execSync(`node ${path.resolve(__dirname, "../../cli")} build --src=${this.dir} --out=${this.dir} --silent`));
-        }catch (e){
-            this.rmDir();
-            throw e;
-        }
+        this.dir = dir;
     }
 
-    async start(path: string = ""){
-        await sleep(500);
-        await killProcess(1, 8000);
-        this.serverProcess = child_process.exec("node " + this.dir + "/dist/index.js");
+    async start(pathURL: string = ""){
+        const localConfig: Config = config({
+            name: "test",
+            src: this.dir,
+            out: this.dir,
+            silent: true
+        });
+        await build(localConfig);
+        this.runner = new Runner(localConfig);
+        await this.runner.start();
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
 
@@ -34,16 +35,13 @@ export default class {
                 resetOnNavigation: false
             });
         }
-        await sleep(500);
-        await this.page.goto("http://localhost:8000" + path);
+        await this.page.goto("http://localhost:8000" + pathURL);
 
         process.on('uncaughtException', err => {
-            killProcess(this.serverProcess, 8000);
-
             if(this.browser?.close)
                 this.browser.close();
 
-            this.rmDir();
+            cleanOutDir(this.dir + "/dist")
 
             console.error(err);
             process.exit(1);
@@ -84,13 +82,7 @@ export default class {
         }
 
         await this.browser.close();
-        this.serverProcess.kill();
-        await killProcess(this.serverProcess, 8000);
-        this.rmDir();
-    }
-
-    rmDir(){
-        if(fs.existsSync(this.dir + "/dist"))
-            fs.rmSync(this.dir + "/dist", {force: true, recursive: true});
+        this.runner.stop(true);
+        cleanOutDir(this.dir + "/dist")
     }
 }
