@@ -1,10 +1,11 @@
-import {exec, execSync} from "child_process";
+import {ChildProcess, exec, execSync} from "child_process";
 import {execScript, isDockerInstalled} from "./utils";
 import path from "path";
 
 // helper to start/restart/attach/stop your app
 export default class {
     config: Config;
+    attachedProcess: ChildProcess = null;
     lastLogDate: Date = new Date();
 
     constructor(config: Config) {
@@ -34,8 +35,11 @@ export default class {
 
     // attach to docker-compose
     attach(stdout: typeof process.stdout){
-        const dockerProcess = exec(`docker-compose -p ${this.config.name} -f ${this.config.out + "/docker-compose.yml"} logs -f -t`);
-        dockerProcess.stdout.on("data", (data) => {
+        if(this.attachedProcess && this.attachedProcess.kill())
+            this.attachedProcess.kill();
+
+        this.attachedProcess = exec(`docker-compose -p ${this.config.name} -f ${this.config.out + "/docker-compose.yml"} logs -f -t`);
+        this.attachedProcess.stdout.on("data", (data) => {
             // filter out lines already displayed in the past
             let latestDate = this.lastLogDate;
             const lines = data.split("\n").filter(line => {
