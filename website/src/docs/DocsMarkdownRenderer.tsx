@@ -3,7 +3,6 @@ import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
 import axios from "axios";
 import {Container} from "react-bootstrap";
-import 'highlight.js/styles/github.css';
 import Layout from "../layout/Layout";
 
 export default class extends Component {
@@ -15,9 +14,7 @@ export default class extends Component {
             if (lang && hljs.getLanguage(lang)) {
                 try {
                     return hljs.highlight(str, { language: lang }).value;
-                } catch (__) {
-                    console.log("ici");
-                }
+                } catch (__) { }
             }
 
             return '';
