@@ -1,17 +1,9 @@
-import {execSSH} from "../scripts/utils";
 import SFTP from "ssh2-sftp-client";
 import fs from "fs";
 import path from "path";
-import sleep from "fullstacked/scripts/sleep";
 
 // listmonk setup -_-
 export default async function (config: Config, sftp: SFTP) {
-    const isListmonkVolumePresent = await execSSH(sftp.client, "docker volume ls -q | grep fullstacked_listmonk");
-    if(isListmonkVolumePresent) {
-        console.log("listmonk is already installed");
-        return;
-    }
-
     console.log("Setting up listmonk");
 
     require('dotenv').config();
@@ -33,23 +25,7 @@ export default async function (config: Config, sftp: SFTP) {
     if(!await sftp.exists(serverPath))
         await sftp.mkdir(serverPath, true);
 
-    const serverDockerCompose = serverPath + "/docker-compose.yml";
-
-    await sftp.put(config.out + "/docker-compose.yml", serverDockerCompose);
     await sftp.put(listmonkConfigOutFile, serverPath + "/config.toml");
-
-    const commands = [
-        `docker-compose -p ${config.name} -f ${serverDockerCompose} up -d mailing_db`,
-        `docker-compose -p ${config.name} -f ${serverDockerCompose} run --rm mailing_app ./listmonk --install --yes`,
-        `docker-compose -p ${config.name} -f ${serverDockerCompose} up -d mailing_app`
-    ];
-
-    for (let i = 0; i < commands.length; i++) {
-        await execSSH(sftp.client, commands[i]);
-
-        if(i !== commands.length - 1)
-            await sleep(3000);
-    }
 
     fs.rmSync(listmonkConfigOutFile, {force: true});
 

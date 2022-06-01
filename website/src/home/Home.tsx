@@ -208,15 +208,13 @@ export default function () {
                     <Form onSubmit={async e => {
                         e.preventDefault();
                         const email =(document.querySelector("#email") as HTMLInputElement).value;
-                        const name =(document.querySelector("#name") as HTMLInputElement).value;
-                        if(!email || !name)
+                        if(!email)
                             return;
 
                         const container = e.currentTarget;
                         container.innerHTML = `<div class="my-4 text-center">Subscribing...</div>`;
 
                         const response = await axios.post("/mailing/subscribe", {
-                            name: name,
                             email: email
                         });
 
@@ -226,7 +224,6 @@ export default function () {
                         <div className={"mb-2"}><b>Stay informed.</b></div>
                         <InputGroup>
                             <FormControl id={"email"} placeholder="Email address" type={"email"}/>
-                            <FormControl id={"name"} placeholder="Name" type={"text"}/>
                             <Button id={"subscribe"} as={"input"} type={"submit"} value={"Subscribe"} />
                         </InputGroup>
                         <div className={"text-muted"}><small>Stay up to date with the latest news and release.</small></div>

@@ -12,7 +12,7 @@ export class MailingRoutes {
         router.post("/subscribe", json(), async (req, res) => {
             const response = await axios.post(MailingRoutes.mailingAppURL + "/api/subscribers",{
                 email: req.body.email,
-                name: req.body.name,
+                name:"-",
                 lists: [2, 3]
             }, {
                 headers: {
