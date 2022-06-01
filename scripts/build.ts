@@ -5,6 +5,7 @@ import {execSync} from "child_process";
 import {cleanOutDir, copyRecursiveSync, execScript} from "./utils";
 import crypto from "crypto";
 import yaml from "yaml";
+import watch from "./watch";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -139,7 +140,7 @@ async function buildWebApp(config, watcher){
         console.log('\x1b[32m%s\x1b[0m', "WebApp Built");
 }
 
-function webAppPostBuild(config: Config, watcher){
+export function webAppPostBuild(config: Config, watcher){
     const publicDir = config.out + "/public";
 
     // get the index.html file
@@ -194,9 +195,8 @@ function webAppPostBuild(config: Config, watcher){
     fs.writeFileSync(publicDir + "/index.html", indexHTMLContentUpdated);
 
     // copy coverage folder if present
-    // TODO: should skip if watching
     const coverageHTMLDir = path.resolve(process.cwd(), "coverage");
-    if(fs.existsSync(coverageHTMLDir)) {
+    if(fs.existsSync(coverageHTMLDir) && !watcher) {
         const coverageOutDir = publicDir + "/coverage";
 
         if(fs.existsSync(coverageHTMLDir))
