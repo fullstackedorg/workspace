@@ -4,7 +4,7 @@
   "version": "0.2.3",
   "description": "A full stack web app tool and development kit",
   "scripts": {
-    "build": "esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
+    "build": "npx esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
     "pretest": "npm run build",
     "test": "node cli test --headless",
     "precoverage": "npm run build",
