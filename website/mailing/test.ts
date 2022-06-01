@@ -8,6 +8,7 @@ import fs from "fs";
 import {execSync} from "child_process";
 import {equal, ok} from "assert";
 import {cleanOutDir} from "../../scripts/utils";
+import sleep from "fullstacked/scripts/sleep";
 
 
 describe("Website Integration Mailing Tests", function(){
@@ -28,6 +29,7 @@ describe("Website Integration Mailing Tests", function(){
     });
 
     it('Should return subscribers count', async function(){
+        await sleep(2000);
         const response = await axios.get("/mailing/subscribers/2");
         equal(response.status, 200);
         ok(response.data)
