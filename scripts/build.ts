@@ -120,6 +120,9 @@ async function buildWebApp(config, watcher){
         watch: watcher ? {
             onRebuild: async function(error, result){
                 if (error) return
+
+                webAppPostBuild(config, watcher);
+
                 watcher(true);
             }
         } : false
@@ -130,7 +133,16 @@ async function buildWebApp(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    // set the index.html file
+    webAppPostBuild(config, watcher);
+
+    if(!config.silent)
+        console.log('\x1b[32m%s\x1b[0m', "WebApp Built");
+}
+
+function webAppPostBuild(config: Config, watcher){
+    const publicDir = config.out + "/public";
+
+    // get the index.html file
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});
     // add page title
@@ -165,17 +177,33 @@ async function buildWebApp(config, watcher){
         indexHTMLContentUpdated = preHTML + `<link rel="icon" href="/favicon.png">` + postHTML;
     }
 
+    const CSSFile = path.resolve(config.src, "index.css");
+    if(fs.existsSync(CSSFile)){
+        // copy file to dist/public
+        fs.copyFileSync(CSSFile, publicDir + "/index.css");
+
+        // add link tag in head
+        const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
+        const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
+        const postHTML = indexHTMLContentUpdated.slice(closingBodyIndex, indexHTMLContentUpdated.length);
+        indexHTMLContentUpdated = preHTML + `<link rel="stylesheet" href="/index.css?v=${versionString}">` + postHTML;
+    }
+
     // output index.html
     fs.mkdirSync(publicDir, {recursive: true});
     fs.writeFileSync(publicDir + "/index.html", indexHTMLContentUpdated);
 
     // copy coverage folder if present
+    // TODO: should skip if watching
     const coverageHTMLDir = path.resolve(process.cwd(), "coverage");
-    if(fs.existsSync(coverageHTMLDir))
-        copyRecursiveSync(coverageHTMLDir, publicDir + "/coverage");
+    if(fs.existsSync(coverageHTMLDir)) {
+        const coverageOutDir = publicDir + "/coverage";
 
-    if(!config.silent)
-        console.log('\x1b[32m%s\x1b[0m', "WebApp Built");
+        if(fs.existsSync(coverageHTMLDir))
+            fs.rmSync(coverageOutDir, {force: true, recursive: true});
+
+        copyRecursiveSync(coverageHTMLDir, coverageOutDir);
+    }
 }
 
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
