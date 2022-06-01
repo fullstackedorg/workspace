@@ -21,6 +21,7 @@ services:
   mailing_app:
     restart: unless-stopped
     image: listmonk/listmonk:latest
+    command: /bin/sh -c "./listmonk --install --idempotent --yes && ./listmonk --upgrade --yes && ./listmonk"
     ports:
       - "9989:9989"
     environment:
