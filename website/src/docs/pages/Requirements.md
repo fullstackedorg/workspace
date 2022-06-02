@@ -1,16 +1,11 @@
 # Requirements
 
-### MacOS/Linux
-
 * NodeJS `>= 14.14`
 * Docker and Docker-Compose
 
-#### Guide
+### Install Guide
 1. Install NodeJS : [https://nodejs.org/](https://nodejs.org/)
 2. Install Docker Desktop : [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
-
-### Windows
-> WIP
 
 ### Recommendations
 A good IDE will help a lot with autocompletion. For my part, I
