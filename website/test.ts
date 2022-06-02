@@ -11,7 +11,6 @@ describe("Website End-2-End", function(){
         this.timeout(30000);
         test = new Helper(__dirname);
         await test.start();
-        await sleep(3000);
     });
 
     it('Should load Home and display quote', async function(){

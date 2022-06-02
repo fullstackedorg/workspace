@@ -5,13 +5,14 @@ import path from "path";
 import puppeteer from "puppeteer";
 import sleep from "fullstacked/scripts/sleep";
 import {cleanOutDir} from "../../../scripts/utils";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Run Test", function(){
     let runProcess, browser, page;
 
     before(async function (){
         runProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} run --src=${__dirname} --out=${__dirname} --silent`);
-        await sleep(10000);
+        await waitForServer(10000)
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
         await page.goto("http://localhost:8000");

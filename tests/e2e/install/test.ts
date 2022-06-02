@@ -6,6 +6,7 @@ import path from "path";
 import {equal} from "assert";
 import puppeteer from "puppeteer";
 import sleep from "fullstacked/scripts/sleep";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Install Test", function(){
     const outDir = path.resolve(__dirname, "dist");
@@ -26,7 +27,7 @@ describe("Install Test", function(){
         execSync(`npx fullstacked create`, {cwd: outDir});
         printLine("Run");
         appProcess = exec(`npx fullstacked run`, {cwd: outDir});
-        await sleep(10000);
+        await waitForServer(10000)
         clearLine();
     })
 
