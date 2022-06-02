@@ -55,6 +55,10 @@ const docsPages: docPages = {
     "/deploying": {
         title: "Deploying",
         file: require("./pages/Deploying.md")
+    },
+    "/examples": {
+        title: "Examples",
+        file: require("./pages/Examples.md")
     }
 }
 
