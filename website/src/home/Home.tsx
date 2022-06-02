@@ -6,12 +6,6 @@ import axios from "axios";
 
 export default function () {
     return <>
-        <style>{`
-        #stack img{
-            height: 60px;
-            object-fit: contain;
-        }
-        `}</style>
         <Container>
             <Row className={"my-10"} style={{position: "relative", zIndex: 1}}>
                 <Col style={{width: "100%", maxWidth: 1100, margin: "0 auto"}}>
