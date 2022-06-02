@@ -6,6 +6,7 @@ import {cleanOutDir, killProcess} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
 import path from "path";
 import sleep from "fullstacked/scripts/sleep";
+import waitForServer from "../../../scripts/waitForServer";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
@@ -23,7 +24,7 @@ describe("Watch Test", function(){
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);
 
-        await sleep(15000);
+        await waitForServer(15000);
 
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
@@ -39,7 +40,6 @@ describe("Watch Test", function(){
 
     it('Should reload webapp', async function(){
         const countBefore = await getReloadCount();
-        await sleep(3000);
 
         fs.appendFileSync(indexFile, "\n// this is a test line");
         await sleep(3000);
@@ -50,6 +50,7 @@ describe("Watch Test", function(){
 
     async function getBootTime(){
         await sleep(1000);
+
         if(browser && !browser.isConnected()) {
             await browser.close();
             browser = await puppeteer.launch({headless: process.argv.includes("--headless")});

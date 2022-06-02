@@ -5,6 +5,7 @@ import Runner from "../../scripts/runner";
 import build from "../../scripts/build";
 import config from "../../scripts/config";
 import {cleanOutDir} from "../../scripts/utils";
+import waitForServer from "../../scripts/waitForServer";
 
 export default class {
     dir;
@@ -35,6 +36,9 @@ export default class {
                 resetOnNavigation: false
             });
         }
+
+        await waitForServer(3000);
+
         await this.page.goto("http://localhost:8000" + pathURL);
 
         process.on('uncaughtException', err => {

@@ -9,6 +9,7 @@ import {execSync} from "child_process";
 import {equal, ok} from "assert";
 import {cleanOutDir, silenceCommandLine} from "../../scripts/utils";
 import sleep from "fullstacked/scripts/sleep";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 
 describe("Website Integration Mailing Tests", function(){
@@ -25,13 +26,12 @@ describe("Website Integration Mailing Tests", function(){
             silent: true
         });
         execSync(silenceCommandLine(`docker-compose -p test -f ${composeFilePath} up -d`));
-        await sleep(5000);
+        await waitForServer(15000, "http://localhost:9989");
         MailingRoutes.mailingAppURL = "http://localhost:9989";
         server.start({silent: true, testing: true});
     });
 
     it('Should return subscribers count', async function(){
-        await sleep(2000);
         const response = await axios.get("/mailing/subscribers/2");
         equal(response.status, 200);
         ok(response.data)

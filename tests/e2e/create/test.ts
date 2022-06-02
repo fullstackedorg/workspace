@@ -4,7 +4,6 @@ import fs from "fs";
 import path from "path";
 import Helper from "tests/e2e/Helper"
 import {equal, ok} from "assert";
-import sleep from "fullstacked/scripts/sleep";
 
 describe("Create Test", function(){
     const webAppFile = path.resolve(__dirname, "index.tsx");
@@ -23,7 +22,6 @@ describe("Create Test", function(){
     it('Should display the default starter app', async function (){
         test = new Helper(__dirname);
         await test.start();
-        await sleep(500);
         const root = await test.page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();

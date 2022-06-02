@@ -14,7 +14,8 @@
             "fullstacked/server": ["./server/index.ts"],
             "fullstacked/webapp": ["./webapp/index.tsx"],
             "fullstacked/tests/e2e/Helper": ["./tests/e2e/Helper.ts"],
-            "fullstacked/scripts/sleep": ["./scripts/sleep.ts"]
+            "fullstacked/scripts/sleep": ["./scripts/sleep.ts"],
+            "fullstacked/scripts/waitForServer": ["./scripts/waitForServer.ts"]
         }
     }
 }
