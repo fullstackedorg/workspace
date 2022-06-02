@@ -9,8 +9,8 @@ import sleep from "fullstacked/scripts/sleep";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
-    const indexFile = __dirname + "/index.tsx";
-    const serverFile = __dirname + "/server.ts";
+    const indexFile = path.resolve(__dirname, "index.tsx");
+    const serverFile = path.resolve(__dirname, "server.ts");
 
     before(async function (){
         await killProcess(1, 8001);
@@ -18,12 +18,12 @@ describe("Watch Test", function(){
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
 
-        fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
-        fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
+        fs.copyFileSync(path.resolve(__dirname, "template-index.tsx"), indexFile);
+        fs.copyFileSync(path.resolve(__dirname, "template-server.ts"), serverFile);
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);
 
-        await sleep(5000);
+        await sleep(15000);
 
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
@@ -39,16 +39,17 @@ describe("Watch Test", function(){
 
     it('Should reload webapp', async function(){
         const countBefore = await getReloadCount();
-        await sleep(1500);
+        await sleep(3000);
 
         fs.appendFileSync(indexFile, "\n// this is a test line");
-        await sleep(1500);
+        await sleep(3000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
     });
 
     async function getBootTime(){
+        await sleep(1000);
         if(browser && !browser.isConnected()) {
             await browser.close();
             browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
@@ -67,7 +68,7 @@ describe("Watch Test", function(){
         ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
-        await sleep(3000);
+        await sleep(5000);
         const timeAfter = await getBootTime();
 
         ok(timeAfter)

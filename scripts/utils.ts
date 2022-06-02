@@ -30,6 +30,13 @@ export function getPackageJSON():{[key:string]: any} {
     return JSON.parse(fs.readFileSync(packageJSONPath, {encoding: "utf-8"}));
 }
 
+export function silenceCommandLine(cmd: string){
+    if(os.platform() === "win32")
+        return cmd + " >nul 2>nul";
+
+    return cmd + " >/dev/null 2>&1";
+}
+
 // harsh kill process at port
 export async function killProcess(process, port: number = 0){
     if(!process)
