@@ -14,6 +14,7 @@ describe("Install Test", function(){
     before(async function (){
         this.timeout(60000);
 
+        cleanOutDir(outDir);
         fs.mkdirSync(outDir);
         printLine("Packing");
         execSync(`npm pack -q --pack-destination ${outDir}`);
@@ -25,7 +26,7 @@ describe("Install Test", function(){
         execSync(`npx fullstacked create`, {cwd: outDir});
         printLine("Run");
         appProcess = exec(`npx fullstacked run`, {cwd: outDir});
-        await sleep(3000);
+        await sleep(10000);
         clearLine();
     })
 

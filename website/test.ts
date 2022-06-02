@@ -11,6 +11,7 @@ describe("Website End-2-End", function(){
         this.timeout(30000);
         test = new Helper(__dirname);
         await test.start();
+        await sleep(3000);
     });
 
     it('Should load Home and display quote', async function(){
@@ -34,7 +35,7 @@ describe("Website End-2-End", function(){
         for (let i = 0; i < docPagesCount; i++) {
             const docPages = await test.page.$$("#docs-navigation > div > div > a");
             await docPages[i].click();
-            await sleep(200);
+            await sleep(500);
             const innerHTML = await docPages[i].getProperty('innerHTML');
             const pageTitle = await innerHTML.jsonValue();
             assert.equal(await getDocsTitle(), pageTitle);
@@ -56,10 +57,7 @@ describe("Website End-2-End", function(){
         await test.page.goto("http://localhost:8000/");
         const inputEmail = await test.page.$('#email');
         await inputEmail.type("hi@cplepage.com");
-
-        const inputName = await test.page.$('#name');
-        await inputName.type("cplepage");
-        await inputName.press('Enter');
+        await inputEmail.press("Enter")
 
         await sleep(2000);
 
