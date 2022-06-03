@@ -16,7 +16,8 @@ export default async function(config: Config, build: boolean = true){
         runner.restart();
     }
 
-    runner.attach(process.stdout);
+    if(!config.silent)
+        runner.attach(process.stdout);
 
     // set exit hook only once
     if(!didSetExitHook){
@@ -32,7 +33,8 @@ export default async function(config: Config, build: boolean = true){
         }
 
         process.on("SIGINT", () => {
-            console.log('\x1b[33m%s\x1b[0m', "Stopping!");
+            if(!config.silent)
+                console.log('\x1b[33m%s\x1b[0m', "Stopping!");
 
             if(runner)
                 runner.stop();

@@ -24,11 +24,10 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup including fe
   * w/ Code Coverage
 * Deploy
 
-### Built with
-* [react](https://github.com/facebook/react)
-* [express](https://github.com/expressjs/express)
-* [mocha](https://github.com/mochajs/mocha)
-* [esbuild](https://github.com/evanw/esbuild)
+### Build with
+* [react](https://github.com/facebook/react) for Web App (Frontend)
+* [express](https://github.com/expressjs/express) for Server (Backend)
+* [mocha](https://github.com/mochajs/mocha) for Testing 
 
 ## Getting Started
 

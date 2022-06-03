@@ -45,20 +45,6 @@ async function installDocker(ssh2) {
     }
 }
 
-async function runTests(config: Config){
-    console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
-
-    try{
-        await test({
-            ...config,
-            headless: true,
-            coverage: true
-        });
-    }catch (e) {
-        throw e;
-    }
-}
-
 // prepare docker compose file for deployment
 function setupDockerComposeFile(dockerComposeFilePath: string, port, version){
     let content = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
@@ -197,7 +183,12 @@ export default async function (config: Config) {
     }
 
     if(!config.skipTest){
-        await runTests(config)
+        console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
+        test({
+            ...config,
+            headless: true,
+            coverage: true
+        });
     }
 
     // send fullstacked-nginx files at appDir

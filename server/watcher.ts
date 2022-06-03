@@ -12,4 +12,4 @@ wss.on("connection", (ws) => {
     ws.onclose = () => clearInterval(interval);
 });
 
-console.log("Watching");
+console.log('\x1b[33m%s\x1b[0m', "Watching");

@@ -1,6 +1,8 @@
 import {ChildProcess, exec, execSync} from "child_process";
 import {execScript, isDockerInstalled, silenceCommandLine} from "./utils";
 import path from "path";
+import fs from "fs";
+import yaml from "yaml";
 
 // helper to start/restart/attach/stop your app
 export default class {
@@ -20,19 +22,32 @@ export default class {
     async start(){
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
+        // check if all images are pulled
+        const dockerCompose = yaml.parse(fs.readFileSync(this.composeFilePath, {encoding: "utf-8"}))
+        const images = Object.values(dockerCompose.services).map(service => (service as any).image);
+        const pullNeeded = images.some(image => {
+            try{
+                execSync(`docker image inspect ${image}`);
+                return false;
+            }catch (e){
+                return true;
+            }
+        });
+
+        // output the pulling process if needed
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d`;
-        if(this.config.silent)
+        if(this.config.silent && !pullNeeded)
             cmd = silenceCommandLine(cmd);
-        execSync(cmd);
+        execSync(cmd, {
+            stdio: this.config.silent && !pullNeeded ? "ignore" : "inherit"
+        });
 
         await execScript(path.resolve(this.config.src, "postrun.ts"), this.config);
     }
 
     restart(){
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} restart -t 0`;
-        if(this.config.silent)
-            cmd = silenceCommandLine(cmd);
-        execSync(cmd)
+        execSync(cmd, {stdio: this.config.silent ? "ignore" : "inherit"});
     }
 
     // attach to docker-compose
@@ -66,8 +81,6 @@ export default class {
     stop(){
         // stop docker-compose and remove all volumes (cleaner)
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} down -t 0 -v`;
-        if(this.config.silent)
-            cmd = silenceCommandLine(cmd);
-        execSync(cmd);
+        execSync(cmd, {stdio: this.config.silent ? "ignore" : "inherit"});
     }
 }
