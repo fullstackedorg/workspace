@@ -1,11 +1,10 @@
 import path from "path"
-import esbuild, {Format, Loader, Platform} from "esbuild";
+import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {execSync} from "child_process";
-import {cleanOutDir, copyRecursiveSync, execScript} from "./utils";
+import {cleanOutDir, copyRecursiveSync, defaultEsbuildConfig, execScript} from "./utils";
 import crypto from "crypto";
 import yaml from "yaml";
-import watch from "./watch";
+
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -62,15 +61,19 @@ async function buildServer(config, watcher){
 
     // attach watcher script if defined
     if(watcher) {
-        const watcherScript = execSync(`npx esbuild ${path.resolve(__dirname, "../server/watcher.ts")} --minify --format=cjs`);
-        fs.writeFileSync(config.out + "/watcher.js", watcherScript);
+        buildSync({
+            entryPoints: [path.resolve(__dirname, "../server/watcher.ts")],
+            outfile: path.resolve(config.out, "watcher.js"),
+            minify: true,
+            format: "cjs"
+        });
     }
 
     // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
 
     // merge with user defined docker-compose if existant
-    const srcDockerComposeFilePath = config.src + "/docker-compose.yml";
+    const srcDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
     if(fs.existsSync(srcDockerComposeFilePath)){
         const templateDockerCompose = yaml.parse(dockerCompose);
         const srcDockerCompose = yaml.parse(fs.readFileSync(srcDockerComposeFilePath, {encoding: "utf-8"}));
@@ -158,11 +161,16 @@ export function webAppPostBuild(config: Config, watcher){
 
     // attach watcher if defined
     if(watcher){
-        const watcherScript = execSync(`npx esbuild ${path.resolve(__dirname, "../webapp/watcher.ts")} --minify`).toString();
+        buildSync({
+            entryPoints: [path.resolve(__dirname, "../webapp/watcher.ts")],
+            minify: true,
+            outfile: path.resolve(publicDir, "watcher.js")
+        });
+
         const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
         const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
         const postHTML = indexHTMLContentUpdated.slice(closingBodyIndex, indexHTMLContentUpdated.length);
-        indexHTMLContentUpdated = preHTML + `<script>${watcherScript}</script>` + postHTML;
+        indexHTMLContentUpdated = preHTML + `<script type="module" src="/watcher.js"></script>` + postHTML;
     }
 
     // add favicon if present
@@ -178,6 +186,7 @@ export function webAppPostBuild(config: Config, watcher){
         indexHTMLContentUpdated = preHTML + `<link rel="icon" href="/favicon.png">` + postHTML;
     }
 
+    // index.css root file
     const CSSFile = path.resolve(config.src, "index.css");
     if(fs.existsSync(CSSFile)){
         // copy file to dist/public
@@ -188,6 +197,46 @@ export function webAppPostBuild(config: Config, watcher){
         const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
         const postHTML = indexHTMLContentUpdated.slice(closingBodyIndex, indexHTMLContentUpdated.length);
         indexHTMLContentUpdated = preHTML + `<link rel="stylesheet" href="/index.css?v=${versionString}">` + postHTML;
+    }
+
+    // web app manifest
+    const manifestFilePath = path.resolve(config.src, "manifest.json");
+    if(fs.existsSync(manifestFilePath)){
+        // copy the file
+        fs.cpSync(manifestFilePath, path.resolve(publicDir, "manifest.json"));
+
+        // add reference tag in head
+        const closingHeadIndex = indexHTMLContentUpdated.indexOf("</head>");
+        const preHTML = indexHTMLContentUpdated.slice(0, closingHeadIndex);
+        const postHTML = indexHTMLContentUpdated.slice(closingHeadIndex, indexHTMLContentUpdated.length);
+        indexHTMLContentUpdated = preHTML + `<link rel="manifest" href="/manifest.json" />` + postHTML;
+    }
+
+    // build service-worker and reference in index.html
+    const serviceWorkerFilePath = path.resolve(config.src, "service-worker.ts");
+    if(fs.existsSync(serviceWorkerFilePath)){
+        buildSync({
+            entryPoints: [path.resolve(__dirname, "../webapp/ServiceWorkerRegistration.ts")],
+            define: {
+                "process.env.VERSION": JSON.stringify(config.version)
+            },
+            minify: true,
+            outfile: path.resolve(publicDir, "service-worker.js")
+        });
+
+        // add reference tag in head
+        const closingHeadIndex = indexHTMLContentUpdated.indexOf("</head>");
+        const preHTML = indexHTMLContentUpdated.slice(0, closingHeadIndex);
+        const postHTML = indexHTMLContentUpdated.slice(closingHeadIndex, indexHTMLContentUpdated.length);
+        indexHTMLContentUpdated = preHTML + `<script src="/service-worker.js"></script>` + postHTML;
+
+        buildSync({
+            entryPoints: [serviceWorkerFilePath],
+            outfile: path.resolve(publicDir, "service-worker", "index.js"),
+            bundle: true,
+            minify: true,
+            sourcemap: true
+        });
     }
 
     // output index.html

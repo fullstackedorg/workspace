@@ -1,5 +1,6 @@
 declare type ConfigCreate = {
-    skipTest? : boolean // create without test setup
+    skipTest? : boolean, // create without test setup
+    pwa? : boolean // add the pwa minimum requirements
 }
 
 declare type ConfigBuild = {
