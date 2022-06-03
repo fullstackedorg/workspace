@@ -23,7 +23,7 @@ export default class {
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
         // check if all images are pulled
-        const dockerCompose = yaml.parse(fs.readFileSync(this.composeFilePath, {encoding: "utf-8"}))
+        const dockerCompose = yaml.parse(fs.readFileSync(this.composeFilePath, {encoding: "utf-8"}));
         const images = Object.values(dockerCompose.services).map(service => (service as any).image);
         const pullNeeded = images.some(image => {
             try{

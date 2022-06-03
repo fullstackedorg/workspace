@@ -6,7 +6,6 @@ dist
 .tests
 coverage
 .env
-.packagePath
 **/*.js
 **/*.js.map
 **/*.d.ts
