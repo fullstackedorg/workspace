@@ -167,10 +167,10 @@ export function webAppPostBuild(config: Config, watcher){
             outfile: path.resolve(publicDir, "watcher.js")
         });
 
-        const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
+        const closingBodyIndex = indexHTMLContentUpdated.indexOf("</head>");
         const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
         const postHTML = indexHTMLContentUpdated.slice(closingBodyIndex, indexHTMLContentUpdated.length);
-        indexHTMLContentUpdated = preHTML + `<script type="module" src="/watcher.js"></script>` + postHTML;
+        indexHTMLContentUpdated = preHTML + `<script src="/watcher.js"></script>` + postHTML;
     }
 
     // add favicon if present
