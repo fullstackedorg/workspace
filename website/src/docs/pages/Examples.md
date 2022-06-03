@@ -86,10 +86,10 @@ const server = new Server();
 
     // update
     server.express.put("/todos/:id", json(), async (req, res) => {
-        const todo: Todo = req.body;
-        delete todo._id;
+        let todo: Todo = req.body;
+        todo._id = new ObjectId(req.params.id)
         const result = await todosCollection.findOneAndReplace({
-            _id: new ObjectId(req.params.id)
+            _id: todo._id
         }, todo);
         res.json(result);
     });

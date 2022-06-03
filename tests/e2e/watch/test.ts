@@ -6,7 +6,7 @@ import {cleanOutDir, killProcess} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
 import path from "path";
 import sleep from "fullstacked/scripts/sleep";
-import waitForServer from "../../../scripts/waitForServer";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
@@ -40,9 +40,10 @@ describe("Watch Test", function(){
 
     it('Should reload webapp', async function(){
         const countBefore = await getReloadCount();
+        await sleep(1500);
 
         fs.appendFileSync(indexFile, "\n// this is a test line");
-        await sleep(3000);
+        await sleep(2000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
@@ -86,6 +87,6 @@ describe("Watch Test", function(){
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
-        cleanOutDir(path.resolve(__dirname, "dist"))
+        cleanOutDir(path.resolve(__dirname, "dist"));
     });
 });

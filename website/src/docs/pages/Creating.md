@@ -79,4 +79,5 @@ This is your initial testing file. Tests written here are just good examples. Yo
 ### Flags
 | Flag | Description |
 | --- | --- |
-| *--skip-test=*  &nbsp;| Won't generate the default test file. |
+| *--skip-test*  &nbsp;| Won't generate the default test file. |
+| *--pwa*  &nbsp;| Generate the required files (`service-worker.ts`, `manifest.json`) to setup a minimal PWA. |
