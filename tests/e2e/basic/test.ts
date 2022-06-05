@@ -3,10 +3,9 @@ import Helper from "tests/e2e/Helper"
 import {equal} from "assert";
 
 describe("Basic Test", function(){
-    let test;
+    let test = new Helper(__dirname);
 
     before(async function (){
-        test = new Helper(__dirname);
         await test.start();
     });
 

@@ -3,10 +3,10 @@ version: '3.7'
 services:
   node:
     image: node:16-alpine
-    working_dir: /dist
+    working_dir: /app
     command: [ "node", "index", "${FLAGS}" ]
     restart: always
     ports:
       - "8000:8000"
     volumes:
-      - ./:/dist
+      - ./${VERSION}:/app

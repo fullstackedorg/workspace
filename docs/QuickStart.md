@@ -2,7 +2,7 @@
 
 
 ### Starting your project
-1. Create a folder were you will develop your awesome web app.
+1. Create a folder where you will develop your awesome web app.
 ```shell
 mkdir my-awesome-project
 cd my-awesome-project
