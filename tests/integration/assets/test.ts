@@ -2,13 +2,15 @@ import {before, describe} from "mocha";
 import axios from "axios";
 import {equal} from "assert";
 import path from "path";
-import fs from "fs";
-import server from "./server";
-import {cleanOutDir} from "../../../scripts/utils";
+import server from "../server";
+import Helper from "../Helper";
 
 
 describe("Assets Tests", function(){
+    const test = new Helper(path.resolve(__dirname, "../"));
+
     before(async function (){
+        await test.start();
         server.start({silent: true, testing: true});
         server.assetsDir = path.resolve(__dirname);
     });
@@ -21,7 +23,7 @@ describe("Assets Tests", function(){
 
     after(function(){
         server.stop();
-        cleanOutDir(path.resolve(__dirname, "dist"));
+        test.stop();
     });
 
 });

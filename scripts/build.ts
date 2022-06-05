@@ -242,17 +242,6 @@ export function webAppPostBuild(config: Config, watcher){
     // output index.html
     fs.mkdirSync(publicDir, {recursive: true});
     fs.writeFileSync(publicDir + "/index.html", indexHTMLContentUpdated);
-
-    // copy coverage folder if present
-    const coverageHTMLDir = path.resolve(process.cwd(), "coverage");
-    if(fs.existsSync(coverageHTMLDir) && !watcher) {
-        const coverageOutDir = publicDir + "/coverage";
-
-        if(fs.existsSync(coverageHTMLDir))
-            fs.rmSync(coverageOutDir, {force: true, recursive: true});
-
-        copyRecursiveSync(coverageHTMLDir, coverageOutDir);
-    }
 }
 
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
