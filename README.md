@@ -31,7 +31,7 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup including fe
 
 ## Getting Started
 
-1. Create a folder were you will develop your awesome web app
+1. Create a folder where you will develop your awesome web app
 ```shell
 mkdir my-awesome-project
 cd my-awesome-project

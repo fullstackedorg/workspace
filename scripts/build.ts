@@ -37,8 +37,8 @@ function getProcessedEnv(config: Config){
 // bundles the server
 async function buildServer(config, watcher){
     const options = {
-        entryPoints: [ config.src + "/server.ts" ],
-        outfile: config.out + "/index.js",
+        entryPoints: [ path.resolve(config.src, "server.ts") ],
+        outfile: path.resolve(config.out, config.version, "index.js"),
         platform: "node" as Platform,
         bundle: true,
         minify: process.env.NODE_ENV === 'production',
@@ -63,7 +63,7 @@ async function buildServer(config, watcher){
     if(watcher) {
         buildSync({
             entryPoints: [path.resolve(__dirname, "../server/watcher.ts")],
-            outfile: path.resolve(config.out, "watcher.js"),
+            outfile: path.resolve(config.out, config.version, "watcher.js"),
             minify: true,
             format: "cjs"
         });
@@ -71,6 +71,7 @@ async function buildServer(config, watcher){
 
     // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
+    dockerCompose = dockerCompose.replace("${VERSION}", config.version);
 
     // merge with user defined docker-compose if existant
     const srcDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
@@ -89,7 +90,7 @@ async function buildServer(config, watcher){
     }
 
     // output docker-compose result to dist directory
-    fs.writeFileSync(config.out + "/docker-compose.yml", dockerCompose);
+    fs.writeFileSync(path.resolve(config.out, "docker-compose.yml"), dockerCompose);
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "Server Built");
@@ -97,10 +98,10 @@ async function buildServer(config, watcher){
 
 // bundles the web app
 async function buildWebApp(config, watcher){
-    const publicDir = config.out + "/public";
+    const publicDir = path.resolve(config.out, config.version, "public");
 
     const options = {
-        entryPoints: [ config.src + "/index.tsx" ],
+        entryPoints: [ path.resolve(config.src, "index.tsx") ],
         outdir: publicDir,
         format: "esm" as Format,
         splitting: true,
@@ -110,7 +111,7 @@ async function buildWebApp(config, watcher){
 
         define: getProcessedEnv(config),
 
-        // assets like images are stored at dist/public/assets
+        // assets like images are stored at dist/{VERSION}/public/assets
         // and the server reroutes all asset request to this directory
         // this is too avoid using publicPath and implies other issues
         assetNames: "assets/[name]-[hash]",
@@ -144,7 +145,7 @@ async function buildWebApp(config, watcher){
 }
 
 export function webAppPostBuild(config: Config, watcher){
-    const publicDir = config.out + "/public";
+    const publicDir = path.resolve(config.out, config.version, "public");
 
     // get the index.html file
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
