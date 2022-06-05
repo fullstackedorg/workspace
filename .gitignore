@@ -6,6 +6,7 @@ dist
 .tests
 .env
 **/*.js
+!coverage/**/*.js
 **/*.js.map
 **/*.d.ts
 !config.d.ts

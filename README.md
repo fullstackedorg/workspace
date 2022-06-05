@@ -9,7 +9,7 @@ A full stack web app build tool and development kit.
 [![version](https://img.shields.io/badge/version-0.3.0-01b0de)](https://www.npmjs.com/package/fullstacked)
 [![dependencies](https://img.shields.io/badge/dependencies-18-yellowgreen)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
 [![module dependencies](https://img.shields.io/badge/module%20deps-360-yellow)](https://npmgraph.js.org/?q=fullstacked)
-[![code coverage](https://img.shields.io/badge/coverage-83.19%25-yellowgreen)](https://fullstacked.org/coverage/)
+[![code coverage](https://img.shields.io/badge/coverage-83.19%25-yellowgreen)](https://cplepage.github.io/fullstacked/coverage/)
 
 
 A complete setup for a Typescript full stack application.
