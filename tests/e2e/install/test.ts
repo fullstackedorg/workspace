@@ -13,7 +13,7 @@ describe("Install Test", function(){
     let packageName, appProcess, browser;
 
     before(async function (){
-        this.timeout(60000);
+        this.timeout(120000);
 
         cleanOutDir(outDir);
         fs.mkdirSync(outDir);
