@@ -71,7 +71,6 @@ async function buildServer(config, watcher){
 
     // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
-    dockerCompose = dockerCompose.replace("${VERSION}", config.version);
 
     // merge with user defined docker-compose if existant
     const srcDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
@@ -88,6 +87,9 @@ async function buildServer(config, watcher){
                 }
             });
     }
+
+    // replace version directory
+    dockerCompose = dockerCompose.replace(/\$\{VERSION\}/g, config.version);
 
     // output docker-compose result to dist directory
     fs.writeFileSync(path.resolve(config.out, "docker-compose.yml"), dockerCompose);
