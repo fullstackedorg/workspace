@@ -12,20 +12,21 @@ export default class {
     runner;
     browser;
     page;
+    localConfig: Config;
 
     constructor(dir: string) {
         this.dir = dir;
     }
 
     async start(pathURL: string = ""){
-        const localConfig: Config = config({
+        this.localConfig = config({
             name: "test",
             src: this.dir,
             out: this.dir,
             silent: true
         });
-        await build(localConfig);
-        this.runner = new Runner(localConfig);
+        await build(this.localConfig);
+        this.runner = new Runner(this.localConfig);
         await this.runner.start();
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
@@ -62,7 +63,7 @@ export default class {
 
             return {
                 ...coverage,
-                url: this.dir + "/dist/public" + file
+                url: this.dir + "/dist/" + this.localConfig.version + "/public" + file
             }
         }).filter(Boolean);
 
