@@ -4,7 +4,6 @@ node_modules
 dist
 .nyc_output
 .tests
-coverage
 .env
 **/*.js
 **/*.js.map
