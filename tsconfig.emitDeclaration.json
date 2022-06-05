@@ -4,9 +4,12 @@
         "declaration": true
     },
     "include": [
+        "config.d.ts",
         "webapp/index.tsx",
         "server/index.ts",
+        "tests/e2e/Helper.ts",
         "tests/integration/Helper.ts",
-        "scripts/sleep.ts"
+        "scripts/sleep.ts",
+        "scripts/waitForServers.ts"
     ]
 }

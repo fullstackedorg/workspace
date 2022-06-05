@@ -15,7 +15,7 @@ declare type ConfigWatch = {
 }
 
 declare type ConfigTest = {
-    coverage? : boolean
+    coverage? : boolean,
     headless? : boolean
 }
 
@@ -31,7 +31,7 @@ declare type ConfigDeploy = {
 
     appDir?     : string, // directory in server
 
-    skipTest?   : boolean // skip testing
+    skipTest?   : boolean, // skip testing
 
     noNginx?    : boolean // skip nginx setup
 }
