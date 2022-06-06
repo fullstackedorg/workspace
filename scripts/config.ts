@@ -1,4 +1,5 @@
 import {getPackageJSON} from "./utils";
+import path from "path";
 
 const defaultConfig: Config = {
     src: process.cwd(),
@@ -14,7 +15,7 @@ export default function(config) {
     }
 
     // always add dist to out dir
-    config.out += "/dist"
+    config.out = path.resolve(config.out, "dist");
 
     // force to have a package.json
     const packageConfigs = getPackageJSON();

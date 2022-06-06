@@ -45,20 +45,6 @@ async function installDocker(ssh2) {
     }
 }
 
-async function runTests(config: Config){
-    console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
-
-    try{
-        await test({
-            ...config,
-            headless: true,
-            coverage: true
-        });
-    }catch (e) {
-        throw e;
-    }
-}
-
 // prepare docker compose file for deployment
 function setupDockerComposeFile(dockerComposeFilePath: string, port, version){
     let content = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
@@ -66,9 +52,6 @@ function setupDockerComposeFile(dockerComposeFilePath: string, port, version){
     // switch port if defined
     // TODO: maybe move this to build script
     content = content.replace("8000:8000", `${port ?? 8000}:8000`);
-
-    // switch mounting current dir to ./{VERSION} dir
-    content = content.replace("./:/dist", `./${version}:/dist`);
 
     // overwrite file
     fs.writeFileSync(dockerComposeFilePath, content);
@@ -102,9 +85,10 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
         fs.rmSync(nginxFilePath);
     }
 
-    // gather all dist files
-    const files = glob.sync("**/*", {cwd: config.out})
-    const localFilePaths = files.map(file => path.resolve(process.cwd(), config.out, file));
+    // gather all dist files for version
+    const distFilesDir = path.resolve(config.out, config.version);
+    const files = glob.sync("**/*", {cwd: distFilesDir})
+    const localFilePaths = files.map(file => path.resolve(distFilesDir, file));
 
     // upload all files
     for (let i = 0; i < files.length; i++) {
@@ -150,7 +134,7 @@ export default async function (config: Config) {
     await sftp.connect(connectionConfig);
 
     // path where the build app files will be
-    const serverPath = config.appDir + "/" + config.name ;
+    const serverPath = config.appDir + "/" + config.name;
     // add to that the version number as directory
     const serverPathDist = serverPath + "/" + config.version;
     /*
@@ -197,7 +181,12 @@ export default async function (config: Config) {
     }
 
     if(!config.skipTest){
-        await runTests(config)
+        console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
+        test({
+            ...config,
+            headless: true,
+            coverage: true
+        });
     }
 
     // send fullstacked-nginx files at appDir

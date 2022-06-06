@@ -31,12 +31,12 @@ describe("Deploy Test", function(){
     }
 
     before(async function (){
-        this.timeout(50000);
+        this.timeout(200000);
 
         if(!isDockerInstalled())
             throw Error("Deploy test needs Docker");
 
-        execSync(`docker rm -f ${containerName} >/dev/null 2>&1`);
+        execSync(`docker rm -f ${containerName}`, {stdio: "ignore"});
         printLine("Setting up docker container");
         execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:80 -p 8443:443 --name ${containerName} docker:dind`);
         printLine("Installing ssh server");

@@ -5,13 +5,14 @@ import path from "path";
 import puppeteer from "puppeteer";
 import fs from "fs";
 import sleep from "fullstacked/scripts/sleep";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Docker-Compose Test", function(){
     let runProcess, browser, page;
 
     before(async function (){
         runProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} run --src=${__dirname} --out=${__dirname} --test-mode`);
-        await sleep(5000);
+        await waitForServer(15000)
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
     })

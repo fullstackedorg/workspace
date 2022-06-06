@@ -1,8 +1,9 @@
-import build from "./build";
+import build, {webAppPostBuild} from "./build";
 import {exec} from "child_process";
 import {killProcess} from "./utils";
 import fs from "fs";
 import run from "./run";
+import path from "path";
 
 let globalConfig: Config;
 
@@ -26,9 +27,16 @@ export default async function(config: Config) {
 
     // start the mini watch server
     await killProcess(1, 8001);
-    const watcherProcess = exec("node " + globalConfig.out + "/watcher.js");
+    const watcherProcess = exec("node " + path.resolve(globalConfig.out, globalConfig.version) + "/watcher.js");
     watcherProcess.stdout.pipe(process.stdout);
     watcherProcess.stderr.pipe(process.stderr);
+
+    if(fs.existsSync(config.src + "/index.css")){
+        fs.watchFile(config.src + "/index.css", () => webAppPostBuild(config, watcher));
+        process.on("SIGINT", () => {
+            fs.unwatchFile(config.src + "/index.css");
+        });
+    }
 
     await watcher(false);
 }

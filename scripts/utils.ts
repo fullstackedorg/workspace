@@ -30,17 +30,32 @@ export function getPackageJSON():{[key:string]: any} {
     return JSON.parse(fs.readFileSync(packageJSONPath, {encoding: "utf-8"}));
 }
 
+export function silenceCommandLine(cmd: string){
+    if(os.platform() === "win32")
+        return cmd + " >nul 2>nul";
+
+    return cmd + " >/dev/null 2>&1";
+}
+
 // harsh kill process at port
 export async function killProcess(process, port: number = 0){
     if(!process)
         return;
 
-    if(os.platform() === 'win32' && process.pid){
+    if(os.platform() === 'win32'){
         if(process.pid)
             try{exec(`taskkill /pid ${process.pid} /f`)} catch (e) {}
 
         if(port){
-            const processesAtPort = new Set(execSync(`netstat -ano | findstr :${port}`).toString()
+            let processes;
+            try{
+                processes = execSync(`netstat -ano | findstr :${port}`).toString();
+            }catch (e) { }
+
+            if(!processes)
+                return;
+
+            const processesAtPort = new Set(processes
                 .split("\r\n")
                 .filter(processLine => processLine.includes("LISTENING"))
                 .map(processLine => processLine.match(/\d*$/))

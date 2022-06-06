@@ -1,16 +1,16 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "A full stack web app tool and development kit",
   "scripts": {
+    "preinstall": "npm config set puppeteer_product=chrome",
     "build": "npx esbuild build-cli.ts --outfile=build-cli.js --format=cjs && node build-cli",
     "pretest": "npm run build",
     "test": "node cli test --headless",
     "precoverage": "npm run build",
     "coverage": "node cli test --headless --coverage",
-    "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly",
-    "website": "node cli watch --src=website"
+    "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly"
   },
   "repository": {
     "type": "git",
@@ -46,7 +46,8 @@
     "glob": "^7.2.0",
     "mocha": "^9.2.2",
     "morgan": "^1.10.0",
-    "puppeteer": "^13.5.1",
+    "nyc": "^15.1.0",
+    "puppeteer": "^13.7.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "ssh2-sftp-client": "^7.2.3",
@@ -55,18 +56,9 @@
     "yaml": "^2.0.1"
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.1.1",
-    "@fortawesome/free-brands-svg-icons": "^6.1.1",
-    "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@fortawesome/react-fontawesome": "^0.1.18",
     "@types/glob": "^7.2.0",
     "@types/ws": "^8.5.3",
-    "highlight.js": "^11.5.1",
-    "markdown-it": "^13.0.1",
     "mongodb": "^4.6.0",
-    "react-bootstrap": "^2.2.2",
-    "react-bootstrap-typeahead": "^6.0.0-alpha.10",
-    "react-router-dom": "^6.2.2",
     "typescript": "^4.6.3"
   }
 }

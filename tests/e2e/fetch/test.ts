@@ -8,8 +8,10 @@ describe("Fetch Test", function(){
 
     before(async function (){
         test = new Helper(__dirname);
-        await test.start()
-        await sleep(2000);
+        await test.start();
+
+        // wait for fetch and render
+        await sleep(1000)
     })
 
     it('Should fetch an endpoint and update frontend', async function(){

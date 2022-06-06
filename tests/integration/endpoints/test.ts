@@ -1,14 +1,16 @@
 import {before, describe} from "mocha";
-import Server from "fullstacked/server";
+import server from "../server"
 import axios from "axios";
 import {equal, ok} from "assert";
+import path from "path";
+import Helper from "fullstacked/tests/integration/Helper";
 
 
 describe("Endpoints Tests", function(){
-    let server;
+    const test = new Helper(path.resolve(__dirname, "../"));
 
     before(async function (){
-        server = new Server();
+        await test.start();
         server.start({silent: true, testing: true});
     });
 
@@ -22,6 +24,7 @@ describe("Endpoints Tests", function(){
 
     after(function(){
         server.stop();
+        test.stop();
     });
 
 });
