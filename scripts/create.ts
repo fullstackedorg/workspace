@@ -14,7 +14,7 @@ server.start();
 export default server;
 `;
 
-const webappTemplate = `import Webapp from "fullstacked/webapp";
+const webAppTemplate = `import Webapp from "fullstacked/webapp";
 
 Webapp(<>Welcome to FullStacked!</>);
 `;
@@ -59,18 +59,41 @@ describe("End-2-End", function(){
     });
 });`;
 
-export default function(config) {
+export default function(config: Config) {
     config = defaultConfig(config);
 
-    // output template files at project src
-    fs.writeFileSync(path.resolve(config.src, "server.ts"), serverTemplate);
-    fs.writeFileSync(path.resolve(config.src, "index.tsx"), webappTemplate);
+    // output template files at project src for server
+    const serverFilePath = path.resolve(config.src, "server.ts");
+    if(!fs.existsSync(serverFilePath)) fs.writeFileSync(serverFilePath, serverTemplate);
+
+    // output template files at project src for web app
+    const webAppFilePath = path.resolve(config.src, "index.tsx");
+    if(!fs.existsSync(webAppFilePath)) fs.writeFileSync(webAppFilePath, webAppTemplate);
 
     if(!config.skipTest) {
         fs.writeFileSync(path.resolve(config.src, "test.ts"), testsTemplate);
 
         // copy this files for to enable JetBrain WebStorm IDE test panel
-        fs.cpSync(path.resolve(__dirname, "../.mocharc.js"), process.cwd() + "/.mocharc.js");
+        if(!fs.existsSync(process.cwd() + "/.mocharc.js"))
+            fs.cpSync(path.resolve(__dirname, "../.mocharc.js"), process.cwd() + "/.mocharc.js");
+    }
+
+    // pwa minimal setup
+    if(config.pwa){
+        const defaultValues = {
+            icons: [],
+            name: config.title,
+            short_name: config.name,
+            display: "standalone",
+            start_url: "/",
+            description: "",
+            background_color: "#FFF",
+            theme_color: "#FFF"
+        }
+        fs.writeFileSync(path.resolve(config.src, "manifest.json"), JSON.stringify(defaultValues, null, 2));
+
+        const serviceWorkerTemplate =`self.addEventListener('fetch', (event) => {});`;
+        fs.writeFileSync(path.resolve(config.src, "service-worker.ts"), serviceWorkerTemplate);
     }
 
     if(!config.silent)

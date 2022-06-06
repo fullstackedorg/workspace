@@ -4,9 +4,9 @@ node_modules
 dist
 .nyc_output
 .tests
-coverage
 .env
-.packagePath
 **/*.js
+!coverage/**/*.js
 **/*.js.map
 **/*.d.ts
+!config.d.ts

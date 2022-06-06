@@ -5,26 +5,28 @@ import Runner from "../../scripts/runner";
 import build from "../../scripts/build";
 import config from "../../scripts/config";
 import {cleanOutDir} from "../../scripts/utils";
+import waitForServer from "../../scripts/waitForServer";
 
 export default class {
     dir;
     runner;
     browser;
     page;
+    localConfig: Config;
 
     constructor(dir: string) {
         this.dir = dir;
     }
 
     async start(pathURL: string = ""){
-        const localConfig: Config = config({
+        this.localConfig = config({
             name: "test",
             src: this.dir,
             out: this.dir,
             silent: true
         });
-        await build(localConfig);
-        this.runner = new Runner(localConfig);
+        await build(this.localConfig);
+        this.runner = new Runner(this.localConfig);
         await this.runner.start();
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
@@ -35,6 +37,9 @@ export default class {
                 resetOnNavigation: false
             });
         }
+
+        await waitForServer(3000);
+
         await this.page.goto("http://localhost:8000" + pathURL);
 
         process.on('uncaughtException', err => {
@@ -58,7 +63,7 @@ export default class {
 
             return {
                 ...coverage,
-                url: this.dir + "/dist/public" + file
+                url: this.dir + "/dist/" + this.localConfig.version + "/public" + file
             }
         }).filter(Boolean);
 

@@ -6,11 +6,12 @@ import {cleanOutDir, killProcess} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
 import path from "path";
 import sleep from "fullstacked/scripts/sleep";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
-    const indexFile = __dirname + "/index.tsx";
-    const serverFile = __dirname + "/server.ts";
+    const indexFile = path.resolve(__dirname, "index.tsx");
+    const serverFile = path.resolve(__dirname, "server.ts");
 
     before(async function (){
         await killProcess(1, 8001);
@@ -18,12 +19,12 @@ describe("Watch Test", function(){
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
 
-        fs.copyFileSync(__dirname + "/template-index.tsx", indexFile);
-        fs.copyFileSync(__dirname + "/template-server.ts", serverFile);
+        fs.copyFileSync(path.resolve(__dirname, "template-index.tsx"), indexFile);
+        fs.copyFileSync(path.resolve(__dirname, "template-server.ts"), serverFile);
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);
 
-        await sleep(5000);
+        await waitForServer(15000);
 
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
@@ -42,13 +43,15 @@ describe("Watch Test", function(){
         await sleep(1500);
 
         fs.appendFileSync(indexFile, "\n// this is a test line");
-        await sleep(1500);
+        await sleep(2000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
     });
 
     async function getBootTime(){
+        await sleep(1000);
+
         if(browser && !browser.isConnected()) {
             await browser.close();
             browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
@@ -67,7 +70,7 @@ describe("Watch Test", function(){
         ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
-        await sleep(3000);
+        await sleep(5000);
         const timeAfter = await getBootTime();
 
         ok(timeAfter)
@@ -84,6 +87,6 @@ describe("Watch Test", function(){
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
-        cleanOutDir(path.resolve(__dirname, "dist"))
+        cleanOutDir(path.resolve(__dirname, "dist"));
     });
 });

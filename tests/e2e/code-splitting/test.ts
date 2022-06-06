@@ -20,7 +20,7 @@ describe("Code Splitting", function(){
     });
 
     it('Should have more than 1 js file in public', async function(){
-        const jsFiles = glob.sync("*.js", {cwd: path.resolve(__dirname.replace("/.tests", ""), "dist/public")});
+        const jsFiles = glob.sync("**/public/*.js", {cwd: path.resolve(__dirname.replace("/.tests", ""), "dist")});
         ok(jsFiles.length > 1);
     });
 

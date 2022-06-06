@@ -6,14 +6,16 @@ import path from "path";
 import {equal} from "assert";
 import puppeteer from "puppeteer";
 import sleep from "fullstacked/scripts/sleep";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Install Test", function(){
     const outDir = path.resolve(__dirname, "dist");
     let packageName, appProcess, browser;
 
     before(async function (){
-        this.timeout(60000);
+        this.timeout(120000);
 
+        cleanOutDir(outDir);
         fs.mkdirSync(outDir);
         printLine("Packing");
         execSync(`npm pack -q --pack-destination ${outDir}`);
@@ -25,7 +27,7 @@ describe("Install Test", function(){
         execSync(`npx fullstacked create`, {cwd: outDir});
         printLine("Run");
         appProcess = exec(`npx fullstacked run`, {cwd: outDir});
-        await sleep(3000);
+        await waitForServer(10000)
         clearLine();
     })
 
