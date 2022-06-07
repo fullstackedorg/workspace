@@ -2,7 +2,7 @@
 node_modules
 dist
 .nyc_output
-coverage
+fullstacked-code-coverages
 **/*.js.map
 test.ts
 
