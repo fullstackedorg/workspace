@@ -3,7 +3,7 @@ import fs from "fs";
 import http from "http";
 import path from "path";
 
-const wss = new WebSocketServer({server: http.createServer().listen(8001)});
+const wss = new WebSocketServer({server: http.createServer().listen(8001, "0.0.0.0")});
 wss.on("connection", (ws) => {
     const interval = setInterval(() => {
         const stats = fs.statSync(path.resolve(__dirname, "public/index.html"));
