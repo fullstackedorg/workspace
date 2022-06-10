@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A full stack web app tool and development kit",
   "scripts": {
     "preinstall": "npm config set puppeteer_product=chrome",
