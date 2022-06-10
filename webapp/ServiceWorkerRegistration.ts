@@ -14,9 +14,7 @@
     }
 
     // register service-worker
-    await navigator.serviceWorker.register('/service-worker/index.js', {
-        scope: "/"
-    });
+    await navigator.serviceWorker.register('/service-worker-entrypoint.js');
 
     window.localStorage.setItem("version", currentVersion);
 })();
