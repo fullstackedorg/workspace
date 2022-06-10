@@ -189,6 +189,19 @@ export function webAppPostBuild(config: Config, watcher){
         indexHTMLContentUpdated = preHTML + `<link rel="icon" href="/favicon.png">` + postHTML;
     }
 
+    // head.html
+    const headFile = path.resolve(config.src, "head.html");
+    if(fs.existsSync(headFile)){
+        // read content
+        const content = fs.readFileSync(headFile, {encoding: "utf-8"});
+
+        // add content to head
+        const closingHeadIndex = indexHTMLContentUpdated.indexOf("</head>");
+        const preHTML = indexHTMLContentUpdated.slice(0, closingHeadIndex);
+        const postHTML = indexHTMLContentUpdated.slice(closingHeadIndex, indexHTMLContentUpdated.length);
+        indexHTMLContentUpdated = preHTML + content + postHTML;
+    }
+
     // index.css root file
     const CSSFile = path.resolve(config.src, "index.css");
     if(fs.existsSync(CSSFile)){
