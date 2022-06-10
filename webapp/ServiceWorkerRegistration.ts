@@ -1,5 +1,5 @@
 (async () => {
-    if (!('serviceWorker' in navigator) || window.location.protocol !== "https")
+    if (!('serviceWorker' in navigator) || window.location.protocol !== "https:")
         return;
 
     // compare version
