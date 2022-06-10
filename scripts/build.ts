@@ -248,7 +248,7 @@ export function webAppPostBuild(config: Config, watcher){
 
         buildSync({
             entryPoints: [serviceWorkerFilePath],
-            outfile: path.resolve(publicDir, "service-worker", "index.js"),
+            outfile: path.resolve(publicDir, "service-worker-entrypoint.js"),
             bundle: true,
             minify: true,
             sourcemap: true
