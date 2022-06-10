@@ -14,5 +14,9 @@
     }
 
     // register service-worker
-    await navigator.serviceWorker.register('/service-worker/index.js');
+    await navigator.serviceWorker.register('/service-worker/index.js', {
+        scope: "/"
+    });
+
+    window.localStorage.setItem("version", currentVersion);
 })();
