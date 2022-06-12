@@ -6,7 +6,7 @@ A full stack web app build tool and development kit.
 [<img src="https://fullstacked.org/favicon.png" alt="FullStacked Logo" width="75px" />](https://fullstacked.org/)
 
 
-[![version](https://img.shields.io/badge/version-0.3.2-01b0de)](https://www.npmjs.com/package/fullstacked)
+[![version](https://img.shields.io/badge/version-0.3.5-01b0de)](https://www.npmjs.com/package/fullstacked)
 [![dependencies](https://img.shields.io/badge/dependencies-18-yellowgreen)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
 [![module dependencies](https://img.shields.io/badge/module%20deps-360-yellow)](https://npmgraph.js.org/?q=fullstacked)
 [![code coverage](https://img.shields.io/badge/coverage-80.99%25-yellowgreen)](https://cplepage.github.io/fullstacked-code-coverage/)
