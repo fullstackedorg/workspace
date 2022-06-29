@@ -8,7 +8,7 @@ export default function(config: Config){
     const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
     // gather all test.ts files
-    // TODO: swap to **/*.test.ts maybe
+    // TODO: swap to **/*test.ts maybe
     const testFiles = path.resolve(process.cwd(), "**/test.ts");
 
     let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
@@ -16,13 +16,8 @@ export default function(config: Config){
         (config.coverage ? "--coverage" : "");
 
     // use nyc for coverage
-    if(config.coverage) {
-        let nycCommand = "npx nyc --reporter text-summary --reporter html";
-        if(config.reportDir)
-            nycCommand += " --report-dir " + config.reportDir;
-
-        testCommand = nycCommand + " " + testCommand;
-    }
+    if(config.coverage)
+        testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand;
 
     execSync(testCommand, {stdio: "inherit"});
 }

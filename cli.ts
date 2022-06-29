@@ -32,8 +32,7 @@ const args = {
     "--name=": value => config.name = value,
     "--title=": value => config.title = value,
     "--no-nginx": () => config.noNginx = true,
-    "--pwa": () => config.pwa = true,
-    "--report-dir=": (value) => config.reportDir = value
+    "--pwa": () => config.pwa = true
 };
 
 process.argv.forEach(arg => {
