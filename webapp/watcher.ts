@@ -1,6 +1,6 @@
 let lastBuildTime, webSocket;
 function connectWebsocket(){
-    webSocket = new WebSocket('ws://localhost:8001');
+    webSocket = new WebSocket('ws://' + window.location.hostname + ':8001');
     webSocket.onmessage = function(message){
         const buildTime = Number(message.data);
         if(!lastBuildTime){
