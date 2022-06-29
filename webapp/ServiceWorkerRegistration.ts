@@ -1,5 +1,5 @@
 (async () => {
-    if (!('serviceWorker' in navigator) || window.location.protocol !== "https")
+    if (!('serviceWorker' in navigator) || window.location.protocol !== "https:")
         return;
 
     // compare version
@@ -14,5 +14,7 @@
     }
 
     // register service-worker
-    await navigator.serviceWorker.register('/service-worker/index.js');
+    await navigator.serviceWorker.register('/service-worker-entrypoint.js');
+
+    window.localStorage.setItem("version", currentVersion);
 })();

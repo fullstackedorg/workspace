@@ -9,7 +9,7 @@
     "pretest": "npm run build",
     "test": "node cli test --headless",
     "precoverage": "npm run build",
-    "coverage": "node cli test --headless --coverage --report-dir=fullstacked-code-coverage",
+    "coverage": "node cli test --headless --coverage",
     "prepublishOnly": "npm run build && tsc -p tsconfig.emitDeclaration.json --emitDeclarationOnly"
   },
   "repository": {
