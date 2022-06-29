@@ -16,8 +16,7 @@ declare type ConfigWatch = {
 
 declare type ConfigTest = {
     coverage? : boolean,
-    headless? : boolean,
-    reportDir?: string
+    headless? : boolean
 }
 
 declare type ConfigDeploy = {
@@ -35,6 +34,8 @@ declare type ConfigDeploy = {
     skipTest?   : boolean, // skip testing
 
     noNginx?    : boolean // skip nginx setup
+
+    pull?       : boolean // force pull new docker images
 }
 
 declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {
