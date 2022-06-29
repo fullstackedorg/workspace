@@ -75,14 +75,12 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     const dockerComposeFilePath = path.resolve(config.out, "docker-compose.yml")
     setupDockerComposeFile(dockerComposeFilePath, config.port, config.version);
     await sftp.put(config.out + "/docker-compose.yml", serverPath + "/docker-compose.yml");
-    fs.rmSync(dockerComposeFilePath);
 
     // setup and ship nginx
     if(!config.noNginx) {
         const nginxFilePath = path.resolve(config.out, "nginx.conf");
         setupNginxFile(nginxFilePath, config.port, config.serverName, config.name, config.version);
         await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
-        fs.rmSync(nginxFilePath);
     }
 
     // gather all dist files for version
@@ -105,8 +103,9 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
 
     // start app
+    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml rm -f`);
+    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml pull`);
     await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
-    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml restart`);
 }
 
 export default async function (config: Config) {
