@@ -103,6 +103,7 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
 
     // start app
+    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml stop -f`);
     await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml rm -f`);
     await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml pull`);
     await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
