@@ -14,7 +14,7 @@ tests/integration/*/*
 tests/integration/Helper.js
 tests/integration/index.tsx
 tests/integration/server.ts
-tests/integration/server.jss
+tests/integration/server.js
 tests/unit
 
 scripts/build.ts

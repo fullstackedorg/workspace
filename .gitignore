@@ -9,4 +9,5 @@ coverage
 **/*.js
 **/*.js.map
 **/*.d.ts
-!config.d.ts
+!./config.d.ts
+!index.d.ts

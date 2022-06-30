@@ -13,7 +13,7 @@ export default class {
 
     constructor(config: Config) {
         this.config = config;
-        this.composeFilePath = path.resolve(this.config.out, "docker-compose.yml");
+        this.composeFilePath = path.resolve(this.config.dist, "docker-compose.yml");
 
         if(!isDockerInstalled())
             throw new Error("Cannot run app without Docker and Docker-Compose");
