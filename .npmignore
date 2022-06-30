@@ -17,8 +17,6 @@ tests/integration/server.ts
 tests/integration/server.jss
 tests/unit
 
-config.d.ts
-
 scripts/build.ts
 scripts/build.d.ts
 scripts/config.ts

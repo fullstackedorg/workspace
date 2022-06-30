@@ -5,8 +5,9 @@ declare type ConfigCreate = {
 
 declare type ConfigBuild = {
     title?: string,
-    src? : string, // in folders
-    out?: string // out folders
+    src? : string, // in folder
+    out?: string // version out folder
+    dist?: string // root out folder
 }
 
 declare type ConfigWatch = {
