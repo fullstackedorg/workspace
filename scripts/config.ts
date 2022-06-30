@@ -14,8 +14,8 @@ export default function(config) {
         ...config
     }
 
-    // always add dist to out dir
-    config.out = path.resolve(config.out, "dist");
+    // always add dist to the out dir
+    config.dist = path.resolve(config.out, "dist");
 
     // force to have a package.json
     const packageConfigs = getPackageJSON();
@@ -30,6 +30,9 @@ export default function(config) {
         if(!config[key])
             throw Error("Missing config " + key + " from package.json or command line args");
     });
+
+    // always add version number to the out folder
+    config.out = path.resolve(config.dist, config.version);
 
     optionalConfig.forEach(key => {
         config[key] = config[key] ?? packageConfigs[key];
