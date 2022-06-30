@@ -33,6 +33,7 @@ export default function(config) {
 
     // always add version number to the out folder
     config.out = path.resolve(config.dist, config.version);
+    config.public = path.resolve(config.out, "public");
 
     optionalConfig.forEach(key => {
         config[key] = config[key] ?? packageConfigs[key];

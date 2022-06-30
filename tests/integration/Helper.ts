@@ -25,7 +25,7 @@ export default class {
         this.runner = new Runner(localConfig);
         await this.runner.start();
         await waitForServer(3000);
-        await execSync(`docker-compose -p ${localConfig.name} -f ${path.resolve(localConfig.out, "docker-compose.yml")} stop -t 0 node`,
+        await execSync(`docker-compose -p ${localConfig.name} -f ${path.resolve(localConfig.dist, "docker-compose.yml")} stop -t 0 node`,
             {stdio: "ignore"});
     }
 

@@ -106,7 +106,7 @@ async function getPortsMap(ssh2, dockerCompose, startingPort: number = 8000): Pr
 
 // deploy app using docker compose
 async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
-    const dockerComposeFilePath = path.resolve(config.out, "docker-compose.yml");
+    const dockerComposeFilePath = path.resolve(config.dist, "docker-compose.yml");
     let dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
 
     // get available ports for each services
@@ -118,19 +118,18 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
         dockerCompose.services[service].ports = ports;
     }
     fs.writeFileSync(dockerComposeFilePath, yaml.stringify(dockerCompose));
-    await sftp.put(config.out + "/docker-compose.yml", serverPath + "/docker-compose.yml");
+    await sftp.put(path.resolve(config.dist, "docker-compose.yml"), serverPath + "/docker-compose.yml");
 
     // setup and ship nginx
     if(!config.noNginx) {
-        const nginxFilePath = path.resolve(config.out, "nginx.conf");
+        const nginxFilePath = path.resolve(config.dist, "nginx.conf");
         setupNginxFile(nginxFilePath, portsMap, config.serverName, config.name, config.version);
         await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
     }
 
     // gather all dist files for version
-    const distFilesDir = path.resolve(config.out, config.version);
-    const files = glob.sync("**/*", {cwd: distFilesDir})
-    const localFilePaths = files.map(file => path.resolve(distFilesDir, file));
+    const files = glob.sync("**/*", {cwd: config.out})
+    const localFilePaths = files.map(file => path.resolve(config.out, file));
 
     // upload all files
     for (let i = 0; i < files.length; i++) {

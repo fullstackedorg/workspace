@@ -38,7 +38,7 @@ function getProcessedEnv(config: Config){
 async function buildServer(config, watcher){
     const options = {
         entryPoints: [ path.resolve(config.src, "server.ts") ],
-        outfile: path.resolve(config.out, config.version, "index.js"),
+        outfile: path.resolve(config.out, "index.js"),
         platform: "node" as Platform,
         bundle: true,
         minify: process.env.NODE_ENV === 'production',
@@ -63,7 +63,7 @@ async function buildServer(config, watcher){
     if(watcher) {
         buildSync({
             entryPoints: [path.resolve(__dirname, "../server/watcher.ts")],
-            outfile: path.resolve(config.out, config.version, "watcher.js"),
+            outfile: path.resolve(config.out, "watcher.js"),
             minify: true,
             format: "cjs"
         });
@@ -92,7 +92,7 @@ async function buildServer(config, watcher){
     dockerCompose = dockerCompose.replace(/\$\{VERSION\}/g, config.version);
 
     // output docker-compose result to dist directory
-    fs.writeFileSync(path.resolve(config.out, "docker-compose.yml"), dockerCompose);
+    fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), dockerCompose);
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "Server Built");
@@ -100,11 +100,9 @@ async function buildServer(config, watcher){
 
 // bundles the web app
 async function buildWebApp(config, watcher){
-    const publicDir = path.resolve(config.out, config.version, "public");
-
     const options = {
         entryPoints: [ path.resolve(config.src, "index.tsx") ],
-        outdir: publicDir,
+        outdir: config.public,
         format: "esm" as Format,
         splitting: true,
         bundle: true,
@@ -147,8 +145,6 @@ async function buildWebApp(config, watcher){
 }
 
 export function webAppPostBuild(config: Config, watcher){
-    const publicDir = path.resolve(config.out, config.version, "public");
-
     // get the index.html file
     const indexHTML = path.resolve(__dirname, "../webapp/index.html");
     const indexHTMLContent = fs.readFileSync( indexHTML, {encoding: "utf-8"});
@@ -167,7 +163,7 @@ export function webAppPostBuild(config: Config, watcher){
         buildSync({
             entryPoints: [path.resolve(__dirname, "../webapp/watcher.ts")],
             minify: true,
-            outfile: path.resolve(publicDir, "watcher.js")
+            outfile: path.resolve(config.public, "watcher.js")
         });
 
         const closingBodyIndex = indexHTMLContentUpdated.indexOf("</head>");
@@ -180,7 +176,7 @@ export function webAppPostBuild(config: Config, watcher){
     const faviconFile = path.resolve(config.src, "favicon.png");
     if(fs.existsSync(faviconFile)){
         // copy file to dist/public
-        fs.copyFileSync(faviconFile, publicDir + "/favicon.png");
+        fs.copyFileSync(faviconFile, path.resolve(config.public, "favicon.png"));
 
         // add link tag in head
         const closingHeadIndex = indexHTMLContentUpdated.indexOf("</head>");
@@ -206,7 +202,7 @@ export function webAppPostBuild(config: Config, watcher){
     const CSSFile = path.resolve(config.src, "index.css");
     if(fs.existsSync(CSSFile)){
         // copy file to dist/public
-        fs.copyFileSync(CSSFile, publicDir + "/index.css");
+        fs.copyFileSync(CSSFile, path.resolve(config.public + "index.css"));
 
         // add link tag in head
         const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
@@ -219,7 +215,7 @@ export function webAppPostBuild(config: Config, watcher){
     const manifestFilePath = path.resolve(config.src, "manifest.json");
     if(fs.existsSync(manifestFilePath)){
         // copy the file
-        fs.cpSync(manifestFilePath, path.resolve(publicDir, "manifest.json"));
+        fs.cpSync(manifestFilePath, path.resolve(config.public, "manifest.json"));
 
         // add reference tag in head
         const closingHeadIndex = indexHTMLContentUpdated.indexOf("</head>");
@@ -237,7 +233,7 @@ export function webAppPostBuild(config: Config, watcher){
                 "process.env.VERSION": JSON.stringify(config.version)
             },
             minify: true,
-            outfile: path.resolve(publicDir, "service-worker.js")
+            outfile: path.resolve(config.public, "service-worker.js")
         });
 
         // add reference tag in head
@@ -248,7 +244,7 @@ export function webAppPostBuild(config: Config, watcher){
 
         buildSync({
             entryPoints: [serviceWorkerFilePath],
-            outfile: path.resolve(publicDir, "service-worker-entrypoint.js"),
+            outfile: path.resolve(config.public, "service-worker-entrypoint.js"),
             bundle: true,
             minify: true,
             sourcemap: true
@@ -256,13 +252,13 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // output index.html
-    fs.mkdirSync(publicDir, {recursive: true});
-    fs.writeFileSync(publicDir + "/index.html", indexHTMLContentUpdated);
+    fs.mkdirSync(config.public, {recursive: true});
+    fs.writeFileSync(path.resolve(config.public, "index.html"), indexHTMLContentUpdated);
 }
 
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
     loadEnvVars(config.src);
-    cleanOutDir(config.out);
+    cleanOutDir(config.dist);
 
     // prebuild script
     await execScript(path.resolve(config.src, "prebuild.ts"), config);
