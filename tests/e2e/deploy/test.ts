@@ -4,7 +4,7 @@ import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path from "path";
-import {cleanOutDir, clearLine, isDockerInstalled, printLine} from "../../../scripts/utils";
+import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import sleep from "fullstacked/scripts/sleep";
 
 describe("Deploy Test", function(){
@@ -25,16 +25,12 @@ describe("Deploy Test", function(){
         --host=localhost
         --ssh-port=${sshPort}
         --user=root
-        --pass=docker
-        --test-mode`;
+        --pass=docker`;
         execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.replace(/\n/g, ' ')}`);
     }
 
     before(async function (){
         this.timeout(200000);
-
-        if(!isDockerInstalled())
-            throw Error("Deploy test needs Docker");
 
         execSync(`docker rm -f ${containerName}`, {stdio: "ignore"});
         printLine("Setting up docker container");
@@ -48,7 +44,6 @@ describe("Deploy Test", function(){
         execSync(`docker exec -d ${containerName} /usr/sbin/sshd -D`);
         printLine("Running deployment command");
         executeDeployment(`
-            --port=8000
             --src=${__dirname}
             --out=${__dirname}`);
         clearLine();
@@ -108,7 +103,6 @@ describe("Deploy Test", function(){
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
         executeDeployment(`
-            --port=8000
             --src=${updatedAppSrc}
             --out=${updatedAppSrc}`);
         clearLine();
@@ -138,7 +132,6 @@ describe("Deploy Test", function(){
 
         printLine("Running deployment command with new version");
         executeDeployment(`
-            --port=8000
             --src=${__dirname}
             --out=${__dirname}
             --version=0.0.0`);
@@ -164,7 +157,6 @@ describe("Deploy Test", function(){
         executeDeployment(`
             --src=${__dirname}
             --out=${__dirname}
-            --port=8001
             --server-name=test.localhost
             --name=test
             --title=Test`);
