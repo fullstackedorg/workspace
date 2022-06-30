@@ -2,14 +2,15 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, execScript, execSSH, printLine} from "./utils";
+import {askToContinue, execScript, execSSH, getNextAvailablePort, printLine} from "./utils";
 import build from "./build";
 import test from "./test";
+import yaml from "yaml";
 
 /*
 *
 * 1. try to connect to remote host
-* 2. check if app at version already deployed
+* 2. check if app at version is already deployed
 * 3. check if docker and docker-compose is installed
 * 4. run tests
 * 5. ship fullstacked-nginx config files
@@ -17,8 +18,8 @@ import test from "./test";
 * 7. setup and ship project docker-compose file
 * 8. setup and ship project nginx.conf file
 * 9. ship built app
-* 10. up/restart built app
-* 11. up/restart fullstacked-nginx
+* 10. pull/up/restart built app
+* 11. pull/up/restart fullstacked-nginx
 *
  */
 
@@ -45,41 +46,84 @@ async function installDocker(ssh2) {
     }
 }
 
-// prepare docker compose file for deployment
-function setupDockerComposeFile(dockerComposeFilePath: string, port, version){
-    let content = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
-
-    // switch port if defined
-    // TODO: maybe move this to build script
-    content = content.replace("8000:8000", `${port ?? 8000}:8000`);
-
-    // overwrite file
-    fs.writeFileSync(dockerComposeFilePath, content);
-}
-
-function setupNginxFile(nginxFilePath: string, port: string, serverName: string, name: string, version: string){
+function setupNginxFile(nginxFilePath: string, portsMap: Map<string, string[]>, serverName: string, name: string, version: string){
     const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
     let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
+    let outputContent = "";
 
-    content = content.replace(/\{PORT\}/g, port ?? "8000");
-    content = content.replace(/\{SERVER_NAME\}/g, serverName ?? "localhost");
-    content = content.replace(/\{APP_NAME\}/g, name);
-    content = content.replace(/\{VERSION\}/g, version);
+    for(const [service, ports] of portsMap){
+        for (let i = 0; i < ports.length; i++) {
+            const port = ports[i].split(":").shift(); // get first half of "8000:8000"
+            const serviceServerName = (service === "node" ? "" : service + ".") + (i ? "-" + i : "") + (serverName ?? "localhost");
+            outputContent += content.replace(/\{PORT\}/g, port)
+                .replace(/\{SERVER_NAME\}/g, serviceServerName)
+                .replace(/\{APP_NAME\}/g, name)
+                .replace(/\{VERSION\}/g, version);
 
-    fs.writeFileSync(nginxFilePath, content);
+            console.log(serviceServerName + "->" + "0.0.0.0:" + port);
+        }
+    }
+
+    fs.writeFileSync(nginxFilePath, outputContent);
+}
+
+async function getPortsMap(ssh2, dockerCompose, startingPort: number = 8000): Promise<Map<string, string[]>> {
+    const portsMap = new Map<string, string[]>();
+
+    const dockerContainerPorts = await execSSH(ssh2, "docker container ls --format \"{{.Ports}}\" -a");
+    const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
+        portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
+        .map(port => parseInt(port)) // cast to number
+        .filter(port => port || !isNaN(port)); // filter empty strings
+
+
+    const services = Object.keys(dockerCompose.services);
+    for(const service of services){
+        const exposedPorts = dockerCompose.services[service].ports;
+        if(!exposedPorts) continue;
+
+        let chosenPorts = [];
+        for(const port of exposedPorts){
+            if(!port.startsWith("${PORT}")) {
+                chosenPorts.push(port);
+                continue;
+            }
+
+            let availablePort = startingPort;
+
+            while(portsInUse.includes(availablePort)){
+                availablePort = availablePort + 1;
+            }
+
+            portsInUse.push(availablePort);
+            chosenPorts.push(port.replace("${PORT}", availablePort));
+        }
+        portsMap.set(service, chosenPorts)
+    }
+
+    return portsMap;
 }
 
 // deploy app using docker compose
 async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
+    const dockerComposeFilePath = path.resolve(config.out, "docker-compose.yml");
+    let dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
+
+    // get available ports for each services
+    const startingPort = parseInt(config.port);
+    const portsMap = await getPortsMap(sftp.client, dockerCompose, startingPort && !isNaN(startingPort) ? startingPort : 8000);
+
     // setup and ship docker-compose file
-    const dockerComposeFilePath = path.resolve(config.out, "docker-compose.yml")
-    setupDockerComposeFile(dockerComposeFilePath, config.port, config.version);
+    for(const [service, ports] of portsMap.entries()){
+        dockerCompose.services[service].ports = ports;
+    }
+    fs.writeFileSync(dockerComposeFilePath, yaml.stringify(dockerCompose));
     await sftp.put(config.out + "/docker-compose.yml", serverPath + "/docker-compose.yml");
 
     // setup and ship nginx
     if(!config.noNginx) {
         const nginxFilePath = path.resolve(config.out, "nginx.conf");
-        setupNginxFile(nginxFilePath, config.port, config.serverName, config.name, config.version);
+        setupNginxFile(nginxFilePath, portsMap, config.serverName, config.name, config.version);
         await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
     }
 
@@ -103,10 +147,15 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
 
     // start app
-    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml stop -f`);
-    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml rm -f`);
-    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml pull`);
-    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
+    if(config.pull){
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml stop`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml rm -f`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml pull`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
+    }else{
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml restart`);
+    }
 }
 
 export default async function (config: Config) {
