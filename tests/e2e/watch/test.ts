@@ -10,7 +10,7 @@ import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
-    const indexFile = path.resolve(__dirname, "index.tsx");
+    const indexFile = path.resolve(__dirname, "webapp.tsx");
     const serverFile = path.resolve(__dirname, "server.ts");
 
     before(async function (){
@@ -19,7 +19,7 @@ describe("Watch Test", function(){
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
 
-        fs.copyFileSync(path.resolve(__dirname, "template-index.tsx"), indexFile);
+        fs.copyFileSync(path.resolve(__dirname, "template-webapp.tsx"), indexFile);
         fs.copyFileSync(path.resolve(__dirname, "template-server.ts"), serverFile);
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);

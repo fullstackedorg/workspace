@@ -59,7 +59,7 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
 | command | uses |
 | --- | --- |
-| npx fullstacked create | Generate the default files `index.tsx` and `server.ts` files. |
+| npx fullstacked create | Generate the default files `webapp.tsx` and `server.ts` files. |
 | npx fullstacked run | Run your web app. |
 | npx fullstacked build | Build your app in production mode to your `dist` folder. |
 | npx fullstacked watch | Rebuilds your app and hot reloads on changes. |
