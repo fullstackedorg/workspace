@@ -202,7 +202,7 @@ export function webAppPostBuild(config: Config, watcher){
     const CSSFile = path.resolve(config.src, "index.css");
     if(fs.existsSync(CSSFile)){
         // copy file to dist/public
-        fs.copyFileSync(CSSFile, path.resolve(config.public + "index.css"));
+        fs.copyFileSync(CSSFile, path.resolve(config.public, "index.css"));
 
         // add link tag in head
         const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
