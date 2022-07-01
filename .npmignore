@@ -12,7 +12,7 @@ tests/e2e/*/*
 tests/e2e/Helper.js
 tests/integration/*/*
 tests/integration/Helper.js
-tests/integration/index.tsx
+tests/integration/webapp.tsx
 tests/integration/server.ts
 tests/integration/server.js
 tests/unit

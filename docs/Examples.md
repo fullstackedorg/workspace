@@ -13,11 +13,11 @@ Your project directory should look something like this
 ```
 |_ node_modules/
 |_ docker-compose.yml
-|_ index.tsx
 |_ package.json
 |_ package-lock.json
 |_ server.ts
 |_ test.ts
+|_ webapp.tsx
 ```
 2. Add the `mongo` image to the newly created `docker-compose.yml`.
 ```yaml

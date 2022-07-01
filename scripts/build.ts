@@ -101,8 +101,9 @@ async function buildServer(config, watcher){
 // bundles the web app
 async function buildWebApp(config, watcher){
     const options = {
-        entryPoints: [ path.resolve(config.src, "index.tsx") ],
+        entryPoints: [ path.resolve(config.src, "webapp.tsx") ],
         outdir: config.public,
+        entryNames: "index",
         format: "esm" as Format,
         splitting: true,
         bundle: true,
