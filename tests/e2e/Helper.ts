@@ -7,9 +7,9 @@ import config from "../../scripts/config";
 import {cleanOutDir} from "../../scripts/utils";
 import waitForServer from "../../scripts/waitForServer";
 
-export default class {
+export default class Helper {
     dir;
-    runner;
+    runner: Runner;
     browser;
     page;
     localConfig: Config;
@@ -46,7 +46,7 @@ export default class {
             if(this.browser?.close)
                 this.browser.close();
 
-            cleanOutDir(this.dir + "/dist")
+            cleanOutDir(this.dir + "/dist");
 
             console.error(err);
             process.exit(1);
@@ -87,7 +87,7 @@ export default class {
         }
 
         await this.browser.close();
-        this.runner.stop(true);
-        cleanOutDir(this.dir + "/dist")
+        this.runner.stop();
+        cleanOutDir(this.dir + "/dist");
     }
 }

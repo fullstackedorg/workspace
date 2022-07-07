@@ -5,22 +5,28 @@ import os from "os";
 import {exec, execSync} from "child_process";
 import {BuildOptions, buildSync} from "esbuild";
 import {Socket} from "net";
-import {CloseEvent, ErrorEvent} from "ws";
 
-// simple y/n console input
-export function askToContinue(question): Promise<boolean> {
+// ask a question, resolve string answer
+export function askQuestion(question: string): Promise<string>{
     const rl = createInterface({
         input: process.stdin,
         output: process.stdout
     });
 
     return new Promise((resolve, reject) => {
-        if(process.argv.includes("--y")) return resolve(true);
-        rl.question(question + ' (y/n): ', (input) => {
+        rl.question(question, (input) => {
             rl.close();
-            resolve(input === "y" || input === "Y" || input === "yes");
+            resolve(input);
         });
     });
+}
+
+// simple y/n console input
+export async function askToContinue(question: string): Promise<boolean> {
+    if(process.argv.includes("--y")) return true;
+
+    const answer = await askQuestion(question + ' (y/n): ');
+    return answer === "y" || answer === "Y" || answer === "yes";
 }
 
 // get package json data from package.json at project root

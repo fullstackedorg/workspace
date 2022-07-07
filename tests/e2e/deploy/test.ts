@@ -11,6 +11,8 @@ describe("Deploy Test", function(){
     const containerName = "dind";
     const sshPort = "2222";
 
+    const serverNameFile = path.resolve(__dirname, ".server-names");
+
     const predeployOutputFile = path.resolve(__dirname, "predeploy.txt");
     const predeployAsyncOutputFile = path.resolve(__dirname, "predeploy-2.txt");
     const postdeployOutputFile = path.resolve(__dirname, "postdeploy.txt");
@@ -31,6 +33,9 @@ describe("Deploy Test", function(){
 
     before(async function (){
         this.timeout(200000);
+
+        // simulate server name setup
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "localhost"}));
 
         execSync(`docker rm -f ${containerName}`, {stdio: "ignore"});
         printLine("Setting up docker container");
@@ -102,6 +107,7 @@ describe("Deploy Test", function(){
         this.timeout(50000);
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
+        fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"), JSON.stringify({"node":"localhost"}));
         executeDeployment(`
             --src=${updatedAppSrc}
             --out=${updatedAppSrc}`);
@@ -117,7 +123,8 @@ describe("Deploy Test", function(){
         equal(value, "Deploy Test 2");
 
         await browser.close();
-        cleanOutDir(path.resolve(updatedAppSrc, "dist"))
+        cleanOutDir(path.resolve(updatedAppSrc, "dist"));
+        fs.rmSync(path.resolve(updatedAppSrc, ".server-names"), {force: true});
     });
 
     it("Should re-deploy with new app version", async function(){
@@ -154,10 +161,10 @@ describe("Deploy Test", function(){
     it("Should run another app", async function(){
         this.timeout(50000);
         printLine("Running deployment command with another app");
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "test.localhost"}));
         executeDeployment(`
             --src=${__dirname}
             --out=${__dirname}
-            --server-name=test.localhost
             --name=test
             --title=Test`);
         clearLine();
@@ -178,6 +185,7 @@ describe("Deploy Test", function(){
 
     after(function(){
         cleanOutDir(path.resolve(__dirname, "dist"))
+        fs.rmSync(serverNameFile, {force: true});
         fs.rmSync(predeployOutputFile, {force: true});
         fs.rmSync(predeployAsyncOutputFile, {force: true});
         fs.rmSync(postdeployOutputFile, {force: true});
