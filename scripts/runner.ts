@@ -5,7 +5,7 @@ import fs from "fs";
 import yaml from "yaml";
 
 // helper to start/restart/attach/stop your app
-export default class {
+export default class Runner {
     config: Config;
     composeFilePath: string;
     attachedProcess: ChildProcess = null;
@@ -47,15 +47,20 @@ export default class {
         fs.writeFileSync(this.composeFilePath, yaml.stringify(dockerCompose));
 
         // check if all images are pulled
-        const images = Object.values(dockerCompose.services).map(service => (service as any).image);
-        const pullNeeded = images.some(image => {
-            try{
-                execSync(`docker image inspect ${image}`);
-                return false;
-            }catch (e){
-                return true;
-            }
-        });
+        let pullNeeded = false;
+        if(this.config.pull)
+            pullNeeded = true;
+        else{
+            const images = Object.values(dockerCompose.services).map(service => (service as any).image);
+            pullNeeded = images.some(image => {
+                try{
+                    execSync(`docker image inspect ${image}`);
+                    return false;
+                }catch (e){
+                    return true;
+                }
+            });
+        }
 
         // output the pulling process if needed
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d`;
@@ -70,7 +75,7 @@ export default class {
     }
 
     restart(){
-        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} restart -t 0`;
+        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} restart -t 0 node`;
         execSync(cmd, {stdio: this.config.silent ? "ignore" : "inherit"});
     }
 

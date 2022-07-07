@@ -2,7 +2,7 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, execScript, execSSH, getNextAvailablePort, printLine} from "./utils";
+import {askQuestion, askToContinue, execScript, execSSH, printLine} from "./utils";
 import build from "./build";
 import test from "./test";
 import yaml from "yaml";
@@ -46,22 +46,18 @@ async function installDocker(ssh2) {
     }
 }
 
-function setupNginxFile(nginxFilePath: string, portsMap: Map<string, string[]>, serverName: string, name: string, version: string){
+function setupNginxFile(nginxFilePath: string, serverNameMap: Map<string, {port: string, serverName: string}>, name: string, version: string){
     const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
     let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
     let outputContent = "";
 
-    for(const [service, ports] of portsMap){
-        for (let i = 0; i < ports.length; i++) {
-            const port = ports[i].split(":").shift(); // get first half of "8000:8000"
-            const serviceServerName = (service === "node" ? "" : service + ".") + (i ? "-" + i : "") + (serverName ?? "localhost");
-            outputContent += content.replace(/\{PORT\}/g, port)
-                .replace(/\{SERVER_NAME\}/g, serviceServerName)
-                .replace(/\{APP_NAME\}/g, name)
-                .replace(/\{VERSION\}/g, version);
+    for(const [service, {port, serverName}] of serverNameMap){
+        outputContent += content.replace(/\{PORT\}/g, port)
+            .replace(/\{SERVER_NAME\}/g, serverName)
+            .replace(/\{APP_NAME\}/g, name)
+            .replace(/\{VERSION\}/g, version);
 
-            console.log(serviceServerName + "->" + "0.0.0.0:" + port);
-        }
+        console.log(serverName + "->" + "0.0.0.0:" + port);
     }
 
     fs.writeFileSync(nginxFilePath, outputContent);
@@ -104,14 +100,38 @@ async function getPortsMap(ssh2, dockerCompose, startingPort: number = 8000): Pr
     return portsMap;
 }
 
+// get server name for each service
+async function getServerNames(portsMap: Map<string, string[]>,
+                              cachedServerNames: {[service: string]: string})
+    : Promise<Map<string, {port: string, serverName: string}>>
+{
+    const serverNameForService = new Map<string, {port: string, serverName: string}>();
+
+    const mainServerName = cachedServerNames["node"] ?? await askQuestion("Enter server name for main web app : \n");
+    serverNameForService.set("node", {port: portsMap.get("node")[0].split(":").shift(), serverName: mainServerName});
+
+    for (const [service, ports] of portsMap.entries()) {
+        if(service === "node")  continue;
+
+        for(const port of ports){
+            const exposedPort = port.split(":");
+            const serverName = cachedServerNames[service] && cachedServerNames[service][port] ?
+                cachedServerNames[service][port] :
+                await askQuestion(`Enter server name for service at port ${exposedPort[1]}: \n`);
+            serverNameForService.set(service, {port: exposedPort[0], serverName: serverName});
+        }
+    }
+
+    return serverNameForService;
+}
+
 // deploy app using docker compose
 async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
     const dockerComposeFilePath = path.resolve(config.dist, "docker-compose.yml");
     let dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
 
     // get available ports for each services
-    const startingPort = parseInt(config.port);
-    const portsMap = await getPortsMap(sftp.client, dockerCompose, startingPort && !isNaN(startingPort) ? startingPort : 8000);
+    const portsMap = await getPortsMap(sftp.client, dockerCompose, 8000);
 
     // setup and ship docker-compose file
     for(const [service, ports] of portsMap.entries()){
@@ -123,7 +143,32 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     // setup and ship nginx
     if(!config.noNginx) {
         const nginxFilePath = path.resolve(config.dist, "nginx.conf");
-        setupNginxFile(nginxFilePath, portsMap, config.serverName, config.name, config.version);
+
+        // check for cached file
+        const cachedServerNamesFilePath = path.resolve(config.src, ".server-names");
+        let cachedServerNames = {};
+        if(fs.existsSync(cachedServerNamesFilePath)){
+            cachedServerNames = JSON.parse(fs.readFileSync(cachedServerNamesFilePath, {encoding: 'utf-8'}));
+        }
+
+        // setup server names in nginx
+        const serverNameMap = await getServerNames(portsMap, cachedServerNames);
+        setupNginxFile(nginxFilePath, serverNameMap, config.name, config.version);
+
+        // save server names to cache file
+        const serverNameJSON = {};
+        serverNameMap.forEach((value, key) => {
+            if(!serverNameJSON[key])
+                serverNameJSON[key] = {};
+
+            if(key === "node")
+                serverNameJSON[key] = value.serverName;
+            else
+                serverNameJSON[key][value.port] = value.serverName;
+        });
+        fs.writeFileSync(cachedServerNamesFilePath, JSON.stringify(serverNameJSON));
+
+        // upload nginx to remote host
         await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
     }
 

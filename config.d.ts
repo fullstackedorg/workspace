@@ -13,11 +13,6 @@ declare type ConfigBuild = {
 
 }
 
-declare type ConfigWatch = {
-    // listen port
-    port?       : string
-}
-
 declare type ConfigTest = {
     coverage? : boolean,
     headless? : boolean
@@ -31,8 +26,6 @@ declare type ConfigDeploy = {
     pass?       : string,
     privateKey? : string,
 
-    serverName? : string,
-
     appDir?     : string, // directory in server
 
     skipTest?   : boolean, // skip testing
@@ -42,7 +35,7 @@ declare type ConfigDeploy = {
     pull?       : boolean // force pull new docker images
 }
 
-declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {
+declare type Config = ConfigCreate & ConfigBuild & ConfigTest & ConfigDeploy & {
     name? : string,
     version? : string,
 

@@ -6,7 +6,7 @@ import path from "path";
 import {cleanOutDir} from "../../scripts/utils";
 import waitForServer from "../../scripts/waitForServer";
 
-export default class {
+export default class Helper {
     dir;
     runner;
 
