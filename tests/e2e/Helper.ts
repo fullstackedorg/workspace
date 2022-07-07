@@ -33,7 +33,8 @@ export default class Helper {
 
         if(process.argv.includes("--coverage")){
             await this.page.coverage.startJSCoverage({
-                includeRawScriptCoverage: true
+                includeRawScriptCoverage: true,
+                resetOnNavigation: false
             });
         }
 
@@ -58,7 +59,8 @@ export default class Helper {
             this.page.goto = async function(path: string) {
                 await Helper.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig);
                 await weakThis.page.coverage.startJSCoverage({
-                    includeRawScriptCoverage: true
+                    includeRawScriptCoverage: true,
+                    resetOnNavigation: false
                 });
                 await originalGoto.apply(this, [path]);
             }
