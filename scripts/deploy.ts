@@ -46,18 +46,18 @@ async function installDocker(ssh2) {
     }
 }
 
-function setupNginxFile(nginxFilePath: string, serverNameMap: Map<string, {port: string, serverName: string}>, name: string, version: string){
+function setupNginxFile(nginxFilePath: string, serverNameMap: Map<string, {externalPort: string, internalPort: string, serverName: string}>, name: string, version: string){
     const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
     let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
     let outputContent = "";
 
-    for(const [service, {port, serverName}] of serverNameMap){
-        outputContent += content.replace(/\{PORT\}/g, port)
+    for(const [service, {externalPort, internalPort, serverName}] of serverNameMap){
+        outputContent += content.replace(/\{PORT\}/g, externalPort)
             .replace(/\{SERVER_NAME\}/g, serverName)
             .replace(/\{APP_NAME\}/g, name)
             .replace(/\{VERSION\}/g, version);
 
-        console.log(serverName + "->" + "0.0.0.0:" + port);
+        console.log(serverName + "->" + "0.0.0.0:" + externalPort + " for " + service + " at port " + internalPort);
     }
 
     fs.writeFileSync(nginxFilePath, outputContent);
@@ -103,22 +103,32 @@ async function getPortsMap(ssh2, dockerCompose, startingPort: number = 8000): Pr
 // get server name for each service
 async function getServerNames(portsMap: Map<string, string[]>,
                               cachedServerNames: {[service: string]: string})
-    : Promise<Map<string, {port: string, serverName: string}>>
+    : Promise<Map<string, {externalPort: string, internalPort: string, serverName: string}>>
 {
-    const serverNameForService = new Map<string, {port: string, serverName: string}>();
+    const serverNameForService = new Map<string, {externalPort: string, internalPort: string, serverName: string}>();
 
     const mainServerName = cachedServerNames["node"] ?? await askQuestion("Enter server name for main web app : \n");
-    serverNameForService.set("node", {port: portsMap.get("node")[0].split(":").shift(), serverName: mainServerName});
+    serverNameForService.set("node", {
+        externalPort: portsMap.get("node")[0].split(":").shift(),
+        internalPort: "8000",
+        serverName: mainServerName
+    });
 
     for (const [service, ports] of portsMap.entries()) {
         if(service === "node")  continue;
 
         for(const port of ports){
-            const exposedPort = port.split(":");
-            const serverName = cachedServerNames[service] && cachedServerNames[service][port] ?
-                cachedServerNames[service][port] :
-                await askQuestion(`Enter server name for service at port ${exposedPort[1]}: \n`);
-            serverNameForService.set(service, {port: exposedPort[0], serverName: serverName});
+            const exposedPortArr = port.split(":");
+            const externalPort = exposedPortArr[0];
+            const internalPort = exposedPortArr[exposedPortArr.length - 1];
+            const serverName = cachedServerNames[service] && cachedServerNames[service][internalPort] ?
+                cachedServerNames[service][internalPort] :
+                await askQuestion(`Enter server name for service ${service} at port ${internalPort}: \n`);
+            serverNameForService.set(service, {
+                externalPort: externalPort,
+                internalPort: internalPort,
+                serverName: serverName
+            });
         }
     }
 
@@ -164,7 +174,7 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
             if(key === "node")
                 serverNameJSON[key] = value.serverName;
             else
-                serverNameJSON[key][value.port] = value.serverName;
+                serverNameJSON[key][value.internalPort] = value.serverName;
         });
         fs.writeFileSync(cachedServerNamesFilePath, JSON.stringify(serverNameJSON));
 
