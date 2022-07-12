@@ -81,7 +81,7 @@ const server = new Server();
     // read
     server.express.get("/todos", async (req, res) => {
         const results = await todosCollection.find();
-        res.json(results.toArray());
+        res.json(await results.toArray());
     });
 
     // update
