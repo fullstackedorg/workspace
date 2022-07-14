@@ -67,7 +67,7 @@ export default function(config: Config) {
     if(!fs.existsSync(serverFilePath)) fs.writeFileSync(serverFilePath, serverTemplate);
 
     // output template files at project src for web app
-    const webAppFilePath = path.resolve(config.src, "index.tsx");
+    const webAppFilePath = path.resolve(config.src, "webapp.tsx");
     if(!fs.existsSync(webAppFilePath)) fs.writeFileSync(webAppFilePath, webAppTemplate);
 
     if(!config.skipTest) {

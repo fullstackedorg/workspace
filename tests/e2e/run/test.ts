@@ -12,7 +12,7 @@ describe("Run Test", function(){
 
     before(async function (){
         runProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} run --src=${__dirname} --out=${__dirname} --silent`);
-        await waitForServer(10000)
+        await waitForServer(10000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
         await page.goto("http://localhost:8000");
@@ -29,7 +29,7 @@ describe("Run Test", function(){
         await browser.close();
         runProcess.kill("SIGINT");
 
-        await sleep(1000);
+        await sleep(3000);
 
         cleanOutDir(path.resolve(__dirname, "dist"));
     });

@@ -15,7 +15,6 @@ let config: Config = {}
 const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
-    "--port=": value => config.port = value,
     "--host=": value => config.host = value,
     "--ssh-port=": value => config.sshPort = parseInt(value),
     "--user=": value => config.user = value,
@@ -27,12 +26,12 @@ const args = {
     "--headless": () => config.headless = true,
     "--skip-test": () => config.skipTest = true,
     "--y": () => config.allYes = true,
-    "--server-name=": value => config.serverName = value,
     "--version=": value => config.version = value,
     "--name=": value => config.name = value,
     "--title=": value => config.title = value,
     "--no-nginx": () => config.noNginx = true,
-    "--pwa": () => config.pwa = true
+    "--pwa": () => config.pwa = true,
+    "--pull": () => config.pull = true
 };
 
 process.argv.forEach(arg => {

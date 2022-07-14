@@ -59,7 +59,7 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
 | command | uses |
 | --- | --- |
-| npx fullstacked create | Generate the default files `index.tsx` and `server.ts` files. |
+| npx fullstacked create | Generate the default files `webapp.tsx` and `server.ts` files. |
 | npx fullstacked run | Run your web app. |
 | npx fullstacked build | Build your app in production mode to your `dist` folder. |
 | npx fullstacked watch | Rebuilds your app and hot reloads on changes. |
@@ -78,23 +78,15 @@ sharing development environments for the purpose of testing and reviewing.
 
 ## Roadmap & Thoughts
 
-* Create tests for `test` commands
-* Save command line args to skip the typing afterwards
+* Containerize Test script
 * Manage to create a simple and efficient way to test frontend component/class individually
 * Add integration with [PWABuilder](https://github.com/pwa-builder/PWABuilder) to generate iOS and Android App
-* Switch to [Deno](https://github.com/denoland/deno)
-  * ✅ No transpiling needed (not even for TS!)
-  * ✅ No *node_modules* installation needed
-  * ⛔️ Making e2e tests (no puppeteer modules yet)
-  * ⛔️ Filesystem less permissive
-* Auto Import like [nuxt.js](https://v3.nuxtjs.org/guide/concepts/auto-imports/)
-  * ✅ The dream
-  * ⛔ Resources for indexing and resolving
-  * ⛔ IDE needs extra plugins
+* Switch nginx image for [nginx proxy manager](https://github.com/NginxProxyManager/nginx-proxy-manager)
+* Switch to [Deno](https://github.com/denoland/deno) or [bun](https://github.com/Jarred-Sumner/bun)
 * TypeScript Web Based IDE
   * Designed only for TypeScript projects, so it helps with all the main features
     * Typing
     * Autocomplete
     * Imports resolving
   * It must be enabled with PWA features, so that it feels like a native app
-  * My goal would be to develop from an iPad Pro with all the same feature Desktop IDE provides.
+  * My goal would be to develop from anywhere (tablet or desktop) with all the same feature popular IDE provide.
