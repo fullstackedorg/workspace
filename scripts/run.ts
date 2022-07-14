@@ -16,8 +16,7 @@ export default async function(config: Config, build: boolean = true){
         runner.restart();
     }
 
-    if(!config.silent)
-        runner.attach(process.stdout);
+    runner.attach(process.stdout);
 
     // set exit hook only once
     if(!didSetExitHook){

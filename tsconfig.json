@@ -9,6 +9,7 @@
             "ES2020",
             "dom"
         ],
+        "typeRoots": ["./types"],
         "jsx": "react-jsx",
         "paths": {
             "fullstacked/server": ["./server/index.ts"],
