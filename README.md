@@ -81,6 +81,7 @@ sharing development environments for the purpose of testing and reviewing.
 * Web Interface manager for server-names, last deployment, etc.
 * Manage to create a simple and efficient way to test frontend component/class individually
 * Add integration with [PWABuilder](https://github.com/pwa-builder/PWABuilder) to generate iOS and Android App
+* Switch nginx image for [nginx proxy manager](https://github.com/NginxProxyManager/nginx-proxy-manager)
 * Switch to [Deno](https://github.com/denoland/deno) or [bun](https://github.com/Jarred-Sumner/bun)
 * TypeScript Web Based IDE
   * Designed only for TypeScript projects, so it helps with all the main features
