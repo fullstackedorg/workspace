@@ -1,10 +1,6 @@
 import esbuild from "esbuild";
 import glob from "glob";
-import path from "path";
-import build from "./scripts/build";
-import config from "./scripts/config";
-import fs from "fs";
-import {copyRecursiveSync, getPackageJSON} from "./scripts/utils";
+import path from "path"
 
 (async function() {
     const scripts = glob.sync(path.resolve(__dirname, "./scripts") + "/**/*.ts")

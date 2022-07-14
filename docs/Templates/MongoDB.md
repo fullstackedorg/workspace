@@ -1,10 +1,5 @@
-# Examples
-
-The examples here assume that you've already went through the 
-[Quick Start](https://fullstacked.org/docs/quick-start) guide.
-
-### MongoDB 
-A database is often very useful. Aka MERN stack, here's how you can add 
+# MongoDB 
+A database is often very useful. Aka MERN (Mongo-Express-React-Node) stack, here's how you can add 
 mongoDB to your stack. You will simply need to add the `mongo` image 
 to your `docker-compose.yml` and create the connection on your server side.
 
@@ -81,7 +76,7 @@ const server = new Server();
     // read
     server.express.get("/todos", async (req, res) => {
         const results = await todosCollection.find();
-        res.json(results.toArray());
+        res.json(await results.toArray());
     });
 
     // update
