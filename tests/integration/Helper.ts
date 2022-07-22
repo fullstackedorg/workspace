@@ -52,7 +52,13 @@ export default function(testSuite: Suite){
     global.integrationTests.passes += passing;
     global.integrationTests.failures += failing;
 
+    const beginning = Array.from(results.matchAll(new RegExp(".*" + testSuite.title, "g")));
+    const sliced = results.slice(beginning[0].index, passingMatches[0].index);
 
+    const endLineMatches = Array.from(sliced.matchAll(/\w\r?\n/g));
+    const lastLine = endLineMatches.pop();
+
+    console.log(sliced.slice(0, lastLine.index + lastLine[0].length).trim());
 
     fs.rmSync(dockerComposeFilePath);
 }
