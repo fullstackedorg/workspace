@@ -2,7 +2,7 @@
 node_modules
 dist
 .nyc_output
-fullstacked-code-coverage
+coverage
 **/*.js.map
 test.ts
 
@@ -12,12 +12,10 @@ tests/e2e/*/*
 tests/e2e/Helper.js
 tests/integration/*/*
 tests/integration/Helper.js
-tests/integration/index.tsx
+tests/integration/webapp.tsx
 tests/integration/server.ts
-tests/integration/server.jss
+tests/integration/server.js
 tests/unit
-
-config.d.ts
 
 scripts/build.ts
 scripts/build.d.ts

@@ -5,13 +5,12 @@ declare type ConfigCreate = {
 
 declare type ConfigBuild = {
     title?: string,
-    src? : string, // in folders
-    out?: string // out folders
-}
+    src? : string, // in folder
 
-declare type ConfigWatch = {
-    // listen port
-    port?       : string
+    dist?: string   // root out folder
+    out?: string    // version out folder
+    public?: string // public out folder
+
 }
 
 declare type ConfigTest = {
@@ -31,16 +30,16 @@ declare type ConfigDeploy = {
     pass?       : string,
     privateKey? : string,
 
-    serverName? : string,
-
     appDir?     : string, // directory in server
 
     skipTest?   : boolean, // skip testing
 
     noNginx?    : boolean // skip nginx setup
+
+    pull?       : boolean // force pull new docker images
 }
 
-declare type Config = ConfigCreate & ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & {
+declare type Config = ConfigCreate & ConfigBuild & ConfigTest & ConfigDeploy & {
     name? : string,
     version? : string,
 
