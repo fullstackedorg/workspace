@@ -58,7 +58,7 @@ export default function(testSuite: Suite){
     const endLineMatches = Array.from(sliced.matchAll(/\w\r?\n/g));
     const lastLine = endLineMatches.pop();
 
-    console.log(sliced.slice(0, lastLine.index + lastLine[0].length).trim());
+    console.log(sliced.slice(0, lastLine.index + lastLine[0].length).trim() + "\n");
 
     fs.rmSync(dockerComposeFilePath);
 }
