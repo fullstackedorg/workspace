@@ -1,5 +1,7 @@
 import path from "path";
 import {execSync} from "child_process";
+import glob from "glob";
+import fs from "fs";
 
 //@ts-ignore
 process.env.FORCE_COLOR = true;
@@ -25,10 +27,19 @@ export default function(config: Config){
     // use nyc for coverage
     if(config.coverage) {
         testCommand = "npx nyc" + " " +
+            "--silent" + " " +
             "--temp-dir " + path.resolve(process.cwd(), ".nyc_output") + " " +
             (config.testMode ? "--no-clean" : "") + " " +
             testCommand;
     }
 
     execSync(testCommand, {stdio: "inherit"});
+
+    if(config.coverage && !config.testMode){
+        glob.sync(path.resolve(process.cwd(), ".nyc_output", "*.json")).forEach(file => {
+           fs.writeFileSync(file,
+               fs.readFileSync(file, {encoding: 'utf-8'}).replace(/\/app/g, process.cwd())
+           );
+        });
+    }
 }
