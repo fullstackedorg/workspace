@@ -17,7 +17,10 @@ declare type ConfigWatch = {
 declare type ConfigTest = {
     coverage? : boolean,
     headless? : boolean,
-    reportDir?: string
+
+    testMode? : boolean,
+    testFile? : string,
+    testSuite? : string
 }
 
 declare type ConfigDeploy = {

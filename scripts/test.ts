@@ -9,11 +9,17 @@ export default function(config: Config){
 
     // gather all test.ts files
     // TODO: swap to **/*test.ts maybe
-    const testFiles = path.resolve(process.cwd(), "**/test.ts");
+    let testFiles = path.resolve(config.src, "**/integration/**", "test.ts");
 
-    let testCommand = `npx mocha "${testFiles}" --config ` + mochaConfigFile + " " +
+    if(config.testFile)
+        testFiles = config.testFile;
+
+    let testCommand = "npx mocha \"" + testFiles + "\" " +
+        "--config " + mochaConfigFile + " " +
+        (config.testSuite ? "--grep \"" + config.testSuite + "\"" : "") + " " +
         (config.headless ? "--headless" : "") + " " +
-        (config.coverage ? "--coverage" : "");
+        (config.coverage ? "--coverage" : "") + " " +
+        (config.testMode ? "--test-mode" : "") + " ";
 
     // use nyc for coverage
     if(config.coverage)

@@ -42,8 +42,12 @@ Module.prototype.require = function(){
 
     // build change .ts end for .js
     if(mustBeBuilt) {
-        buildSync(defaultEsbuildConfig(filePath));
         arguments["0"] = filePath.slice(0, -2) + "js";
+
+        if(process.argv.includes("--test-mode"))
+            return originalRequire.apply(this, arguments);
+
+        buildSync(defaultEsbuildConfig(filePath));
     }
 
     return originalRequire.apply(this, arguments);
