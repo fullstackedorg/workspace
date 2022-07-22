@@ -42,6 +42,10 @@ export default function(config: Config){
            );
         });
 
-        execSync("npx nyc report --reporter html --reporter text-summary --temp-dir " + path.resolve(config.src, ".nyc_output"), {stdio: "inherit"});
+        execSync("npx nyc report" + " " +
+            "--reporter html" + " " +
+            "--reporter text-summary" + " " +
+            "--report-dir " + path.resolve(config.src, "coverage") + " " +
+            "--temp-dir " + path.resolve(config.src, ".nyc_output"), {stdio: "inherit"});
     }
 }
