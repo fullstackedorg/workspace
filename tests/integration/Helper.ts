@@ -13,7 +13,12 @@ export default function(testSuite: Suite, srcDir: string = null){
 
     const testFilePathComponents = testSuite.file.split("/");
     testFilePathComponents.pop();
-    const testDir = testFilePathComponents.join("/");
+    const testDir = path.resolve(testFilePathComponents.join("/"), ".test");
+
+    if(fs.existsSync(testDir))
+        fs.rmSync(testDir, {force: true, recursive: true});
+
+    fs.mkdirSync(testDir);
 
     let dockerCompose = yaml.parse(fs.readFileSync(path.resolve(__dirname, "..", "..", "docker-compose.yml"), {encoding: "utf-8"}));
 
@@ -74,12 +79,12 @@ export default function(testSuite: Suite, srcDir: string = null){
     global.integrationTests.failures += failing;
 
     const beginning = Array.from(results.matchAll(new RegExp(".*" + testSuite.title, "g")));
-    const sliced = results.slice(beginning[0].index, passingMatches[0].index);
+    const sliced = results.slice(beginning[0].index, failing === 0 ? passingMatches[0].index : undefined);
 
     const endLineMatches = Array.from(sliced.matchAll(/\w\r?\n/g));
-    const lastLine = endLineMatches.pop();
+    const lastLine = endLineMatches.length ? endLineMatches.pop() : null;
 
-    console.log(sliced.slice(0, lastLine.index + lastLine[0].length).trim() + "\n");
+    console.log(sliced.slice(0, lastLine ? lastLine.index + lastLine[0].length : undefined).trim() + "\n");
 
-    fs.rmSync(dockerComposeFilePath);
+    fs.rmSync(testDir, {force: true, recursive: true});
 }

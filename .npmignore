@@ -6,7 +6,12 @@ coverage
 **/*.js.map
 test.ts
 
+/build.js
+/build.ts
+
 docs
+
+mocha-reporter.ts
 
 tests/e2e/*/*
 tests/e2e/Helper.js
