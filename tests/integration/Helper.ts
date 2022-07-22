@@ -30,6 +30,7 @@ export default function(testSuite: Suite){
         "test",
         "--test-file=" + testSuite.file.replace(process.cwd(), "/app"),
         "--test-suite=" + testSuite.title,
+        (process.argv.includes("--coverage") ? "--coverage" : ""),
         "--test-mode"
     ];
 
