@@ -16,6 +16,7 @@ export default function(config: Config){
 
     let testCommand = "npx mocha \"" + testFiles + "\" " +
         "--config " + mochaConfigFile + " " +
+        "--reporter " + path.resolve(__dirname, "..", "mocha-reporter.js") + " " +
         (config.testSuite ? "--grep \"" + config.testSuite + "\"" : "") + " " +
         (config.headless ? "--headless" : "") + " " +
         (config.coverage ? "--coverage" : "") + " " +

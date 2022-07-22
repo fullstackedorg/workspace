@@ -40,18 +40,17 @@ export default function(testSuite: Suite){
     const results = execSync(`docker-compose -f ${dockerComposeFilePath} logs --no-log-prefix -f node`).toString();
     execSync(silenceCommandLine(`docker-compose -f ${dockerComposeFilePath} down -t 0 -v`));
 
-
     const passingMatches = Array.from(results.matchAll(/\d+ passing/g));
     const failingMatches = Array.from(results.matchAll(/\d+ failing/g));
 
     const passing = parseInt(passingMatches[0][0]);
     const failing = failingMatches.length ? parseInt(failingMatches[0][0]) : 0;
 
-    if(!global.intgrationTests)
-        global.integrationTest = {passing: 0, failing: 0};
+    if(!global.integrationTests)
+        global.integrationTests = {passes: 0, failures: 0};
 
-    global.integrationTest.passing += passing;
-    global.integrationTest.failing += failing;
+    global.integrationTests.passes += passing;
+    global.integrationTests.failures += failing;
 
 
 
