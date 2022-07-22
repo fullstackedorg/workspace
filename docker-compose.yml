@@ -5,7 +5,7 @@ services:
     image: node:16-alpine
     working_dir: /app
     command: [ "node", "index", "${FLAGS}" ]
-    restart: always
+    restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:

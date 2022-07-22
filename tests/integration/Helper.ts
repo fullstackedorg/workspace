@@ -1,36 +1,59 @@
-import config from "../../scripts/config";
-import build from "../../scripts/build";
-import Runner from "../../scripts/runner";
-import {execSync} from "child_process";
+import {Suite} from "mocha";
+import yaml from "yaml";
+import fs from "fs";
 import path from "path";
-import {cleanOutDir} from "../../scripts/utils";
-import waitForServer from "../../scripts/waitForServer";
+import {getPackageJSON, silenceCommandLine} from "../../scripts/utils";
+import {execSync} from "child_process";
 
-export default class {
-    dir;
-    runner;
+export default function(testSuite: Suite){
+    if(process.argv.includes("--test-mode"))
+        return;
 
-    constructor(srcDir: string) {
-        this.dir = srcDir;
-    }
+    testSuite.tests = [];
 
-    async start(){
-        const localConfig: Config = config({
-            name: "test",
-            src: this.dir,
-            out: this.dir,
-            silent: true
-        });
-        await build(localConfig);
-        this.runner = new Runner(localConfig);
-        await this.runner.start();
-        await waitForServer(3000);
-        await execSync(`docker-compose -p ${localConfig.name} -f ${path.resolve(localConfig.out, "docker-compose.yml")} stop -t 0 node`,
-            {stdio: "ignore"});
-    }
+    const testFilePathComponents = testSuite.file.split("/");
+    testFilePathComponents.pop();
+    const testDir = testFilePathComponents.join("/");
 
-    async stop(){
-        this.runner.stop(true);
-        cleanOutDir(this.dir + "/dist")
-    }
+    const dockerCompose = yaml.parse(fs.readFileSync(path.resolve(__dirname, "..", "..", "docker-compose.yml"), {encoding: "utf-8"}));
+
+    delete dockerCompose.services.node.ports;
+    dockerCompose.services.node.volumes = [
+        process.cwd() + ":/app"
+    ];
+
+    const isFullStackedProject = getPackageJSON().name === "fullstacked";
+
+    dockerCompose.services.node.command = [
+        (isFullStackedProject ? "node" : "npx"),
+        (isFullStackedProject ? "cli" : "fullstacked"),
+        "test",
+        "--test-file=" + testSuite.file.replace(process.cwd(), "/app"),
+        "--test-suite=" + testSuite.title,
+        "--test-mode"
+    ];
+
+    const dockerComposeFilePath = path.resolve(testDir, "docker-compose.yml")
+    fs.writeFileSync(dockerComposeFilePath, yaml.stringify(dockerCompose));
+
+    execSync(silenceCommandLine(`docker-compose -f ${dockerComposeFilePath} up -d`));
+    const results = execSync(`docker-compose -f ${dockerComposeFilePath} logs --no-log-prefix -f node`).toString();
+    execSync(silenceCommandLine(`docker-compose -f ${dockerComposeFilePath} down -t 0 -v`));
+
+
+    const passingMatches = Array.from(results.matchAll(/\d+ passing/g));
+    const failingMatches = Array.from(results.matchAll(/\d+ failing/g));
+
+    const passing = parseInt(passingMatches[0][0]);
+    const failing = failingMatches.length ? parseInt(failingMatches[0][0]) : 0;
+
+    if(!global.intgrationTests)
+        global.integrationTest = {passing: 0, failing: 0};
+
+    global.integrationTest.passing += passing;
+    global.integrationTest.failing += failing;
+
+
+
+    fs.rmSync(dockerComposeFilePath);
 }
