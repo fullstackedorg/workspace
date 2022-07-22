@@ -4,21 +4,29 @@ import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
 import {exec, execSync} from "child_process";
 import {BuildOptions, buildSync} from "esbuild";
+import {Socket} from "net";
 
-// simple y/n console input
-export function askToContinue(question): Promise<boolean> {
+// ask a question, resolve string answer
+export function askQuestion(question: string): Promise<string>{
     const rl = createInterface({
         input: process.stdin,
         output: process.stdout
     });
 
     return new Promise((resolve, reject) => {
-        if(process.argv.includes("--y")) return resolve(true);
-        rl.question(question + ' (y/n): ', (input) => {
+        rl.question(question, (input) => {
             rl.close();
-            resolve(input === "y" || input === "Y" || input === "yes");
+            resolve(input);
         });
     });
+}
+
+// simple y/n console input
+export async function askToContinue(question: string): Promise<boolean> {
+    if(process.argv.includes("--y")) return true;
+
+    const answer = await askQuestion(question + ' (y/n): ');
+    return answer === "y" || answer === "Y" || answer === "yes";
 }
 
 // get package json data from package.json at project root
@@ -141,7 +149,7 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
 }
 
 // exec command on remote host over ssh
-export function execSSH(ssh2, cmd){
+export function execSSH(ssh2, cmd): Promise<string>{
     return new Promise(resolve => {
         let message = "";
         ssh2.exec(cmd, (err, stream) => {
@@ -196,4 +204,38 @@ export function cleanOutDir(dir){
     if(!fs.existsSync(dir))
         return;
     fs.rmSync(dir, {force: true, recursive: true});
+}
+
+// source: https://stackoverflow.com/a/66116887
+export function getNextAvailablePort(port: number = 8000): Promise<number> {
+    return new Promise((resolve, reject) => {
+        const socket = new Socket();
+
+        const timeout = () => {
+            resolve(port);
+            socket.destroy();
+        };
+
+        const next = () => {
+            socket.destroy();
+            resolve(getNextAvailablePort(++port));
+        };
+
+        setTimeout(timeout, 200);
+        socket.on("timeout", timeout);
+
+        socket.on("connect", function () {
+            next();
+        });
+
+        socket.on("error", function (exception) {
+            if ((exception as any).code !== "ECONNREFUSED") {
+                reject(exception);
+            } else {
+                timeout();
+            }
+        });
+
+        socket.connect(port, "0.0.0.0");
+    });
 }

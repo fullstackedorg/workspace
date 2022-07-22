@@ -5,7 +5,7 @@ It generates the default starter files, simply run the following command:
 ```shell
 npx fullstacked create
 ```
-This create two files : `server.ts`, `index.tsx` and `test.ts`. 
+This create two files : `server.ts`, `webapp.tsx` and `test.ts`. 
 These files are your entrypoints for your server, web app and tests respectively.
 
 ### Default Files
@@ -24,7 +24,7 @@ export default server;
 ```
 This is your Server(backend) entrypoint. No need register your public static folder. It's all taken care of
 
-#### index.tsx
+#### webapp.tsx
 ```tsx
 import Webapp from "fullstacked/webapp";
 

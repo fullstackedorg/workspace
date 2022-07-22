@@ -4,12 +4,14 @@ import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path from "path";
-import {cleanOutDir, clearLine, isDockerInstalled, printLine} from "../../../scripts/utils";
+import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import sleep from "fullstacked/scripts/sleep";
 
 describe("Deploy Test", function(){
     const containerName = "dind";
     const sshPort = "2222";
+
+    const serverNameFile = path.resolve(__dirname, ".server-names");
 
     const predeployOutputFile = path.resolve(__dirname, "predeploy.txt");
     const predeployAsyncOutputFile = path.resolve(__dirname, "predeploy-2.txt");
@@ -25,16 +27,15 @@ describe("Deploy Test", function(){
         --host=localhost
         --ssh-port=${sshPort}
         --user=root
-        --pass=docker
-        --test-mode`;
+        --pass=docker`;
         execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.replace(/\n/g, ' ')}`);
     }
 
     before(async function (){
         this.timeout(200000);
 
-        if(!isDockerInstalled())
-            throw Error("Deploy test needs Docker");
+        // simulate server name setup
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "localhost"}));
 
         execSync(`docker rm -f ${containerName}`, {stdio: "ignore"});
         printLine("Setting up docker container");
@@ -48,7 +49,6 @@ describe("Deploy Test", function(){
         execSync(`docker exec -d ${containerName} /usr/sbin/sshd -D`);
         printLine("Running deployment command");
         executeDeployment(`
-            --port=8000
             --src=${__dirname}
             --out=${__dirname}`);
         clearLine();
@@ -107,8 +107,8 @@ describe("Deploy Test", function(){
         this.timeout(50000);
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
+        fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"), JSON.stringify({"node":"localhost"}));
         executeDeployment(`
-            --port=8000
             --src=${updatedAppSrc}
             --out=${updatedAppSrc}`);
         clearLine();
@@ -123,7 +123,8 @@ describe("Deploy Test", function(){
         equal(value, "Deploy Test 2");
 
         await browser.close();
-        cleanOutDir(path.resolve(updatedAppSrc, "dist"))
+        cleanOutDir(path.resolve(updatedAppSrc, "dist"));
+        fs.rmSync(path.resolve(updatedAppSrc, ".server-names"), {force: true});
     });
 
     it("Should re-deploy with new app version", async function(){
@@ -138,7 +139,6 @@ describe("Deploy Test", function(){
 
         printLine("Running deployment command with new version");
         executeDeployment(`
-            --port=8000
             --src=${__dirname}
             --out=${__dirname}
             --version=0.0.0`);
@@ -161,11 +161,10 @@ describe("Deploy Test", function(){
     it("Should run another app", async function(){
         this.timeout(50000);
         printLine("Running deployment command with another app");
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "test.localhost"}));
         executeDeployment(`
             --src=${__dirname}
             --out=${__dirname}
-            --port=8001
-            --server-name=test.localhost
             --name=test
             --title=Test`);
         clearLine();
@@ -186,6 +185,7 @@ describe("Deploy Test", function(){
 
     after(function(){
         cleanOutDir(path.resolve(__dirname, "dist"))
+        fs.rmSync(serverNameFile, {force: true});
         fs.rmSync(predeployOutputFile, {force: true});
         fs.rmSync(predeployAsyncOutputFile, {force: true});
         fs.rmSync(postdeployOutputFile, {force: true});

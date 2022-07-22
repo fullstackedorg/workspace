@@ -15,7 +15,7 @@ function watcher(isWebApp: boolean){
 
     console.log('\x1b[32m%s\x1b[0m', "Server Rebuilt");
     // add flags to start node index --development
-    fs.writeFileSync(globalConfig.out + "/.env", "FLAGS=--development");
+    fs.writeFileSync(path.resolve(globalConfig.dist, ".env"), "FLAGS=--development");
     return run(globalConfig, false);
 }
 
@@ -27,14 +27,14 @@ export default async function(config: Config) {
 
     // start the mini watch server
     await killProcess(1, 8001);
-    const watcherProcess = exec("node " + path.resolve(globalConfig.out, globalConfig.version) + "/watcher.js");
+    const watcherProcess = exec("node " + path.resolve(globalConfig.out, "watcher.js"));
     watcherProcess.stdout.pipe(process.stdout);
     watcherProcess.stderr.pipe(process.stderr);
 
-    if(fs.existsSync(config.src + "/index.css")){
-        fs.watchFile(config.src + "/index.css", () => webAppPostBuild(config, watcher));
+    if(fs.existsSync(path.resolve(config.src, "index.css"))){
+        fs.watchFile(path.resolve(config.src, "index.css"), () => webAppPostBuild(config, watcher));
         process.on("SIGINT", () => {
-            fs.unwatchFile(config.src + "/index.css");
+            fs.unwatchFile(path.resolve(config.src, "index.css"));
         });
     }
 

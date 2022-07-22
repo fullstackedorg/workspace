@@ -6,7 +6,7 @@ import Helper from "fullstacked/tests/e2e/Helper"
 import {equal, ok} from "assert";
 
 describe("Create Test", function(){
-    const webAppFile = path.resolve(__dirname, "index.tsx");
+    const webAppFile = path.resolve(__dirname, "webapp.tsx");
     const serverFile = path.resolve(__dirname, "server.ts");
     const serviceWorkerFile = path.resolve(__dirname, "service-worker.ts");
     const manifestFile = path.resolve(__dirname, "manifest.json");

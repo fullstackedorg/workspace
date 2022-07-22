@@ -2,14 +2,15 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askToContinue, execScript, execSSH, printLine} from "./utils";
+import {askQuestion, askToContinue, execScript, execSSH, printLine} from "./utils";
 import build from "./build";
 import test from "./test";
+import yaml from "yaml";
 
 /*
 *
 * 1. try to connect to remote host
-* 2. check if app at version already deployed
+* 2. check if app at version is already deployed
 * 3. check if docker and docker-compose is installed
 * 4. run tests
 * 5. ship fullstacked-nginx config files
@@ -17,8 +18,8 @@ import test from "./test";
 * 7. setup and ship project docker-compose file
 * 8. setup and ship project nginx.conf file
 * 9. ship built app
-* 10. up/restart built app
-* 11. up/restart fullstacked-nginx
+* 10. pull/up/restart built app
+* 11. pull/up/restart fullstacked-nginx
 *
  */
 
@@ -45,50 +46,145 @@ async function installDocker(ssh2) {
     }
 }
 
-// prepare docker compose file for deployment
-function setupDockerComposeFile(dockerComposeFilePath: string, port, version){
-    let content = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
-
-    // switch port if defined
-    // TODO: maybe move this to build script
-    content = content.replace("8000:8000", `${port ?? 8000}:8000`);
-
-    // overwrite file
-    fs.writeFileSync(dockerComposeFilePath, content);
-}
-
-function setupNginxFile(nginxFilePath: string, port: string, serverName: string, name: string, version: string){
+function setupNginxFile(nginxFilePath: string, serverNameMap: Map<string, {externalPort: string, internalPort: string, serverName: string}>, name: string, version: string){
     const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
     let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
+    let outputContent = "";
 
-    content = content.replace(/\{PORT\}/g, port ?? "8000");
-    content = content.replace(/\{SERVER_NAME\}/g, serverName ?? "localhost");
-    content = content.replace(/\{APP_NAME\}/g, name);
-    content = content.replace(/\{VERSION\}/g, version);
+    for(const [service, {externalPort, internalPort, serverName}] of serverNameMap){
+        outputContent += content.replace(/\{PORT\}/g, externalPort)
+            .replace(/\{SERVER_NAME\}/g, serverName)
+            .replace(/\{APP_NAME\}/g, name)
+            .replace(/\{VERSION\}/g, version);
 
-    fs.writeFileSync(nginxFilePath, content);
+        console.log(serverName + "->" + "0.0.0.0:" + externalPort + " for " + service + " at port " + internalPort);
+    }
+
+    fs.writeFileSync(nginxFilePath, outputContent);
+}
+
+async function getPortsMap(ssh2, dockerCompose, startingPort: number = 8000): Promise<Map<string, string[]>> {
+    const portsMap = new Map<string, string[]>();
+
+    const dockerContainerPorts = await execSSH(ssh2, "docker container ls --format \"{{.Ports}}\" -a");
+    const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
+        portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
+        .map(port => parseInt(port)) // cast to number
+        .filter(port => port || !isNaN(port)); // filter empty strings
+
+
+    const services = Object.keys(dockerCompose.services);
+    for(const service of services){
+        const exposedPorts = dockerCompose.services[service].ports;
+        if(!exposedPorts) continue;
+
+        let chosenPorts = [];
+        for(const port of exposedPorts){
+            if(!port.startsWith("${PORT}")) {
+                chosenPorts.push(port);
+                continue;
+            }
+
+            let availablePort = startingPort;
+
+            while(portsInUse.includes(availablePort)){
+                availablePort = availablePort + 1;
+            }
+
+            portsInUse.push(availablePort);
+            chosenPorts.push(port.replace("${PORT}", availablePort));
+        }
+        portsMap.set(service, chosenPorts)
+    }
+
+    return portsMap;
+}
+
+// get server name for each service
+async function getServerNames(portsMap: Map<string, string[]>,
+                              cachedServerNames: {[service: string]: string})
+    : Promise<Map<string, {externalPort: string, internalPort: string, serverName: string}>>
+{
+    const serverNameForService = new Map<string, {externalPort: string, internalPort: string, serverName: string}>();
+
+    const mainServerName = cachedServerNames["node"] ?? await askQuestion("Enter server name for main web app : \n");
+    serverNameForService.set("node", {
+        externalPort: portsMap.get("node")[0].split(":").shift(),
+        internalPort: "8000",
+        serverName: mainServerName
+    });
+
+    for (const [service, ports] of portsMap.entries()) {
+        if(service === "node")  continue;
+
+        for(const port of ports){
+            const exposedPortArr = port.split(":");
+            const externalPort = exposedPortArr[0];
+            const internalPort = exposedPortArr[exposedPortArr.length - 1];
+            const serverName = cachedServerNames[service] && cachedServerNames[service][internalPort] ?
+                cachedServerNames[service][internalPort] :
+                await askQuestion(`Enter server name for service ${service} at port ${internalPort}: \n`);
+            serverNameForService.set(service, {
+                externalPort: externalPort,
+                internalPort: internalPort,
+                serverName: serverName
+            });
+        }
+    }
+
+    return serverNameForService;
 }
 
 // deploy app using docker compose
 async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
+    const dockerComposeFilePath = path.resolve(config.dist, "docker-compose.yml");
+    let dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
+
+    // get available ports for each services
+    const portsMap = await getPortsMap(sftp.client, dockerCompose, 8000);
+
     // setup and ship docker-compose file
-    const dockerComposeFilePath = path.resolve(config.out, "docker-compose.yml")
-    setupDockerComposeFile(dockerComposeFilePath, config.port, config.version);
-    await sftp.put(config.out + "/docker-compose.yml", serverPath + "/docker-compose.yml");
-    fs.rmSync(dockerComposeFilePath);
+    for(const [service, ports] of portsMap.entries()){
+        dockerCompose.services[service].ports = ports;
+    }
+    fs.writeFileSync(dockerComposeFilePath, yaml.stringify(dockerCompose));
+    await sftp.put(path.resolve(config.dist, "docker-compose.yml"), serverPath + "/docker-compose.yml");
 
     // setup and ship nginx
     if(!config.noNginx) {
-        const nginxFilePath = path.resolve(config.out, "nginx.conf");
-        setupNginxFile(nginxFilePath, config.port, config.serverName, config.name, config.version);
+        const nginxFilePath = path.resolve(config.dist, "nginx.conf");
+
+        // check for cached file
+        const cachedServerNamesFilePath = path.resolve(config.src, ".server-names");
+        let cachedServerNames = {};
+        if(fs.existsSync(cachedServerNamesFilePath)){
+            cachedServerNames = JSON.parse(fs.readFileSync(cachedServerNamesFilePath, {encoding: 'utf-8'}));
+        }
+
+        // setup server names in nginx
+        const serverNameMap = await getServerNames(portsMap, cachedServerNames);
+        setupNginxFile(nginxFilePath, serverNameMap, config.name, config.version);
+
+        // save server names to cache file
+        const serverNameJSON = {};
+        serverNameMap.forEach((value, key) => {
+            if(!serverNameJSON[key])
+                serverNameJSON[key] = {};
+
+            if(key === "node")
+                serverNameJSON[key] = value.serverName;
+            else
+                serverNameJSON[key][value.internalPort] = value.serverName;
+        });
+        fs.writeFileSync(cachedServerNamesFilePath, JSON.stringify(serverNameJSON));
+
+        // upload nginx to remote host
         await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
-        fs.rmSync(nginxFilePath);
     }
 
     // gather all dist files for version
-    const distFilesDir = path.resolve(config.out, config.version);
-    const files = glob.sync("**/*", {cwd: distFilesDir})
-    const localFilePaths = files.map(file => path.resolve(distFilesDir, file));
+    const files = glob.sync("**/*", {cwd: config.out})
+    const localFilePaths = files.map(file => path.resolve(config.out, file));
 
     // upload all files
     for (let i = 0; i < files.length; i++) {
@@ -105,8 +201,15 @@ async function deployDockerCompose(config: Config, sftp, serverPath, serverPathD
     console.log('\x1b[33m%s\x1b[0m', "Starting app");
 
     // start app
-    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
-    await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml restart`);
+    if(config.pull){
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml stop`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml rm -f`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml pull`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
+    }else{
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml restart`);
+    }
 }
 
 export default async function (config: Config) {
