@@ -23,8 +23,12 @@ export default function(config: Config){
         (config.testMode ? "--test-mode" : "") + " ";
 
     // use nyc for coverage
-    if(config.coverage)
-        testCommand = "npx nyc --reporter text-summary --reporter html " + testCommand;
+    if(config.coverage) {
+        testCommand = "npx nyc" + " " +
+            "--temp-dir " + path.resolve(process.cwd(), ".nyc_output") + " " +
+            (config.testMode ? "--no-clean" : "") + " " +
+            testCommand;
+    }
 
     execSync(testCommand, {stdio: "inherit"});
 }
