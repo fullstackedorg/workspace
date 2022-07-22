@@ -15,11 +15,6 @@ Helper(
             equal(response.data, "Hello World");
         });
 
-        it('Should hit hello world endpoint failing', async function(){
-            const response = await axios.get("/hello-world");
-            equal(response.data, "Hello World2");
-        });
-
         after(async function(){
             server.stop();
         });
