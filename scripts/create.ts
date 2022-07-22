@@ -72,10 +72,6 @@ export default function(config: Config) {
 
     if(!config.skipTest) {
         fs.writeFileSync(path.resolve(config.src, "test.ts"), testsTemplate);
-
-        // copy this files for to enable JetBrain WebStorm IDE test panel
-        if(!fs.existsSync(process.cwd() + "/.mocharc.js"))
-            fs.cpSync(path.resolve(__dirname, "../.mocharc.js"), process.cwd() + "/.mocharc.js");
     }
 
     // pwa minimal setup
