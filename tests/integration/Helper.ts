@@ -5,7 +5,7 @@ import path from "path";
 import {getPackageJSON, silenceCommandLine} from "../../scripts/utils";
 import {execSync} from "child_process";
 
-export default function(testSuite: Suite){
+export default function(testSuite: Suite, srcDir: string = null){
     if(process.argv.includes("--test-mode"))
         return;
 
@@ -15,9 +15,8 @@ export default function(testSuite: Suite){
     testFilePathComponents.pop();
     const testDir = testFilePathComponents.join("/");
 
-    const dockerCompose = yaml.parse(fs.readFileSync(path.resolve(__dirname, "..", "..", "docker-compose.yml"), {encoding: "utf-8"}));
+    let dockerCompose = yaml.parse(fs.readFileSync(path.resolve(__dirname, "..", "..", "docker-compose.yml"), {encoding: "utf-8"}));
 
-    delete dockerCompose.services.node.ports;
     dockerCompose.services.node.volumes = [
         process.cwd() + ":/app"
     ];
@@ -33,6 +32,27 @@ export default function(testSuite: Suite){
         (process.argv.includes("--coverage") ? "--coverage" : ""),
         "--test-mode"
     ];
+
+    if(srcDir && !isFullStackedProject){
+        const srcDockerComposeFilePath = path.resolve(srcDir, "docker-compose.yml");
+        if(fs.existsSync(srcDockerComposeFilePath)){
+            const srcDockerCompose = yaml.parse(fs.readFileSync(srcDockerComposeFilePath, {encoding: "utf-8"}));
+            dockerCompose = {
+                ...dockerCompose,
+                ...srcDockerCompose,
+                services: {
+                    ...dockerCompose.services,
+                    ...(srcDockerCompose.services ?? {})
+                }
+            };
+        }
+    }
+
+
+    Object.keys(dockerCompose.services).forEach(service => {
+        if(dockerCompose.services[service].ports)
+            delete dockerCompose.services[service].ports;
+    });
 
     const dockerComposeFilePath = path.resolve(testDir, "docker-compose.yml")
     fs.writeFileSync(dockerComposeFilePath, yaml.stringify(dockerCompose));

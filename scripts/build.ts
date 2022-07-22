@@ -72,12 +72,12 @@ async function buildServer(config, watcher){
     // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
 
-    // merge with user defined docker-compose if existant
+    // merge with user defined docker-compose if existent
     const srcDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
     if(fs.existsSync(srcDockerComposeFilePath)){
         const templateDockerCompose = yaml.parse(dockerCompose);
         const srcDockerCompose = yaml.parse(fs.readFileSync(srcDockerComposeFilePath, {encoding: "utf-8"}));
-        if(srcDockerCompose)
+        if(srcDockerCompose) {
             dockerCompose = yaml.stringify({
                 ...templateDockerCompose,
                 ...srcDockerCompose,
@@ -86,6 +86,7 @@ async function buildServer(config, watcher){
                     ...(srcDockerCompose.services ?? {})
                 }
             });
+        }
     }
 
     // replace version directory
