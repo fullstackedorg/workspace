@@ -7,6 +7,6 @@ services:
     command: [ "node", "index", "${FLAGS}" ]
     restart: unless-stopped
     ports:
-      - "${PORT}:8000"
+      - "${PORT}:80"
     volumes:
       - ./${VERSION}:/app
