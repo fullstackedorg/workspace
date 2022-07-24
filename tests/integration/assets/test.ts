@@ -5,22 +5,20 @@ import Helper from "fullstacked/tests/integration/Helper";
 import server from "./server";
 import path from "path";
 
-Helper(
-    describe("Assets Tests", function(){
-        before(async function (){
-            server.start({silent: true, testing: true});
-            server.assetsDir = path.resolve(__dirname);
-        });
+Helper(describe("Assets Tests", function(){
+    before(async function (){
+        server.start({silent: true, testing: true});
+        server.assetsDir = path.resolve(__dirname);
+    });
 
-        it('Should output image in asset folder and respond with JPG image', async function(){
-            const response = await axios.get("/assets/logo.jpg");
-            equal(response.status, 200);
-            equal(response.headers["content-type"], "image/jpeg");
-        });
+    it('Should output image in asset folder and respond with JPG image', async function(){
+        const response = await axios.get("/assets/logo.jpg");
+        equal(response.status, 200);
+        equal(response.headers["content-type"], "image/jpeg");
+    });
 
-        after(function(){
-            server.stop();
-        });
-    })
-)
+    after(function(){
+        server.stop();
+    });
+}), __dirname)
 

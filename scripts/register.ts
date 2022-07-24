@@ -2,10 +2,7 @@ import {buildSync} from "esbuild";
 import Module from "module";
 import path from "path";
 import fs from "fs";
-import axios from "axios";
 import {defaultEsbuildConfig} from "./utils";
-
-axios.defaults.baseURL = 'http://localhost:8000';
 
 const fullstackedRoot = path.resolve(__dirname, "..");
 const tsConfig = JSON.parse(fs.readFileSync(fullstackedRoot + "/tsconfig.json", {encoding: "utf8"}));

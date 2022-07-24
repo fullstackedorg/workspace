@@ -29,7 +29,7 @@ export default class Server {
 
         this.express.use(express.static(this.publicDir));
 
-        const port = 8000;
+        const port = 80;
 
         this.server = http.createServer(this.express).listen(port);
         if(!args.silent)
