@@ -10,6 +10,7 @@ describe("Build Test", function(){
     const prebuildAsyncOutputFile = path.resolve(__dirname, "prebuild-2.txt");
     const postbuildOutputFile = path.resolve(__dirname, "postbuild.txt");
     const postbuildAsyncOutputFile = path.resolve(__dirname, "postbuild-2.txt");
+    const ssrOutputFile = path.resolve(__dirname, "ssr.html");
 
     before(function(){
         const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} build --src=${__dirname} --out=${__dirname} --silent --test-mode`).toString();
@@ -37,11 +38,17 @@ describe("Build Test", function(){
         equal(fs.readFileSync(postbuildAsyncOutputFile, {encoding: "utf8"}), "postbuild async");
     });
 
+    it('Should have server side rendered div', function(){
+        ok(fs.existsSync(ssrOutputFile));
+        equal(fs.readFileSync(ssrOutputFile, {encoding: "utf8"}), "<div></div>");
+    });
+
     after( function() {
         fs.rmSync(prebuildOutputFile);
         fs.rmSync(prebuildAsyncOutputFile);
         fs.rmSync(postbuildOutputFile);
         fs.rmSync(postbuildAsyncOutputFile);
+        fs.rmSync(ssrOutputFile);
         cleanOutDir(__dirname + "/dist");
     });
 });
