@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import sleep from "fullstacked/scripts/sleep";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Deploy Test", function(){
     const containerName = "dind";
@@ -41,6 +42,7 @@ describe("Deploy Test", function(){
         printLine("Setting up docker container");
         execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:80 -p 8443:443 --name ${containerName} docker:dind`);
         printLine("Installing ssh server");
+        execSync(`docker exec ${containerName} apk del openssh-client`);
         execSync(`docker exec ${containerName} apk add --update --no-cache openssh`);
         execSync(`docker exec ${containerName} sh -c "echo \\\"PasswordAuthentication yes\\\" >> /etc/ssh/sshd_config"`);
         execSync(`docker exec ${containerName} sh -c "echo \\\"PermitRootLogin yes\\\" >> /etc/ssh/sshd_config"`);
@@ -51,6 +53,7 @@ describe("Deploy Test", function(){
         executeDeployment(`
             --src=${__dirname}
             --out=${__dirname}`);
+        await waitForServer(2000);
         clearLine();
     });
 

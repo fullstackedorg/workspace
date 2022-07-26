@@ -7,6 +7,7 @@
         "./config.d.ts",
         "webapp/index.tsx",
         "server/index.ts",
+        "server/ssr.tsx",
         "tests/e2e/Helper.ts",
         "tests/integration/Helper.ts",
         "scripts/sleep.ts",

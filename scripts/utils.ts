@@ -164,8 +164,10 @@ export function execSSH(ssh2, cmd): Promise<string>{
     });
 }
 
-// exec .ts file
+// exec .ts/.tsx file
 export async function execScript(filePath: string, config: Config, ...args): Promise<void> {
+    // prioritize .tsx file
+    filePath = fs.existsSync(filePath + "x") ? filePath + "x" : filePath;
     if(!fs.existsSync(filePath))
         return;
 
