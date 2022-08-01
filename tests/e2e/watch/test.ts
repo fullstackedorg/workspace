@@ -2,7 +2,7 @@ import {before, describe} from "mocha";
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
-import {cleanOutDir, killProcess} from "scripts/utils";
+import {cleanOutDir} from "scripts/utils";
 import {equal, ok, notEqual} from "assert";
 import path from "path";
 import sleep from "fullstacked/scripts/sleep";
@@ -14,8 +14,6 @@ describe("Watch Test", function(){
     const serverFile = path.resolve(__dirname, "server.ts");
 
     before(async function (){
-        await killProcess(1, 8001);
-
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
 
@@ -82,8 +80,6 @@ describe("Watch Test", function(){
         watchProcess.kill("SIGINT");
 
         await sleep(3000);
-
-        await killProcess(watchProcess, 8001);
 
         if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);

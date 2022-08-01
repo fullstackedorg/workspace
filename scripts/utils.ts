@@ -45,57 +45,6 @@ export function silenceCommandLine(cmd: string){
     return cmd + " >/dev/null 2>&1";
 }
 
-// harsh kill process at port
-export async function killProcess(process, port: number = 0){
-    if(!process)
-        return;
-
-    if(os.platform() === 'win32'){
-        if(process.pid)
-            try{exec(`taskkill /pid ${process.pid} /f`)} catch (e) {}
-
-        if(port){
-            let processes;
-            try{
-                processes = execSync(`netstat -ano | findstr :${port}`).toString();
-            }catch (e) { }
-
-            if(!processes)
-                return;
-
-            const processesAtPort = new Set(processes
-                .split("\r\n")
-                .filter(processLine => processLine.includes("LISTENING"))
-                .map(processLine => processLine.match(/\d*$/))
-                .filter(processMatch => processMatch && processMatch[0] !== "0")
-                .map(processMatch => processMatch[0]));
-
-            processesAtPort.forEach(processID => {
-                try{exec(`taskkill /pid ${processID} /f`)} catch (e) {}
-            });
-        }
-
-        return;
-    }
-
-
-    if(process.kill)
-        process.kill();
-
-    if(!port)
-        return;
-
-    let processesAtPort;
-    try{
-        processesAtPort = execSync(`lsof -t -i:${port}`);
-    }catch (e) {}
-    if(processesAtPort) {
-        processesAtPort.toString().split("\n").filter(e => e !== "").forEach(processAtPort => {
-            try {execSync(`kill -9 ${processAtPort.toString()}`)} catch (e) {}
-        });
-    }
-}
-
 // check if docker and docker-compose CLI is installed locally
 export function isDockerInstalled(): boolean{
     const dockerVersion = execSync("docker -v").toString();
