@@ -1,16 +1,57 @@
-import express from "express";
+import express, {Router as expressRouter, Request, RequestHandler, Response} from "express";
 import path from "path";
 import fs from "fs";
 import morgan from "morgan";
 import http from "http";
 
-export default class Server {
+// source : https://stackoverflow.com/a/54973882
+type Override<T, U> = Omit<T, keyof U> & U;
+
+export class Router{
+    express = expressRouter();
+
+    get<RES_BODY>(
+        path: string,
+        handler: (req: Request, res: Response<RES_BODY>) => void,
+        ...middlewares: RequestHandler[]
+    ){
+        this.express.get(path, ...middlewares, handler);
+    }
+
+    post<RES_BODY, REQ_BODY>(
+        path: string,
+        handler: (req: Override<Request, {body: REQ_BODY}>, res: Response<RES_BODY>) => void,
+        ...middlewares: RequestHandler[]
+    ){
+        this.express.post(path, ...middlewares, handler);
+    }
+
+    put<RES_BODY, REQ_BODY>(
+        path: string,
+        handler: (req?: Override<Request, {body: REQ_BODY}>, res?: Response<RES_BODY>) => void,
+        ...middlewares: RequestHandler[]
+    ){
+        this.express.put(path, ...middlewares, handler);
+    }
+
+    delete<RES_BODY>(
+        path: string,
+        handler: (req: Request, res: Response<RES_BODY>) => void,
+        ...middlewares: RequestHandler[]
+    ){
+        this.express.delete(path, ...middlewares, handler);
+    }
+}
+
+export default class Server extends Router{
     server: http.Server;
+    port: number = 80;
     express = express();
     publicDir = path.resolve(__dirname, './public');
     assetsDir = this.publicDir + "/assets";
 
     constructor() {
+        super();
         if(process.argv.includes("--development")) this.express.use(morgan('dev'));
 
         this.express.use("*/assets/:assetFile", (req, res, next) => {
@@ -22,18 +63,18 @@ export default class Server {
         });
     }
 
-    start(args: {silent: boolean, testing: boolean} = {silent: false, testing: false}){
+    start(args: {silent?: boolean, testing?: boolean} = {silent: false, testing: false}, callback?: Function){
         // prevent starting server by import
         // source: https://stackoverflow.com/a/6398335
         if (require.main !== module && !args.testing) return;
 
         this.express.use(express.static(this.publicDir));
 
-        const port = 80;
-
-        this.server = http.createServer(this.express).listen(port);
+        this.server = http.createServer(this.express).listen(this.port);
         if(!args.silent)
-            console.log("Listening at http://localhost:" + port);
+            console.log("Listening at http://localhost:" + this.port);
+
+        if(callback) callback();
     }
 
     stop(){

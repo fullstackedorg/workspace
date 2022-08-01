@@ -33,7 +33,7 @@ HelperIntegration(describe("Hello World", function(){
 
     it('Should hit hello world endpoint', async function(){
         const response = await axios.get("/hello-world");
-        equal(response.data, "Hello World");
+        assert.equal(response.data, "Hello World");
     });
 
     after(async function(){

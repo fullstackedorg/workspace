@@ -1,10 +1,10 @@
 import path from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, copyRecursiveSync, defaultEsbuildConfig, execScript} from "./utils";
+import {cleanOutDir, execScript, randStr} from "./utils";
 import crypto from "crypto";
 import yaml from "yaml";
-
+import typing from "./typing";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -36,6 +36,8 @@ function getProcessedEnv(config: Config){
 
 // bundles the server
 async function buildServer(config, watcher){
+    const filesToLookup: Set<string> = new Set();
+
     const options = {
         entryPoints: [ path.resolve(config.src, "server.ts") ],
         outfile: path.resolve(config.out, "index.js"),
@@ -44,11 +46,26 @@ async function buildServer(config, watcher){
         minify: process.env.NODE_ENV === 'production',
         sourcemap: process.env.NODE_ENV !== 'production',
 
+        plugins: [{
+            name: 'endpoint-typing',
+            setup(build) {
+                build.onStart(() => {
+                    filesToLookup.clear();
+                })
+                build.onLoad({filter: /.*/g}, args => {
+                    if(!args.path.includes("node_modules"))
+                        filesToLookup.add(args.path)
+                    return null;
+                })
+            },
+        }],
+
         define: getProcessedEnv(config),
 
         watch: watcher ? {
             onRebuild: async function(error, result){
                 if(error) return;
+                typing(config, filesToLookup);
                 watcher();
             }
         } : false
@@ -59,15 +76,7 @@ async function buildServer(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    // attach watcher script if defined
-    if(watcher) {
-        buildSync({
-            entryPoints: [path.resolve(__dirname, "../server/watcher.ts")],
-            outfile: path.resolve(config.out, "watcher.js"),
-            minify: true,
-            format: "cjs"
-        });
-    }
+    typing(config, filesToLookup);
 
     // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});

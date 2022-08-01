@@ -6,6 +6,9 @@ coverage
 **/*.js.map
 test.ts
 
+d.ts
+d.d.ts
+
 /build.js
 /build.ts
 
