@@ -40,10 +40,10 @@ describe("Watch Test", function(){
 
     it('Should reload webapp', async function(){
         const countBefore = await getReloadCount();
-        await sleep(1500);
+        await sleep(1000);
 
         fs.appendFileSync(indexFile, "\n// this is a test line");
-        await sleep(2000);
+        await sleep(1000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);

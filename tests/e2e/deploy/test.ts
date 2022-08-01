@@ -187,7 +187,7 @@ describe("Deploy Test", function(){
     });
 
     after(function(){
-        cleanOutDir(path.resolve(__dirname, "dist"))
+        cleanOutDir(path.resolve(__dirname, "dist"));
         fs.rmSync(serverNameFile, {force: true});
         fs.rmSync(predeployOutputFile, {force: true});
         fs.rmSync(predeployAsyncOutputFile, {force: true});
