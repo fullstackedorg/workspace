@@ -8,6 +8,7 @@
         "./config.d.ts",
         "./d.ts",
         "webapp/index.tsx",
+        "webapp/fetch.ts",
         "server/index.ts",
         "server/ssr.tsx",
         "tests/e2e/Helper.ts",

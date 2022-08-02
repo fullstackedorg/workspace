@@ -1,5 +1,5 @@
 import {Component} from "react"
-import {Webapp} from "fullstacked/webapp";
+import {fetch} from "fullstacked/fetch";
 
 export default class extends Component {
     state = {
@@ -8,13 +8,13 @@ export default class extends Component {
 
     async componentDidMount(){
         try{
-            await Webapp.post("/api/test", {});
-            await Webapp.put("/api/test", {});
-            await Webapp.del("/api/test");
+            await fetch.post("/api/test", {});
+            await fetch.put("/api/test", {});
+            await fetch.del("/api/test");
         }catch (e) {
             return;
         }
-        this.setState({text: await Webapp.get("/api/test")});
+        this.setState({text: await fetch.get("/api/test")});
     }
 
     render(){
