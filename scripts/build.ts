@@ -43,8 +43,8 @@ async function buildServer(config, watcher){
         outfile: path.resolve(config.out, "index.js"),
         platform: "node" as Platform,
         bundle: true,
-        minify: process.env.NODE_ENV === 'production',
-        sourcemap: process.env.NODE_ENV !== 'production',
+        minify: config.production,
+        sourcemap: !config.production,
 
         plugins: [{
             name: 'endpoint-typing',
@@ -117,8 +117,8 @@ async function buildWebApp(config, watcher){
         format: "esm" as Format,
         splitting: true,
         bundle: true,
-        minify: process.env.NODE_ENV === 'production',
-        sourcemap: process.env.NODE_ENV !== 'production',
+        minify: config.production,
+        sourcemap: !config.production,
 
         define: getProcessedEnv(config),
 

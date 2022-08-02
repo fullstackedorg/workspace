@@ -303,7 +303,10 @@ export default async function (config: Config) {
     }
 
     // build app
-    await build(config);
+    await build({
+        ...config,
+        production: true
+    });
 
     // predeploy script
     await execScript(path.resolve(config.src, "predeploy.ts"), config, sftp);
