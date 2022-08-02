@@ -1,7 +1,7 @@
 import path from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, execScript, randStr} from "./utils";
+import {cleanOutDir, execScript} from "./utils";
 import crypto from "crypto";
 import yaml from "yaml";
 import typing from "./typing";
@@ -38,15 +38,9 @@ function getProcessedEnv(config: Config){
 async function buildServer(config, watcher){
     const filesToLookup: Set<string> = new Set();
 
-    const options = {
-        entryPoints: [ path.resolve(config.src, "server.ts") ],
-        outfile: path.resolve(config.out, "index.js"),
-        platform: "node" as Platform,
-        bundle: true,
-        minify: config.production,
-        sourcemap: !config.production,
-
-        plugins: [{
+    const plugins = [];
+    if(!config.production){
+        plugins.push({
             name: 'endpoint-typing',
             setup(build) {
                 build.onStart(() => {
@@ -58,7 +52,18 @@ async function buildServer(config, watcher){
                     return null;
                 })
             },
-        }],
+        });
+    }
+
+    const options = {
+        entryPoints: [ path.resolve(config.src, "server.ts") ],
+        outfile: path.resolve(config.out, "index.js"),
+        platform: "node" as Platform,
+        bundle: true,
+        minify: config.production,
+        sourcemap: !config.production,
+
+        plugins: plugins,
 
         define: getProcessedEnv(config),
 
@@ -76,7 +81,9 @@ async function buildServer(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    typing(config, filesToLookup);
+    // generate endpoint typing
+    if(!config.production)
+        typing(config, filesToLookup);
 
     // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});

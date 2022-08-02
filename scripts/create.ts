@@ -24,7 +24,7 @@ import {before, describe} from "mocha";
 import Helper from "fullstacked/tests/e2e/Helper";
 import HelperIntegration from "fullstacked/tests/integration/Helper";
 import server from "./server";
-import axios from "axios";
+import {fetch} from "fullstacked/fetch";
 
 HelperIntegration(describe("Hello World", function(){
     before(async function (){
@@ -32,8 +32,8 @@ HelperIntegration(describe("Hello World", function(){
     });
 
     it('Should hit hello world endpoint', async function(){
-        const response = await axios.get("/hello-world");
-        assert.equal(response.data, "Hello World");
+        const response = await fetch.get("/hello-world");
+        assert.equal(response, "Hello World");
     });
 
     after(async function(){

@@ -43,13 +43,12 @@ scripts/watch.ts
 build-cli.ts
 build-cli.js
 
-tsconfig.emitDeclaration.json
-
 .mocharc.ts
 
 cli.ts
 
 webapp/GlobalReact.d.ts
+webapp/fetch.js
 
 server/index.js
 server/watcher.js
