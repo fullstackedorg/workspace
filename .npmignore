@@ -7,7 +7,6 @@ coverage
 test.ts
 
 d.ts
-d.d.ts
 
 /build.js
 /build.ts
@@ -39,9 +38,6 @@ scripts/utils.ts
 scripts/utils.d.ts
 scripts/watch.ts
 scripts/watch.ts
-
-build-cli.ts
-build-cli.js
 
 .mocharc.ts
 
