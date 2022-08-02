@@ -1,8 +1,9 @@
-import express, {Router as expressRouter, Request, RequestHandler, Response} from "express";
+import express, {Router as expressRouter, Request, RequestHandler, Response, RequestParamHandler} from "express";
 import path from "path";
 import fs from "fs";
 import morgan from "morgan";
 import http from "http";
+import {ParsedQs} from "qs";
 
 // source : https://stackoverflow.com/a/54973882
 type Override<T, U> = Omit<T, keyof U> & U;
@@ -10,33 +11,33 @@ type Override<T, U> = Omit<T, keyof U> & U;
 export class Router{
     express = expressRouter();
 
-    get<RES_BODY>(
+    get<RES_BODY, QUERY_OBJ extends ParsedQs = {}>(
         path: string,
-        handler: (req: Request, res: Response<RES_BODY>) => void,
+        handler: (req: Override<Request, {query: QUERY_OBJ}>, res: Response<RES_BODY>) => void,
         ...middlewares: RequestHandler[]
     ){
         this.express.get(path, ...middlewares, handler);
     }
 
-    post<RES_BODY, REQ_BODY>(
+    post<RES_BODY, REQ_BODY, QUERY_OBJ extends ParsedQs = {}>(
         path: string,
-        handler: (req: Override<Request, {body: REQ_BODY}>, res: Response<RES_BODY>) => void,
+        handler: (req: Override<Request, {query: QUERY_OBJ, body: REQ_BODY}>, res: Response<RES_BODY>) => void,
         ...middlewares: RequestHandler[]
     ){
         this.express.post(path, ...middlewares, handler);
     }
 
-    put<RES_BODY, REQ_BODY>(
+    put<RES_BODY, REQ_BODY, QUERY_OBJ extends ParsedQs = {}>(
         path: string,
-        handler: (req?: Override<Request, {body: REQ_BODY}>, res?: Response<RES_BODY>) => void,
+        handler: (req?: Override<Request, {query: QUERY_OBJ, body: REQ_BODY}>, res?: Response<RES_BODY>) => void,
         ...middlewares: RequestHandler[]
     ){
         this.express.put(path, ...middlewares, handler);
     }
 
-    delete<RES_BODY>(
+    delete<RES_BODY, QUERY_OBJ extends ParsedQs = {}>(
         path: string,
-        handler: (req: Request, res: Response<RES_BODY>) => void,
+        handler: (req: Override<Request, {query: QUERY_OBJ}>, res: Response<RES_BODY>) => void,
         ...middlewares: RequestHandler[]
     ){
         this.express.delete(path, ...middlewares, handler);
