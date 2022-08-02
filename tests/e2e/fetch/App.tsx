@@ -8,8 +8,8 @@ export default class extends Component {
 
     async componentDidMount(){
         try{
-            await fetch.post("/api/test", {});
-            await fetch.put("/api/test", {});
+            await fetch.post("/api/test");
+            await fetch.put("/api/test");
             await fetch.del("/api/test");
         }catch (e) {
             return;
