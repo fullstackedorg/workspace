@@ -1,9 +1,9 @@
 import {before, describe} from "mocha";
-import axios from "axios";
 import {equal} from "assert";
 import Helper from "fullstacked/tests/integration/Helper";
 import server from "./server";
 import path from "path";
+import axios from "axios";
 
 Helper(describe("Assets Tests", function(){
     before(async function (){

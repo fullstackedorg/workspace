@@ -49,6 +49,6 @@ describe("Build Test", function(){
         fs.rmSync(postbuildOutputFile);
         fs.rmSync(postbuildAsyncOutputFile);
         fs.rmSync(ssrOutputFile);
-        cleanOutDir(__dirname + "/dist");
+        cleanOutDir(path.resolve(__dirname, "dist"));
     });
 });

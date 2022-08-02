@@ -33,43 +33,45 @@ Webapp(<>Welcome to FullStacked!</>);
 This is your Webapp(frontend) entrypoint. No need to use render from react-dom or setup an HTML file. Once again, it's all take care of.
 
 #### test.ts
+
 ```ts
 import * as assert from "assert";
 import {before, describe} from "mocha";
 import Helper from "fullstacked/tests/e2e/Helper";
 import server from "./server";
 import axios from "axios";
+import {fetch} from "./fetch";
 
-describe("Integration", function(){
+describe("Integration", function () {
     let test;
 
-    before(async function (){
+    before(async function () {
         test = new Helper(__dirname);
         await test.start();
     });
 
-    it('Should hit endpoint', async function(){
-        assert.equal((await axios.get("/hello-world")).data, "Hello World");
+    it('Should hit endpoint', async function () {
+        assert.equal((await fetch.get("/hello-world")).data, "Hello World");
     });
 
-    after(async function(){
+    after(async function () {
         await test.stop();
     });
 });
 
-describe("End-to-End", function(){
-    before(async function (){
+describe("End-to-End", function () {
+    before(async function () {
         server.start({silent: true, testing: true});
     });
 
-    it('Should load default page', async function(){
+    it('Should load default page', async function () {
         const root = await test.page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
         assert.equal(value, "Welcome to FullStacked!");
     });
 
-    after(async function (){
+    after(async function () {
         server.stop();
     });
 });
