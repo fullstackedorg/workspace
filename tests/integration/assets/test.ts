@@ -1,16 +1,12 @@
 import {before, describe} from "mocha";
-import axios from "axios";
 import {equal} from "assert";
+import Helper from "fullstacked/tests/integration/Helper";
+import server from "./server";
 import path from "path";
-import server from "../server";
-import Helper from "../Helper";
+import axios from "axios";
 
-
-describe("Assets Tests", function(){
-    const test = new Helper(path.resolve(__dirname, "../"));
-
+Helper(describe("Assets Tests", function(){
     before(async function (){
-        await test.start();
         server.start({silent: true, testing: true});
         server.assetsDir = path.resolve(__dirname);
     });
@@ -23,7 +19,6 @@ describe("Assets Tests", function(){
 
     after(function(){
         server.stop();
-        test.stop();
     });
+}), __dirname)
 
-});

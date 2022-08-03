@@ -1,10 +1,10 @@
 import {describe} from "mocha";
-import {equal, ok} from "assert";
+import {equal, notEqual, ok} from "assert";
 import sleep from "fullstacked/scripts/sleep";
 import waitForServer from "fullstacked/scripts/waitForServer";
 import fs from "fs";
 import path from "path";
-import {copyRecursiveSync} from "../../scripts/utils";
+import {copyRecursiveSync, randStr} from "../../scripts/utils";
 
 describe("Unit Tests", function(){
     const oneSec = 1000;
@@ -38,5 +38,11 @@ describe("Unit Tests", function(){
 
         fs.rmSync(dir, {force: true, recursive: true});
         fs.rmSync(copiedDir, {force: true, recursive: true});
+    });
+
+    it("Should create random strings", function(){
+        const str = randStr(20);
+        ok(str.length === 20);
+        notEqual(str, randStr(20));
     });
 });

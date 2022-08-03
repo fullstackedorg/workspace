@@ -1,4 +1,5 @@
 import {Component} from "react"
+import {fetch} from "fullstacked/fetch";
 
 export default class extends Component {
     state = {
@@ -6,10 +7,14 @@ export default class extends Component {
     }
 
     async componentDidMount(){
-        const request = await fetch("/api/test");
-        this.setState({
-            text: await request.text()
-        });
+        try{
+            await fetch.post("/api/test");
+            await fetch.put("/api/test");
+            await fetch.del("/api/test");
+        }catch (e) {
+            return;
+        }
+        this.setState({text: await fetch.get("/api/test")});
     }
 
     render(){

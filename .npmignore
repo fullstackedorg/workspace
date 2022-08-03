@@ -6,7 +6,17 @@ coverage
 **/*.js.map
 test.ts
 
+d.ts
+
+**/*.js.map
+**/*.tjs.map
+
+/build.js
+/build.ts
+
 docs
+
+mocha-reporter.ts
 
 tests/e2e/*/*
 tests/e2e/Helper.js
@@ -32,16 +42,12 @@ scripts/utils.d.ts
 scripts/watch.ts
 scripts/watch.ts
 
-build-cli.ts
-build-cli.js
-
-tsconfig.emitDeclaration.json
-
 .mocharc.ts
 
 cli.ts
 
 webapp/GlobalReact.d.ts
+webapp/fetch.js
 
 server/index.js
 server/watcher.js
