@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["ssrTest.tsx"],
+  "sourcesContent": ["import ssr from \"../../../server/ssr\";\n\nexport default function(){\n    return ssr(<div />);\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA,iBAAgB;AAED,2BAAU;AACrB,SAAO,wBAAI,oCAAC,WAAI,CAAE;AACtB;",
+  "names": []
+}
