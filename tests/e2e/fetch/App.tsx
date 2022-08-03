@@ -1,5 +1,5 @@
 import {Component} from "react"
-import {fetch} from "fullstacked/fetch";
+import {fetch} from "fullstacked/webapp/fetch";
 
 export default class extends Component {
     state = {
