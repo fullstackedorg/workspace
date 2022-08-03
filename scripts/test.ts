@@ -37,9 +37,14 @@ export default function(config: Config){
 
     if(config.coverage && !config.testMode){
         glob.sync(path.resolve(config.src, ".nyc_output", "*.json")).forEach(file => {
-           fs.writeFileSync(file,
-               fs.readFileSync(file, {encoding: 'utf-8'}).replace(/\/app/g, config.src)
-           );
+            const content = fs.readFileSync(file, {encoding: 'utf-8'});
+            const updatedContent = content.replace(/\/app.*?\./g, value => {
+                const pathComponents = value.split("/");
+                pathComponents.shift(); // remove ""
+                pathComponents.shift(); // remove "app"
+                return path.resolve(config.src,  pathComponents.join(path.sep));
+            });
+            fs.writeFileSync(file, updatedContent);
         });
 
         execSync("npx nyc report" + " " +
