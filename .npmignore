@@ -8,6 +8,9 @@ test.ts
 
 d.ts
 
+**/*.js.map
+**/*.tjs.map
+
 /build.js
 /build.ts
 

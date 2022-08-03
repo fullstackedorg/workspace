@@ -7,7 +7,9 @@ coverage
 .tests
 .env
 **/*.js
+**/*.tjs
 **/*.js.map
+**/*.tjs.map
 **/*.d.ts
 !./config.d.ts
 !./index.d.ts
