@@ -69,7 +69,7 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 see flags and requirements in the [docs](https://fullstacked.org/docs/commands)
 
 ## Motivation
-As many web developer, I have changed my toolset more too often. We wasted
+As many web developer, I have changed my toolset way too often. We wasted
 so much time on configs and figuring out how to deploy web apps. FullStacked aims to skip
 all the configuration phases to instead, start developing as quickly as possible!
 
