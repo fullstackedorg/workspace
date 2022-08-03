@@ -25,6 +25,12 @@ Module.prototype.require = function(){
         mustBeBuilt = true;
     }
 
+    // if relative path and .tsx file exist, then build
+    if(!mustBeBuilt && (filePath.startsWith("./") || filePath.startsWith("../")) && fs.existsSync(path.resolve(this.path, filePath + ".tsx"))){
+        filePath = path.resolve(this.path, filePath + ".tsx");
+        mustBeBuilt = true;
+    }
+
     // check if file exist and is not a node_module
     if(!mustBeBuilt && !this.id.includes("node_modules") && fs.existsSync(path.resolve(process.cwd(), filePath + ".ts"))){
         filePath = path.resolve(process.cwd(), filePath + ".ts");
