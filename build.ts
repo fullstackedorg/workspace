@@ -1,14 +1,20 @@
 import esbuild from "esbuild";
 import glob from "glob";
 import path from "path"
+import fs from "fs";
 
 (async function() {
+    const testingTypesFile = path.resolve(__dirname, "node_modules", "@types", "fullstacked");
+    if(fs.existsSync(testingTypesFile))
+        fs.rmSync(testingTypesFile, {force: true, recursive: true});
+
     const scripts = glob.sync(path.resolve(__dirname, "./scripts") + "/**/*.ts")
         .filter(file => !file.endsWith(".d.ts"));
 
     const otherScripts = [
         path.resolve(__dirname, "./cli.ts"),
-        path.resolve(__dirname, "./.mocharc.ts")
+        path.resolve(__dirname, "./.mocharc.ts"),
+        path.resolve(__dirname, "./mocha-reporter.ts")
     ]
 
     const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {

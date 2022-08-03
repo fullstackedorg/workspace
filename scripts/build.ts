@@ -1,10 +1,10 @@
 import path from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, copyRecursiveSync, defaultEsbuildConfig, execScript} from "./utils";
+import {cleanOutDir, execScript} from "./utils";
 import crypto from "crypto";
 import yaml from "yaml";
-
+import typing from "./typing";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -36,19 +36,41 @@ function getProcessedEnv(config: Config){
 
 // bundles the server
 async function buildServer(config, watcher){
+    const filesToLookup: Set<string> = new Set();
+
+    const plugins = [];
+    if(!config.production){
+        plugins.push({
+            name: 'endpoint-typing',
+            setup(build) {
+                build.onStart(() => {
+                    filesToLookup.clear();
+                })
+                build.onLoad({filter: /.*/g}, args => {
+                    if(!args.path.includes("node_modules"))
+                        filesToLookup.add(args.path)
+                    return null;
+                })
+            },
+        });
+    }
+
     const options = {
         entryPoints: [ path.resolve(config.src, "server.ts") ],
         outfile: path.resolve(config.out, "index.js"),
         platform: "node" as Platform,
         bundle: true,
-        minify: process.env.NODE_ENV === 'production',
-        sourcemap: process.env.NODE_ENV !== 'production',
+        minify: config.production,
+        sourcemap: !config.production,
+
+        plugins: plugins,
 
         define: getProcessedEnv(config),
 
         watch: watcher ? {
             onRebuild: async function(error, result){
                 if(error) return;
+                typing(config, filesToLookup);
                 watcher();
             }
         } : false
@@ -59,25 +81,19 @@ async function buildServer(config, watcher){
     if(result.errors.length > 0)
         return;
 
-    // attach watcher script if defined
-    if(watcher) {
-        buildSync({
-            entryPoints: [path.resolve(__dirname, "../server/watcher.ts")],
-            outfile: path.resolve(config.out, "watcher.js"),
-            minify: true,
-            format: "cjs"
-        });
-    }
+    // generate endpoint typing
+    if(!config.production)
+        typing(config, filesToLookup);
 
     // get docker-compose.yml template file
     let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
 
-    // merge with user defined docker-compose if existant
+    // merge with user defined docker-compose if existent
     const srcDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
     if(fs.existsSync(srcDockerComposeFilePath)){
         const templateDockerCompose = yaml.parse(dockerCompose);
         const srcDockerCompose = yaml.parse(fs.readFileSync(srcDockerComposeFilePath, {encoding: "utf-8"}));
-        if(srcDockerCompose)
+        if(srcDockerCompose) {
             dockerCompose = yaml.stringify({
                 ...templateDockerCompose,
                 ...srcDockerCompose,
@@ -86,6 +102,7 @@ async function buildServer(config, watcher){
                     ...(srcDockerCompose.services ?? {})
                 }
             });
+        }
     }
 
     // replace version directory
@@ -107,8 +124,8 @@ async function buildWebApp(config, watcher){
         format: "esm" as Format,
         splitting: true,
         bundle: true,
-        minify: process.env.NODE_ENV === 'production',
-        sourcemap: process.env.NODE_ENV !== 'production',
+        minify: config.production,
+        sourcemap: !config.production,
 
         define: getProcessedEnv(config),
 

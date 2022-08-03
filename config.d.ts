@@ -7,6 +7,8 @@ declare type ConfigBuild = {
     title?: string,
     src? : string, // in folder
 
+    production?: boolean
+
     dist?: string   // root out folder
     out?: string    // version out folder
     public?: string // public out folder
@@ -15,7 +17,11 @@ declare type ConfigBuild = {
 
 declare type ConfigTest = {
     coverage? : boolean,
-    headless? : boolean
+    headless? : boolean,
+
+    testMode? : boolean,
+    testFile? : string,
+    testSuite? : string
 }
 
 declare type ConfigDeploy = {

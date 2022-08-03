@@ -7,10 +7,10 @@ A full stack web app build tool and development kit.
 [<img src="https://fullstacked.org/favicon.png" alt="FullStacked Logo" width="75px" />](https://fullstacked.org/)
 
 
-[![version](https://img.shields.io/badge/version-0.4.0-01b0de)](https://www.npmjs.com/package/fullstacked)
-[![dependencies](https://img.shields.io/badge/dependencies-18-yellowgreen)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
-[![module dependencies](https://img.shields.io/badge/module%20deps-361-yellow)](https://npmgraph.js.org/?q=fullstacked)
-[![code coverage](https://img.shields.io/badge/coverage-82.04%25-yellowgreen)](https://cplepage.github.io/fullstacked-code-coverage/)
+[![version](https://img.shields.io/badge/version-0.5.0-01b0de)](https://www.npmjs.com/package/fullstacked)
+[![dependencies](https://img.shields.io/badge/dependencies-19-yellowgreen)](https://www.npmjs.com/package/fullstacked?activeTab=dependencies)
+[![module dependencies](https://img.shields.io/badge/module%20deps-363-yellow)](https://npmgraph.js.org/?q=fullstacked)
+[![code coverage](https://img.shields.io/badge/coverage-86.22%25-yellowgreen)](https://cplepage.github.io/fullstacked-code-coverage/)
 
 
 A complete setup for a Typescript full stack application.
@@ -69,8 +69,8 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 see flags and requirements in the [docs](https://fullstacked.org/docs/commands)
 
 ## Motivation
-As many web developer, I have changed my toolset more than once. I wasted
-too much time on configs and figuring out how to deploy my apps. FullStacked aims to skip
+As many web developer, I have changed my toolset way too often. We wasted
+so much time on configs and figuring out how to deploy web apps. FullStacked aims to skip
 all the configuration phases to instead, start developing as quickly as possible!
 
 I also really like the iterative approach, so I look forward to implementing ways to help with 
@@ -78,12 +78,12 @@ sharing development environments for the purpose of testing and reviewing.
 
 ## Roadmap & Thoughts
 
-* Containerize Test script
 * Manage to create a simple and efficient way to test frontend component/class individually
 * Add integration with [PWABuilder](https://github.com/pwa-builder/PWABuilder) to generate iOS and Android App
-* Switch nginx image for [nginx proxy manager](https://github.com/NginxProxyManager/nginx-proxy-manager)
+* <s>Switch nginx image for [nginx proxy manager](https://github.com/NginxProxyManager/nginx-proxy-manager) </s> 
+Will create our own interface with [Tabler](https://github.com/tabler/tabler)
 * Switch to [Deno](https://github.com/denoland/deno) or [bun](https://github.com/Jarred-Sumner/bun)
-* TypeScript Web Based IDE
+* TypeScript Web Based IDE using [monaco editor](https://github.com/microsoft/monaco-editor)
   * Designed only for TypeScript projects, so it helps with all the main features
     * Typing
     * Autocomplete
