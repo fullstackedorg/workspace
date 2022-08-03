@@ -40,7 +40,7 @@ import {before, describe} from "mocha";
 import Helper from "fullstacked/tests/e2e/Helper";
 import server from "./server";
 import axios from "axios";
-import {fetch} from "./fetch";
+import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Integration", function () {
     let test;

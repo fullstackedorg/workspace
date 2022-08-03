@@ -2,7 +2,7 @@ import {before, describe} from "mocha";
 import {equal} from "assert";
 import Helper from "fullstacked/tests/integration/Helper";
 import server from "./server";
-import {fetch} from "fullstacked/fetch";
+import {fetch} from "fullstacked/webapp/fetch";
 
 Helper(describe("Hello World", function(){
     before(async function (){
