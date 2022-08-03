@@ -24,9 +24,7 @@ export default function(testSuite: Suite, srcDir: string = null){
 }
 
 async function runIntegrationTest(testSuite: Suite, srcDir: string){
-    const testFilePathComponents = testSuite.file.split("/");
-    testFilePathComponents.pop();
-    const testDir = path.resolve(testFilePathComponents.join("/"), ".test");
+    const testDir = path.resolve(path.dirname(testSuite.file), ".test");
 
     if(fs.existsSync(testDir))
         fs.rmSync(testDir, {force: true, recursive: true});
@@ -48,13 +46,23 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
         process.cwd() + ":/app"
     ];
 
+    const testFilePathComponents = testSuite.file.split(path.sep);
+    const rootDirComponents = process.cwd().split(path.sep);
+    const testFilePath = ["/app"];
+    for (let i = 0; i < testFilePathComponents.length; i++) {
+        if(testFilePathComponents[i] === rootDirComponents[i])
+            continue;
+
+        testFilePath.push(testFilePathComponents[i]);
+    }
+
     const isFullStackedProject = getPackageJSON().name === "fullstacked";
 
     dockerCompose.services.node.command = [
         (isFullStackedProject ? "node" : "npx"),
         (isFullStackedProject ? "cli" : "fullstacked"),
         "test",
-        "--test-file=" + testSuite.file.replace(process.cwd(), "/app"),
+        "--test-file=" + testFilePath.join("/"),
         "--test-suite=" + testSuite.title,
         (process.argv.includes("--coverage") ? "--coverage" : ""),
         "--test-mode"
