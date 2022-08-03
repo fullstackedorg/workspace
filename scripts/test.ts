@@ -42,7 +42,8 @@ export default function(config: Config){
                 const pathComponents = value.split("/");
                 pathComponents.shift(); // remove ""
                 pathComponents.shift(); // remove "app"
-                return path.resolve(config.src,  pathComponents.join(path.sep));
+                const updatedPath = path.resolve(config.src,  pathComponents.join(path.sep))
+                return path.sep === "\\" ? updatedPath.replace(/\\/g, "\\\\") : updatedPath;
             });
             fs.writeFileSync(file, updatedContent);
         });
