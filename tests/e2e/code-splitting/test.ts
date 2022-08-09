@@ -13,10 +13,10 @@ describe("Code Splitting", function(){
     })
 
     it('Should lazy load the component', async function(){
-        const root = await test.page.$("#root");
+        const root = await test.page.$("lazy-loaded");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        equal(value, "<div>Lazy Loaded</div>");
+        equal(value, "Lazy Loaded");
     });
 
     it('Should have more than 1 js file in public', async function(){

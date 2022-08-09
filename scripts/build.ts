@@ -118,7 +118,7 @@ async function buildServer(config, watcher){
 // bundles the web app
 async function buildWebApp(config, watcher){
     const options = {
-        entryPoints: [ path.resolve(config.src, "webapp.tsx") ],
+        entryPoints: [ path.resolve(config.src, "webapp.ts") ],
         outdir: config.public,
         entryNames: "index",
         format: "esm" as Format,
@@ -213,6 +213,19 @@ export function webAppPostBuild(config: Config, watcher){
         const closingHeadIndex = indexHTMLContentUpdated.indexOf("</head>");
         const preHTML = indexHTMLContentUpdated.slice(0, closingHeadIndex);
         const postHTML = indexHTMLContentUpdated.slice(closingHeadIndex, indexHTMLContentUpdated.length);
+        indexHTMLContentUpdated = preHTML + content + postHTML;
+    }
+
+    // body.html
+    const bodyFile = path.resolve(config.src, "body.html");
+    if(fs.existsSync(bodyFile)){
+        // read content
+        const content = fs.readFileSync(bodyFile, {encoding: "utf-8"});
+
+        // add content to body
+        const closingBodyIndex = indexHTMLContentUpdated.indexOf("</body>");
+        const preHTML = indexHTMLContentUpdated.slice(0, closingBodyIndex);
+        const postHTML = indexHTMLContentUpdated.slice(closingBodyIndex, indexHTMLContentUpdated.length);
         indexHTMLContentUpdated = preHTML + content + postHTML;
     }
 
