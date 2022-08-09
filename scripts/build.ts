@@ -137,7 +137,8 @@ async function buildWebApp(config, watcher){
             ".png": "file" as Loader,
             ".jpg": "file" as Loader,
             ".svg": "file" as Loader,
-            ".md": "file" as Loader
+            ".md": "file" as Loader,
+            ".ttf": "file" as Loader,
         },
 
         watch: watcher ? {
