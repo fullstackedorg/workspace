@@ -1,6 +1,7 @@
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
 import {equal} from "assert";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Basic Test", function(){
     let test = new Helper(__dirname);
@@ -12,8 +13,8 @@ describe("Basic Test", function(){
     it('Should load a basic web page', async function(){
         const root = await test.page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
-        const value = await innerHTML.jsonValue();
-        equal(value, "<div>Basic Test</div>");
+        const value: string = await innerHTML.jsonValue();
+        equal(value.trim(), "<basic-test>Basic Test</basic-test>");
     });
 
     after(async function(){
