@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "yaml";
 import {execSync} from "child_process";
-import {execSSH} from "./utils";
+import {silenceCommandLine} from "./utils";
 
 export default function (config: FullStackedConfig) {
     const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
@@ -17,8 +17,11 @@ export default function (config: FullStackedConfig) {
     if(!config.volume || !volumes.includes(config.volume))
         return console.log("Volume not found in current docker-compose running");
 
-    execSync(`docker-compose -p ${config.name} -f ${dockerComposeFile} stop`);
-    execSync(`docker-compose -p ${config.name} -f ${dockerComposeFile} rm -f`);
+    const stopCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} stop`;
+    execSync(config.silent ? silenceCommandLine(stopCommand) : stopCommand);
+
+    const rmCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} rm -f`
+    execSync(config.silent ? silenceCommandLine(rmCommand) : rmCommand);
 
     execSync(`docker run -v ${config.name + "_" + config.volume}:/data -v ${config.backupDir ?? config.dist}/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${config.volume}.tar --strip 1"`, {
         stdio: config.silent ? "ignore" : "inherit"
@@ -26,5 +29,6 @@ export default function (config: FullStackedConfig) {
 
     execSync(`docker rm fullstacked-restore -f`);
 
-    execSync(`docker-compose -p ${config.name} -f ${dockerComposeFile} up -d`);
+    const upCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} up -d`;
+    execSync(config.silent ? silenceCommandLine(upCommand) : upCommand);
 }
