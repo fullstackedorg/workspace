@@ -11,7 +11,7 @@ import config from "../../../scripts/config";
 import build from "../../../scripts/build";
 import {clearLine, printLine} from "../../../scripts/utils";
 
-describe("Backup / Restore Test", function(){
+describe("Backup-Restore Test", function(){
     let testArr;
     let runner: Runner;
     const backupDir = path.resolve(__dirname, "backup");
@@ -28,8 +28,7 @@ describe("Backup / Restore Test", function(){
         runner = new Runner(localConfig);
         await runner.start();
         printLine("Generating data");
-        await waitForServer(10000);
-        await sleep(3000);
+        await waitForServer(10000, "http://localhost:8000/get");
         await axios.post("http://localhost:8000/post");
         testArr = (await axios.get("http://localhost:8000/get")).data;
     });
@@ -51,8 +50,7 @@ describe("Backup / Restore Test", function(){
         notDeepEqual((await axios.get("http://localhost:8000/get")).data, testArr);
         printLine("Restoring");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --volume=mongo-data --backupDir=${__dirname} --silent`);
-        await waitForServer(5000);
-        await sleep(3000);
+        await waitForServer(10000, "http://localhost:8000/get");
         deepEqual((await axios.get("http://localhost:8000/get")).data, testArr);
         clearLine();
     });
