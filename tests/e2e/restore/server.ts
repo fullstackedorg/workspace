@@ -10,14 +10,14 @@ server.start({}, async () => {
     const database = client.db("test");
     const collection = database.collection<{ test: number }>("tests");
 
-    server.post("/todos", async (req, res) => {
+    server.post("/post", async (req, res) => {
         const result = await collection.insertOne({
             test: Math.floor(Math.random() * 1000000)
         });
         res.json(result);
     });
 
-    server.get("/todos", async (req, res) => {
+    server.get("/get", async (req, res) => {
         const results = await collection.find();
         res.json(await results.toArray());
     });
