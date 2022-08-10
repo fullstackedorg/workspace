@@ -7,7 +7,9 @@ const scripts = {
     "run"   : "./scripts/run",
     "watch" : "./scripts/watch",
     "deploy": "./scripts/deploy",
-    "test"  : "./scripts/test"
+    "test"  : "./scripts/test",
+    "backup": "./scripts/backup",
+    "restore": "./scripts/restore"
 };
 let script = "run"
 
@@ -34,7 +36,9 @@ const args = {
     "--title=": value => config.title = value,
     "--no-nginx": () => config.noNginx = true,
     "--pwa": () => config.pwa = true,
-    "--pull": () => config.pull = true
+    "--pull": () => config.pull = true,
+    "--volume=": value => config.volume = value,
+    "--backupDir=": value => config.backupDir = value
 };
 
 process.argv.forEach(arg => {

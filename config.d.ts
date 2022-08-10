@@ -41,7 +41,12 @@ declare type ConfigDeploy = {
     pull?       : boolean // force pull new docker images
 }
 
-declare type Config = ConfigCreate & ConfigBuild & ConfigTest & ConfigDeploy & {
+declare type ConfigBackup = {
+    volume? : string,
+    backupDir? : string
+}
+
+declare type Config = ConfigCreate & ConfigBuild & ConfigTest & ConfigDeploy & ConfigBackup & {
     name? : string,
     version? : string,
 
