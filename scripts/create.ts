@@ -14,10 +14,15 @@ server.start();
 export default server;
 `;
 
-const webAppTemplate = `import Webapp from "fullstacked/webapp";
+const bodyTemplate = `<fullstacked-element></fullstacked-element>`;
 
-Webapp(<>Welcome to FullStacked!</>);
-`;
+const webAppTemplate = `class FullStacked extends HTMLElement{
+    connectedCallback(){
+        this.innerHTML = "Welcome to FullStacked!";
+    }
+}
+
+customElements.define("fullstacked-element", FullStacked);`;
 
 const testsTemplate = `import * as assert from "assert";
 import {before, describe} from "mocha";
@@ -50,7 +55,7 @@ describe("End-2-End", function(){
     });
 
     it('Should load default page', async function(){
-        const root = await test.page.$("#root");
+        const root = await test.page.$("fullstacked-element");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
         assert.equal(value, "Welcome to FullStacked!");
@@ -69,8 +74,12 @@ export default function(config: Config) {
     if(!fs.existsSync(serverFilePath)) fs.writeFileSync(serverFilePath, serverTemplate);
 
     // output template files at project src for web app
-    const webAppFilePath = path.resolve(config.src, "webapp.tsx");
+    const webAppFilePath = path.resolve(config.src, "webapp.ts");
     if(!fs.existsSync(webAppFilePath)) fs.writeFileSync(webAppFilePath, webAppTemplate);
+
+    // output template files at project src for web app
+    const bodyFilePath = path.resolve(config.src, "body.html");
+    if(!fs.existsSync(bodyFilePath)) fs.writeFileSync(bodyFilePath, bodyTemplate);
 
     if(!config.skipTest) {
         fs.writeFileSync(path.resolve(config.src, "test.ts"), testsTemplate);

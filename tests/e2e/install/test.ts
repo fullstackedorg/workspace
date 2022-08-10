@@ -35,7 +35,7 @@ describe("Install Test", function(){
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
-        const root = await page.$("#root");
+        const root = await page.$("fullstacked-element");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
         equal(value, "Welcome to FullStacked!");

@@ -4,9 +4,11 @@ import fs from "fs";
 import path from "path";
 import Helper from "fullstacked/tests/e2e/Helper"
 import {equal, ok} from "assert";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Create Test", function(){
-    const webAppFile = path.resolve(__dirname, "webapp.tsx");
+    const bodyFile = path.resolve(__dirname, "body.html");
+    const webAppFile = path.resolve(__dirname, "webapp.ts");
     const serverFile = path.resolve(__dirname, "server.ts");
     const serviceWorkerFile = path.resolve(__dirname, "service-worker.ts");
     const manifestFile = path.resolve(__dirname, "manifest.json");
@@ -17,6 +19,7 @@ describe("Create Test", function(){
         if(logMessage)
             console.log(logMessage);
 
+        ok(fs.existsSync(bodyFile));
         ok(fs.existsSync(webAppFile));
         ok(fs.existsSync(serverFile));
     });
@@ -33,7 +36,7 @@ describe("Create Test", function(){
     it('Should display the default starter app', async function (){
         test = new Helper(__dirname);
         await test.start();
-        const root = await test.page.$("#root");
+        const root = await test.page.$("fullstacked-element");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
         equal(value, "Welcome to FullStacked!");
@@ -42,7 +45,7 @@ describe("Create Test", function(){
     after(async () => {
         await test.stop();
 
-        const files = [webAppFile, serverFile, serviceWorkerFile, manifestFile];
+        const files = [bodyFile, webAppFile, serverFile, serviceWorkerFile, manifestFile];
 
         files.forEach(file => {
             if(fs.existsSync(file))

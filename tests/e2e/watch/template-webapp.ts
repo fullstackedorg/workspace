@@ -1,13 +1,15 @@
-import webapp from "fullstacked/webapp";
-
 const key = "reloadCount";
 const reloadCountStr = window.localStorage.getItem(key);
 const reloadCount = reloadCountStr ? Number(reloadCountStr) : 0;
 
-webapp(<>
-    <div id={"reloadCount"}>{reloadCount}</div>
-    <div id={"bootTime"} />
-</>);
+class FullStackedWatch extends HTMLElement{
+    connectedCallback(){
+        this.innerHTML = `<div id="reloadCount">${reloadCount}</div>
+<div id="bootTime" />`;
+    }
+}
+
+customElements.define("fullstacked-element", FullStackedWatch);
 
 window.localStorage.setItem(key, (reloadCount + 1).toString());
 
