@@ -18,5 +18,5 @@ export default function (config: FullStackedConfig) {
         stdio: config.silent ? "ignore" : "inherit"
     });
 
-    execSync(`docker rm fullstacked-backup -f`);
+    execSync(`docker rm fullstacked-backup -f -v`);
 }
