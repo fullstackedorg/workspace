@@ -26,6 +26,6 @@ export default function (config: FullStackedConfig) {
 
     execSync(`docker rm fullstacked-restore -f -v`);
 
-    const upCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} up --force-recreate -d`;
+    const upCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} start`;
     execSync(config.silent ? silenceCommandLine(upCommand) : upCommand);
 }
