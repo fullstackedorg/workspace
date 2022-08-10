@@ -17,18 +17,15 @@ export default function (config: FullStackedConfig) {
     if(!config.volume || !volumes.includes(config.volume))
         return console.log("Volume not found in current docker-compose running");
 
-    const stopCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} stop`;
+    const stopCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} stop -t 0`;
     execSync(config.silent ? silenceCommandLine(stopCommand) : stopCommand);
-
-    const rmCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} rm -f`
-    execSync(config.silent ? silenceCommandLine(rmCommand) : rmCommand);
 
     execSync(`docker run -v ${config.name + "_" + config.volume}:/data -v ${config.backupDir ?? config.dist}/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${config.volume}.tar --strip 1"`, {
         stdio: config.silent ? "ignore" : "inherit"
     });
 
-    execSync(`docker rm fullstacked-restore -f`);
+    execSync(`docker rm fullstacked-restore -f -v`);
 
-    const upCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} up -d`;
+    const upCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} up --force-recreate -d`;
     execSync(config.silent ? silenceCommandLine(upCommand) : upCommand);
 }

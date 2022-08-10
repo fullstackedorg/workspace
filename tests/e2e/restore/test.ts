@@ -23,7 +23,7 @@ describe("Backup / Restore Test", function(){
         const localConfig = config({
             src: __dirname,
             silent: true
-        })
+        });
         await build(localConfig);
         runner = new Runner(localConfig);
         await runner.start();
