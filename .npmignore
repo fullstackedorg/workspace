@@ -23,6 +23,8 @@ tests/e2e/*/*
 tests/e2e/Helper.js
 tests/integration/*/*
 tests/integration/Helper.js
+tests/integration/SSH.ts
+tests/integration/SSH.js
 tests/integration/webapp.tsx
 tests/integration/server.ts
 tests/integration/server.js

@@ -38,7 +38,7 @@ const args = {
     "--pwa": () => config.pwa = true,
     "--pull": () => config.pull = true,
     "--volume=": value => config.volume = value,
-    "--backupDir=": value => config.backupDir = value
+    "--backup-dir=": value => config.backupDir = value
 };
 
 process.argv.forEach(arg => {
