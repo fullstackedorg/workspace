@@ -23,7 +23,7 @@ export namespace fetch {
     ): Promise<T extends keyof ENDPOINTS_POST ? ENDPOINTS_POST[T][0] : any>
     {
         let constructedURL: string = url;
-        constructedURL += args[1] ? "?" + convertQueryObjectToString(args[1]) : ""
+        constructedURL += args[1] ? convertQueryObjectToString(args[1]) : ""
         return (await axios.post(constructedURL, args[0], args[2] ?? {})).data;
     }
 
@@ -33,7 +33,7 @@ export namespace fetch {
     ): Promise<T extends keyof ENDPOINTS_PUT ? ENDPOINTS_PUT[T][0] : any>
     {
         let constructedURL: string = url;
-        constructedURL += args[1] ? "?" + convertQueryObjectToString(args[1]) : ""
+        constructedURL += args[1] ? convertQueryObjectToString(args[1]) : ""
         return (await axios.put(constructedURL, args[0], args[2] ?? {})).data;
     }
 
