@@ -10,10 +10,7 @@ export default function(config: Config){
     const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
     // gather all test.ts files
-    let testFiles = path.resolve(config.src, "**", "*test.ts");
-
-    if(config.testFile)
-        testFiles = config.testFile;
+    let testFiles = config.testFile ?? path.resolve(config.src, "**", "*test.ts");
 
     let testCommand = "npx mocha \"" + testFiles + "\" " +
         "--config " + mochaConfigFile + " " +
@@ -37,11 +34,11 @@ export default function(config: Config){
     if(config.coverage && !config.testMode){
         glob.sync(path.resolve(config.src, ".nyc_output", "*.json")).forEach(file => {
             const content = fs.readFileSync(file, {encoding: 'utf-8'});
-            const updatedContent = content.replace(/\/app.*?\./g, value => {
+            const updatedContent = content.replace(/\/app\/.*?\./g, value => {
                 const pathComponents = value.split("/");
                 pathComponents.shift(); // remove ""
                 pathComponents.shift(); // remove "app"
-                const updatedPath = path.resolve(config.src,  pathComponents.join(path.sep))
+                const updatedPath = path.resolve(config.src,  pathComponents.join(path.sep));
                 return path.sep === "\\" ? updatedPath.replace(/\\/g, "\\\\") : updatedPath;
             });
             fs.writeFileSync(file, updatedContent);

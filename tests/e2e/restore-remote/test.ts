@@ -4,10 +4,10 @@ import {exec, execSync} from "child_process";
 import path from "path";
 import fs from "fs";
 import waitForServer from "fullstacked/scripts/waitForServer";
-import axios from "axios";
 import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import {deepEqual, notDeepEqual, ok} from "assert";
 import sleep from "fullstacked/scripts/sleep";
+import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();
@@ -57,15 +57,15 @@ describe("Backup-Restore Remotely Test", function(){
             setupRemoteDeployment(sshServer2),
         ]);
 
-        await axios.post(`http://localhost:${sshServer1.httpPort}/post`);
-        testArr = (await axios.get(`http://localhost:${sshServer1.httpPort}/get`)).data;
+        await fetch.post(`http://localhost:${sshServer1.httpPort}/post`);
+        testArr = await fetch.get(`http://localhost:${sshServer1.httpPort}/get`);
     });
 
     it("Should backup / restore volume remotely", async function(){
         this.timeout(50000);
 
         ok(testArr.length > 0);
-        notDeepEqual(testArr, (await axios.get(`http://localhost:${sshServer2.httpPort}/get`)).data)
+        notDeepEqual(await fetch.get(`http://localhost:${sshServer2.httpPort}/get`), testArr);
 
         printLine("Backing Up");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup
@@ -93,7 +93,7 @@ describe("Backup-Restore Remotely Test", function(){
         await waitForServer(10000, `http://localhost:${sshServer2.httpPort}/get`);
         clearLine();
 
-        deepEqual((await axios.get(`http://localhost:${sshServer2.httpPort}/get`)).data, testArr);
+        deepEqual(await fetch.get(`http://localhost:${sshServer2.httpPort}/get`), testArr);
     });
 
     after(function(){
