@@ -4,6 +4,7 @@ import fs from "fs";
 import {cleanOutDir, execScript} from "./utils";
 import yaml from "yaml";
 import typing from "./typing";
+import watch from "./watch";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -116,8 +117,9 @@ async function buildServer(config: Config, watcher){
 
 // bundles the web app
 async function buildWebApp(config, watcher){
+    const entrypoint = path.resolve(config.src, "webapp", "index.ts");
     const options = {
-        entryPoints: [ path.resolve(config.src, "webapp", "index.ts") ],
+        entryPoints: [ entrypoint ],
         outdir: config.public,
         entryNames: "index",
         format: "esm" as Format,
@@ -148,7 +150,21 @@ async function buildWebApp(config, watcher){
 
                 watcher(true);
             }
-        } : false
+        } : false,
+
+        plugins: watcher ? [{
+            name: 'watch-extra-files',
+            setup(build) {
+                build.onResolve({ filter: new RegExp(entrypoint) }, args => {
+                    return {
+                        watchFiles: [
+                            path.resolve(config.src, "webapp", "index.html"),
+                            path.resolve(config.src, "webapp", "index.css")
+                        ]
+                    };
+                })
+            },
+        }] : []
     }
 
     const result = await esbuild.build(options);
