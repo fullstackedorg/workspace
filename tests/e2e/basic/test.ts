@@ -1,7 +1,6 @@
 import {before, describe} from "mocha";
 import Helper from "tests/e2e/Helper"
 import {equal} from "assert";
-import sleep from "fullstacked/scripts/sleep";
 
 describe("Basic Test", function(){
     let test = new Helper(__dirname);

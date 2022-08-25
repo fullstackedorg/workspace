@@ -10,8 +10,7 @@ export default function(config: Config){
     const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
     // gather all test.ts files
-    // TODO: swap to **/*test.ts maybe
-    let testFiles = path.resolve(config.src, "**", "test.ts");
+    let testFiles = path.resolve(config.src, "**", "*test.ts");
 
     if(config.testFile)
         testFiles = config.testFile;

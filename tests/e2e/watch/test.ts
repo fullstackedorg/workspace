@@ -10,15 +10,15 @@ import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
-    const indexFile = path.resolve(__dirname, "webapp.ts");
-    const serverFile = path.resolve(__dirname, "server.ts");
+    const webappFile = path.resolve(__dirname, "webapp", "index.ts");
+    const serverFile = path.resolve(__dirname, "server", "index.ts");
 
     before(async function (){
-        if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
+        if(fs.existsSync(webappFile)) fs.rmSync(webappFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
 
-        fs.copyFileSync(path.resolve(__dirname, "template-webapp.ts"), indexFile);
-        fs.copyFileSync(path.resolve(__dirname, "template-server.ts"), serverFile);
+        fs.copyFileSync(path.resolve(__dirname, "webapp", "template.ts"), webappFile);
+        fs.copyFileSync(path.resolve(__dirname, "server", "template.ts"), serverFile);
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);
 
@@ -40,7 +40,7 @@ describe("Watch Test", function(){
         const countBefore = await getReloadCount();
         await sleep(1000);
 
-        fs.appendFileSync(indexFile, "\n// this is a test line");
+        fs.appendFileSync(webappFile, "\n// this is a test line");
         await sleep(1000);
 
         const countAfter = await getReloadCount();
@@ -81,7 +81,7 @@ describe("Watch Test", function(){
 
         await sleep(3000);
 
-        if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
+        if(fs.existsSync(webappFile)) fs.rmSync(webappFile);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
         cleanOutDir(path.resolve(__dirname, "dist"));
     });

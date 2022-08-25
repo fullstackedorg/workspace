@@ -1,10 +1,21 @@
 import {getPackageJSON} from "./utils";
 import path from "path";
+import crypto from "crypto";
+import {execSync} from "child_process";
 
 const defaultConfig: Config = {
     src: process.cwd(),
     out: process.cwd(),
     appDir: "/home"
+}
+
+function getGitShortCommitHash(){
+    try{
+        return execSync("git rev-parse --short HEAD").toString().trim();
+    }
+    catch (e){
+        return ""
+    }
 }
 
 export default function(config) {
@@ -38,6 +49,10 @@ export default function(config) {
     optionalConfig.forEach(key => {
         config[key] = config[key] ?? packageConfigs[key];
     });
+
+    if(!config.hash){
+        config.hash = getGitShortCommitHash() ?? crypto.randomBytes(7).toString('hex');
+    }
 
     return config;
 }

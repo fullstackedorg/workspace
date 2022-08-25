@@ -1,9 +1,8 @@
-declare type ConfigCreate = {
-    skipTest? : boolean, // create without test setup
-    pwa? : boolean // add the pwa minimum requirements
-}
-
 declare type ConfigBuild = {
+    name? : string, // app name
+    version? : string,  // version number
+    hash? : string, // hash (git commit short hash)
+
     title?: string,
     src? : string, // in folder
 
@@ -46,10 +45,7 @@ declare type ConfigBackup = {
     backupDir? : string
 }
 
-declare type Config = ConfigCreate & ConfigBuild & ConfigTest & ConfigDeploy & ConfigBackup & {
-    name? : string,
-    version? : string,
-
+declare type Config = ConfigBuild & ConfigTest & ConfigDeploy & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean
 }
