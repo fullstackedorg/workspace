@@ -11,7 +11,8 @@ const defaultConfig: Config = {
 
 function getGitShortCommitHash(){
     try{
-        return execSync("git rev-parse --short HEAD").toString().trim();
+        const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
+        return commitHash.startsWith("fatal") ? "" : commitHash;
     }
     catch (e){
         return ""
@@ -51,7 +52,7 @@ export default function(config) {
     });
 
     if(!config.hash){
-        config.hash = getGitShortCommitHash() ?? crypto.randomBytes(7).toString('hex');
+        config.hash = getGitShortCommitHash() || crypto.randomBytes(4).toString('hex');
     }
 
     return config;

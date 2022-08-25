@@ -22,7 +22,7 @@ function getProcessedEnv(config: Config){
     let processEnv = {};
     Object.keys(process.env).forEach(envKey => {
         // keys with parenthesis causes problems
-        if(envKey.includes("(") || envKey.includes(")"))
+        if(envKey.includes("(") || envKey.includes(")") || envKey.includes("-"))
             return;
 
         processEnv['process.env.' + envKey] = "'" + escape(process.env[envKey].trim()) + "'";
@@ -227,7 +227,7 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // index.css root file
-    const CSSFile = path.resolve(config.src, "index.css");
+    const CSSFile = path.resolve(config.src, "webapp", "index.css");
     if(fs.existsSync(CSSFile)){
         // copy file to dist/public
         fs.copyFileSync(CSSFile, path.resolve(config.public, "index.css"));
