@@ -34,11 +34,11 @@ function getProcessedEnv(config: Config){
 }
 
 // bundles the server
-async function buildServer(config, watcher){
+async function buildServer(config: Config, watcher){
     const filesToLookup: Set<string> = new Set();
 
     const plugins = [];
-    if(!config.production){
+    if(!config.production && !config.testMode){
         plugins.push({
             name: 'endpoint-typing',
             setup(build) {
@@ -81,7 +81,7 @@ async function buildServer(config, watcher){
         return;
 
     // generate endpoint typing
-    if(!config.production)
+    if(!config.production && !config.testMode)
         typing(config, filesToLookup);
 
     // get docker-compose.yml template file

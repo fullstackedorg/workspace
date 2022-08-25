@@ -2,7 +2,6 @@ import {describe} from "mocha";
 import {execSync} from "child_process";
 import path from "path";
 import waitForServer from "fullstacked/scripts/waitForServer";
-import axios from "axios";
 import sleep from "fullstacked/scripts/sleep";
 import {notDeepEqual, deepEqual, ok} from "assert";
 import fs from "fs";
@@ -10,6 +9,7 @@ import Runner from "../../../scripts/runner";
 import config from "../../../scripts/config";
 import build from "../../../scripts/build";
 import {clearLine, printLine} from "../../../scripts/utils";
+import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Backup-Restore Test", function(){
     let testArr;
@@ -24,13 +24,13 @@ describe("Backup-Restore Test", function(){
             src: __dirname,
             silent: true
         });
-        await build(localConfig);
+        await build({...localConfig, testMode: true});
         runner = new Runner(localConfig);
         await runner.start();
         printLine("Generating data");
         await waitForServer(10000, "http://localhost:8000/get");
-        await axios.post("http://localhost:8000/post");
-        testArr = (await axios.get("http://localhost:8000/get")).data;
+        await fetch.post("http://localhost:8000/post");
+        testArr = await fetch.get("http://localhost:8000/get");
     });
 
     it("Should backup / restore volume", async function(){
@@ -47,11 +47,11 @@ describe("Backup-Restore Test", function(){
         await runner.start();
         await waitForServer(10000);
         await sleep(3000);
-        notDeepEqual((await axios.get("http://localhost:8000/get")).data, testArr);
+        notDeepEqual(await fetch.get("http://localhost:8000/get"), testArr);
         printLine("Restoring");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --volume=mongo-data --backup-dir=${__dirname} --silent`);
         await waitForServer(10000, "http://localhost:8000/get");
-        deepEqual((await axios.get("http://localhost:8000/get")).data, testArr);
+        deepEqual(await fetch.get("http://localhost:8000/get"), testArr);
         clearLine();
     });
 
