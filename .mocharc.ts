@@ -9,5 +9,6 @@ const possibleLocation = [
 module.exports = {
     require: possibleLocation,
     timeout: 20000,
+    exclude: "**/node_modules/**",
     "enable-source-maps": true
 }
