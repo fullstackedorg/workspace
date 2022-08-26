@@ -34,7 +34,7 @@ describe("Deploy Test", function(){
         this.timeout(200000);
 
         // simulate server name setup
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "localhost"}));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
 
         sshServer.init();
         printLine("Running deployment command");
@@ -98,7 +98,8 @@ describe("Deploy Test", function(){
         this.timeout(50000);
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
-        fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"), JSON.stringify({"node":"localhost"}));
+        fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"),
+            JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
         executeDeployment(`
             --src=${updatedAppSrc}
             --out=${updatedAppSrc}`);
@@ -152,7 +153,7 @@ describe("Deploy Test", function(){
     it("Should run another app", async function(){
         this.timeout(50000);
         printLine("Running deployment command with another app");
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "test.localhost"}));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "test.localhost" } } }));
         executeDeployment(`
             --src=${__dirname}
             --out=${__dirname}
