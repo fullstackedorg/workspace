@@ -1,4 +1,4 @@
-import {getServerNamesConfigs, setupNginxFile} from "../../../scripts/deploy";
+import {setupNginxFile} from "../../../scripts/deploy";
 import {deepEqual, equal} from "assert";
 import path from "path";
 import fs from "fs";
@@ -17,7 +17,8 @@ describe("Test nginx generation", function(){
             ["some-service", ["8002:9000", "8003:9001"]]
         ]);
         await setupNginxFile(nginxFile, serverNameFile, "test", "0.0.0", portsMap);
-        deepEqual(fs.readFileSync(nginxFile), fs.readFileSync(path.resolve(__dirname, "nginx-result.conf")));
+        equal(fs.readFileSync(nginxFile, {encoding: "utf-8"}).replace(/\r\n/g, "\n"),
+            fs.readFileSync(path.resolve(__dirname, "nginx-result.conf"),{encoding: "utf-8"}).replace(/\r\n/g, "\n"));
         deepEqual(JSON.parse(fs.readFileSync(serverNameFile, {encoding: "utf-8"})),
             JSON.parse(fs.readFileSync(path.resolve(__dirname, "server-names-template.json"), {encoding: "utf-8"})));
     });

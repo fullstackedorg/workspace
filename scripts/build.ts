@@ -4,7 +4,6 @@ import fs from "fs";
 import {cleanOutDir, execScript} from "./utils";
 import yaml from "yaml";
 import typing from "./typing";
-import watch from "./watch";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -155,7 +154,7 @@ async function buildWebApp(config, watcher){
         plugins: watcher ? [{
             name: 'watch-extra-files',
             setup(build) {
-                build.onResolve({ filter: new RegExp(entrypoint) }, args => {
+                build.onResolve({ filter: /.*/ }, args => {
                     return {
                         watchFiles: [
                             path.resolve(config.src, "webapp", "index.html"),
