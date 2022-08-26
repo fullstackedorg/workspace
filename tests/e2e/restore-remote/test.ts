@@ -49,7 +49,7 @@ describe("Backup-Restore Remotely Test", function(){
         sshServer2.httpPort = 8001;
         sshServer2.httpsPort = 8444;
 
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "localhost"}));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
         fs.mkdirSync(outDir);
 
         await Promise.all([
