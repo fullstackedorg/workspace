@@ -233,7 +233,7 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // add favicon if present
-    const faviconFile = path.resolve(config.src, "favicon.png");
+    const faviconFile = path.resolve(config.src, "webapp", "favicon.png");
     if(fs.existsSync(faviconFile)){
         // copy file to dist/public
         fs.copyFileSync(faviconFile, path.resolve(config.public, "favicon.png"));
