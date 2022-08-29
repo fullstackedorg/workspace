@@ -25,11 +25,6 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup including fe
   * w/ Code Coverage
 * Deploy
 
-### Build with
-* [react](https://github.com/facebook/react) for Web App (Frontend)
-* [express](https://github.com/expressjs/express) for Server (Backend)
-* [mocha](https://github.com/mochajs/mocha) for Testing 
-
 ## Getting Started
 
 1. Create a folder where you will develop your awesome web app
@@ -39,19 +34,11 @@ cd my-awesome-project
 ```
 2. Init npm
 ```shell
-npm init -y
+npm init fullstacked
 ```
-3. Install FullStacked
+3. Startup you project locally!
 ```shell
-npm i fullstacked
-```
-4. Create the default starter files
-```shell
-npx fullstacked create
-```
-5. Startup you project locally!
-```shell
-npx fullstacked watch
+npm start
 ```
 Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
@@ -59,7 +46,7 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
 | command | uses |
 | --- | --- |
-| npx fullstacked create | Generate the default files `webapp.tsx` and `server.ts` files. |
+| npm init fullstacked | Generate the default files `webapp.tsx` and `server.ts` files. |
 | npx fullstacked run | Run your web app. |
 | npx fullstacked build | Build your app in production mode to your `dist` folder. |
 | npx fullstacked watch | Rebuilds your app and hot reloads on changes. |

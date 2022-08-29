@@ -8,24 +8,14 @@ mkdir my-awesome-project
 cd my-awesome-project
 ```
 
-2. Init npm
+2. Init FullStacked project
 ```shell
-npm init -y
+npm init fullstacked
 ```
 
-3. Install FullStacked
+3. Start the watcher
 ```shell
-npm i fullstacked
+npm start
 ```
 
-4. Generate the default files
-```shell
-npx fullstacked create
-```
-
-5. Start the watcher
-```shell
-npx fullstacked watch
-```
-
-6. Open [http://localhost:8000](http://localhost:8000/) and start developing!
+4. Open [http://localhost:8000](http://localhost:8000/) and start developing!
