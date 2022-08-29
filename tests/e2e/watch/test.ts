@@ -10,15 +10,25 @@ import waitForServer from "fullstacked/scripts/waitForServer";
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
-    const indexFile = path.resolve(__dirname, "webapp.tsx");
-    const serverFile = path.resolve(__dirname, "server.ts");
+    const webappFile = path.resolve(__dirname, "webapp", "index.ts");
+    const indexHTML = path.resolve(__dirname, "webapp", "index.html");
+    const indexCSS = path.resolve(__dirname, "webapp", "index.css");
+    const serverFile = path.resolve(__dirname, "server", "index.ts");
+
+    function deleteAllFiles(){
+        if(fs.existsSync(webappFile)) fs.rmSync(webappFile);
+        if(fs.existsSync(indexHTML)) fs.rmSync(indexHTML);
+        if(fs.existsSync(indexCSS)) fs.rmSync(indexCSS);
+        if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+    }
 
     before(async function (){
-        if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
-        if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+       deleteAllFiles();
 
-        fs.copyFileSync(path.resolve(__dirname, "template-webapp.tsx"), indexFile);
-        fs.copyFileSync(path.resolve(__dirname, "template-server.ts"), serverFile);
+        fs.copyFileSync(path.resolve(__dirname, "webapp", "template.ts"), webappFile);
+        fs.copyFileSync(path.resolve(__dirname, "webapp", "template.html"), indexHTML);
+        fs.copyFileSync(path.resolve(__dirname, "webapp", "template.css"), indexCSS);
+        fs.copyFileSync(path.resolve(__dirname, "server", "template.ts"), serverFile);
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);
 
@@ -36,11 +46,33 @@ describe("Watch Test", function(){
         return Number(value);
     }
 
-    it('Should reload webapp', async function(){
+    it('Should reload webapp when changing webapp/index.ts', async function(){
         const countBefore = await getReloadCount();
         await sleep(1000);
 
-        fs.appendFileSync(indexFile, "\n// this is a test line");
+        fs.appendFileSync(webappFile, "\n// this is a test line");
+        await sleep(1000);
+
+        const countAfter = await getReloadCount();
+        equal(countAfter - countBefore, 1);
+    });
+
+    it('Should reload webapp when changing webapp/index.html', async function(){
+        const countBefore = await getReloadCount();
+        await sleep(1000);
+
+        fs.appendFileSync(indexHTML, "\n<div></div>");
+        await sleep(1000);
+
+        const countAfter = await getReloadCount();
+        equal(countAfter - countBefore, 1);
+    });
+
+    it('Should reload webapp when changing webapp/index.css', async function(){
+        const countBefore = await getReloadCount();
+        await sleep(1000);
+
+        fs.appendFileSync(indexCSS, "\ndiv{}");
         await sleep(1000);
 
         const countAfter = await getReloadCount();
@@ -81,8 +113,7 @@ describe("Watch Test", function(){
 
         await sleep(3000);
 
-        if(fs.existsSync(indexFile)) fs.rmSync(indexFile);
-        if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+        deleteAllFiles();
         cleanOutDir(path.resolve(__dirname, "dist"));
     });
 });

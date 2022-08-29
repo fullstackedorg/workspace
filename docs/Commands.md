@@ -2,7 +2,7 @@
 
 | Command | Description |
 | --- | --- |
-| [npx fullstacked create](https://fullstacked.org/docs/creating) | Generate the default files webapp.tsx and server.ts files. |
+| [npm init fullstacked](https://fullstacked.org/docs/creating) | Generate the default starter files. |
 | [npx fullstacked build](https://fullstacked.org/docs/building) | Build your app in production mode to your dist folder. |
 | [npx fullstacked run](https://fullstacked.org/docs/running) | Run your app. |
 | [npx fullstacked watch](https://fullstacked.org/docs/watching) | Rebuilds your app and hot reloads on changes. |

@@ -19,10 +19,10 @@ describe("Run Test", function(){
     })
 
     it('Should run a basic web page', async function(){
-        const root = await page.$("#root");
+        const root = await page.$("fullstacked-element");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        equal(value, "<div>Run Test</div>");
+        equal(value, "Run Test");
     });
 
     after(async function(){

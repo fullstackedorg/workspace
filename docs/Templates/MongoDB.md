@@ -3,17 +3,7 @@ A database is often very useful. Aka MERN (Mongo-Express-React-Node) stack, here
 mongoDB to your stack. You will simply need to add the `mongo` image 
 to your `docker-compose.yml` and create the connection on your server side.
 
-1. Create a `docker-compose.yml` at the source root of your project. 
-Your project directory should look something like this
-```
-|_ node_modules/
-|_ docker-compose.yml
-|_ package.json
-|_ package-lock.json
-|_ server.ts
-|_ test.ts
-|_ webapp.tsx
-```
+1. Create a `docker-compose.yml` at the source root of your project.
 2. Add the `mongo` image to the newly created `docker-compose.yml`.
 ```yaml
 version: '3.7'
@@ -45,7 +35,7 @@ await client.close();
 ```
 5. Create some awesome applications! Here's a small CRUD for a todo app
 ```ts
-// server.ts
+// server/index.ts
 
 import Server from "fullstacked/server";
 import {json} from "express";
@@ -60,43 +50,49 @@ type Todo = {
 const server = new Server();
 
 (async () => {
-    const uri = "mongodb://username:password@mongo:27017";
-    const client = new MongoClient(uri);
-    await client.connect();
-    const database = client.db("todo-snippet");
-    const todosCollection = database.collection<Todo>("todos");
+    let todosCollection = null;
+    const createMongoConnection = async () => {
+        const uri = "mongodb://username:password@mongo:27017";
+        const client = new MongoClient(uri);
+        await client.connect();
+        const database = client.db("todo-snippet");
+        todosCollection = database.collection<Todo>("todos");
+    }
 
     // create
-    server.express.post("/todos", json(), async (req, res) => {
+    server.post("/todos", async (req, res) => {
         const todo: Todo = req.body;
         const result = await todosCollection.insertOne(todo);
         res.json(result);
-    });
+    }, json());
 
     // read
-    server.express.get("/todos", async (req, res) => {
+    server.get("/todos", async (req, res) => {
         const results = await todosCollection.find();
         res.json(await results.toArray());
     });
 
     // update
-    server.express.put("/todos/:id", json(), async (req, res) => {
+    server.put("/todos/:id", async (req, res) => {
         let todo: Todo = req.body;
         todo._id = new ObjectId(req.params.id)
         const result = await todosCollection.findOneAndReplace({
             _id: todo._id
         }, todo);
         res.json(result);
-    });
+    }, json());
 
     // delete
-    server.express.delete("/todos/:id", async (req, res) => {
+    server.delete("/todos/:id", async (req, res) => {
         const result = await todosCollection.deleteOne({
             _id: new ObjectId(req.params.id)
         });
         res.json(result);
     });
     
+    server.start({}, async () => {
+        await createMongoConnection();
+    })
 })();
 
 export default server;
