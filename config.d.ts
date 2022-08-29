@@ -1,9 +1,8 @@
-declare type ConfigCreate = {
-    skipTest? : boolean, // create without test setup
-    pwa? : boolean // add the pwa minimum requirements
-}
-
 declare type ConfigBuild = {
+    name? : string, // app name
+    version? : string,  // version number
+    hash? : string, // hash (git commit short hash)
+
     title?: string,
     src? : string, // in folder
 
@@ -41,10 +40,12 @@ declare type ConfigDeploy = {
     pull?       : boolean // force pull new docker images
 }
 
-declare type Config = ConfigCreate & ConfigBuild & ConfigTest & ConfigDeploy & {
-    name? : string,
-    version? : string,
+declare type ConfigBackup = {
+    volume? : string,
+    backupDir? : string
+}
 
+declare type Config = ConfigBuild & ConfigTest & ConfigDeploy & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean
 }

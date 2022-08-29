@@ -12,8 +12,8 @@ describe("Basic Test", function(){
     it('Should load a basic web page', async function(){
         const root = await test.page.$("#root");
         const innerHTML = await root.getProperty('innerHTML');
-        const value = await innerHTML.jsonValue();
-        equal(value, "<div>Basic Test</div>");
+        const value: string = await innerHTML.jsonValue();
+        equal(value.trim(), "<basic-test>Basic Test</basic-test>");
     });
 
     after(async function(){

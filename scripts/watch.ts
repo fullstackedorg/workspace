@@ -34,12 +34,5 @@ export default async function(config: Config) {
         ws.onclose = () => activeClients.delete(ws);
     });
 
-    if(fs.existsSync(path.resolve(config.src, "index.css"))){
-        fs.watchFile(path.resolve(config.src, "index.css"), () => webAppPostBuild(config, watcher));
-        process.on("SIGINT", () => {
-            fs.unwatchFile(path.resolve(config.src, "index.css"));
-        });
-    }
-
     await watcher(false);
 }

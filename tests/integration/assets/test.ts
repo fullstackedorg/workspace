@@ -1,7 +1,7 @@
 import {before, describe} from "mocha";
 import {equal} from "assert";
 import Helper from "fullstacked/tests/integration/Helper";
-import server from "./server";
+import server from "./server/index";
 import path from "path";
 import axios from "axios";
 

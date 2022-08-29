@@ -15,10 +15,10 @@ describe("Fetch Test", function(){
     })
 
     it('Should fetch an endpoint and update frontend', async function(){
-        const root = await test.page.$("#root");
+        const root = await test.page.$("fullstacked-element");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        equal(value, "<div>test</div>");
+        equal(value, "test");
     });
 
     after(async function(){

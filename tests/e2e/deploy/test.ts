@@ -4,14 +4,13 @@ import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path from "path";
-import {cleanOutDir, clearLine, printLine, silenceCommandLine} from "../../../scripts/utils";
+import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import sleep from "fullstacked/scripts/sleep";
 import waitForServer from "fullstacked/scripts/waitForServer";
+import SSH from "../SSH";
 
 describe("Deploy Test", function(){
-    const containerName = "dind";
-    const sshPort = "2222";
-
+    const sshServer = new SSH();
     const serverNameFile = path.resolve(__dirname, ".server-names");
 
     const predeployOutputFile = path.resolve(__dirname, "predeploy.txt");
@@ -24,11 +23,10 @@ describe("Deploy Test", function(){
         --silent
         --y
         --skip-test
-        --test-mode
         --host=localhost
-        --ssh-port=${sshPort}
-        --user=root
-        --pass=docker`;
+        --ssh-port=${sshServer.sshPort}
+        --user=${sshServer.username}
+        --pass=${sshServer.password}`;
         execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.replace(/\n/g, ' ')}`);
     }
 
@@ -36,19 +34,9 @@ describe("Deploy Test", function(){
         this.timeout(200000);
 
         // simulate server name setup
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "localhost"}));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
 
-        execSync(`docker rm -f ${containerName}`, {stdio: "ignore"});
-        printLine("Setting up docker container");
-        execSync(`docker run --privileged -d -p ${sshPort}:22 -p 8000:80 -p 8443:443 --name ${containerName} docker:dind`);
-        printLine("Installing ssh server");
-        execSync(silenceCommandLine(`docker exec ${containerName} apk del openssh-client`));
-        execSync(`docker exec ${containerName} apk add --update --no-cache openssh`);
-        execSync(`docker exec ${containerName} sh -c "echo \\\"PasswordAuthentication yes\\\" >> /etc/ssh/sshd_config"`);
-        execSync(`docker exec ${containerName} sh -c "echo \\\"PermitRootLogin yes\\\" >> /etc/ssh/sshd_config"`);
-        execSync(`docker exec ${containerName} ssh-keygen -A`);
-        execSync(`docker exec -d ${containerName} sh -c "echo -n \\\"root:docker\\\" | chpasswd"`);
-        execSync(`docker exec -d ${containerName} /usr/sbin/sshd -D`);
+        sshServer.init();
         printLine("Running deployment command");
         executeDeployment(`
             --src=${__dirname}
@@ -110,7 +98,8 @@ describe("Deploy Test", function(){
         this.timeout(50000);
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
-        fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"), JSON.stringify({"node":"localhost"}));
+        fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"),
+            JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
         executeDeployment(`
             --src=${updatedAppSrc}
             --out=${updatedAppSrc}`);
@@ -164,7 +153,7 @@ describe("Deploy Test", function(){
     it("Should run another app", async function(){
         this.timeout(50000);
         printLine("Running deployment command with another app");
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": "test.localhost"}));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "test.localhost" } } }));
         executeDeployment(`
             --src=${__dirname}
             --out=${__dirname}
@@ -193,7 +182,6 @@ describe("Deploy Test", function(){
         fs.rmSync(predeployAsyncOutputFile, {force: true});
         fs.rmSync(postdeployOutputFile, {force: true});
         fs.rmSync(postdeployAsyncOutputFile, {force: true});
-
-        execSync(`docker rm -f ${containerName} -v`);
+        sshServer.stop();
     });
 });

@@ -2,12 +2,13 @@
 import defaultConfig from "./scripts/config";
 
 const scripts = {
-    "create": "./scripts/create",
     "build" : "./scripts/build",
     "run"   : "./scripts/run",
     "watch" : "./scripts/watch",
     "deploy": "./scripts/deploy",
-    "test"  : "./scripts/test"
+    "test"  : "./scripts/test",
+    "backup": "./scripts/backup",
+    "restore": "./scripts/restore"
 };
 let script = "run"
 
@@ -30,11 +31,13 @@ const args = {
     "--skip-test": () => config.skipTest = true,
     "--y": () => config.allYes = true,
     "--version=": value => config.version = value,
+    "--hash=": value => config.hash = value,
     "--name=": value => config.name = value,
     "--title=": value => config.title = value,
     "--no-nginx": () => config.noNginx = true,
-    "--pwa": () => config.pwa = true,
-    "--pull": () => config.pull = true
+    "--pull": () => config.pull = true,
+    "--volume=": value => config.volume = value,
+    "--backup-dir=": value => config.backupDir = value
 };
 
 process.argv.forEach(arg => {
