@@ -7,7 +7,6 @@ One of the most used library for frontend development.
 ```shell
 npm i react react-dom
 ```
-
 2. Set up your entrypoint to render your React App
 ```html
 <!-- webapp/index.html -->
