@@ -19,7 +19,7 @@ function watcher(isWebApp: boolean){
 
 async function connectToWatcher(){
     await waitForServer(3000);
-    ws = new WebSocket("ws://localhost:8000/hot-reload");
+    ws = new WebSocket("ws://localhost:8000/watcher");
 }
 
 export default async function(config: Config) {

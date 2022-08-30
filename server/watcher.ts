@@ -2,7 +2,7 @@ import {IncomingMessage, Server} from "http";
 import {WebSocketServer, WebSocket} from "ws";
 
 export default class {
-    path = "/hot-reload";
+    path = "/watcher";
     filter: (request: IncomingMessage) => boolean;
     ws = new Set<WebSocket>();
 
