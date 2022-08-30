@@ -81,14 +81,6 @@ describe("Watch Test", function(){
 
     async function getBootTime(){
         await sleep(1000);
-
-        if(browser && !browser.isConnected()) {
-            await browser.close();
-            browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
-            page = await browser.newPage();
-            await page.goto("http://localhost:8000");
-            await sleep(1000);
-        }
         const root = await page.$("#bootTime");
         const innerHTML = await root.getProperty('innerHTML');
         const value = Number(await innerHTML.jsonValue());
@@ -100,7 +92,7 @@ describe("Watch Test", function(){
         ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
-        await sleep(6000);
+        await sleep(2000);
         const timeAfter = await getBootTime();
 
         ok(timeAfter)

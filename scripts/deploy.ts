@@ -46,7 +46,7 @@ async function installDocker(ssh2) {
     }
 }
 
-export async function setupNginxFile(nginxFilePath: string, cachedServerNamesFilePath: string, name: string, version: string, portsMap: Map<string, string[]>){
+export async function setupNginxFile(nginxFilePath: string, cachedServerNamesFilePath: string, name: string, version: string, portsMap: Map<string, string[]>, silent: boolean = false){
     let cachedServerNames = {};
     if(fs.existsSync(cachedServerNamesFilePath)){
         cachedServerNames = JSON.parse(fs.readFileSync(cachedServerNamesFilePath, {encoding: 'utf-8'}));
@@ -65,7 +65,8 @@ export async function setupNginxFile(nginxFilePath: string, cachedServerNamesFil
             .replace(/\{VERSION\}/g, version)
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs ?? "");
 
-        console.log(serverName + "->" + "0.0.0.0:" + externalPort + " for " + service + " at port " + internalPort);
+        if(!silent)
+            console.log(serverName + "->" + "0.0.0.0:" + externalPort + " for " + service + " at port " + internalPort);
 
         if(!serverNamesJSONOutput[service])
             serverNamesJSONOutput[service] = {};

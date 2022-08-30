@@ -10,13 +10,13 @@ describe("Test nginx generation", function(){
     before(function(){
         fs.copyFileSync(path.resolve(__dirname, "server-names-template.json"), serverNameFile);
     })
-    it("Should generate nginx cong correctly", async function (){
+    it("Should generate nginx conf correctly", async function (){
         const portsMap = new Map([
             ["node", ["8000:80"]],
             ["mongodb", ["8001:27017"]],
             ["some-service", ["8002:9000", "8003:9001"]]
         ]);
-        await setupNginxFile(nginxFile, serverNameFile, "test", "0.0.0", portsMap);
+        await setupNginxFile(nginxFile, serverNameFile, "test", "0.0.0", portsMap, true);
         equal(fs.readFileSync(nginxFile, {encoding: "utf-8"}).replace(/\r\n/g, "\n"),
             fs.readFileSync(path.resolve(__dirname, "nginx-result.conf"),{encoding: "utf-8"}).replace(/\r\n/g, "\n"));
         deepEqual(JSON.parse(fs.readFileSync(serverNameFile, {encoding: "utf-8"})),
