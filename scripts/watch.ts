@@ -1,24 +1,25 @@
-import build, {webAppPostBuild} from "./build";
-import fs from "fs";
+import build from "./build";
 import run from "./run";
-import path from "path";
-import {WebSocketServer, WebSocket} from "ws";
-import http from "http";
+import {WebSocket} from "ws";
+import waitForServer from "./waitForServer";
 
 let globalConfig: Config,
-    activeClients: Set<WebSocket> = new Set();
+    ws: WebSocket;
 
 function watcher(isWebApp: boolean){
     if(isWebApp) {
        console.log('\x1b[32m%s\x1b[0m', "WebApp Rebuilt");
-       activeClients.forEach(ws => ws.send(Date.now()));
+       ws.send(Date.now());
        return;
     }
 
     console.log('\x1b[32m%s\x1b[0m', "Server Rebuilt");
-    // add flags to start node index --development
-    fs.writeFileSync(path.resolve(globalConfig.dist, ".env"), "FLAGS=--development");
-    return run(globalConfig, false);
+    run(globalConfig, false).then(() => connectToWatcher());
+}
+
+async function connectToWatcher(){
+    await waitForServer(3000);
+    ws = new WebSocket("ws://localhost:8000/hot-reload");
 }
 
 export default async function(config: Config) {
@@ -26,13 +27,6 @@ export default async function(config: Config) {
 
     // build with the watcher defined
     await build(config, watcher);
-
-    // start the mini watch server
-    const wss = new WebSocketServer({server: http.createServer().listen(8001, "0.0.0.0")});
-    wss.on("connection", (ws) => {
-        activeClients.add(ws);
-        ws.onclose = () => activeClients.delete(ws);
-    });
 
     await watcher(false);
 }

@@ -69,7 +69,7 @@ async function buildServer(config: Config, watcher){
         watch: watcher ? {
             onRebuild: async function(error, result){
                 if(error) return;
-                typing(config, filesToLookup);
+                // typing(config, filesToLookup);
                 watcher();
             }
         } : false
@@ -81,34 +81,46 @@ async function buildServer(config: Config, watcher){
         return;
 
     // generate endpoint typing
-    if(!config.production && !config.testMode)
-        typing(config, filesToLookup);
+    // if(!config.production && !config.testMode)
+    //     typing(config, filesToLookup);
 
     // get docker-compose.yml template file
-    let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
+    let dockerComposeRaw = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
+    let dockerCompose = yaml.parse(dockerComposeRaw);
+
+    if(watcher){
+        dockerCompose.services["node"].command += " --development";
+        buildSync({
+            entryPoints: [ path.resolve(__dirname, "..", "server", "watcher.ts") ],
+            outfile: path.resolve(config.out, "watcher.js"),
+            platform: "node" as Platform,
+            bundle: true,
+            minify: true,
+            sourcemap: false,
+        })
+    }
 
     // merge with user defined docker-compose if existent
-    const srcDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
-    if(fs.existsSync(srcDockerComposeFilePath)){
-        const templateDockerCompose = yaml.parse(dockerCompose);
-        const srcDockerCompose = yaml.parse(fs.readFileSync(srcDockerComposeFilePath, {encoding: "utf-8"}));
-        if(srcDockerCompose) {
-            dockerCompose = yaml.stringify({
-                ...templateDockerCompose,
-                ...srcDockerCompose,
+    const userDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
+    if(fs.existsSync(userDockerComposeFilePath)){
+        const userDockerCompose = yaml.parse(fs.readFileSync(userDockerComposeFilePath, {encoding: "utf-8"}));
+        if(userDockerCompose) {
+            dockerCompose = {
+                ...dockerCompose,
+                ...userDockerCompose,
                 services: {
-                    ...templateDockerCompose.services,
-                    ...(srcDockerCompose.services ?? {})
+                    ...dockerCompose.services,
+                    ...(userDockerCompose.services ?? {})
                 }
-            });
+            };
         }
     }
 
     // replace version directory
-    dockerCompose = dockerCompose.replace(/\$\{VERSION\}/g, config.version);
+    const dockerComposeStr = yaml.stringify(dockerCompose).replace(/\$\{VERSION\}/g, config.version);
 
     // output docker-compose result to dist directory
-    fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), dockerCompose);
+    fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), dockerComposeStr);
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "Server Built");
@@ -225,7 +237,8 @@ export function webAppPostBuild(config: Config, watcher){
         buildSync({
             entryPoints: [path.resolve(__dirname, "../webapp/watcher.ts")],
             minify: true,
-            outfile: path.resolve(config.public, "watcher.js")
+            outfile: path.resolve(config.public, "watcher.js"),
+            bundle: true
         });
 
         addInBODY(`<script src="/watcher.js"></script>`);
