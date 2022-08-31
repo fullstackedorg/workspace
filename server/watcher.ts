@@ -17,6 +17,10 @@ export default class {
                 });
             }
 
+            ws.onclose = () => {
+                this.ws.delete(ws);
+            }
+
             this.ws.add(ws);
         });
 

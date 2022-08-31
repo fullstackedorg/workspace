@@ -19,7 +19,7 @@ async function connectWebsocket(){
     await waitForServer(3000, window.location.origin);
     warningContainer.remove();
     webSocket = new WebSocket((window.location.protocol === "https:" ? "wss:" : "ws:") + "//" +
-        window.location.host + "/hot-reload");
+        window.location.host + "/watcher");
     webSocket.onmessage = () => window.location.reload();
     webSocket.onclose = function(){
         document.body.append(warningContainer);
