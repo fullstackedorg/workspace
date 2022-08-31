@@ -37,7 +37,8 @@ const args = {
     "--no-nginx": () => config.noNginx = true,
     "--pull": () => config.pull = true,
     "--volume=": value => config.volume = value,
-    "--backup-dir=": value => config.backupDir = value
+    "--backup-dir=": value => config.backupDir = value,
+    "--timeout=": value => config.timeout = parseInt(value)
 };
 
 process.argv.forEach(arg => {

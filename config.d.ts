@@ -11,7 +11,10 @@ declare type ConfigBuild = {
     dist?: string   // root out folder
     out?: string    // version out folder
     public?: string // public out folder
+}
 
+declare type ConfigWatch = {
+    timeout? : number
 }
 
 declare type ConfigTest = {
@@ -45,7 +48,7 @@ declare type ConfigBackup = {
     backupDir? : string
 }
 
-declare type Config = ConfigBuild & ConfigTest & ConfigDeploy & ConfigBackup & {
+declare type Config = ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean
 }
