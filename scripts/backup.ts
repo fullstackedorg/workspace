@@ -72,6 +72,8 @@ async function backupRemote(config: FullStackedConfig){
         await new Promise<void>(async resolve => {
             let readStream = sftp.sftp.createReadStream(tarFilePath, { autoClose: true });
             readStream.once('end', () => {
+                clearLine();
+                dlStream.close();
                 resolve();
             });
 
@@ -85,12 +87,11 @@ async function backupRemote(config: FullStackedConfig){
                 progressStream.on('progress', progress => {
                     printLine("Download progress : " + progress.percentage.toFixed(2) + "%")
                 });
-                clearLine();
 
-                readStream = readStream.pipe(progressStream, { end: true });
+                readStream.pipe(progressStream, { end: true }).pipe(dlStream, {end: true});
+            }else{
+                readStream.pipe(dlStream, { end: true });
             }
-
-            readStream.pipe(dlStream, { end: true });
         });
     }
 

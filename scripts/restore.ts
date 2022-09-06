@@ -20,10 +20,18 @@ export default async function (config: FullStackedConfig) {
         if(!config.silent)
             console.log(`Restoring ${volume} on local host`);
 
+        const backupDir = config.backupDir ?? path.resolve(process.cwd(), "backup");
+
+        const backupFile = path.resolve(backupDir, `${volume}.tar`);
+        if(!fs.existsSync(backupFile)) {
+            console.log(`Cannot find backup file for volume ${volume}`);
+            continue;
+        }
+
         const commandArr = [
             "docker", "run",
             "-v", config.name + "_" + volume + ":/data",
-            "-v", config.backupDir ?? path.resolve(process.cwd(), "backup") + ":/backup",
+            "-v", backupDir + ":/backup",
             "--name=fullstacked-restore busybox",
             "sh -c \"cd data && rm -rf ./* && tar xvf /backup/" + volume + ".tar --strip 1\""
         ];
@@ -60,8 +68,10 @@ async function restoreRemote(config: FullStackedConfig){
             console.log(`Restoring ${volume} on remote host`);
 
         const backupFile = path.resolve(backupDir, `${volume}.tar`);
-        if(!fs.existsSync(backupFile))
-            throw Error("Cannot find backup file");
+        if(!fs.existsSync(backupFile)) {
+            console.log(`Cannot find backup file for volume ${volume}`);
+            continue;
+        }
 
         let ulStream = fs.createReadStream(backupFile);
 
@@ -73,12 +83,13 @@ async function restoreRemote(config: FullStackedConfig){
             progressStream.on('progress', progress => {
                 printLine("Upload progress : " + progress.percentage.toFixed(2) + "%")
             });
-            clearLine();
 
             ulStream = ulStream.pipe(progressStream);
         }
 
         await sftp.put(ulStream, `/tmp/backup/${volume}.tar`);
+
+        clearLine();
 
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${dockerComposeRemoteFile} stop -t 0`);
         await execSSH(sftp.client, `docker run -v ${config.name + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
