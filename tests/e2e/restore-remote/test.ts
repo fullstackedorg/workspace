@@ -69,22 +69,18 @@ describe("Backup-Restore Remotely Test", function(){
 
         printLine("Backing Up");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup
-            --backup-dir=${__dirname}
-            --volume=mongo-data
             --host=localhost
             --user=${sshServer1.username}
             --pass=${sshServer1.password}
             --ssh-port=${sshServer1.sshPort}
             `.replace(/\n/g, ' '));
 
-        const backupFile = path.resolve(__dirname, "backup", "mongo-data.tar");
+        const backupFile = path.resolve(process.cwd(), "backup", "mongo-data.tar");
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 100);
 
         printLine("Restoring");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore
-            --backup-dir=${__dirname}
-            --volume=mongo-data
             --host=localhost
             --user=${sshServer2.username}
             --pass=${sshServer2.password}

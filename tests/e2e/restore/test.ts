@@ -14,7 +14,7 @@ import {fetch} from "fullstacked/webapp/fetch";
 describe("Backup-Restore Test", function(){
     let testArr;
     let runner: Runner;
-    const backupDir = path.resolve(__dirname, "backup");
+    const backupDir = path.resolve(process.cwd(), "backup")
     const backupFile = path.resolve(backupDir, "mongo-data.tar");
 
     before(async function (){
@@ -38,7 +38,7 @@ describe("Backup-Restore Test", function(){
 
         ok(testArr.length > 0);
         printLine("Backing up");
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --volume=mongo-data --backup-dir=${__dirname} --silent`);
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 0);
         runner.stop();
@@ -49,7 +49,7 @@ describe("Backup-Restore Test", function(){
         await sleep(3000);
         notDeepEqual(await fetch.get("http://localhost:8000/get"), testArr);
         printLine("Restoring");
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --volume=mongo-data --backup-dir=${__dirname} --silent`);
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --silent`);
         await waitForServer(10000, "http://localhost:8000/get");
         deepEqual(await fetch.get("http://localhost:8000/get"), testArr);
         clearLine();

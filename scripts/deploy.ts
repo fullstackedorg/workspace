@@ -2,7 +2,7 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askQuestion, askToContinue, execScript, execSSH, printLine} from "./utils";
+import {askQuestion, askToContinue, execScript, execSSH, getSFTPClient, printLine} from "./utils";
 import build from "./build";
 import test from "./test";
 import yaml from "yaml";
@@ -230,24 +230,7 @@ export default async function (config: Config) {
     if(!await askToContinue("Continue"))
         return;
 
-    const sftp = new SFTP();
-
-    // setup ssh connection
-    let connectionConfig: any = {
-        host: config.host,
-        username: config.user
-    }
-
-    if(config.sshPort)
-        connectionConfig.port = config.sshPort;
-
-    if(config.pass)
-        connectionConfig.password = config.pass;
-
-    if(config.privateKey)
-        connectionConfig.privateKey = fs.readFileSync(path.resolve(process.cwd(), config.privateKey));
-
-    await sftp.connect(connectionConfig);
+    const sftp = await getSFTPClient(config);
 
     // path where the build app files will be
     const serverPath = config.appDir + "/" + config.name;

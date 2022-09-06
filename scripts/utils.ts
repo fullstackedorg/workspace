@@ -2,9 +2,12 @@ import path from "path";
 import fs from "fs";
 import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
-import {exec, execSync} from "child_process";
+import {execSync} from "child_process";
 import {BuildOptions, buildSync} from "esbuild";
 import {Socket} from "net";
+import {FullStackedConfig} from "../index";
+import SFTP from "ssh2-sftp-client";
+import yaml from "yaml";
 
 // ask a question, resolve string answer
 export function askQuestion(question: string): Promise<string>{
@@ -204,4 +207,50 @@ export function randStr(length) {
             charactersLength));
     }
     return result;
+}
+
+
+export async function getSFTPClient(config: FullStackedConfig){
+    const sftp = new SFTP();
+
+    // setup ssh connection
+    let connectionConfig: any = {
+        host: config.host,
+        username: config.user
+    }
+
+    if(config.sshPort)
+        connectionConfig.port = config.sshPort;
+
+    if(config.pass)
+        connectionConfig.password = config.pass;
+
+    if(config.privateKey)
+        connectionConfig.privateKey = fs.readFileSync(path.resolve(process.cwd(), config.privateKey));
+
+
+    await sftp.connect(connectionConfig);
+
+    return sftp;
+}
+
+export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: string | string[]): string[]{
+    const dockerCompose = yaml.parse(dockerComposeStr);
+    const volumes = Object.keys(dockerCompose.volumes);
+
+    if(!volumes.length)
+        throw new Error("No volumes in docker-compose file");
+
+    const volumesToBackup = volumesAsked ?
+        Array.isArray(volumesAsked)
+            ? volumesAsked
+            : [volumesAsked]
+        : volumes;
+
+    for (const volume of volumesToBackup) {
+        if(!volumes.includes(volume))
+            throw new Error(`Could not find volume ${volume} in docker-compose file`);
+    }
+
+    return volumesToBackup;
 }
