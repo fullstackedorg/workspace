@@ -2,7 +2,7 @@ import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
-import {execSSH, getSFTPClient, getVolumesToBackup} from "./utils";
+import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, printLine} from "./utils";
 import progress from "progress-stream";
 
 export default async function (config: FullStackedConfig) {
@@ -74,6 +74,11 @@ async function backupRemote(config: FullStackedConfig){
             const progressStream = progress({
                 length: fileStat.size
             });
+
+            progressStream.on('progress', progress => {
+                printLine("Download progress : " + progress.percentage + "%")
+            });
+            clearLine();
 
             dlStream = progressStream.pipe(dlStream);
         }
