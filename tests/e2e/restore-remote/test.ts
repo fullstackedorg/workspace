@@ -63,7 +63,7 @@ describe("Backup-Restore Remotely Test", function(){
     });
 
     it("Should backup / restore volume remotely", async function(){
-        this.timeout(50000);
+        this.timeout(100000);
 
         ok(testArr.length > 0);
         notDeepEqual(await fetch.get(`http://localhost:${sshServer2.httpPort}/get`), testArr);
