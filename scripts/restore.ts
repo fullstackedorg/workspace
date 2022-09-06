@@ -71,7 +71,7 @@ async function restoreRemote(config: FullStackedConfig){
             });
 
             progressStream.on('progress', progress => {
-                printLine("Upload progress : " + progress.percentage + "%")
+                printLine("Upload progress : " + progress.percentage.toFixed(2) + "%")
             });
             clearLine();
 

@@ -66,24 +66,32 @@ async function backupRemote(config: FullStackedConfig){
         const tarFilePath = `/tmp/backup/${volume}.tar`;
 
         const outFilePath = path.resolve(backupDir, `${volume}.tar`);
-        let dlStream = fs.createWriteStream(outFilePath);
+        const dlStream = fs.createWriteStream(outFilePath);
 
-        if(!config.silent){
-            const fileStat = await sftp.stat(tarFilePath);
-
-            const progressStream = progress({
-                length: fileStat.size
+        // TODO: https://github.com/theophilusx/ssh2-sftp-client/issues/434
+        await new Promise<void>(async resolve => {
+            let readStream = sftp.sftp.createReadStream(tarFilePath, { autoClose: true });
+            readStream.once('end', () => {
+                resolve();
             });
 
-            progressStream.on('progress', progress => {
-                printLine("Download progress : " + progress.percentage + "%")
-            });
-            clearLine();
+            if(!config.silent) {
+                const fileStat = await sftp.stat(tarFilePath);
 
-            dlStream = progressStream.pipe(dlStream);
-        }
+                const progressStream = progress({
+                    length: fileStat.size
+                });
 
-        await sftp.get(`/tmp/backup/${volume}.tar`, dlStream);
+                progressStream.on('progress', progress => {
+                    printLine("Download progress : " + progress.percentage.toFixed(2) + "%")
+                });
+                clearLine();
+
+                readStream = readStream.pipe(progressStream, { end: true });
+            }
+
+            readStream.pipe(dlStream, { end: true });
+        });
     }
 
     // close connection
