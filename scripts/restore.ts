@@ -2,7 +2,7 @@ import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
-import {getSFTPClient, getVolumesToBackup, silenceCommandLine} from "./utils";
+import {clearLine, getSFTPClient, getVolumesToBackup, printLine, silenceCommandLine} from "./utils";
 import {execSSH} from "./utils";
 import progress from "progress-stream";
 
@@ -69,6 +69,11 @@ async function restoreRemote(config: FullStackedConfig){
             const progressStream = progress({
                 length: fs.statSync(backupFile).size
             });
+
+            progressStream.on('progress', progress => {
+                printLine("Upload progress : " + progress.percentage + "%")
+            });
+            clearLine();
 
             ulStream = ulStream.pipe(progressStream);
         }
