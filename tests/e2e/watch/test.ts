@@ -92,7 +92,7 @@ describe("Watch Test", function(){
         ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
-        await sleep(2000);
+        await sleep(4000);
         const timeAfter = await getBootTime();
 
         ok(timeAfter)
