@@ -36,10 +36,16 @@ const args = {
     "--title=": value => config.title = value,
     "--no-nginx": () => config.noNginx = true,
     "--pull": () => config.pull = true,
-    "--volume=": value => config.volume = value,
+    "--volume=": value => config.volume = upgradeToArray(value),
     "--backup-dir=": value => config.backupDir = value,
     "--timeout=": value => config.timeout = parseInt(value)
 };
+
+function upgradeToArray(rawValue: string): string | string[]{
+    return rawValue.includes(",")
+        ? rawValue.split(",").map(value => value.trim())
+        : rawValue;
+}
 
 process.argv.forEach(arg => {
     Object.keys(scripts).forEach(availableScript => {
@@ -48,8 +54,9 @@ process.argv.forEach(arg => {
     });
 
     Object.keys(args).forEach(anchor => {
-        if(arg.startsWith(anchor))
+        if(arg.startsWith(anchor)) {
             args[anchor](arg.slice(anchor.length));
+        }
     });
 });
 

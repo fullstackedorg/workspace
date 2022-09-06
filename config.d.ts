@@ -44,7 +44,7 @@ declare type ConfigDeploy = {
 }
 
 declare type ConfigBackup = {
-    volume? : string,
+    volume? : string | string[],
     backupDir? : string
 }
 
