@@ -13,6 +13,7 @@ describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();
     const sshServer2 = new SSH();
     const serverNameFile = path.resolve(__dirname, ".server-names");
+    const backupDir = path.resolve(process.cwd(), "backup");
     const outDir = path.resolve(__dirname, "out");
     let testArr = [];
 
@@ -75,7 +76,7 @@ describe("Backup-Restore Remotely Test", function(){
             --ssh-port=${sshServer1.sshPort}
             `.replace(/\n/g, ' '));
 
-        const backupFile = path.resolve(process.cwd(), "backup", "mongo-data.tar");
+        const backupFile = path.resolve(backupDir, "mongo-data.tar");
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 100);
 
@@ -95,7 +96,7 @@ describe("Backup-Restore Remotely Test", function(){
     after(function(){
         fs.rmSync(serverNameFile);
         cleanOutDir(outDir);
-        cleanOutDir(path.resolve(__dirname, "backup"));
+        cleanOutDir(backupDir);
         cleanOutDir(path.resolve(__dirname, "dist"));
         sshServer1.stop();
         sshServer2.stop();
