@@ -70,7 +70,7 @@ async function backupRemote(config: FullStackedConfig){
 
         // TODO: https://github.com/theophilusx/ssh2-sftp-client/issues/434
         await new Promise<void>(async resolve => {
-            let readStream = sftp.sftp.createReadStream(tarFilePath, { autoClose: true });
+            let readStream = sftp.createReadStream(tarFilePath, { autoClose: true });
             readStream.once('end', () => {
                 clearLine();
                 dlStream.close(() => resolve());

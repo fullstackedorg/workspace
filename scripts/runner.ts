@@ -46,21 +46,21 @@ export default class Runner {
 
         fs.writeFileSync(this.composeFilePath, yaml.stringify(dockerCompose));
 
-        // check if all images are pulled
-        let pullNeeded = false;
-        if(this.config.pull)
-            pullNeeded = true;
-        else{
-            const images = Object.values(dockerCompose.services).map(service => (service as any).image);
-            pullNeeded = images.some(image => {
-                try{
-                    execSync(`docker image inspect ${image}`);
-                    return false;
-                }catch (e){
-                    return true;
-                }
-            });
+        // force pull process
+        if(this.config.pull) {
+            execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} pull`, {stdio: "inherit"});
         }
+
+        // check if all images are pulled
+        const images = Object.values(dockerCompose.services).map(service => (service as any).image);
+        const pullNeeded = images.some(image => {
+            try{
+                execSync(`docker image inspect ${image}`);
+                return false;
+            }catch (e){
+                return true;
+            }
+        });
 
         // output the pulling process if needed
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d`;
