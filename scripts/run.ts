@@ -3,15 +3,16 @@ import Runner from "./runner";
 import os from "os";
 import readline from "readline";
 
-let runner = null, didSetExitHook = false;
+let runner: Runner = null, didSetExitHook = false;
 
 export default async function(config: Config, build: boolean = true){
     if(build)
         await Build(config);
 
+    let port;
     if(!runner) {
         runner = new Runner(config);
-        await runner.start();
+        port = await runner.start();
     }else{
         runner.restart();
     }
@@ -41,4 +42,6 @@ export default async function(config: Config, build: boolean = true){
         });
         didSetExitHook = true;
     }
+
+    return port;
 }

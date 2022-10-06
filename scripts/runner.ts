@@ -19,7 +19,7 @@ export default class Runner {
             throw new Error("Cannot run app without Docker and Docker-Compose");
     }
 
-    async start() {
+    async start(): Promise<number> {
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
         // get compose content
@@ -28,6 +28,7 @@ export default class Runner {
         // setup exposed ports
         const services = Object.keys(dockerCompose.services);
         let availablePort = 8000;
+        let nodePort = availablePort;
         for(const service of services){
             const serviceObject = dockerCompose.services[service];
             const exposedPorts = serviceObject.ports;
@@ -39,6 +40,10 @@ export default class Runner {
                 if(!exposedPorts[i].startsWith("${PORT}")) continue;
 
                 availablePort = await getNextAvailablePort(availablePort);
+
+                if(service === "node")
+                    nodePort = availablePort;
+
                 dockerCompose.services[service].ports[i] = exposedPorts[i].replace("${PORT}", availablePort);
                 availablePort++;
             }
@@ -72,6 +77,8 @@ export default class Runner {
         });
 
         await execScript(path.resolve(this.config.src, "postrun.ts"), this.config);
+
+        return nodePort;
     }
 
     restart(){
