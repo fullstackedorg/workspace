@@ -14,7 +14,9 @@ declare type ConfigBuild = {
 }
 
 declare type ConfigWatch = {
-    timeout? : number
+    timeout? : number,
+    watchFile?: string | string[],
+    watchDir?: string | string[]
 }
 
 declare type ConfigTest = {

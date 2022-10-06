@@ -139,12 +139,26 @@ async function buildWebApp(config, watcher){
         plugins: watcher ? [{
             name: 'watch-extra-files',
             setup(build) {
+
+                const extraFiles = config.watchFile
+                    ? Array.isArray(config.watchFile)
+                        ? config.watchFile.map(file => path.resolve(config.src, file))
+                        : [path.resolve(config.src, config.watchFile)]
+                    : [];
+
+                const extraDirs = config.watchDir
+                    ? Array.isArray(config.watchDir)
+                        ? config.watchDir.map(dir => path.resolve(config.src, dir))
+                        : [path.resolve(config.src, config.watchDir)]
+                    : [];
+
                 build.onResolve({ filter: /.*/ }, args => {
                     return {
-                        watchFiles: [
+                        watchFiles: extraFiles.concat([
                             path.resolve(config.src, "webapp", "index.html"),
                             path.resolve(config.src, "webapp", "index.css")
-                        ]
+                        ]),
+                        watchDirs: extraDirs
                     };
                 })
             },
@@ -290,6 +304,6 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
         buildWebApp(config, watcher)
     ]);
 
-    // prebuild script
+    // postbuild script
     await execScript(path.resolve(config.src, "postbuild.ts"), config);
 }
