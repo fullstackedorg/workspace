@@ -116,7 +116,7 @@ async function buildWebApp(config, watcher){
 
         // assets like images are stored at dist/{VERSION}/public/assets
         // and the server reroutes all asset request to this directory
-        // this is too avoid using publicPath and implies other issues
+        // this is to avoid using publicPath and implies other issues
         assetNames: "assets/[name]-[hash]",
         loader: {
             ".png": "file" as Loader,
@@ -252,7 +252,7 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // web app manifest
-    const manifestFilePath = path.resolve(config.src, "manifest.json");
+    const manifestFilePath = path.resolve(config.src, "webapp", "manifest.json");
     if(fs.existsSync(manifestFilePath)){
         // copy the file
         fs.cpSync(manifestFilePath, path.resolve(config.public, "manifest.json"));
@@ -262,7 +262,7 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // build service-worker and reference in index.html
-    const serviceWorkerFilePath = path.resolve(config.src, "service-worker.ts");
+    const serviceWorkerFilePath = path.resolve(config.src, "webapp", "service-worker.ts");
     if(fs.existsSync(serviceWorkerFilePath)){
         buildSync({
             entryPoints: [path.resolve(__dirname, "../webapp/ServiceWorkerRegistration.ts")],
