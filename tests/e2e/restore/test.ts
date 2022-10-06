@@ -1,5 +1,5 @@
 import {describe} from "mocha";
-import {execSync} from "child_process";
+import {exec, execSync} from "child_process";
 import path from "path";
 import waitForServer from "fullstacked/scripts/waitForServer";
 import sleep from "fullstacked/scripts/sleep";
@@ -14,16 +14,16 @@ import {fetch} from "fullstacked/webapp/fetch";
 describe("Backup-Restore Test", function(){
     let testArr;
     let runner: Runner;
-    const backupDir = path.resolve(process.cwd(), "backup")
+    const localConfig = config({
+        src: __dirname,
+        silent: true
+    });
+    const backupDir = path.resolve(process.cwd(), "backup");
     const backupFile = path.resolve(backupDir, "mongo-data.tar");
 
     before(async function (){
         this.timeout(30000);
 
-        const localConfig = config({
-            src: __dirname,
-            silent: true
-        });
         await build({...localConfig, testMode: true});
         runner = new Runner(localConfig);
         await runner.start();
@@ -53,6 +53,19 @@ describe("Backup-Restore Test", function(){
         await waitForServer(10000, "http://localhost:8000/get");
         deepEqual(await fetch.get("http://localhost:8000/get"), testArr);
         clearLine();
+    });
+
+    it("Should start with volume restored", async function(){
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
+        runner.stop();
+
+        const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);
+        await waitForServer(30000, "http://localhost:8000/get");
+
+        deepEqual(await fetch.get("http://localhost:8000/get"), testArr)
+
+        runProcess.kill();
+        await runner.start();
     });
 
     after(function() {

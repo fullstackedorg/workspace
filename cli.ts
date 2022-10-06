@@ -40,7 +40,8 @@ const args = {
     "--backup-dir=": value => config.backupDir = value,
     "--timeout=": value => config.timeout = parseInt(value),
     "--watch-file=": value => config.watchFile = upgradeToArray(value),
-    "--watch-dir=": value => config.watchDir = upgradeToArray(value)
+    "--watch-dir=": value => config.watchDir = upgradeToArray(value),
+    "--restored": () => config.restored = true
 };
 
 function upgradeToArray(rawValue: string): string | string[]{

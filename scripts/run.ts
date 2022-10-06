@@ -2,6 +2,7 @@ import Build from "./build";
 import Runner from "./runner";
 import os from "os";
 import readline from "readline";
+import restore from "./restore";
 
 let runner: Runner = null, didSetExitHook = false;
 
@@ -9,10 +10,15 @@ export default async function(config: Config, build: boolean = true){
     if(build)
         await Build(config);
 
-    let port;
     if(!runner) {
         runner = new Runner(config);
-        port = await runner.start();
+        await runner.start();
+        console.log("Web App Running at http://localhost:" + runner.nodePort);
+
+
+        if(config.restored)
+            await restore(config)
+
     }else{
         runner.restart();
     }
@@ -43,5 +49,5 @@ export default async function(config: Config, build: boolean = true){
         didSetExitHook = true;
     }
 
-    return port;
+    return runner.nodePort;
 }
