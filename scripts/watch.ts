@@ -23,7 +23,6 @@ async function watcher(isWebApp: boolean){
 
     if(typeof definedPort === "number") {
         runningPort = definedPort;
-        console.log("App running at http://localhost:" + runningPort);
     }
 
     await connectToWatcher(runningPort);

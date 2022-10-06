@@ -38,9 +38,9 @@ export default class Helper {
             });
         }
 
-        await waitForServer(3000);
+        await waitForServer(3000, `http://localhost:${this.runner.nodePort}`);
 
-        await this.page.goto("http://localhost:8000" + pathURL);
+        await this.page.goto(`http://localhost:${this.runner.nodePort}` + pathURL);
 
         process.on('uncaughtException', err => {
             if(this.browser?.close)
@@ -57,7 +57,7 @@ export default class Helper {
             const weakThis = this;
             // @ts-ignore
             this.page.goto = async function(path: string) {
-                await Helper.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig);
+                await Helper.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig, weakThis.runner.nodePort);
                 await weakThis.page.coverage.startJSCoverage({
                     includeRawScriptCoverage: true,
                     resetOnNavigation: false
@@ -67,7 +67,7 @@ export default class Helper {
         }
     }
 
-    private static async outputCoverage(page, dir, localConfig){
+    private static async outputCoverage(page, dir, localConfig, nodePort){
         const jsCoverage = (await page.coverage.stopJSCoverage()).map(({rawScriptCoverage: coverage}) => {
             let url: URL;
             try{ url = new URL(coverage.url); }
@@ -76,7 +76,7 @@ export default class Helper {
             const file = url.pathname;
             const origin = url.origin;
 
-            if(!file.endsWith(".js") || !origin.includes("localhost:8000"))
+            if(!file.endsWith(".js") || !origin.includes(`localhost:${nodePort}`))
                 return false;
 
             return {
@@ -101,7 +101,7 @@ export default class Helper {
 
     async stop(){
         if(process.argv.includes("--coverage")){
-            await Helper.outputCoverage(this.page, this.dir, this.localConfig);
+            await Helper.outputCoverage(this.page, this.dir, this.localConfig, this.runner.nodePort);
         }
 
         await this.browser.close();

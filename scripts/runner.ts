@@ -10,6 +10,7 @@ export default class Runner {
     composeFilePath: string;
     attachedProcess: ChildProcess = null;
     lastLogDate: Date = new Date();
+    nodePort: number;
 
     constructor(config: Config) {
         this.config = config;
@@ -42,7 +43,7 @@ export default class Runner {
                 availablePort = await getNextAvailablePort(availablePort);
 
                 if(service === "node")
-                    nodePort = availablePort;
+                    this.nodePort = availablePort;
 
                 dockerCompose.services[service].ports[i] = exposedPorts[i].replace("${PORT}", availablePort);
                 availablePort++;

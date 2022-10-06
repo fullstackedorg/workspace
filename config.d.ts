@@ -13,6 +13,10 @@ declare type ConfigBuild = {
     public?: string // public out folder
 }
 
+declare type ConfigRun = {
+    restored?: boolean
+}
+
 declare type ConfigWatch = {
     timeout? : number,
     watchFile?: string | string[],
@@ -50,7 +54,7 @@ declare type ConfigBackup = {
     backupDir? : string
 }
 
-declare type Config = ConfigBuild & ConfigWatch & ConfigTest & ConfigDeploy & ConfigBackup & {
+declare type Config = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean
 }
