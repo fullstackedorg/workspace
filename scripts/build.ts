@@ -1,7 +1,7 @@
 import path from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, execScript} from "./utils";
+import {cleanOutDir, copyRecursiveSync, execScript} from "./utils";
 import yaml from "yaml";
 
 // load .env located at root of src
@@ -239,6 +239,13 @@ export function webAppPostBuild(config: Config, watcher){
 
         // add link tag in head
         addInHEAD(`<link rel="icon" href="/favicon.png">`);
+    }
+
+    // add app-icons dir if present
+    const appIconsDir = path.resolve(config.src, "webapp", "app-icons");
+    if(fs.existsSync(appIconsDir)){
+        // copy file to dist/public
+        copyRecursiveSync(appIconsDir, path.resolve(config.public, "app-icons"));
     }
 
     // index.css root file
