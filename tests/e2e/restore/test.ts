@@ -28,9 +28,9 @@ describe("Backup-Restore Test", function(){
         runner = new Runner(localConfig);
         await runner.start();
         printLine("Generating data");
-        await waitForServer(10000, "http://localhost:8000/get");
-        await fetch.post("http://localhost:8000/post");
-        testArr = await fetch.get("http://localhost:8000/get");
+        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        await fetch.post(`http://localhost:${runner.nodePort}/post`);
+        testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
     });
 
     it("Should backup / restore volume", async function(){
@@ -47,30 +47,31 @@ describe("Backup-Restore Test", function(){
         await runner.start();
         await waitForServer(10000);
         await sleep(3000);
-        notDeepEqual(await fetch.get("http://localhost:8000/get"), testArr);
+        notDeepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
         printLine("Restoring");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --silent`);
-        await waitForServer(10000, "http://localhost:8000/get");
-        deepEqual(await fetch.get("http://localhost:8000/get"), testArr);
+        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        deepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
         clearLine();
     });
 
     it("Should start with volume restored", async function(){
+        this.timeout(50000);
+
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
-        runner.stop();
 
         const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);
-        await waitForServer(30000, "http://localhost:8000/get");
+        await waitForServer(30000, `http://localhost:${runner.nodePort + 1}/get`);
 
-        deepEqual(await fetch.get("http://localhost:8000/get"), testArr)
+        deepEqual(await fetch.get(`http://localhost:${runner.nodePort + 1}/get`), testArr);
 
         runProcess.kill();
-        await runner.start();
     });
 
     after(function() {
         if(fs.existsSync(backupDir))
             fs.rmSync(backupDir, {force: true, recursive: true});
+
         runner.stop();
     });
 });

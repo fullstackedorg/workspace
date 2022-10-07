@@ -6,8 +6,7 @@ import {execScript} from "./utils";
 import path from "path";
 
 let globalConfig: Config,
-    ws: WebSocket,
-    runningPort;
+    ws: WebSocket;
 
 async function watcher(isWebApp: boolean){
     await execScript(path.resolve(globalConfig.src, "postbuild.ts"), globalConfig);
@@ -19,13 +18,9 @@ async function watcher(isWebApp: boolean){
     }
 
     console.log('\x1b[32m%s\x1b[0m', "Server Rebuilt");
-    const definedPort = await run(globalConfig, false);
+    const runner = await run(globalConfig, false);
 
-    if(typeof definedPort === "number") {
-        runningPort = definedPort;
-    }
-
-    await connectToWatcher(runningPort);
+    await connectToWatcher(runner.nodePort);
 }
 
 async function connectToWatcher(port: number){

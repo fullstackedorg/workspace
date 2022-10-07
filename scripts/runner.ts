@@ -29,7 +29,6 @@ export default class Runner {
         // setup exposed ports
         const services = Object.keys(dockerCompose.services);
         let availablePort = 8000;
-        let nodePort = availablePort;
         for(const service of services){
             const serviceObject = dockerCompose.services[service];
             const exposedPorts = serviceObject.ports;
@@ -42,13 +41,12 @@ export default class Runner {
 
                 availablePort = await getNextAvailablePort(availablePort);
 
-                if(service === "node")
-                    this.nodePort = availablePort;
-
                 dockerCompose.services[service].ports[i] = exposedPorts[i].replace("${PORT}", availablePort);
                 availablePort++;
             }
         }
+
+        this.nodePort = parseInt(dockerCompose.services["node"].ports[0].split(":").shift());
 
         fs.writeFileSync(this.composeFilePath, yaml.stringify(dockerCompose));
 
@@ -79,7 +77,7 @@ export default class Runner {
 
         await execScript(path.resolve(this.config.src, "postrun.ts"), this.config);
 
-        return nodePort;
+        return this.nodePort;
     }
 
     restart(){
