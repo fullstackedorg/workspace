@@ -18,7 +18,6 @@ export default async function(config: Config, build: boolean = true){
 
         if(config.restored)
             await restore(config)
-
     }else{
         runner.restart();
     }
@@ -49,5 +48,5 @@ export default async function(config: Config, build: boolean = true){
         didSetExitHook = true;
     }
 
-    return runner.nodePort;
+    return runner;
 }
