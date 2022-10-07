@@ -46,6 +46,7 @@ export class Router{
 
 export default class Server extends Router{
     server: http.Server;
+    watcher;
     port: number = 80;
     express = express();
     publicDir = path.resolve(__dirname, './public');
@@ -72,8 +73,12 @@ export default class Server extends Router{
         this.express.use(express.static(this.publicDir));
 
         this.server = http.createServer(this.express).listen(this.port);
-        if(!args.silent)
-            console.log("Listening at http://localhost:" + this.port);
+
+        if(process.argv.includes("--development")){
+            const watcherModule = require("./watcher");
+            this.watcher = new watcherModule.default();
+            this.watcher.init(this.server);
+        }
 
         if(callback) callback();
     }

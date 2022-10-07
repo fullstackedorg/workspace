@@ -1,5 +1,5 @@
 import {describe} from "mocha";
-import {execSync} from "child_process";
+import {exec, execSync} from "child_process";
 import path from "path";
 import waitForServer from "fullstacked/scripts/waitForServer";
 import sleep from "fullstacked/scripts/sleep";
@@ -14,23 +14,23 @@ import {fetch} from "fullstacked/webapp/fetch";
 describe("Backup-Restore Test", function(){
     let testArr;
     let runner: Runner;
-    const backupDir = path.resolve(__dirname, "backup");
+    const localConfig = config({
+        src: __dirname,
+        silent: true
+    });
+    const backupDir = path.resolve(process.cwd(), "backup");
     const backupFile = path.resolve(backupDir, "mongo-data.tar");
 
     before(async function (){
         this.timeout(30000);
 
-        const localConfig = config({
-            src: __dirname,
-            silent: true
-        });
         await build({...localConfig, testMode: true});
         runner = new Runner(localConfig);
         await runner.start();
         printLine("Generating data");
-        await waitForServer(10000, "http://localhost:8000/get");
-        await fetch.post("http://localhost:8000/post");
-        testArr = await fetch.get("http://localhost:8000/get");
+        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        await fetch.post(`http://localhost:${runner.nodePort}/post`);
+        testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
     });
 
     it("Should backup / restore volume", async function(){
@@ -38,7 +38,7 @@ describe("Backup-Restore Test", function(){
 
         ok(testArr.length > 0);
         printLine("Backing up");
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --volume=mongo-data --backup-dir=${__dirname} --silent`);
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 0);
         runner.stop();
@@ -47,17 +47,31 @@ describe("Backup-Restore Test", function(){
         await runner.start();
         await waitForServer(10000);
         await sleep(3000);
-        notDeepEqual(await fetch.get("http://localhost:8000/get"), testArr);
+        notDeepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
         printLine("Restoring");
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --volume=mongo-data --backup-dir=${__dirname} --silent`);
-        await waitForServer(10000, "http://localhost:8000/get");
-        deepEqual(await fetch.get("http://localhost:8000/get"), testArr);
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --silent`);
+        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        deepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
         clearLine();
+    });
+
+    it("Should start with volume restored", async function(){
+        this.timeout(50000);
+
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
+
+        const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);
+        await waitForServer(30000, `http://localhost:${runner.nodePort + 1}/get`);
+
+        deepEqual(await fetch.get(`http://localhost:${runner.nodePort + 1}/get`), testArr);
+
+        runProcess.kill();
     });
 
     after(function() {
         if(fs.existsSync(backupDir))
             fs.rmSync(backupDir, {force: true, recursive: true});
+
         runner.stop();
     });
 });

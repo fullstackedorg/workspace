@@ -2,7 +2,7 @@ import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askQuestion, askToContinue, execScript, execSSH, printLine} from "./utils";
+import {askQuestion, askToContinue, execScript, execSSH, getSFTPClient, printLine} from "./utils";
 import build from "./build";
 import test from "./test";
 import yaml from "yaml";
@@ -46,7 +46,7 @@ async function installDocker(ssh2) {
     }
 }
 
-export async function setupNginxFile(nginxFilePath: string, cachedServerNamesFilePath: string, name: string, version: string, portsMap: Map<string, string[]>){
+export async function setupNginxFile(nginxFilePath: string, cachedServerNamesFilePath: string, name: string, version: string, portsMap: Map<string, string[]>, silent: boolean = false){
     let cachedServerNames = {};
     if(fs.existsSync(cachedServerNamesFilePath)){
         cachedServerNames = JSON.parse(fs.readFileSync(cachedServerNamesFilePath, {encoding: 'utf-8'}));
@@ -65,7 +65,8 @@ export async function setupNginxFile(nginxFilePath: string, cachedServerNamesFil
             .replace(/\{VERSION\}/g, version)
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs ?? "");
 
-        console.log(serverName + "->" + "0.0.0.0:" + externalPort + " for " + service + " at port " + internalPort);
+        if(!silent)
+            console.log(serverName + "->" + "0.0.0.0:" + externalPort + " for " + service + " at port " + internalPort);
 
         if(!serverNamesJSONOutput[service])
             serverNamesJSONOutput[service] = {};
@@ -229,24 +230,7 @@ export default async function (config: Config) {
     if(!await askToContinue("Continue"))
         return;
 
-    const sftp = new SFTP();
-
-    // setup ssh connection
-    let connectionConfig: any = {
-        host: config.host,
-        username: config.user
-    }
-
-    if(config.sshPort)
-        connectionConfig.port = config.sshPort;
-
-    if(config.pass)
-        connectionConfig.password = config.pass;
-
-    if(config.privateKey)
-        connectionConfig.privateKey = fs.readFileSync(path.resolve(process.cwd(), config.privateKey));
-
-    await sftp.connect(connectionConfig);
+    const sftp = await getSFTPClient(config);
 
     // path where the build app files will be
     const serverPath = config.appDir + "/" + config.name;

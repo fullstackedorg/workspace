@@ -6,6 +6,7 @@ dist
 coverage
 **/*.js.map
 test.ts
+/backup
 
 d.ts
 

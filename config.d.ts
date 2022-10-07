@@ -11,7 +11,16 @@ declare type ConfigBuild = {
     dist?: string   // root out folder
     out?: string    // version out folder
     public?: string // public out folder
+}
 
+declare type ConfigRun = {
+    restored?: boolean
+}
+
+declare type ConfigWatch = {
+    timeout? : number,
+    watchFile?: string | string[],
+    watchDir?: string | string[]
 }
 
 declare type ConfigTest = {
@@ -41,11 +50,11 @@ declare type ConfigDeploy = {
 }
 
 declare type ConfigBackup = {
-    volume? : string,
+    volume? : string | string[],
     backupDir? : string
 }
 
-declare type Config = ConfigBuild & ConfigTest & ConfigDeploy & ConfigBackup & {
+declare type Config = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean
 }

@@ -1,9 +1,8 @@
 import path from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, execScript} from "./utils";
+import {cleanOutDir, copyRecursiveSync, execScript} from "./utils";
 import yaml from "yaml";
-import typing from "./typing";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -35,25 +34,6 @@ function getProcessedEnv(config: Config){
 
 // bundles the server
 async function buildServer(config: Config, watcher){
-    const filesToLookup: Set<string> = new Set();
-
-    const plugins = [];
-    if(!config.production && !config.testMode){
-        plugins.push({
-            name: 'endpoint-typing',
-            setup(build) {
-                build.onStart(() => {
-                    filesToLookup.clear();
-                })
-                build.onLoad({filter: /.*/g}, args => {
-                    if(!args.path.includes("node_modules"))
-                        filesToLookup.add(args.path)
-                    return null;
-                })
-            },
-        });
-    }
-
     const options = {
         entryPoints: [ path.resolve(config.src, "server", "index.ts") ],
         outfile: path.resolve(config.out, "index.js"),
@@ -62,14 +42,11 @@ async function buildServer(config: Config, watcher){
         minify: config.production,
         sourcemap: !config.production,
 
-        plugins: plugins,
-
         define: getProcessedEnv(config),
 
         watch: watcher ? {
             onRebuild: async function(error, result){
                 if(error) return;
-                typing(config, filesToLookup);
                 watcher();
             }
         } : false
@@ -80,35 +57,43 @@ async function buildServer(config: Config, watcher){
     if(result.errors.length > 0)
         return;
 
-    // generate endpoint typing
-    if(!config.production && !config.testMode)
-        typing(config, filesToLookup);
-
     // get docker-compose.yml template file
-    let dockerCompose = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
+    let dockerComposeRaw = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
+    let dockerCompose = yaml.parse(dockerComposeRaw);
+
+    if(watcher){
+        dockerCompose.services["node"].command += " --development";
+        buildSync({
+            entryPoints: [ path.resolve(__dirname, "..", "server", "watcher.ts") ],
+            outfile: path.resolve(config.out, "watcher.js"),
+            platform: "node" as Platform,
+            bundle: true,
+            minify: true,
+            sourcemap: false,
+        })
+    }
 
     // merge with user defined docker-compose if existent
-    const srcDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
-    if(fs.existsSync(srcDockerComposeFilePath)){
-        const templateDockerCompose = yaml.parse(dockerCompose);
-        const srcDockerCompose = yaml.parse(fs.readFileSync(srcDockerComposeFilePath, {encoding: "utf-8"}));
-        if(srcDockerCompose) {
-            dockerCompose = yaml.stringify({
-                ...templateDockerCompose,
-                ...srcDockerCompose,
+    const userDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
+    if(fs.existsSync(userDockerComposeFilePath)){
+        const userDockerCompose = yaml.parse(fs.readFileSync(userDockerComposeFilePath, {encoding: "utf-8"}));
+        if(userDockerCompose) {
+            dockerCompose = {
+                ...dockerCompose,
+                ...userDockerCompose,
                 services: {
-                    ...templateDockerCompose.services,
-                    ...(srcDockerCompose.services ?? {})
+                    ...dockerCompose.services,
+                    ...(userDockerCompose.services ?? {})
                 }
-            });
+            };
         }
     }
 
     // replace version directory
-    dockerCompose = dockerCompose.replace(/\$\{VERSION\}/g, config.version);
+    const dockerComposeStr = yaml.stringify(dockerCompose).replace(/\$\{VERSION\}/g, config.version);
 
     // output docker-compose result to dist directory
-    fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), dockerCompose);
+    fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), dockerComposeStr);
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "Server Built");
@@ -131,7 +116,7 @@ async function buildWebApp(config, watcher){
 
         // assets like images are stored at dist/{VERSION}/public/assets
         // and the server reroutes all asset request to this directory
-        // this is too avoid using publicPath and implies other issues
+        // this is to avoid using publicPath and implies other issues
         assetNames: "assets/[name]-[hash]",
         loader: {
             ".png": "file" as Loader,
@@ -154,12 +139,26 @@ async function buildWebApp(config, watcher){
         plugins: watcher ? [{
             name: 'watch-extra-files',
             setup(build) {
+
+                const extraFiles = config.watchFile
+                    ? Array.isArray(config.watchFile)
+                        ? config.watchFile.map(file => path.resolve(config.src, file))
+                        : [path.resolve(config.src, config.watchFile)]
+                    : [];
+
+                const extraDirs = config.watchDir
+                    ? Array.isArray(config.watchDir)
+                        ? config.watchDir.map(dir => path.resolve(config.src, dir))
+                        : [path.resolve(config.src, config.watchDir)]
+                    : [];
+
                 build.onResolve({ filter: /.*/ }, args => {
                     return {
-                        watchFiles: [
+                        watchFiles: extraFiles.concat([
                             path.resolve(config.src, "webapp", "index.html"),
                             path.resolve(config.src, "webapp", "index.css")
-                        ]
+                        ]),
+                        watchDirs: extraDirs
                     };
                 })
             },
@@ -225,7 +224,8 @@ export function webAppPostBuild(config: Config, watcher){
         buildSync({
             entryPoints: [path.resolve(__dirname, "../webapp/watcher.ts")],
             minify: true,
-            outfile: path.resolve(config.public, "watcher.js")
+            outfile: path.resolve(config.public, "watcher.js"),
+            bundle: true
         });
 
         addInBODY(`<script src="/watcher.js"></script>`);
@@ -241,6 +241,13 @@ export function webAppPostBuild(config: Config, watcher){
         addInHEAD(`<link rel="icon" href="/favicon.png">`);
     }
 
+    // add app-icons dir if present
+    const appIconsDir = path.resolve(config.src, "webapp", "app-icons");
+    if(fs.existsSync(appIconsDir)){
+        // copy file to dist/public
+        copyRecursiveSync(appIconsDir, path.resolve(config.public, "app-icons"));
+    }
+
     // index.css root file
     const CSSFile = path.resolve(config.src, "webapp", "index.css");
     if(fs.existsSync(CSSFile)){
@@ -252,7 +259,7 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // web app manifest
-    const manifestFilePath = path.resolve(config.src, "manifest.json");
+    const manifestFilePath = path.resolve(config.src, "webapp", "manifest.json");
     if(fs.existsSync(manifestFilePath)){
         // copy the file
         fs.cpSync(manifestFilePath, path.resolve(config.public, "manifest.json"));
@@ -262,7 +269,7 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // build service-worker and reference in index.html
-    const serviceWorkerFilePath = path.resolve(config.src, "service-worker.ts");
+    const serviceWorkerFilePath = path.resolve(config.src, "webapp", "service-worker.ts");
     if(fs.existsSync(serviceWorkerFilePath)){
         buildSync({
             entryPoints: [path.resolve(__dirname, "../webapp/ServiceWorkerRegistration.ts")],
@@ -304,6 +311,6 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
         buildWebApp(config, watcher)
     ]);
 
-    // prebuild script
+    // postbuild script
     await execScript(path.resolve(config.src, "postbuild.ts"), config);
 }
