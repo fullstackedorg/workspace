@@ -10,6 +10,7 @@ export default class Runner {
     composeFilePath: string;
     attachedProcess: ChildProcess = null;
     lastLogDate: Date = new Date();
+    nodePort: number;
 
     constructor(config: Config) {
         this.config = config;
@@ -19,7 +20,7 @@ export default class Runner {
             throw new Error("Cannot run app without Docker and Docker-Compose");
     }
 
-    async start() {
+    async start(): Promise<number> {
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
         // get compose content
@@ -39,28 +40,31 @@ export default class Runner {
                 if(!exposedPorts[i].startsWith("${PORT}")) continue;
 
                 availablePort = await getNextAvailablePort(availablePort);
+
                 dockerCompose.services[service].ports[i] = exposedPorts[i].replace("${PORT}", availablePort);
                 availablePort++;
             }
         }
 
+        this.nodePort = parseInt(dockerCompose.services["node"].ports[0].split(":").shift());
+
         fs.writeFileSync(this.composeFilePath, yaml.stringify(dockerCompose));
 
-        // check if all images are pulled
-        let pullNeeded = false;
-        if(this.config.pull)
-            pullNeeded = true;
-        else{
-            const images = Object.values(dockerCompose.services).map(service => (service as any).image);
-            pullNeeded = images.some(image => {
-                try{
-                    execSync(`docker image inspect ${image}`);
-                    return false;
-                }catch (e){
-                    return true;
-                }
-            });
+        // force pull process
+        if(this.config.pull) {
+            execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} pull`, {stdio: "inherit"});
         }
+
+        // check if all images are pulled
+        const images = Object.values(dockerCompose.services).map(service => (service as any).image);
+        const pullNeeded = images.some(image => {
+            try{
+                execSync(`docker image inspect ${image}`);
+                return false;
+            }catch (e){
+                return true;
+            }
+        });
 
         // output the pulling process if needed
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d`;
@@ -72,6 +76,8 @@ export default class Runner {
         });
 
         await execScript(path.resolve(this.config.src, "postrun.ts"), this.config);
+
+        return this.nodePort;
     }
 
     restart(){

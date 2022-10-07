@@ -18,16 +18,15 @@ describe("Deploy Test", function(){
     const postdeployOutputFile = path.resolve(__dirname, "postdeploy.txt");
     const postdeployAsyncOutputFile = path.resolve(__dirname, "postdeploy-2.txt");
 
-    function executeDeployment(args: string){
-        args += `
-        --silent
-        --y
-        --skip-test
-        --host=localhost
-        --ssh-port=${sshServer.sshPort}
-        --user=${sshServer.username}
-        --pass=${sshServer.password}`;
-        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.replace(/\n/g, ' ')}`);
+    function executeDeployment(args: string[]){
+        args = args.concat(["--silent",
+            "--y",
+            "--skip-test",
+            "--host=localhost",
+            `--ssh-port=${sshServer.sshPort}`,
+            `--user=${sshServer.username}`,
+            `--pass=${sshServer.password}`]);
+        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.join(" ")}`);
     }
 
     before(async function (){
@@ -38,9 +37,7 @@ describe("Deploy Test", function(){
 
         sshServer.init();
         printLine("Running deployment command");
-        executeDeployment(`
-            --src=${__dirname}
-            --out=${__dirname}`);
+        executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`]);
         await waitForServer(2000);
         clearLine();
     });
@@ -100,9 +97,7 @@ describe("Deploy Test", function(){
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
         fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"),
             JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
-        executeDeployment(`
-            --src=${updatedAppSrc}
-            --out=${updatedAppSrc}`);
+        executeDeployment([`--src=${updatedAppSrc}`, `--out=${updatedAppSrc}`]);
         clearLine();
 
         const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
@@ -130,10 +125,7 @@ describe("Deploy Test", function(){
         const currentAppVersion = await innerHTML.jsonValue();
 
         printLine("Running deployment command with new version");
-        executeDeployment(`
-            --src=${__dirname}
-            --out=${__dirname}
-            --version=0.0.0`);
+        executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`, `--version=0.0.0`]);
         clearLine();
 
         await sleep(1000);
@@ -154,11 +146,7 @@ describe("Deploy Test", function(){
         this.timeout(50000);
         printLine("Running deployment command with another app");
         fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "test.localhost" } } }));
-        executeDeployment(`
-            --src=${__dirname}
-            --out=${__dirname}
-            --name=test
-            --title=Test`);
+        executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`, `--name=test`, `--title=Test`]);
         clearLine();
 
         const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});

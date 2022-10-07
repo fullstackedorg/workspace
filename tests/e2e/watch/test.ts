@@ -15,11 +15,19 @@ describe("Watch Test", function(){
     const indexCSS = path.resolve(__dirname, "webapp", "index.css");
     const serverFile = path.resolve(__dirname, "server", "index.ts");
 
+    const postTest = path.resolve(__dirname, "post-test.txt");
+
+    const extraFile = path.resolve(__dirname, "extra.txt");
+    const extraDir = path.resolve(__dirname, "extra");
+
     function deleteAllFiles(){
         if(fs.existsSync(webappFile)) fs.rmSync(webappFile);
         if(fs.existsSync(indexHTML)) fs.rmSync(indexHTML);
         if(fs.existsSync(indexCSS)) fs.rmSync(indexCSS);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+        if(fs.existsSync(postTest)) fs.rmSync(postTest);
+        if(fs.existsSync(extraFile)) fs.rmSync(extraFile);
+        if(fs.existsSync(extraDir)) fs.rmSync(extraDir, {force: true, recursive: true});
     }
 
     before(async function (){
@@ -30,7 +38,10 @@ describe("Watch Test", function(){
         fs.copyFileSync(path.resolve(__dirname, "webapp", "template.css"), indexCSS);
         fs.copyFileSync(path.resolve(__dirname, "server", "template.ts"), serverFile);
 
-        watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent`);
+        fs.writeFileSync(extraFile, "");
+        fs.mkdirSync(extraDir);
+
+        watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent --watch-file=extra.txt --watch-dir=extra`);
 
         await waitForServer(15000);
 
@@ -81,14 +92,6 @@ describe("Watch Test", function(){
 
     async function getBootTime(){
         await sleep(1000);
-
-        if(browser && !browser.isConnected()) {
-            await browser.close();
-            browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
-            page = await browser.newPage();
-            await page.goto("http://localhost:8000");
-            await sleep(1000);
-        }
         const root = await page.$("#bootTime");
         const innerHTML = await root.getProperty('innerHTML');
         const value = Number(await innerHTML.jsonValue());
@@ -100,11 +103,44 @@ describe("Watch Test", function(){
         ok(timeBefore)
 
         fs.appendFileSync(serverFile, "\n// this is a test line");
-        await sleep(6000);
+        await sleep(4000);
         const timeAfter = await getBootTime();
 
         ok(timeAfter)
         notEqual(timeBefore, timeAfter);
+    });
+
+    it('Should re-execute pre and post build', async function(){
+        const getPostCount = () => parseInt(fs.readFileSync(postTest, {encoding: "utf-8"}));
+
+        const postCount = getPostCount();
+
+        fs.appendFileSync(webappFile, "\n// this is a test line");
+        await sleep(1000);
+
+        ok(postCount < getPostCount());
+    });
+
+    it('Should watch extra file', async function(){
+        const countBefore = await getReloadCount();
+        await sleep(1000);
+
+        fs.appendFileSync(extraFile, "\n// this is a test line");
+        await sleep(1000);
+
+        const countAfter = await getReloadCount();
+        equal(countAfter - countBefore, 1);
+    });
+
+    it('Should watch extra dir', async function(){
+        const countBefore = await getReloadCount();
+        await sleep(1000);
+
+        fs.writeFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
+        await sleep(1000);
+
+        const countAfter = await getReloadCount();
+        equal(countAfter - countBefore, 1);
     });
 
     after(async function(){
