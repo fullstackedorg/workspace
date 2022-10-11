@@ -127,11 +127,7 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
         return;
 
     // build file on the fly
-    const esbuildConfig = {
-        ...defaultEsbuildConfig(filePath),
-        bundle: true,
-        external: ["esbuild"]
-    };
+    const esbuildConfig = defaultEsbuildConfig(filePath);
     buildSync(esbuildConfig);
 
     // with test-mode, add istanbul ignore so the code coverage wont fail to parse deleted files

@@ -304,9 +304,6 @@ export default async function (config: Config) {
         production: true
     });
 
-    // predeploy script
-    await execScript(path.resolve(config.src, "predeploy.ts"), config, sftp);
-
     // clean and create directory
     if(mustOverWriteCurrentVersion)
         await sftp.rmdir(serverPathDist, true);
@@ -315,6 +312,9 @@ export default async function (config: Config) {
     // create self-signed certificate
     // TODO: Allow to provide legit certificates
     await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`);
+
+    // predeploy script
+    await execScript(path.resolve(config.src, "predeploy.ts"), config, sftp);
 
     // deploy
     await deployDockerCompose(config, sftp, serverPath, serverPathDist);
