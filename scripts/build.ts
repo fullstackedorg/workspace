@@ -1,7 +1,7 @@
 import path from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, copyRecursiveSync, execScript} from "./utils";
+import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils";
 import yaml from "yaml";
 
 // load .env located at root of src
@@ -216,7 +216,7 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // add js entrypoint
-    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash}"></script>`)
+    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + "-" + randStr(6)}"></script>`)
 
 
     // attach watcher if defined
