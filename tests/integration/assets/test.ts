@@ -3,7 +3,6 @@ import {equal} from "assert";
 import Helper from "fullstacked/tests/integration/Helper";
 import server from "./server/index";
 import path from "path";
-import axios from "axios";
 
 Helper(describe("Assets Tests", function(){
     before(async function (){
@@ -12,9 +11,9 @@ Helper(describe("Assets Tests", function(){
     });
 
     it('Should output image in asset folder and respond with JPG image', async function(){
-        const response = await axios.get("/assets/logo.jpg");
+        const response = await fetch("http://localhost/assets/logo.jpg");
         equal(response.status, 200);
-        equal(response.headers["content-type"], "image/jpeg");
+        equal(response.headers.get("content-type"), "image/jpeg");
     });
 
     after(function(){
