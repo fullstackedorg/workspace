@@ -1,4 +1,3 @@
-import {describe} from "mocha";
 import {exec, execSync} from "child_process";
 import path from "path";
 import waitForServer from "fullstacked/scripts/waitForServer";
@@ -9,7 +8,6 @@ import Runner from "../../../scripts/runner";
 import config from "../../../scripts/config";
 import build from "../../../scripts/build";
 import {clearLine, printLine} from "../../../scripts/utils";
-import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Backup-Restore Test", function(){
     let testArr;
@@ -29,8 +27,11 @@ describe("Backup-Restore Test", function(){
         await runner.start();
         printLine("Generating data");
         await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
-        await fetch.post(`http://localhost:${runner.nodePort}/post`);
-        testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
+
+        await fetch(`http://localhost:${runner.nodePort}/post`, {method: "post"});
+
+        const res = await fetch(`http://localhost:${runner.nodePort}/get`);
+        testArr = await res.json();
     });
 
     it("Should backup / restore volume", async function(){
@@ -47,11 +48,16 @@ describe("Backup-Restore Test", function(){
         await runner.start();
         await waitForServer(10000);
         await sleep(3000);
-        notDeepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
+
+        const res = await fetch(`http://localhost:${runner.nodePort}/get`);
+        notDeepEqual(await res.json(), testArr);
+
         printLine("Restoring");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --silent`);
         await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
-        deepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
+
+        const res2 = await fetch(`http://localhost:${runner.nodePort}/get`)
+        deepEqual(await res2.json(), testArr);
         clearLine();
     });
 
@@ -63,7 +69,8 @@ describe("Backup-Restore Test", function(){
         const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);
         await waitForServer(30000, `http://localhost:${runner.nodePort + 1}/get`);
 
-        deepEqual(await fetch.get(`http://localhost:${runner.nodePort + 1}/get`), testArr);
+        const res = await fetch(`http://localhost:${runner.nodePort + 1}/get`);
+        deepEqual(await res.json(), testArr);
 
         runProcess.kill();
     });

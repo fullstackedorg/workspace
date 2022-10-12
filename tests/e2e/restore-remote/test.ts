@@ -7,7 +7,6 @@ import waitForServer from "fullstacked/scripts/waitForServer";
 import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import {deepEqual, notDeepEqual, ok} from "assert";
 import sleep from "fullstacked/scripts/sleep";
-import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();
@@ -57,15 +56,17 @@ describe("Backup-Restore Remotely Test", function(){
             setupRemoteDeployment(sshServer2),
         ]);
 
-        await fetch.post(`http://localhost:${sshServer1.httpPort}/post`);
-        testArr = await fetch.get(`http://localhost:${sshServer1.httpPort}/get`);
+        await fetch(`http://localhost:${sshServer1.httpPort}/post`, {method: "post"});
+        const res = await fetch(`http://localhost:${sshServer1.httpPort}/get`);
+        testArr = await res.json();
     });
 
     it("Should backup / restore volume remotely", async function(){
         this.timeout(100000);
 
         ok(testArr.length > 0);
-        notDeepEqual(await fetch.get(`http://localhost:${sshServer2.httpPort}/get`), testArr);
+        const res = await fetch(`http://localhost:${sshServer2.httpPort}/get`);
+        notDeepEqual(await res.json(), testArr);
 
         printLine("Backing Up");
         execSync([`node ${path.resolve(__dirname, "../../../", "cli")} backup`,
@@ -87,7 +88,8 @@ describe("Backup-Restore Remotely Test", function(){
         await waitForServer(10000, `http://localhost:${sshServer2.httpPort}/get`);
         clearLine();
 
-        deepEqual(await fetch.get(`http://localhost:${sshServer2.httpPort}/get`), testArr);
+        const res2 = await fetch(`http://localhost:${sshServer2.httpPort}/get`)
+        deepEqual(await res2.json(), testArr);
     });
 
     after(function(){

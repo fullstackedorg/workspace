@@ -50,8 +50,5 @@ scripts/watch.ts
 
 cli.ts
 
-webapp/GlobalReact.d.ts
-webapp/fetch.js
-
 server/index.js
 server/watcher.js
