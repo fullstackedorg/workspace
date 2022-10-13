@@ -1,6 +1,6 @@
 # Requirements
 
-* NodeJS `>= 14.14`
+* NodeJS `>= 18.x`
 * Docker and Docker-Compose
 
 ### Install Guide
