@@ -1,4 +1,5 @@
-import {before, describe} from "mocha";
+import "../../../scripts/register";
+import {describe, it, before, after} from "node:test";
 import {equal} from "assert";
 import {exec} from "child_process";
 import path from "path";
@@ -6,6 +7,7 @@ import puppeteer from "puppeteer";
 import sleep from "fullstacked/scripts/sleep";
 import {cleanOutDir} from "../../../scripts/utils";
 import waitForServer from "fullstacked/scripts/waitForServer";
+import fs from "fs";
 
 describe("Run Test", function(){
     let runProcess, browser, page;
@@ -13,7 +15,7 @@ describe("Run Test", function(){
     before(async function (){
         runProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} run --src=${__dirname} --out=${__dirname} --silent`);
         await waitForServer(10000);
-        browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
         page = await browser.newPage();
         await page.goto("http://localhost:8000");
     })

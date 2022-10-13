@@ -12,11 +12,7 @@ import {getPackageJSON} from "./scripts/utils";
     const scripts = glob.sync(path.resolve(__dirname, "./scripts") + "/**/*.ts")
         .filter(file => !file.endsWith(".d.ts"));
 
-    const otherScripts = [
-        path.resolve(__dirname, "./cli.ts"),
-        path.resolve(__dirname, "./.mocharc.ts"),
-        path.resolve(__dirname, "./mocha-reporter.ts")
-    ]
+    const otherScripts = [path.resolve(__dirname, "./cli.ts")];
 
     const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {
         return esbuild.build({

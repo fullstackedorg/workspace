@@ -6,6 +6,7 @@ import build from "../../scripts/build";
 import config from "../../scripts/config";
 import {cleanOutDir} from "../../scripts/utils";
 import waitForServer from "../../scripts/waitForServer";
+import path from "path";
 
 export default class Helper {
     dir: string;
@@ -28,7 +29,7 @@ export default class Helper {
         await build(this.localConfig);
         this.runner = new Runner(this.localConfig);
         await this.runner.start();
-        this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        this.browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
         this.page = await this.browser.newPage();
 
         if(process.argv.includes("--coverage")){

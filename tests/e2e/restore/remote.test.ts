@@ -1,4 +1,5 @@
-import {describe} from "mocha";
+import "../../../scripts/register";
+import {describe, it, before, after} from "node:test";
 import SSH from "../SSH";
 import {exec, execSync} from "child_process";
 import path from "path";
@@ -41,8 +42,6 @@ describe("Backup-Restore Remotely Test", function(){
     }
 
     before(async function () {
-        this.timeout(200000);
-
         sshServer2.containerName = "dind2";
         sshServer2.sshPort = 2223;
         sshServer2.httpPort = 8001;
@@ -62,8 +61,6 @@ describe("Backup-Restore Remotely Test", function(){
     });
 
     it("Should backup / restore volume remotely", async function(){
-        this.timeout(100000);
-
         ok(testArr.length > 0);
         const res = await fetch(`http://localhost:${sshServer2.httpPort}/get`);
         notDeepEqual(await res.json(), testArr);

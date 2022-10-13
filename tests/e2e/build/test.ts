@@ -1,9 +1,10 @@
-import {describe} from "mocha";
+import "../../../scripts/register";
 import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
 import {equal, ok} from "assert";
 import {cleanOutDir} from "../../../scripts/utils";
+import {describe, it, before, after} from "node:test";
 
 describe("Build Test", function(){
     const prebuildOutputFile = path.resolve(__dirname, "prebuild.txt");
