@@ -4,7 +4,7 @@ export default function (waitLimit: number, url: string = "http://localhost:8000
         const interval = setInterval(() => {
 
             const abortController = new AbortController()
-            const timeoutId = setTimeout(abortController.abort, 500)
+            const timeoutId = setTimeout(() => abortController.abort(), 500)
 
             fetch(url, { signal: abortController.signal })
                 .then(() => {

@@ -1,86 +1,61 @@
-import express, {Router as expressRouter, Request, RequestHandler, Response, RequestParamHandler} from "express";
 import path from "path";
 import fs from "fs";
-import morgan from "morgan";
-import http from "http";
-import {ParsedQs} from "qs";
+import http, {IncomingMessage} from "http";
+import mime from "mime-types";
 
-// source : https://stackoverflow.com/a/54973882
-type Override<T, U> = Omit<T, keyof U> & U;
-
-export class Router{
-    express = expressRouter();
-
-    get<RES_BODY, QUERY_OBJ extends ParsedQs = {}>(
-        path: string,
-        handler: (req: Override<Request, {query: QUERY_OBJ}>, res: Response<RES_BODY>) => void,
-        ...middlewares: RequestHandler[]
-    ){
-        this.express.get(path, ...middlewares, handler);
-    }
-
-    post<RES_BODY, REQ_BODY, QUERY_OBJ extends ParsedQs = {}>(
-        path: string,
-        handler: (req: Override<Request, {query: QUERY_OBJ, body: REQ_BODY}>, res: Response<RES_BODY>) => void,
-        ...middlewares: RequestHandler[]
-    ){
-        this.express.post(path, ...middlewares, handler);
-    }
-
-    put<RES_BODY, REQ_BODY, QUERY_OBJ extends ParsedQs = {}>(
-        path: string,
-        handler: (req?: Override<Request, {query: QUERY_OBJ, body: REQ_BODY}>, res?: Response<RES_BODY>) => void,
-        ...middlewares: RequestHandler[]
-    ){
-        this.express.put(path, ...middlewares, handler);
-    }
-
-    delete<RES_BODY, QUERY_OBJ extends ParsedQs = {}>(
-        path: string,
-        handler: (req: Override<Request, {query: QUERY_OBJ}>, res: Response<RES_BODY>) => void,
-        ...middlewares: RequestHandler[]
-    ){
-        this.express.delete(path, ...middlewares, handler);
-    }
-}
-
-export default class Server extends Router{
+export default class Server {
     server: http.Server;
     watcher;
     port: number = 80;
-    express = express();
     publicDir = path.resolve(__dirname, './public');
-    assetsDir = this.publicDir + "/assets";
+    logger: (req: IncomingMessage) => void = null;
 
     constructor() {
-        super();
-        if(process.argv.includes("--development")) this.express.use(morgan('dev'));
+        if(process.argv.includes("--development")){
+            this.logger = (req: IncomingMessage) => {
+                console.log(req.method, req.url);
+            }
+        }
 
-        this.express.use("*/assets/:assetFile", (req, res, next) => {
-            const filePath = this.assetsDir + "/" + req.params.assetFile;
-            if(fs.existsSync(filePath))
-                return res.sendFile(filePath);
+        this.server = http.createServer((req, res) => {
+            if(this.logger) this.logger(req);
 
-            next();
+            const url = new URL(this.publicDir + req.url, "http://localhost");
+
+            const filePath = url.pathname +
+                (url.pathname.endsWith("/")
+                    ? "index.html"
+                    : "");
+
+            if(fs.existsSync(filePath)){
+                fs.readFile(filePath, (err,data) => {
+
+                    if (err) {
+                        res.writeHead(404);
+                        res.end(JSON.stringify(err));
+                        return;
+                    }
+
+                    res.writeHead(200, {"content-type": mime.lookup(filePath)});
+                    res.end(data);
+                });
+            }
         });
     }
 
-    start(args: {silent?: boolean, testing?: boolean} = {silent: false, testing: false}, callback?: Function){
+
+    start(args: {silent?: boolean, testing?: boolean} = {silent: false, testing: false}){
         // prevent starting server by import
         // source: https://stackoverflow.com/a/6398335
         if (require.main !== module && !args.testing) return;
 
-        this.express.use(express.static(this.publicDir));
-
-        this.server = http.createServer(this.express).listen(this.port);
+        this.server.listen(this.port);
 
         if(process.argv.includes("--development")){
             const watcherModule = require("./watcher");
             this.watcher = new watcherModule.default();
             this.watcher.init(this.server);
         }
-
-        if(callback) callback();
     }
 
     stop(){
