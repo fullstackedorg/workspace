@@ -1,13 +1,15 @@
 import Server from "fullstacked/server";
 
-(() => {
-    const bootTime = Date.now();
+const server = new Server();
 
-    const server = new Server();
+const bootTime = Date.now();
 
-    server.express.get("/bootTime", (req, res) => {
-        res.json(bootTime);
-    });
+server.server.addListener("request", (req, res) => {
+    if(req.url === "/bootTime"){
+        res.writeHead(200, {"content-type": "text/plain"});
+        res.write(bootTime.toString());
+        res.end();
+    }
+});
 
-    server.start();
-})()
+server.start();

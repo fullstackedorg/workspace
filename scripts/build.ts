@@ -102,6 +102,12 @@ async function buildServer(config: Config, watcher){
 // bundles the web app
 async function buildWebApp(config, watcher){
     const entrypoint = path.resolve(config.src, "webapp", "index.ts");
+
+    if(!fs.existsSync(entrypoint)){
+        fs.mkdirSync(config.public, {recursive: true});
+        return fs.writeFileSync(path.resolve(config.public, "index.html"), "Nothing to see here...");
+    }
+
     const options = {
         entryPoints: [ entrypoint ],
         outdir: config.public,
