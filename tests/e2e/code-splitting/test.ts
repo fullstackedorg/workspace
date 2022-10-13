@@ -1,5 +1,6 @@
-import {before, describe} from "mocha";
-import Helper from "tests/e2e/Helper"
+import "../../../scripts/register";
+import {before, describe, it, after} from "node:test";
+import Helper from "fullstacked/tests/e2e/Helper"
 import {glob} from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";

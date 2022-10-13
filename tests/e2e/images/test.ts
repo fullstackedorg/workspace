@@ -1,7 +1,7 @@
-import {describe} from "mocha";
+import "../../../scripts/register";
+import {describe, it, afterEach} from "node:test";
 import {ok} from "assert";
 import Helper from "fullstacked/tests/e2e/Helper";
-
 
 describe("Images Format Test", function(){
     let test;

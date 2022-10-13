@@ -1,4 +1,5 @@
-import {before, describe} from "mocha";
+import "../../../scripts/register";
+import {describe, it, before, after} from "node:test";
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
@@ -45,7 +46,7 @@ describe("Watch Test", function(){
 
         await waitForServer(15000);
 
-        browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
         page = await browser.newPage();
         await page.goto("http://localhost:8000");
     });

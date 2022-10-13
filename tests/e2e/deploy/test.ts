@@ -1,4 +1,5 @@
-import {before, describe} from "mocha";
+import "../../../scripts/register";
+import {before, after, describe, it} from "node:test";
 import {execSync} from "child_process";
 import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
@@ -9,7 +10,7 @@ import sleep from "fullstacked/scripts/sleep";
 import waitForServer from "fullstacked/scripts/waitForServer";
 import SSH from "../SSH";
 
-describe("Deploy Test", function(){
+describe("Deploy Test",  function(){
     const sshServer = new SSH();
     const serverNameFile = path.resolve(__dirname, ".server-names");
 
@@ -30,8 +31,6 @@ describe("Deploy Test", function(){
     }
 
     before(async function (){
-        this.timeout(200000);
-
         // simulate server name setup
         fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
 
@@ -53,7 +52,7 @@ describe("Deploy Test", function(){
     });
 
     it("Should access deployed app", async function(){
-        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
         const title = await page.$("h1");
@@ -67,7 +66,7 @@ describe("Deploy Test", function(){
 
     it("Should access deployed app over https", async function(){
         const browser = await puppeteer.launch({
-            headless: process.argv.includes("--headless"),
+            headless: fs.existsSync(path.resolve(process.cwd(), ".headless")),
             ignoreHTTPSErrors: true
         });
         const page = await browser.newPage();
@@ -91,8 +90,7 @@ describe("Deploy Test", function(){
         equal(fs.readFileSync(postdeployAsyncOutputFile, {encoding: "utf8"}), "postdeploy async");
     });
 
-    it("Should overwrite current app", async function(){
-        this.timeout(50000);
+    it("Should overwrite current app",  async function(){
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
         fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"),
@@ -100,7 +98,7 @@ describe("Deploy Test", function(){
         executeDeployment([`--src=${updatedAppSrc}`, `--out=${updatedAppSrc}`]);
         clearLine();
 
-        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
         const title = await page.$("h1");
@@ -115,8 +113,7 @@ describe("Deploy Test", function(){
     });
 
     it("Should re-deploy with new app version", async function(){
-        this.timeout(50000);
-        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
         const version = await page.$("#version");
@@ -143,13 +140,12 @@ describe("Deploy Test", function(){
     });
 
     it("Should run another app", async function(){
-        this.timeout(50000);
         printLine("Running deployment command with another app");
         fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "test.localhost" } } }));
         executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`, `--name=test`, `--title=Test`]);
         clearLine();
 
-        const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        const browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
         const currentTitle = await page.title();

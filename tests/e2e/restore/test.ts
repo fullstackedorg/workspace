@@ -1,3 +1,5 @@
+import "../../../scripts/register";
+import {describe, it, before, after} from "node:test";
 import {exec, execSync} from "child_process";
 import path from "path";
 import waitForServer from "fullstacked/scripts/waitForServer";
@@ -20,8 +22,6 @@ describe("Backup-Restore Test", function(){
     const backupFile = path.resolve(backupDir, "mongo-data.tar");
 
     before(async function (){
-        this.timeout(30000);
-
         await build({...localConfig, testMode: true});
         runner = new Runner(localConfig);
         await runner.start();
@@ -34,9 +34,7 @@ describe("Backup-Restore Test", function(){
         testArr = await res.json();
     });
 
-    it("Should backup / restore volume", async function(){
-        this.timeout(50000);
-
+    it("Should backup / restore volume",  async function(){
         ok(testArr.length > 0);
         printLine("Backing up");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
@@ -61,9 +59,7 @@ describe("Backup-Restore Test", function(){
         clearLine();
     });
 
-    it("Should start with volume restored", async function(){
-        this.timeout(50000);
-
+    it("Should start with volume restored",  async function(){
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
 
         const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);

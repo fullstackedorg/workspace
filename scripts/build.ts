@@ -120,10 +120,6 @@ async function buildWebApp(config, watcher){
 
         define: getProcessedEnv(config),
 
-        // assets like images are stored at dist/{VERSION}/public/assets
-        // and the server reroutes all asset request to this directory
-        // this is to avoid using publicPath and implies other issues
-        assetNames: "assets/[name]-[hash]",
         loader: {
             ".png": "file" as Loader,
             ".jpg": "file" as Loader,
@@ -134,7 +130,7 @@ async function buildWebApp(config, watcher){
 
         watch: watcher ? {
             onRebuild: async function(error, result){
-                if (error) return
+                if (error) return;
 
                 webAppPostBuild(config, watcher);
 
@@ -223,7 +219,6 @@ export function webAppPostBuild(config: Config, watcher){
 
     // add js entrypoint
     addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + "-" + randStr(6)}"></script>`)
-
 
     // attach watcher if defined
     if(watcher){

@@ -1,3 +1,5 @@
+import "../../../scripts/register";
+import {describe, it, before, after} from "node:test"
 import {setupNginxFile} from "../../../scripts/deploy";
 import {deepEqual, equal} from "assert";
 import path from "path";

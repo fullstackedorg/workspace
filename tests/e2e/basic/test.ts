@@ -1,5 +1,6 @@
-import {before, describe} from "mocha";
-import Helper from "tests/e2e/Helper"
+import "../../../scripts/register";
+import { describe, it, before, after } from 'node:test';
+import Helper from "fullstacked/tests/e2e/Helper"
 import {equal} from "assert";
 
 describe("Basic Test", function(){
