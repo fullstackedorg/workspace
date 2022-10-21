@@ -54,7 +54,16 @@ export default class Server extends Router{
 
     constructor() {
         super();
-        if(process.argv.includes("--development")) this.express.use(morgan('dev'));
+        if(process.argv.includes("--development")) {
+            this.express.use(morgan('dev'));
+
+            this.express.get("/", (req, res, next) => {
+                if(req.rawHeaders.includes("waiting-for-server"))
+                    return res.send("ready");
+                next();
+            });
+
+        }
 
         this.express.use("*/assets/:assetFile", (req, res, next) => {
             const filePath = this.assetsDir + "/" + req.params.assetFile;
