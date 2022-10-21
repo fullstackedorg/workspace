@@ -58,7 +58,7 @@ export default class Server extends Router{
             this.express.use(morgan('dev'));
 
             this.express.get("/", (req, res, next) => {
-                if(req.rawHeaders.includes("waiting-for-server"))
+                if(req.rawHeaders.includes("wait-for-server"))
                     return res.send("ready");
                 next();
             });
