@@ -5,7 +5,12 @@ export default function (waitLimit: number, url: string = "http://localhost:8000
         const startTime = Date.now();
         const interval = setInterval(() => {
 
-            axios.get(url, {timeout: 500})
+            axios.get(url, {
+                timeout: 500,
+                headers: {
+                    "wait-for-server": startTime
+                }
+            })
                 .then(() => {
                     clearInterval(interval)
                     resolve()
