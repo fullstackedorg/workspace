@@ -38,7 +38,8 @@ declare type ConfigDeploy = {
     sshPort?    : number,
     user?       : string,
     pass?       : string,
-    privateKey? : string,
+    sshKey?     : string,
+    sshKeyFile? : string,
 
     appDir?     : string, // directory in server
 
