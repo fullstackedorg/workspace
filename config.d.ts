@@ -34,12 +34,12 @@ declare type ConfigTest = {
 
 declare type ConfigDeploy = {
     // ssh credentials
-    host?       : string,
-    sshPort?    : number,
-    user?       : string,
-    pass?       : string,
-    sshKey?     : string,
-    sshKeyFile? : string,
+    host?           : string,
+    sshPort?        : number,
+    user?           : string,
+    pass?           : string,
+    privateKey?     : string,
+    privateKeyFile? : string,
 
     appDir?     : string, // directory in server
 
