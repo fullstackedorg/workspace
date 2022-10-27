@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "description": "A full stack web app tool and development kit",
   "types": "index.d.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "npx esbuild build.ts --outfile=build.js --format=cjs && node build",
     "pretest": "npm run build",
     "test": "node cli test --headless",
-    "coverage": "npm test -- --coverage",
+    "coverage": "export NODE_OPTIONS=--no-experimental-fetch && npm test -- --coverage",
     "prepublishOnly": "npm run build"
   },
   "repository": {
