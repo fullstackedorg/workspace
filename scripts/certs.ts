@@ -51,7 +51,7 @@ export default async function(config: FullStackedConfig){
 
             let res, success = true;
             try{
-                res = await axios.get(url);
+                res = await axios.get(url, {timeout: 2000});
                 success = res.data === fs.readFileSync(path.resolve(__dirname, "..", "nginx", "html", "index.html"), {encoding: "utf-8"});
             }catch (e){
                 success = false;
