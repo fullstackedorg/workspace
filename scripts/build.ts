@@ -216,7 +216,10 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // add js entrypoint
-    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + "-" + randStr(6)}"></script>`)
+    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + (
+        config.production 
+            ? ""
+            : "-" + randStr(6) )}"></script>`)
 
 
     // attach watcher if defined
@@ -255,7 +258,10 @@ export function webAppPostBuild(config: Config, watcher){
         fs.copyFileSync(CSSFile, path.resolve(config.public, "index.css"));
 
         // add link tag
-        addInHEAD(`<link rel="stylesheet" href="/index.css?v=${config.version + "-" + config.hash}">`)
+        addInHEAD(`<link rel="stylesheet" href="/index.css?v=${config.version + "-" + config.hash + (
+            config.production
+                ? ""
+                : "-" + randStr(6) )}">`)
     }
 
     // web app manifest
