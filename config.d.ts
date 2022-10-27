@@ -32,6 +32,11 @@ declare type ConfigTest = {
     testSuite? : string
 }
 
+declare type ConfigCerts = {
+    domain? : string |string[],
+    email?: string
+}
+
 declare type ConfigDeploy = {
     // ssh credentials
     host?           : string,
@@ -45,7 +50,7 @@ declare type ConfigDeploy = {
 
     skipTest?   : boolean, // skip testing
 
-    noNginx?    : boolean // skip nginx setup
+    noHttps?    : boolean // skip cert setup
 
     pull?       : boolean // force pull new docker images
 }
@@ -55,7 +60,7 @@ declare type ConfigBackup = {
     backupDir? : string
 }
 
-declare type Config = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigBackup & {
+declare type Config = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigCerts & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean
 }

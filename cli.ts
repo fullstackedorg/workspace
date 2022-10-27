@@ -2,13 +2,14 @@
 import defaultConfig from "./scripts/config";
 
 const scripts = {
-    "build" : "./scripts/build",
-    "run"   : "./scripts/run",
-    "watch" : "./scripts/watch",
-    "deploy": "./scripts/deploy",
-    "test"  : "./scripts/test",
-    "backup": "./scripts/backup",
-    "restore": "./scripts/restore"
+    "build"     : "./scripts/build",
+    "run"       : "./scripts/run",
+    "watch"     : "./scripts/watch",
+    "deploy"    : "./scripts/deploy",
+    "test"      : "./scripts/test",
+    "backup"    : "./scripts/backup",
+    "restore"   : "./scripts/restore",
+    "certs"     : "./scripts/certs"
 };
 let script = "run"
 
@@ -35,14 +36,16 @@ const args = {
     "--hash=": value => config.hash = value,
     "--name=": value => config.name = value,
     "--title=": value => config.title = value,
-    "--no-nginx": () => config.noNginx = true,
+    "--no-https": () => config.noHttps = true,
     "--pull": () => config.pull = true,
     "--volume=": value => config.volume = upgradeToArray(value),
     "--backup-dir=": value => config.backupDir = value,
     "--timeout=": value => config.timeout = parseInt(value),
     "--watch-file=": value => config.watchFile = upgradeToArray(value),
     "--watch-dir=": value => config.watchDir = upgradeToArray(value),
-    "--restored": () => config.restored = true
+    "--restored": () => config.restored = true,
+    "--domain=": value => config.domain = upgradeToArray(value),
+    "--email=": value => config.email = value
 };
 
 function upgradeToArray(rawValue: string): string | string[]{

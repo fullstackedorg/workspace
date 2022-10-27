@@ -7,12 +7,11 @@ export default class {
     username = "root";
     password = "docker";
     httpPort = 8000;
-    httpsPort = 8443;
 
     init(){
         execSync(`docker rm -f ${this.containerName}`, {stdio: "ignore"});
         printLine("Setting up dind container with SSH");
-        execSync(`docker run --privileged -d -p ${this.sshPort}:22 -p ${this.httpPort}:80 -p ${this.httpsPort}:443 --name ${this.containerName} docker:dind`);
+        execSync(`docker run --privileged -d -p ${this.sshPort}:22 -p ${this.httpPort}:80 --name ${this.containerName} docker:dind`);
         printLine("Installing ssh server");
         execSync(silenceCommandLine(`docker exec ${this.containerName} apk del openssh-client`));
         execSync(`docker exec ${this.containerName} apk add --update --no-cache openssh`);
