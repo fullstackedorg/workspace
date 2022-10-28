@@ -11,7 +11,7 @@ import SSH from "../SSH";
 
 describe("Deploy Test", function(){
     const sshServer = new SSH();
-    const serverNameFile = path.resolve(__dirname, ".server-names");
+    const serverNameFile = path.resolve(__dirname, ".fullstacked.json");
 
     const predeployOutputFile = path.resolve(__dirname, "predeploy.txt");
     const predeployAsyncOutputFile = path.resolve(__dirname, "predeploy-2.txt");
@@ -23,6 +23,7 @@ describe("Deploy Test", function(){
             "--y",
             "--skip-test",
             "--host=localhost",
+            "--no-https",
             `--ssh-port=${sshServer.sshPort}`,
             `--user=${sshServer.username}`,
             `--pass=${sshServer.password}`]);
@@ -33,11 +34,12 @@ describe("Deploy Test", function(){
         this.timeout(200000);
 
         // simulate server name setup
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
+        fs.writeFileSync(serverNameFile, JSON.stringify({node: {"${PORT}:80": {server_name: "localhost"} } }, null, 2));
 
         sshServer.init();
         printLine("Running deployment command");
         executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`]);
+        printLine("Deployment complete");
         await waitForServer(2000);
         clearLine();
     });
@@ -65,22 +67,6 @@ describe("Deploy Test", function(){
         await browser.close();
     });
 
-    it("Should access deployed app over https", async function(){
-        const browser = await puppeteer.launch({
-            headless: process.argv.includes("--headless"),
-            ignoreHTTPSErrors: true
-        });
-        const page = await browser.newPage();
-        await page.goto("https://localhost:8443");
-        const title = await page.$("h1");
-        const innerHTML = await title.getProperty('innerHTML');
-        const value = await innerHTML.jsonValue();
-
-        equal(value, "Deploy Test");
-
-        await browser.close();
-    });
-
     it("Should have executed postdeploy", function(){
         ok(fs.existsSync(postdeployOutputFile));
         equal(fs.readFileSync(postdeployOutputFile, {encoding: "utf8"}), "postdeploy");
@@ -95,8 +81,8 @@ describe("Deploy Test", function(){
         this.timeout(50000);
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
-        fs.writeFileSync(path.resolve(updatedAppSrc, ".server-names"),
-            JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
+        fs.writeFileSync(path.resolve(updatedAppSrc, ".fullstacked.json"),
+            JSON.stringify({"node": {"${PORT}:80": { server_name: "localhost" } } }));
         executeDeployment([`--src=${updatedAppSrc}`, `--out=${updatedAppSrc}`]);
         clearLine();
 
@@ -145,7 +131,7 @@ describe("Deploy Test", function(){
     it("Should run another app", async function(){
         this.timeout(50000);
         printLine("Running deployment command with another app");
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "test.localhost" } } }));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"${PORT}:80": { server_name: "test.localhost" } } }));
         executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`, `--name=test`, `--title=Test`]);
         clearLine();
 

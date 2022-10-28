@@ -1,4 +1,3 @@
-import SFTP from "ssh2-sftp-client";
 import path from "path";
 import fs from "fs";
 import glob from "glob";
@@ -6,86 +5,52 @@ import {askQuestion, askToContinue, execScript, execSSH, getSFTPClient, printLin
 import build from "./build";
 import test from "./test";
 import yaml from "yaml";
+import Docker from "./docker";
+import certs from "./certs";
 
 /*
 *
 * 1. try to connect to remote host
-* 2. check if app at version is already deployed
-* 3. check if docker and docker-compose is installed
+* 2. check if docker and docker-compose is installed
+* 3. check if app at version is already deployed
 * 4. run tests
-* 5. ship fullstacked-nginx config files
-* 6. build app production mode
-* 7. setup and ship project docker-compose file
-* 8. setup and ship project nginx.conf file
-* 9. ship built app
-* 10. pull/up/restart built app
-* 11. pull/up/restart fullstacked-nginx
+* 5. build app production mode
+* 6. load .fullstacked.json
+* 7. determine hostnames required, missing, ask
+* 8. Certs script (if no-https, ship fullstacked-nginx)
+* 9. save hostnames info locally (.fullstacked.json)
+* 10. setup project docker-compose and nginx.conf files
+* 11. predeploy script
+* 12. ship fullstacked-nginx files
+* 13. ship project docker-compose and nginx.conf files
+* 14. ship built app
+* 15. pull/up/restart built app
+* 16. pull/up/restart fullstacked-nginx
+* 17. postdeploy script
+* 18. clean up
 *
  */
 
-// check if docker is installed on remote host
-async function isDockerInstalledOnRemote(ssh2): Promise<boolean>{
-    const dockerVersion = await execSSH(ssh2, "docker -v");
-    return dockerVersion !== "";
-}
+export async function uploadFullStackedNginx(sftp, config){
+    if(!await sftp.exists(config.appDir)) await sftp.mkdir(config.appDir);
+    const fullStackedNginxDir = path.resolve(__dirname, "..", "nginx")
+    const fullStackedNginxFiles = glob.sync(path.resolve(fullStackedNginxDir, "**", "*"))
+        .map(file => file.substring(fullStackedNginxDir.length + 1));
 
-// install docker on remote host
-async function installDocker(ssh2) {
-    let commands = [
-        "yum install docker -y",
-        "wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)",
-        "mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose",
-        "chmod -v +x /usr/local/bin/docker-compose",
-        "systemctl enable docker.service",
-        "systemctl start docker.service",
-        "chmod 666 /var/run/docker.sock"
-    ]
+    console.log("Uploading FullStacked Nginx onto remote host");
+    for(let i = 0; i < fullStackedNginxFiles.length; i++){
+        const filePath = path.resolve(fullStackedNginxDir, fullStackedNginxFiles[i]);
+        const fileInfo = fs.statSync(filePath);
+        if(fileInfo.isDirectory())
+            await sftp.mkdir(config.appDir + "/" + fullStackedNginxFiles[i]);
+        else
+            await sftp.put(filePath, config.appDir + "/" + fullStackedNginxFiles[i]);
 
-    for (let i = 0; i < commands.length; i++) {
-        await execSSH(ssh2, "sudo " + commands[i]);
+        printLine("Progress: " + (i + 1) + "/" + fullStackedNginxFiles.length);
     }
 }
 
-export async function setupNginxFile(nginxFilePath: string, cachedServerNamesFilePath: string, name: string, version: string, portsMap: Map<string, string[]>, silent: boolean = false){
-    let cachedServerNames = {};
-    if(fs.existsSync(cachedServerNamesFilePath)){
-        cachedServerNames = JSON.parse(fs.readFileSync(cachedServerNamesFilePath, {encoding: 'utf-8'}));
-    }
-
-    const serverNames = await getServerNamesConfigs(portsMap, cachedServerNames);
-    const nginxFileTemplate = path.resolve(__dirname, "../nginx.conf");
-    let content = fs.readFileSync(nginxFileTemplate, {encoding: "utf-8"});
-    let nginxOutputContent = "";
-    let serverNamesJSONOutput = {};
-
-    for(const {service, externalPort, internalPort, serverName, extraConfigs} of serverNames){
-        nginxOutputContent += content.replace(/\{PORT\}/g, externalPort)
-            .replace(/\{SERVER_NAME\}/g, serverName)
-            .replace(/\{APP_NAME\}/g, name)
-            .replace(/\{VERSION\}/g, version)
-            .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs ?? "");
-
-        if(!silent)
-            console.log(serverName + "->" + "0.0.0.0:" + externalPort + " for " + service + " at port " + internalPort);
-
-        if(!serverNamesJSONOutput[service])
-            serverNamesJSONOutput[service] = {};
-
-        serverNamesJSONOutput[service][internalPort] = {
-            server_name: serverName
-        }
-
-        if(extraConfigs)
-            serverNamesJSONOutput[service][internalPort].nginx_extra_configs = extraConfigs;
-    }
-
-    fs.writeFileSync(nginxFilePath, nginxOutputContent);
-    fs.writeFileSync(cachedServerNamesFilePath, JSON.stringify(serverNamesJSONOutput));
-}
-
-async function getPortsMap(ssh2, dockerCompose, startingPort: number = 8000): Promise<Map<string, string[]>> {
-    const portsMap = new Map<string, string[]>();
-
+async function getAvailablePorts(ssh2, count: number, startingPort: number = 8000): Promise<string[]> {
     const dockerContainerPorts = await execSSH(ssh2, "docker container ls --format \"{{.Ports}}\" -a");
     const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
         portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
@@ -93,136 +58,14 @@ async function getPortsMap(ssh2, dockerCompose, startingPort: number = 8000): Pr
         .filter(port => port || !isNaN(port)); // filter empty strings
 
 
-    const services = Object.keys(dockerCompose.services);
-    for(const service of services){
-        const exposedPorts = dockerCompose.services[service].ports;
-        if(!exposedPorts) continue;
-
-        let chosenPorts = [];
-        for(const port of exposedPorts){
-            if(!port.startsWith("${PORT}")) {
-                chosenPorts.push(port);
-                continue;
-            }
-
-            let availablePort = startingPort;
-
-            while(portsInUse.includes(availablePort)){
-                availablePort = availablePort + 1;
-            }
-
-            portsInUse.push(availablePort);
-            chosenPorts.push(port.replace("${PORT}", availablePort));
-        }
-        portsMap.set(service, chosenPorts)
+    const availablePorts = [];
+    while (availablePorts.length < count){
+        if(!portsInUse.includes(startingPort))
+            availablePorts.push(startingPort);
+        startingPort++;
     }
 
-    return portsMap;
-}
-
-// get server name for each service
-export async function getServerNamesConfigs(portsMap: Map<string, string[]>,
-                                            cachedServerNames: {
-                                                [service: string]: {
-                                                    [port: string]: {
-                                                        server_name: string,
-                                                        nginx_extra_configs?: string
-                                                    }
-                                                }
-                                            })
- {
-    const serverNameForService: {
-        service: string,
-        externalPort: string,
-        internalPort: string,
-        serverName: string,
-        extraConfigs?: string
-    }[] = [];
-    for (const [service, ports] of portsMap.entries()) {
-        for(const port of ports){
-            const exposedPortArr = port.split(":");
-            const externalPort = exposedPortArr[0];
-            const internalPort = exposedPortArr[exposedPortArr.length - 1];
-
-            const serverName = cachedServerNames[service] && cachedServerNames[service][internalPort]
-                ? cachedServerNames[service][internalPort].server_name
-                : await askQuestion(service === "nope"
-                    ? "Enter server name for main web app : \n"
-                    : `Enter server name for service ${service} at port ${internalPort}: \n`);
-
-            const extraConfigs = cachedServerNames[service] && cachedServerNames[service][internalPort] ?
-                cachedServerNames[service][internalPort].nginx_extra_configs : "";
-
-            serverNameForService.push({
-                service: service,
-                externalPort: externalPort,
-                internalPort: internalPort,
-                serverName: serverName,
-                extraConfigs: extraConfigs
-            });
-        }
-    }
-
-    return serverNameForService;
-}
-
-// deploy app using docker compose
-async function deployDockerCompose(config: Config, sftp, serverPath, serverPathDist){
-    const dockerComposeFilePath = path.resolve(config.dist, "docker-compose.yml");
-    let dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
-
-    // get available ports for each services
-    const portsMap = await getPortsMap(sftp.client, dockerCompose, 8000);
-
-    // setup and ship docker-compose file
-    for(const [service, ports] of portsMap.entries()){
-        dockerCompose.services[service].ports = ports;
-    }
-    fs.writeFileSync(dockerComposeFilePath, yaml.stringify(dockerCompose));
-    await sftp.put(path.resolve(config.dist, "docker-compose.yml"), serverPath + "/docker-compose.yml");
-
-    // setup and ship nginx
-    if(!config.noNginx) {
-        const nginxFilePath = path.resolve(config.dist, "nginx.conf");
-
-        // check for cached file
-        const cachedServerNamesFilePath = path.resolve(config.src, ".server-names");
-
-        // setup server names in nginx
-        await setupNginxFile(nginxFilePath, cachedServerNamesFilePath, config.name, config.version, portsMap);
-
-        // upload nginx to remote host
-        await sftp.put(nginxFilePath, serverPath + "/nginx.conf");
-    }
-
-    // gather all dist files for version
-    const files = glob.sync("**/*", {cwd: config.out})
-    const localFilePaths = files.map(file => path.resolve(config.out, file));
-
-    // upload all files
-    for (let i = 0; i < files.length; i++) {
-        const fileInfo = fs.statSync(localFilePaths[i]);
-        if(fileInfo.isDirectory())
-            await sftp.mkdir(serverPathDist + "/" + files[i]);
-        else
-            await sftp.put(localFilePaths[i], serverPathDist + "/" + files[i]);
-
-        printLine("Progress: " + (i + 1) + "/" + files.length);
-    }
-    console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
-
-    console.log('\x1b[33m%s\x1b[0m', "Starting app");
-
-    // start app
-    if(config.pull){
-        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml stop`);
-        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml rm -f`);
-        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml pull`);
-        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
-    }else{
-        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml up -d`);
-        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverPath}/docker-compose.yml restart`);
-    }
+    return availablePorts;
 }
 
 export default async function (config: Config) {
@@ -230,37 +73,19 @@ export default async function (config: Config) {
     if(!await askToContinue("Continue"))
         return;
 
-    const sftp = await getSFTPClient(config);
+    // 1.
+    let sftp = await getSFTPClient(config);
 
-    // path where the build app files will be
-    const serverPath = config.appDir + "/" + config.name;
-    // add to that the version number as directory
-    const serverPathDist = serverPath + "/" + config.version;
-    /*
-    * e.g.,
-    * /home
-    * |_ nginx.conf
-    * |_ /project-1
-    * |  |_ docker-compose.yml
-    * |  |_ nginx.conf
-    * |  |_ /0.0.1
-    * |  |  |_ index.js
-    * |  |  |_ /public
-    * |  |  |  |_ ...
-    * |  |_ /0.0.2
-    * |  |  |_ index.js
-    * |  |  |_ /public
-    * |  |  |  |_ ...
-    * |_ /project-2
-    * |  |_ ...
-    * ...
-     */
+    // 2.
+    await Docker(sftp);
 
-    // check if version was already deployed
+    // 3.
+    const serverAppDir = config.appDir + "/" + config.name;
+    const serverAppDistDir = serverAppDir + "/" + config.version;
     let mustOverWriteCurrentVersion = false;
-    if(await sftp.exists(serverPathDist)){
+    if(await sftp.exists(serverAppDistDir)){
         console.log('\x1b[33m%s\x1b[0m', "Version " + config.version + " is already deployed");
-        if(!await askToContinue("Overwrite [" + serverPathDist + "]")) {
+        if(!await askToContinue("Overwrite [" + serverAppDistDir + "]")) {
             await sftp.end();
             return;
         }
@@ -268,71 +93,179 @@ export default async function (config: Config) {
         mustOverWriteCurrentVersion = true;
     }
 
-    // check if docker is installed on remote
-    if(!await isDockerInstalledOnRemote(sftp.client)) {
-        console.log('\x1b[33m%s\x1b[0m', "You are about to install Docker on your remote host");
-        if(!await askToContinue("Continue"))
-            return;
-
-        await installDocker(sftp.client);
-        if(!await isDockerInstalledOnRemote(sftp.client))
-            return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
-    }
-
+    // 4.
     if(!config.skipTest){
+        await sftp.end()
         console.log('\x1b[32m%s\x1b[0m', "Launching Tests!");
         test({
             ...config,
             headless: true,
             coverage: true
         });
+        sftp = await getSFTPClient(config);
     }
 
-    // send fullstacked-nginx files at appDir
-    if(!await sftp.exists(config.appDir))
-        await sftp.mkdir(config.appDir, true);
-
-    await sftp.put(path.resolve(__dirname, "../nginx/docker-compose.yml"), config.appDir + "/docker-compose.yml");
-
-    if(!config.noNginx) {
-        await sftp.put(path.resolve(__dirname, "../nginx/nginx.conf"), config.appDir + "/nginx.conf");
-    }
-
-    // build app
+    // 5.
     await build({
         ...config,
         production: true
     });
 
-    // clean and create directory
-    if(mustOverWriteCurrentVersion)
-        await sftp.rmdir(serverPathDist, true);
-    await sftp.mkdir(serverPathDist, true);
+    // 6.
+    let hostnames: {
+        [service: string]: {
+            [service_port: string]: {
+                server_name: string,
+                nginx_extra_configs: string
+            }
+        }
+    } = {};
+    const fullstackedConfig = path.resolve(config.src, ".fullstacked.json");
+    if(fs.existsSync(fullstackedConfig)) hostnames = JSON.parse(fs.readFileSync(fullstackedConfig, {encoding: "utf-8"}))
 
-    // create self-signed certificate
-    // TODO: Allow to provide legit certificates
-    await execSSH(sftp.client, `openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout ${serverPathDist}/key.pem -out ${serverPathDist}/cert.pem -days 365`);
+    // 7.
+    const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
+    const dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFile, {encoding: "utf-8"}));
+    const services = Object.keys(dockerCompose.services);
+    for(const service of services){
+        const ports = dockerCompose.services[service].ports;
+        if(!ports) continue;
 
-    // predeploy script
-    await execScript(path.resolve(config.src, "predeploy.ts"), config, sftp);
+        for(const port of ports){
+            if(hostnames[service] && hostnames[service][port]) continue;
 
-    // deploy
-    await deployDockerCompose(config, sftp, serverPath, serverPathDist);
+            const domain = await askQuestion(`Enter domain (example.com) or multiple domains (split with space : example.com www.example.com) for ${service} at ${port}\n`);
 
-    // up/restart fullstacked-nginx
-    if(!config.noNginx) {
-        await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
-        await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
+            if(!hostnames[service]) hostnames[service] = {};
+            hostnames[service][port] = {
+                server_name: domain,
+                nginx_extra_configs: ""
+            };
+
+        }
     }
 
-    // close connection
-    await sftp.end();
+    // 8.
+    if(!config.noHttps){
+        await certs({
+            ...config,
+            domain: Object.keys(hostnames).map(service => Object.keys(hostnames[service]).map(port => hostnames[service][port].server_name.split(" "))).flat().flat()
+        });
+    }else await uploadFullStackedNginx(sftp, config)
 
-    if(!config.silent)
-        console.log('\x1b[32m%s\x1b[0m', config.name + " v" + config.version + " deployed!");
 
-    // post deploy script
+    // 9.
+    fs.writeFileSync(fullstackedConfig, JSON.stringify(hostnames, null, 2));
+
+    // 10.
+    const neededPortsCount = Object.keys(hostnames).map(service => Object.keys(hostnames[service]).filter(port => port.startsWith("${PORT}"))).flat().length;
+    const availablePorts = await getAvailablePorts(sftp.client, neededPortsCount);
+
+    const nginxFile = path.resolve(config.dist, "nginx.conf");
+
+    const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx.conf"), {encoding: "utf-8"}) + "\n" +
+        (config.noHttps
+            ? ""
+            : fs.readFileSync(path.resolve(__dirname, "..", "nginx-ssl.conf"), {encoding: "utf-8"}));
+
+    let nginxConf = ""
+
+    Object.keys(dockerCompose.services).forEach(service => {
+        if(!dockerCompose.services[service].ports) return;
+
+        dockerCompose.services[service].ports.forEach((port, index) => {
+            let externalPort = port.split(":").at(0);
+            if(externalPort === "${PORT}"){
+                externalPort = availablePorts.shift();
+                dockerCompose.services[service].ports[index] = externalPort + port.substring("${PORT}".length);
+            }
+
+            nginxConf += nginxTemplate.replace(/\{PORT\}/g, externalPort)
+                .replace(/\{SERVER_NAME\}/g, hostnames[service][port].server_name)
+                .replace(/\{APP_NAME\}/g, config.name)
+                .replace(/\{VERSION\}/g, config.version)
+                .replace(/\{EXTRA_CONFIGS\}/g, hostnames[service][port].nginx_extra_configs ?? "")
+                .replace(/\{DOMAIN\}/g, hostnames[service][port].server_name.split(" ").at(0));
+        });
+    });
+
+    fs.writeFileSync(dockerComposeFile, yaml.stringify(dockerCompose));
+    fs.writeFileSync(nginxFile, nginxConf);
+
+    // 11.
+    await execScript(path.resolve(config.src, "predeploy.ts"), config);
+
+    // 13.
+    if(await sftp.exists(serverAppDir)) await execSSH(sftp.client, `sudo chown ${config.user}:${config.user} ${serverAppDir}`);
+    else await sftp.mkdir(serverAppDir, true);
+    await sftp.put(dockerComposeFile, serverAppDir + "/docker-compose.yml");
+    await sftp.put(nginxFile, serverAppDir + "/nginx.conf");
+
+    // 14.
+    if(mustOverWriteCurrentVersion) await sftp.rmdir(serverAppDistDir, true);
+    await sftp.mkdir(serverAppDistDir, true);
+    const files = glob.sync("**/*", {cwd: config.out})
+    const localFiles = files.map(file => path.resolve(config.out, file));
+
+    for (let i = 0; i < files.length; i++) {
+        const fileInfo = fs.statSync(localFiles[i]);
+        if(fileInfo.isDirectory())
+            await sftp.mkdir(serverAppDistDir + "/" + files[i]);
+        else
+            await sftp.put(localFiles[i], serverAppDistDir + "/" + files[i]);
+
+        printLine("Progress: " + (i + 1) + "/" + files.length);
+    }
+    console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
+
+
+    // 15.
+    if(config.pull){
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml stop`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml rm -f`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml pull`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml up -d`);
+    }else{
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml up -d`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml restart`);
+    }
+
+    // 16.
+    await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
+    await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
+
+    // 17.
     await execScript(path.resolve(config.src, "postdeploy.ts"), config);
 
-    process.exit(0);
+    // 18.
+    await sftp.end();
+    if(!config.silent)
+        console.log('\x1b[32m%s\x1b[0m', config.name + " v" + config.version + " deployed!");
+    return process.exit(0);
 }
+
+
+
+/*
+* e.g.,
+* {APP_DIR} <-- config.appDir
+* ├── nginx.conf
+* ├── docker-compose.yml
+* ├── /html
+* │   └── ...
+* ├── /project-1 <-- serverAppDir
+* │   ├── docker-compose.yml
+* │   ├── nginx.conf
+* │   ├── /certs
+* │   │   └── ...
+* │   ├── /0.0.1 <-- serverAppDistDir
+* │   │   ├── index.js
+* │   │   └── /public
+* │   │       └── ...
+* │   └── /0.0.2
+* │      ├── index.js
+* │      └── /public
+* │          └── ...
+* └── /project-2
+*     └── ...
+*/

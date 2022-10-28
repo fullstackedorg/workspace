@@ -12,7 +12,7 @@ import {fetch} from "fullstacked/webapp/fetch";
 describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();
     const sshServer2 = new SSH();
-    const serverNameFile = path.resolve(__dirname, ".server-names");
+    const serverNameFile = path.resolve(__dirname, ".fullstacked.json");
     const backupDir = path.resolve(process.cwd(), "backup");
     const outDir = path.resolve(__dirname, "out");
     let testArr = [];
@@ -28,6 +28,7 @@ describe("Backup-Restore Remotely Test", function(){
                 `--out=${sshServer === sshServer1 ? outDir : __dirname}`,
                 "--y",
                 "--skip-test",
+                "--no-https",
                 "--host=localhost",
                 `--user=${sshServer.username}`,
                 `--pass=${sshServer.password}`,
@@ -47,9 +48,8 @@ describe("Backup-Restore Remotely Test", function(){
         sshServer2.containerName = "dind2";
         sshServer2.sshPort = 2223;
         sshServer2.httpPort = 8001;
-        sshServer2.httpsPort = 8444;
 
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"${PORT}:80": { server_name: "localhost" } } }));
         fs.mkdirSync(outDir);
 
         await Promise.all([

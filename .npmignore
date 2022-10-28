@@ -32,17 +32,16 @@ tests/integration/server.js
 tests/unit
 
 scripts/build.ts
-scripts/build.d.ts
+scripts/certs.ts
 scripts/config.ts
 scripts/create.ts
 scripts/deploy.ts
+scripts/docker.ts
 scripts/register.ts
 scripts/run.ts
 scripts/runner.ts
-scripts/runner.d.ts
 scripts/test.ts
 scripts/utils.ts
-scripts/utils.d.ts
 scripts/watch.ts
 scripts/watch.ts
 

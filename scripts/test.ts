@@ -29,7 +29,9 @@ export default function(config: Config){
             testCommand;
     }
 
-    execSync(testCommand, {stdio: "inherit"});
+    let env = process.env;
+    env["NODE_OPTIONS"] = "--no-experimental-fetch";
+    execSync(testCommand, {stdio: "inherit", env: env});
 
     if(config.coverage && !config.testMode){
         glob.sync(path.resolve(config.src, ".nyc_output", "*.json")).forEach(file => {

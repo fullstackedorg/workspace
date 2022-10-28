@@ -5,7 +5,7 @@ import * as path from "path";
 import {equal, ok} from "assert";
 
 describe("Code Splitting", function(){
-    let test;
+    let test: Helper;
 
     before(async function (){
         test = new Helper(__dirname);
