@@ -45,7 +45,8 @@ const args = {
     "--watch-dir=": value => config.watchDir = upgradeToArray(value),
     "--restored": () => config.restored = true,
     "--domain=": value => config.domain = upgradeToArray(value),
-    "--email=": value => config.email = value
+    "--email=": value => config.email = value,
+    "--production": () => config.production = true
 };
 
 function upgradeToArray(rawValue: string): string | string[]{
