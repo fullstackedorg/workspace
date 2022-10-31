@@ -1,5 +1,4 @@
-import "../../../scripts/register";
-import { describe, it, before, after } from 'node:test';
+import { describe, it, before, after } from 'mocha';
 import Helper from "fullstacked/tests/e2e/Helper"
 import {equal} from "assert";
 

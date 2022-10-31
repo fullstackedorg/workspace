@@ -1,12 +1,11 @@
-import "../../../scripts/register";
-import {before, describe, it, after} from "node:test";
+import {before, describe, it, after} from 'mocha';
 import Helper from "fullstacked/tests/e2e/Helper"
 import {glob} from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";
 
 describe("Code Splitting", function(){
-    let test;
+    let test: Helper;
 
     before(async function (){
         test = new Helper(__dirname);

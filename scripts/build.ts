@@ -3,6 +3,7 @@ import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils";
 import yaml from "yaml";
+import glob from "glob";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -154,12 +155,14 @@ async function buildWebApp(config, watcher){
                         : [path.resolve(config.src, config.watchDir)]
                     : [];
 
+                const filesInDir = extraDirs.map(dir => glob.sync(path.resolve(dir, "**", "*"), {nodir: true})).flat();
+
                 build.onResolve({ filter: /.*/ }, args => {
                     return {
                         watchFiles: extraFiles.concat([
                             path.resolve(config.src, "webapp", "index.html"),
                             path.resolve(config.src, "webapp", "index.css")
-                        ]),
+                        ], filesInDir),
                         watchDirs: extraDirs
                     };
                 })
@@ -218,7 +221,10 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // add js entrypoint
-    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + "-" + randStr(6)}"></script>`)
+    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + (
+        config.production 
+            ? ""
+            : "-" + randStr(6) )}"></script>`)
 
     // attach watcher if defined
     if(watcher){
@@ -256,7 +262,10 @@ export function webAppPostBuild(config: Config, watcher){
         fs.copyFileSync(CSSFile, path.resolve(config.public, "index.css"));
 
         // add link tag
-        addInHEAD(`<link rel="stylesheet" href="/index.css?v=${config.version + "-" + config.hash}">`)
+        addInHEAD(`<link rel="stylesheet" href="/index.css?v=${config.version + "-" + config.hash + (
+            config.production
+                ? ""
+                : "-" + randStr(6) )}">`)
     }
 
     // web app manifest
