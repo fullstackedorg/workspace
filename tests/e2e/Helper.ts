@@ -29,7 +29,7 @@ export default class Helper {
         await build(this.localConfig);
         this.runner = new Runner(this.localConfig);
         await this.runner.start();
-        this.browser = await puppeteer.launch({headless: fs.existsSync(path.resolve(process.cwd(), ".headless"))});
+        this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
 
         if(process.argv.includes("--coverage")){

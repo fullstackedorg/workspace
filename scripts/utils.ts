@@ -222,8 +222,10 @@ export async function getSFTPClient(config: FullStackedConfig){
         connectionConfig.password = config.pass;
 
     if(config.privateKey)
-        connectionConfig.privateKey = fs.readFileSync(path.resolve(process.cwd(), config.privateKey));
+        connectionConfig.privateKey = config.privateKey;
 
+    if(config.privateKeyFile)
+        connectionConfig.privateKey = fs.readFileSync(path.resolve(process.cwd(), config.privateKeyFile));
 
     await sftp.connect(connectionConfig);
 

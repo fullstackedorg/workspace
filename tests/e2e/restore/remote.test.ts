@@ -1,5 +1,4 @@
-import "../../../scripts/register";
-import {describe, it, before, after} from "node:test";
+import {describe, it, before, after} from 'mocha';
 import SSH from "../SSH";
 import {exec, execSync} from "child_process";
 import path from "path";
@@ -8,11 +7,12 @@ import waitForServer from "fullstacked/scripts/waitForServer";
 import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import {deepEqual, notDeepEqual, ok} from "assert";
 import sleep from "fullstacked/scripts/sleep";
+import {fetch} from "../../../webapp/fetch";
 
 describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();
     const sshServer2 = new SSH();
-    const serverNameFile = path.resolve(__dirname, ".server-names");
+    const serverNameFile = path.resolve(__dirname, ".fullstacked.json");
     const backupDir = path.resolve(process.cwd(), "backup");
     const outDir = path.resolve(__dirname, "out");
     let testArr = [];
@@ -23,15 +23,17 @@ describe("Backup-Restore Remotely Test", function(){
                 await sleep(2000);
 
             sshServer.init();
-            exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
+            const deployment = exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
                 `--src=${__dirname}`,
                 `--out=${sshServer === sshServer1 ? outDir : __dirname}`,
                 "--y",
                 "--skip-test",
+                "--no-https",
                 "--host=localhost",
                 `--user=${sshServer.username}`,
                 `--pass=${sshServer.password}`,
                 `--ssh-port=${sshServer.sshPort}`].join(" "));
+            // deployment.stdout.pipe(process.stdout);
             try{
                 await waitForServer(150000, `http://localhost:${sshServer.httpPort}/get`);
             }catch (e){
@@ -42,12 +44,13 @@ describe("Backup-Restore Remotely Test", function(){
     }
 
     before(async function () {
+        this.timeout(200000);
+
         sshServer2.containerName = "dind2";
         sshServer2.sshPort = 2223;
         sshServer2.httpPort = 8001;
-        sshServer2.httpsPort = 8444;
 
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"80": { server_name: "localhost" } } }));
+        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"${PORT}:80": { server_name: "localhost" } } }));
         fs.mkdirSync(outDir);
 
         await Promise.all([
@@ -55,15 +58,16 @@ describe("Backup-Restore Remotely Test", function(){
             setupRemoteDeployment(sshServer2),
         ]);
 
-        await fetch(`http://localhost:${sshServer1.httpPort}/post`, {method: "post"});
-        const res = await fetch(`http://localhost:${sshServer1.httpPort}/get`);
-        testArr = await res.json();
+        await fetch.post(`http://localhost:${sshServer1.httpPort}/post`);
+        testArr = await fetch.get(`http://localhost:${sshServer1.httpPort}/get`);
     });
 
     it("Should backup / restore volume remotely", async function(){
+        this.timeout(100000);
+
         ok(testArr.length > 0);
-        const res = await fetch(`http://localhost:${sshServer2.httpPort}/get`);
-        notDeepEqual(await res.json(), testArr);
+        const response = await fetch.get(`http://localhost:${sshServer2.httpPort}/get`);
+        notDeepEqual(response, testArr);
 
         printLine("Backing Up");
         execSync([`node ${path.resolve(__dirname, "../../../", "cli")} backup`,
@@ -85,8 +89,8 @@ describe("Backup-Restore Remotely Test", function(){
         await waitForServer(10000, `http://localhost:${sshServer2.httpPort}/get`);
         clearLine();
 
-        const res2 = await fetch(`http://localhost:${sshServer2.httpPort}/get`)
-        deepEqual(await res2.json(), testArr);
+        const response2 = await fetch.get(`http://localhost:${sshServer2.httpPort}/get`)
+        deepEqual(response2, testArr);
     });
 
     after(function(){

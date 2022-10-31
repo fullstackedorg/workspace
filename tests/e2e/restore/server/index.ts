@@ -3,8 +3,6 @@ import {MongoClient} from 'mongodb';
 
 const server = new Server();
 
-server.start();
-
 (async () => {
     const uri = "mongodb://username:password@mongo:27017";
     const client = new MongoClient(uri);
@@ -12,7 +10,7 @@ server.start();
     const database = client.db("test");
     const collection = database.collection<{ test: number }>("tests");
 
-    server.server.addListener("request",async (req, res) => {
+    server.addListener(async (req, res) => {
         if(req.url !== "/post" || req.method !== "POST") return;
 
         const result = await collection.insertOne({
@@ -24,7 +22,7 @@ server.start();
         res.end();
     });
 
-    server.server.addListener("request",async (req, res) => {
+    server.addListener(async (req, res) => {
         if(req.url !== "/get") return;
 
         const result = await collection.find();
@@ -34,4 +32,7 @@ server.start();
         res.write(JSON.stringify(data));
         res.end();
     });
+
+
+    server.start();
 })()

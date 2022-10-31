@@ -1,28 +1,55 @@
 import path from "path";
+import {execSync} from "child_process";
 import glob from "glob";
-import {run} from "node:test";
-import {buildSync} from "esbuild";
-import {defaultEsbuildConfig} from "./utils";
 import fs from "fs";
 
+//@ts-ignore
+process.env.FORCE_COLOR = true;
+
 export default function(config: Config){
-    let testFiles = config.testFile
-        ? [config.testFile]
-        : glob.sync(path.resolve(config.src, "**", "*test.ts"));
+    const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
 
-    testFiles = testFiles.map(testFile => {
-        const esbuildConfig = defaultEsbuildConfig(testFile);
-        buildSync(esbuildConfig);
-        return esbuildConfig.outfile;
-    });
+    // gather all test.ts files
+    let testFiles = config.testFile ?? path.resolve(config.src, "**", "*test.ts");
 
-    if(config.headless)
-        fs.writeFileSync(path.resolve(process.cwd(), ".headless"), "");
+    let testCommand = "npx mocha \"" + testFiles + "\" " +
+        "--config " + mochaConfigFile + " " +
+        "--reporter " + path.resolve(__dirname, "..", "mocha-reporter.js") + " " +
+        (config.testSuite ? "--grep \"" + config.testSuite + "\"" : "") + " " +
+        (config.headless ? "--headless" : "") + " " +
+        (config.coverage ? "--coverage" : "") + " " +
+        (config.testMode ? "--test-mode" : "") + " ";
 
-    const tapStream = run({files: testFiles});
-    tapStream.on("close", () => {
-        if(config.headless)
-            fs.rmSync(path.resolve(process.cwd(), ".headless"));
-    });
-    tapStream.pipe(process.stdout);
+    // use nyc for coverage
+    if(config.coverage) {
+        testCommand = "npx nyc" + " " +
+            "--silent" + " " +
+            "--temp-dir " + path.resolve(config.src, ".nyc_output") + " " +
+            (config.testMode ? "--no-clean" : "") + " " +
+            testCommand;
+    }
+
+    let env = process.env;
+    env["NODE_OPTIONS"] = "--no-experimental-fetch";
+    execSync(testCommand, {stdio: "inherit", env: env});
+
+    if(config.coverage && !config.testMode){
+        glob.sync(path.resolve(config.src, ".nyc_output", "*.json")).forEach(file => {
+            const content = fs.readFileSync(file, {encoding: 'utf-8'});
+            const updatedContent = content.replace(/\/app\/.*?\./g, value => {
+                const pathComponents = value.split("/");
+                pathComponents.shift(); // remove ""
+                pathComponents.shift(); // remove "app"
+                const updatedPath = path.resolve(config.src,  pathComponents.join(path.sep));
+                return path.sep === "\\" ? updatedPath.replace(/\\/g, "\\\\") : updatedPath;
+            });
+            fs.writeFileSync(file, updatedContent);
+        });
+
+        execSync("npx nyc report" + " " +
+            "--reporter html" + " " +
+            "--reporter text-summary" + " " +
+            "--report-dir " + path.resolve(config.src, "coverage") + " " +
+            "--temp-dir " + path.resolve(config.src, ".nyc_output"), {stdio: "inherit"});
+    }
 }
