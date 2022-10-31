@@ -89,6 +89,11 @@ export default async function(config: FullStackedConfig){
             console.log("SSL certificates needs renewal");
         }
 
+        if(!cert.subjectAltName){
+            await sftp.end();
+            return console.log("Looks like self-signed certificate, proceeding...");
+        }
+
         const domains = cert.subjectAltName.split(",").map(record => record.trim().substring("DNS:".length));
         if(!compareArrays(hostnames, domains)){
             console.error("Certificate domains does not match provided hostnames", domains, hostnames);
