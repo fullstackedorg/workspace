@@ -1,6 +1,13 @@
 # Requirements
 
-* NodeJS `>= 18.x`
+## Remote Development
+
+If you are looking to simply develop a web app, I strongly suggest you tu try [FullStacked IDE](https://ide.fullstacked.org).
+It is a web based IDE that wraps FullStacked usage with clean and efficient interfaces!
+
+## Local Development
+
+* NodeJS `>= 16.x`
 * Docker and Docker-Compose
 
 ### Install Guide

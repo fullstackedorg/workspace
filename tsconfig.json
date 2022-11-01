@@ -13,6 +13,7 @@
         "jsx": "react-jsx",
         "paths": {
             "fullstacked/server": ["./server/index.ts"],
+            "fullstacked/webapp/fetch": ["./webapp/fetch.ts"],
             "fullstacked/tests/e2e/Helper": ["./tests/e2e/Helper.ts"],
             "fullstacked/tests/integration/Helper": ["./tests/integration/Helper.ts"],
             "fullstacked/scripts/sleep": ["./scripts/sleep.ts"],

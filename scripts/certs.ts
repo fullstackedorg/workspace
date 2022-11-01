@@ -1,6 +1,5 @@
 import {FullStackedConfig} from "../index";
-import {askQuestion, execSSH, getSFTPClient, printLine} from "./utils";
-import glob from "glob";
+import {askQuestion, execSSH, getSFTPClient} from "./utils";
 import path from "path";
 import fs from "fs";
 import Docker from "./docker";

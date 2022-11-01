@@ -44,6 +44,7 @@ describe("Watch Test", function(){
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent --watch-file=extra.txt --watch-dir=extra`);
         // watchProcess.stdout.pipe(process.stdout);
+        // watchProcess.stderr.pipe(process.stderr);
 
         await waitForServer(15000);
 

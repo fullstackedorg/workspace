@@ -15,4 +15,3 @@ coverage
 !./index.d.ts
 /version.ts
 /backup
-.headless

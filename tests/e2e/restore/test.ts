@@ -9,7 +9,7 @@ import Runner from "../../../scripts/runner";
 import config from "../../../scripts/config";
 import build from "../../../scripts/build";
 import {clearLine, printLine} from "../../../scripts/utils";
-import {fetch} from "../../../webapp/fetch";
+import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Backup-Restore Test", function(){
     let testArr;

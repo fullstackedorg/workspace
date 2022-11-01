@@ -13,8 +13,6 @@ d.ts
 **/*.js.map
 **/*.tjs.map
 
-.headless
-
 /build.js
 /build.ts
 

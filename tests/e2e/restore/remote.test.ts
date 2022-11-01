@@ -7,7 +7,7 @@ import waitForServer from "fullstacked/scripts/waitForServer";
 import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
 import {deepEqual, notDeepEqual, ok} from "assert";
 import sleep from "fullstacked/scripts/sleep";
-import {fetch} from "../../../webapp/fetch";
+import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();
