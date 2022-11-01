@@ -10,7 +10,7 @@ Helper(describe("Hello World", function(){
     });
 
     it('Should hit hello world endpoint', async function(){
-        const response = await fetch.get("/hello-world") ;
+        const response = await fetch.get("http://localhost/hello-world") ;
         equal(response, "Hello World");
     });
 
