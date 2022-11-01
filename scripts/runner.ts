@@ -67,7 +67,7 @@ export default class Runner {
         });
 
         // output the pulling process if needed
-        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d`;
+        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d -t 0`;
         if(this.config.silent && !pullNeeded)
             cmd = silenceCommandLine(cmd);
 

@@ -11,5 +11,6 @@ a web browser at an address like `http://localhost:8000`.
 ### Flags
 | Flag                                        | Description                                                                                          |
 |---------------------------------------------|------------------------------------------------------------------------------------------------------|
-| *--timeout=*  &nbsp;                        | Let the `watcher` await your app for `X` amount of milliseconds.<br/> *Default: 3000*                |
+| *--timeout=*  &nbsp;                        | Allow the `watcher` await your app for `X` amount of milliseconds.<br/> *Default: 3000*              |
 | *--watch-file=* <br/> *--watch-dir=* &nbsp; | Watch extra files and directories. Will hot reload your web app when any of these files is modified. |
+| *--restored*                                | Watch extra files and directories. Will hot reload your web app when any of these files is modified. |

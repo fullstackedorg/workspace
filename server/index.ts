@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import http, {IncomingMessage, RequestListener, ClientRequest, ServerResponse} from "http";
+import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime-types";
 
 export default class Server {

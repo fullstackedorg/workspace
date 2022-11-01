@@ -9,7 +9,7 @@
     "build": "npx esbuild build.ts --outfile=build.js --format=cjs && node build",
     "pretest": "npm run build",
     "test": "node cli test --headless",
-    "coverage": "npm run test -- --coverage",
+    "coverage": "npm test -- --coverage",
     "prepublishOnly": "npm run build"
   },
   "repository": {
