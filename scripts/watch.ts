@@ -44,7 +44,7 @@ function connectToWatcher(port: number){
 
 export default async function(config: Config) {
     globalConfig = config;
-    globalConfig.timeout = globalConfig.timeout || 3000;
+    globalConfig.timeout = globalConfig.timeout || 1000;
 
     // build with the watcher defined
     await build(config, watcher);
