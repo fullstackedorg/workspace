@@ -1,23 +1,22 @@
-<p style="text-align: center; margin-bottom: -10px">
+<p align="center">
 <a href="https://fullstacked.org/">
 <img src="https://fullstacked.org/favicon.png" alt="FullStacked Logo" width="50px" />
 </a>
 </p>
-<h1 style="text-align: center; margin: 0">FullStacked</h1>
-<p style="text-align: center">
+<h1 align="center">FullStacked</h1>
+<h3 align="center">A TypeScript Web Apps Tool</h3>
+<p align="center" ><small>The only tool you need from creation to deployment</small></p>
+<p align="center">
 <a href="https://www.npmjs.com/package/fullstacked"><img src="https://img.shields.io/badge/version-0.8.0-01b0de" alt="version"/>
-<a href="https://www.npmjs.com/package/fullstacked?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-17-yellowgreen" alt="dependencies"/></a>
-<a href="https://npmgraph.js.org/?q=fullstacked"><img src="https://img.shields.io/badge/module%20deps-365-yellow" alt="module dependencies"/></a>
-<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-82.00%25-yellowgreen" alt="code coverage"/></a>
+<a href="https://www.npmjs.com/package/fullstacked?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-13-yellowgreen" alt="dependencies"/></a>
+<a href="https://npmgraph.js.org/?q=fullstacked"><img src="https://img.shields.io/badge/module%20deps-302-yellow" alt="module dependencies"/></a>
+<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-80.27%25-yellowgreen" alt="code coverage"/></a>
 </p>
 
 > **Warning** <br />
 > FullStacked is still in early development. Commands and syntax are likely to change.
 
-# FullStacked
-A full stack web app build tool and development kit.
-
-A complete setup for a TypeScript full stack application.
+FullStacked provides a complete setup for a TypeScript full stack web application.
 It has all the Server(Backend) setup and the WebApp(Frontend) setup with features like :
 * ~~Create~~ Now in [`create-fullstacked`](https://github.com/cplepage/create-fullstacked) project
 * Run
@@ -33,7 +32,7 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup with feature
 ## Requirements
 ### Remote Development
 
-If you are looking to simply develop a web app, I strongly suggest you tu try [FullStacked IDE](https://ide.fullstacked.org).
+If you are looking to simply develop a web app, I strongly suggest you to try [FullStacked IDE](https://ide.fullstacked.org).
 It is a web based IDE that wraps FullStacked usage with clean and efficient interfaces.
 
 ### Local Development
@@ -67,7 +66,7 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
 | command                 | uses                                                                             |
 |-------------------------|----------------------------------------------------------------------------------|
-| npm init fullstacked    | Generate the default files starter files                                         |
+| npm init fullstacked    | Generate the default starter files                                         |
 | npx fullstacked run     | Run your web app.                                                                |
 | npx fullstacked build   | Build your app.                                                                  |
 | npx fullstacked watch   | Rebuilds your app and hot reloads on changes.                                    |
@@ -89,9 +88,12 @@ sharing development environments for the purpose of testing and reviewing.
 ## Roadmap & Thoughts
 
 * Manage to create a simple and efficient way to test frontend component/class individually
-* Switch to [Deno](https://github.com/denoland/deno) or [bun](https://github.com/Jarred-Sumner/bun)  
+* ~~Switch to~~ Support [Deno](https://github.com/denoland/deno) and/or [bun](https://github.com/Jarred-Sumner/bun)  
 <br /> 
+ 
 > These are being implemented in [FullStacked IDE](https://ide.fullstacked.org)
+ 
+ 
 * Add integration with [PWABuilder](https://github.com/pwa-builder/PWABuilder) to generate iOS and Android App
 * <s>Switch nginx image for [nginx proxy manager](https://github.com/NginxProxyManager/nginx-proxy-manager) </s> 
 Will create our own interface with [Tabler](https://github.com/tabler/tabler)
