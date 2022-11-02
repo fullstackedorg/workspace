@@ -41,8 +41,7 @@ It is a web based IDE that wraps FullStacked usage with clean and efficient inte
 * NodeJS `>= 16.x` [https://nodejs.org/](https://nodejs.org/)
 * Docker and Docker-Compose [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
  
-
-## Getting Started
+#### Getting Started
 
 1. Create a folder where you will develop your awesome web app
 ```shell
@@ -59,7 +58,7 @@ npm start
 ```
 Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
-## Commands
+#### Commands
 
 | command                 | uses                                                                             |
 |-------------------------|----------------------------------------------------------------------------------|
