@@ -29,20 +29,17 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup with feature
 * Deploy
 * Backup/Restore
 
-## Requirements
-### Remote Development
+## Usage
+### Remotely
 
-If you are looking to simply develop a web app, I strongly suggest you to try [FullStacked IDE](https://ide.fullstacked.org).
+If you are looking to simply and quickly develop a web app, I strongly suggest to try [FullStacked IDE](https://ide.fullstacked.org).
 It is a web based IDE that wraps FullStacked usage with clean and efficient interfaces.
 
-### Local Development
+### Locally (on your machine)
 
-* NodeJS `>= 16.x`
-* Docker and Docker-Compose
-
-#### Install Guide
-1. Install NodeJS : [https://nodejs.org/](https://nodejs.org/)
-2. Install Docker Desktop : [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+#### Requirements
+* NodeJS `>= 16.x` [https://nodejs.org/](https://nodejs.org/)
+* Docker and Docker-Compose [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
  
 
 ## Getting Started
