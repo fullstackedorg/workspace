@@ -13,6 +13,7 @@ describe("Docker-Compose Test", function(){
     before(async function (){
         runProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} run --src=${__dirname} --out=${__dirname}`);
         // runProcess.stdout.pipe(process.stdout);
+        // runProcess.stderr.pipe(process.stderr);
 
         await waitForServer(15000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
