@@ -18,6 +18,8 @@ d.ts
 
 docs
 
+mocha-reporter.ts
+
 tests/e2e/*/*
 tests/e2e/Helper.js
 tests/e2e/SSH.ts
@@ -46,6 +48,8 @@ scripts/watch.ts
 .mocharc.ts
 
 cli.ts
+
+webapp/fetch.js
 
 server/index.js
 server/watcher.js
