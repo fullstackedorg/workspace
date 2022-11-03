@@ -104,6 +104,8 @@ async function buildServer(config: Config, watcher){
 async function buildWebApp(config, watcher){
     const entrypoint = path.resolve(config.src, "webapp", "index.ts");
 
+    if(fs.existsSync(config.public)) fs.rmSync(config.public, {force: true, recursive: true});
+
     if(!fs.existsSync(entrypoint)){
         fs.mkdirSync(config.public, {recursive: true});
         return fs.writeFileSync(path.resolve(config.public, "index.html"), "Nothing to see here...");
