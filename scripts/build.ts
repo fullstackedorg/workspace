@@ -78,6 +78,22 @@ async function buildServer(config: Config, watcher){
     const userDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
     if(fs.existsSync(userDockerComposeFilePath)){
         const userDockerCompose = yaml.parse(fs.readFileSync(userDockerComposeFilePath, {encoding: "utf-8"}));
+
+        Object.keys(userDockerCompose.services).forEach(service => {
+            // no profile in service => always spawn
+            if(!userDockerCompose.services[service].profiles) return;
+
+            // if in prod and includes prod or not prod and include dev => remove profiles attribute and spawn
+            if(userDockerCompose.services[service].profiles.includes(config.production ? "production" : "development")){
+                delete userDockerCompose.services[service].profiles;
+                return;
+            }
+
+            // remove service here
+            delete userDockerCompose.services[service];
+        });
+
+
         if(userDockerCompose) {
             dockerCompose = {
                 ...dockerCompose,
