@@ -50,6 +50,8 @@ export default class Server {
             if(res.writableEnded) return;
 
             fs.readFile(filePath, (err,data) => {
+                if(res.writableEnded) return;
+
                 if (err) {
                     res.writeHead(404);
                     return res.end(JSON.stringify(err));

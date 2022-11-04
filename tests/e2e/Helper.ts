@@ -6,7 +6,6 @@ import build from "../../scripts/build";
 import config from "../../scripts/config";
 import {cleanOutDir} from "../../scripts/utils";
 import waitForServer from "../../scripts/waitForServer";
-import path from "path";
 
 export default class Helper {
     dir: string;
@@ -41,7 +40,7 @@ export default class Helper {
 
         await waitForServer(3000, `http://localhost:${this.runner.nodePort}`);
 
-        await this.page.goto(`http://localhost:${this.runner.nodePort}` + pathURL);
+        await this.goto(pathURL);
 
         process.on('uncaughtException', err => {
             if(this.browser?.close)
@@ -66,6 +65,10 @@ export default class Helper {
                 await originalGoto.apply(this, [path]);
             }
         }
+    }
+
+    async goto(path: string){
+        await this.page.goto(`http://localhost:${this.runner.nodePort}${path}`);
     }
 
     private static async outputCoverage(page, dir, localConfig, nodePort){

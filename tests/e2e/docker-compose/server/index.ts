@@ -8,15 +8,12 @@ server.addListener(async (req, res) => {
         const uri = "mongodb://root:test@mongo:27017";
         const client = new MongoClient(uri);
 
-        console.log("ici");
         try {
             await client.connect();
         }catch (e){
             res.writeHead(500);
             return res.end("failed");
         }
-
-        console.log("ici3");
 
         res.writeHead(200, {"content-type": "text/html"});
         res.write("success");
