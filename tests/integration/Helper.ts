@@ -1,4 +1,4 @@
-import {Suite} from "mocha";
+import {it, Suite} from "mocha";
 import yaml from "yaml";
 import fs from "fs";
 import path from "path";
