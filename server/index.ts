@@ -40,6 +40,8 @@ export default class Server {
         if (require.main !== module && !args.testing) return;
 
         this.addListener((req, res) => {
+            if(res.headersSent) return;
+
             const url = new URL(this.publicDir + req.url, "http://localhost");
 
             const filePath = url.pathname +
@@ -47,10 +49,8 @@ export default class Server {
                     ? "index.html"
                     : "");
 
-            if(res.writableEnded) return;
-
             fs.readFile(filePath, (err,data) => {
-                if(res.writableEnded) return;
+                if(res.headersSent) return;
 
                 if (err) {
                     res.writeHead(404);
