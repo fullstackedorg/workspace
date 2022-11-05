@@ -109,7 +109,7 @@ export default class Helper {
         }
 
         await this.browser.close();
-        this.runner.stop();
+        await this.runner.stop();
         cleanOutDir(this.dir + "/dist");
     }
 }

@@ -43,7 +43,7 @@ describe("Backup-Restore Test", function(){
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 0);
-        runner.stop();
+        await runner.stop();
         printLine("Restarting");
         await sleep(5000)
         await runner.start();
@@ -80,6 +80,6 @@ describe("Backup-Restore Test", function(){
         if(fs.existsSync(backupDir))
             fs.rmSync(backupDir, {force: true, recursive: true});
 
-        runner.stop();
+        await runner.stop();
     });
 });
