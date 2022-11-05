@@ -41,8 +41,7 @@ export default async function(config: Config, build: boolean = true){
                 console.log('\x1b[33m%s\x1b[0m', "Stopping!");
 
             if(runner)
-                runner.stop();
-            process.exit(0);
+                runner.stop().then(() => process.exit(0));
         });
         didSetExitHook = true;
     }

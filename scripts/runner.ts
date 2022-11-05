@@ -117,5 +117,14 @@ export default class Runner {
         // stop docker-compose and remove all volumes (cleaner)
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} down -t 0 -v`;
         execSync(cmd, {stdio: this.config.silent ? "ignore" : "inherit"});
+        return new Promise<void>(resolve => {
+            const interval = setInterval(() => {
+                let logs = execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} logs`);
+                if(!logs) {
+                    clearInterval(interval)
+                    resolve();
+                }
+            }, 100);
+        });
     }
 }
