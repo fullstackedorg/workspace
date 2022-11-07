@@ -50,7 +50,7 @@ async function buildServer(config: Config, watcher){
             name: 'fullstacked-bundled-server',
             setup(build) {
                 const fs = require('fs')
-                build.onLoad({ filter: new RegExp(fullstackedServerFile) }, async (args) => {
+                build.onLoad({ filter: new RegExp(fullstackedServerFile.replace(/\\/g, "\\\\")) }, async (args) => {
                     // load all entry points from server dir
                     const serverFiles = glob.sync(path.resolve(config.src, "server", "**", "*.server.ts"));
 
@@ -60,7 +60,7 @@ async function buildServer(config: Config, watcher){
                         serverFiles.unshift(indexServerFile);
 
                     return {
-                        contents: fs.readFileSync(fullstackedServerFile) + "\n" + serverFiles.map(file => `require("${file}");`).join("\n"),
+                        contents: fs.readFileSync(fullstackedServerFile) + "\n" + serverFiles.map(file => `require("${file.replace(/\\/g, "\\\\")}");`).join("\n"),
                         loader: 'ts',
                     }
                 })
