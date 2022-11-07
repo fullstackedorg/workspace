@@ -31,7 +31,8 @@ class ServerInstance {
 
 
     start(){
-        this.addListener((req, res) => {
+        // mush always be last
+        this.reqListeners.push((req, res) => {
             if(res.headersSent) return;
 
             const url = new URL(this.publicDir + req.url, "http://localhost");
