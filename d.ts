@@ -1,4 +1,6 @@
-declare type ENDPOINTS_GET = {}
-declare type ENDPOINTS_POST = {}
-declare type ENDPOINTS_PUT = {}
-declare type ENDPOINTS_DELETE = {}
+// to remove when @types/node gets updated
+declare module 'node:test'{
+    function before(fn: Function, options?: Object): void;
+    function after(fn: Function, options?: Object): void;
+    function afterEach(fs: Function, options?: Object): void;
+}

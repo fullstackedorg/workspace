@@ -67,7 +67,7 @@ export default class Runner {
         });
 
         // output the pulling process if needed
-        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d`;
+        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d -t 0`;
         if(this.config.silent && !pullNeeded)
             cmd = silenceCommandLine(cmd);
 
@@ -117,5 +117,15 @@ export default class Runner {
         // stop docker-compose and remove all volumes (cleaner)
         let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} down -t 0 -v`;
         execSync(cmd, {stdio: this.config.silent ? "ignore" : "inherit"});
+        return new Promise<void>(resolve => {
+            const interval = setInterval(() => {
+                let logs = execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} logs`)
+                    .toString().trim().replace("Attaching to", "");
+                if(!logs) {
+                    clearInterval(interval)
+                    resolve();
+                }
+            }, 100);
+        });
     }
 }

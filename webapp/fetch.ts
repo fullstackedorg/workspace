@@ -8,44 +8,44 @@ export namespace fetch {
         return "?" + new URLSearchParams(query).toString();
     }
 
-    export async function get<T extends keyof ENDPOINTS_GET | string>(
-        url: T,
-        query?: T extends keyof ENDPOINTS_GET ? ENDPOINTS_GET[T][1] : any,
+    export async function get(
+        url: string,
+        query?: {[key: string]: any},
         config?: AxiosRequestConfig)
-        : Promise<T extends keyof ENDPOINTS_GET ? ENDPOINTS_GET[T][0] : any>
+        : Promise<any>
     {
         return (await axios.get(url + convertQueryObjectToString(query), config)).data;
     }
 
-    export async function post<T extends keyof ENDPOINTS_POST | string>(
-        url: T,
-        data?: T extends keyof ENDPOINTS_POST ? ENDPOINTS_POST[T][1] : any,
-        query?: T extends keyof ENDPOINTS_POST ? ENDPOINTS_POST[T][2] : any,
+    export async function post(
+        url: string,
+        data?: any,
+        query?: {[key: string]: any},
         config?: AxiosRequestConfig
-    ): Promise<T extends keyof ENDPOINTS_POST ? ENDPOINTS_POST[T][0] : any>
+    ): Promise<any>
     {
         let constructedURL: string = url;
         constructedURL += query ? convertQueryObjectToString(query) : ""
         return (await axios.post(constructedURL, data, config ?? {})).data;
     }
 
-    export async function put<T extends keyof ENDPOINTS_PUT | string>(
-        url: T,
-        data?: T extends keyof ENDPOINTS_POST ? ENDPOINTS_POST[T][1] : any,
-        query?: T extends keyof ENDPOINTS_POST ? ENDPOINTS_POST[T][2] : any,
+    export async function put(
+        url: string,
+        data?: any,
+        query?: {[key: string]: any},
         config?: AxiosRequestConfig
-    ): Promise<T extends keyof ENDPOINTS_PUT ? ENDPOINTS_PUT[T][0] : any>
+    ): Promise<any>
     {
         let constructedURL: string = url;
         constructedURL += query ? convertQueryObjectToString(query) : ""
         return (await axios.put(constructedURL, data, config ?? {})).data;
     }
 
-    export async function del<T extends keyof ENDPOINTS_DELETE | string>(
-        url: T,
-        query?: T extends keyof ENDPOINTS_GET ? ENDPOINTS_GET[T][1] : any,
+    export async function del(
+        url: string,
+        query?: {[key: string]: any},
         config?: AxiosRequestConfig)
-        : Promise<T extends keyof ENDPOINTS_DELETE ? ENDPOINTS_DELETE[T][0] : any>
+        : Promise<any>
     {
         return (await axios.delete(url + convertQueryObjectToString(query), config)).data;
     }

@@ -1,4 +1,4 @@
-import waitForServer from "../scripts/waitForServer";
+import waitForServer from "fullstacked/scripts/waitForServer";
 
 let webSocket;
 

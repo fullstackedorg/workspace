@@ -1,4 +1,4 @@
-import {describe} from "mocha";
+import {describe, it} from 'mocha';
 import {equal, notEqual, ok} from "assert";
 import sleep from "fullstacked/scripts/sleep";
 import waitForServer from "fullstacked/scripts/waitForServer";

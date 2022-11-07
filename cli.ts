@@ -5,11 +5,10 @@ const scripts = {
     "build"     : "./scripts/build",
     "run"       : "./scripts/run",
     "watch"     : "./scripts/watch",
-    "deploy"    : "./scripts/deploy",
     "test"      : "./scripts/test",
+    "deploy"    : "./scripts/deploy",
     "backup"    : "./scripts/backup",
-    "restore"   : "./scripts/restore",
-    "certs"     : "./scripts/certs"
+    "restore"   : "./scripts/restore"
 };
 let script = "run"
 
@@ -44,8 +43,6 @@ const args = {
     "--watch-file=": value => config.watchFile = upgradeToArray(value),
     "--watch-dir=": value => config.watchDir = upgradeToArray(value),
     "--restored": () => config.restored = true,
-    "--domain=": value => config.domain = upgradeToArray(value),
-    "--email=": value => config.email = value,
     "--production": () => config.production = true
 };
 

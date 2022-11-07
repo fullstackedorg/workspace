@@ -1,4 +1,4 @@
-import {before, describe} from "mocha";
+import {before, after, describe, it} from 'mocha';
 import {execSync} from "child_process";
 import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
@@ -9,7 +9,7 @@ import sleep from "fullstacked/scripts/sleep";
 import waitForServer from "fullstacked/scripts/waitForServer";
 import SSH from "../SSH";
 
-describe("Deploy Test", function(){
+describe("Deploy Test",  function(){
     const sshServer = new SSH();
     const serverNameFile = path.resolve(__dirname, ".fullstacked.json");
 
@@ -27,7 +27,7 @@ describe("Deploy Test", function(){
             `--ssh-port=${sshServer.sshPort}`,
             `--user=${sshServer.username}`,
             `--pass=${sshServer.password}`]);
-        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.join(" ")}`);
+        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy ${args.join(" ")}`);
     }
 
     before(async function (){
@@ -36,7 +36,7 @@ describe("Deploy Test", function(){
         // simulate server name setup
         fs.writeFileSync(serverNameFile, JSON.stringify({node: {"${PORT}:80": {server_name: "localhost"} } }, null, 2));
 
-        sshServer.init();
+        await sshServer.init();
         printLine("Running deployment command");
         executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`]);
         printLine("Deployment complete");
@@ -77,8 +77,9 @@ describe("Deploy Test", function(){
         equal(fs.readFileSync(postdeployAsyncOutputFile, {encoding: "utf8"}), "postdeploy async");
     });
 
-    it("Should overwrite current app", async function(){
+    it("Should overwrite current app",  async function(){
         this.timeout(50000);
+
         printLine("Running deployment command for updated app");
         const updatedAppSrc = path.resolve(__dirname, "updated-app");
         fs.writeFileSync(path.resolve(updatedAppSrc, ".fullstacked.json"),
@@ -97,11 +98,12 @@ describe("Deploy Test", function(){
 
         await browser.close();
         cleanOutDir(path.resolve(updatedAppSrc, "dist"));
-        fs.rmSync(path.resolve(updatedAppSrc, ".server-names"), {force: true});
+        fs.rmSync(path.resolve(updatedAppSrc, ".fullstacked.json"), {force: true});
     });
 
     it("Should re-deploy with new app version", async function(){
         this.timeout(50000);
+
         const browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         const page = await browser.newPage();
         await page.goto("http://localhost:8000");
@@ -130,6 +132,7 @@ describe("Deploy Test", function(){
 
     it("Should run another app", async function(){
         this.timeout(50000);
+
         printLine("Running deployment command with another app");
         fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"${PORT}:80": { server_name: "test.localhost" } } }));
         executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`, `--name=test`, `--title=Test`]);

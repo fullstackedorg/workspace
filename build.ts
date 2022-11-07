@@ -15,8 +15,8 @@ import {getPackageJSON} from "./scripts/utils";
     const otherScripts = [
         path.resolve(__dirname, "./cli.ts"),
         path.resolve(__dirname, "./.mocharc.ts"),
-        path.resolve(__dirname, "./mocha-reporter.ts")
-    ]
+        path.resolve(__dirname, "./mocha-reporter.ts"),
+    ];
 
     const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {
         return esbuild.build({

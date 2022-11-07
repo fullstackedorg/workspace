@@ -40,7 +40,7 @@ export default class Helper {
 
         await waitForServer(3000, `http://localhost:${this.runner.nodePort}`);
 
-        await this.page.goto(`http://localhost:${this.runner.nodePort}` + pathURL);
+        await this.goto(pathURL);
 
         process.on('uncaughtException', err => {
             if(this.browser?.close)
@@ -65,6 +65,10 @@ export default class Helper {
                 await originalGoto.apply(this, [path]);
             }
         }
+    }
+
+    async goto(path: string){
+        await this.page.goto(`http://localhost:${this.runner.nodePort}${path}`);
     }
 
     private static async outputCoverage(page, dir, localConfig, nodePort){
@@ -105,7 +109,7 @@ export default class Helper {
         }
 
         await this.browser.close();
-        this.runner.stop();
+        await this.runner.stop();
         cleanOutDir(this.dir + "/dist");
     }
 }

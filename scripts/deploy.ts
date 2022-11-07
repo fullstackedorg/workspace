@@ -121,7 +121,7 @@ export default async function (config: Config) {
         }
     } = {};
     const fullstackedConfig = path.resolve(config.src, ".fullstacked.json");
-    if(fs.existsSync(fullstackedConfig)) hostnames = JSON.parse(fs.readFileSync(fullstackedConfig, {encoding: "utf-8"}))
+    if(fs.existsSync(fullstackedConfig)) hostnames = JSON.parse(fs.readFileSync(fullstackedConfig, {encoding: "utf-8"}));
 
     // 7.
     const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");

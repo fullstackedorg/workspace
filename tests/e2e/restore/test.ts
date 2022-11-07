@@ -1,4 +1,4 @@
-import {describe} from "mocha";
+import {describe, it, before, after} from 'mocha';
 import {exec, execSync} from "child_process";
 import path from "path";
 import waitForServer from "fullstacked/scripts/waitForServer";
@@ -29,11 +29,13 @@ describe("Backup-Restore Test", function(){
         await runner.start();
         printLine("Generating data");
         await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+
         await fetch.post(`http://localhost:${runner.nodePort}/post`);
+
         testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
     });
 
-    it("Should backup / restore volume", async function(){
+    it("Should backup / restore volume",  async function(){
         this.timeout(50000);
 
         ok(testArr.length > 0);
@@ -41,21 +43,26 @@ describe("Backup-Restore Test", function(){
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 0);
-        runner.stop();
+        await runner.stop();
         printLine("Restarting");
         await sleep(5000)
         await runner.start();
         await waitForServer(10000);
         await sleep(3000);
-        notDeepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
+
+        const response = await fetch.get(`http://localhost:${runner.nodePort}/get`);
+        notDeepEqual(response, testArr);
+
         printLine("Restoring");
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --silent`);
         await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
-        deepEqual(await fetch.get(`http://localhost:${runner.nodePort}/get`), testArr);
+
+        const response2 = await fetch.get(`http://localhost:${runner.nodePort}/get`);
+        deepEqual(response2, testArr);
         clearLine();
     });
 
-    it("Should start with volume restored", async function(){
+    it("Should start with volume restored",  async function(){
         this.timeout(50000);
 
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
@@ -63,15 +70,16 @@ describe("Backup-Restore Test", function(){
         const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);
         await waitForServer(30000, `http://localhost:${runner.nodePort + 1}/get`);
 
-        deepEqual(await fetch.get(`http://localhost:${runner.nodePort + 1}/get`), testArr);
+        const response = await fetch.get(`http://localhost:${runner.nodePort + 1}/get`);
+        deepEqual(response, testArr);
 
         runProcess.kill();
     });
 
-    after(function() {
+    after(async function() {
         if(fs.existsSync(backupDir))
             fs.rmSync(backupDir, {force: true, recursive: true});
 
-        runner.stop();
+        await runner.stop();
     });
 });
