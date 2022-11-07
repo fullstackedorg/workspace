@@ -27,7 +27,7 @@ describe("Deploy Test",  function(){
             `--ssh-port=${sshServer.sshPort}`,
             `--user=${sshServer.username}`,
             `--pass=${sshServer.password}`]);
-        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy  ${args.join(" ")}`);
+        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy ${args.join(" ")}`);
     }
 
     before(async function (){
@@ -36,7 +36,7 @@ describe("Deploy Test",  function(){
         // simulate server name setup
         fs.writeFileSync(serverNameFile, JSON.stringify({node: {"${PORT}:80": {server_name: "localhost"} } }, null, 2));
 
-        sshServer.init();
+        await sshServer.init();
         printLine("Running deployment command");
         executeDeployment([`--src=${__dirname}`, `--out=${__dirname}`]);
         printLine("Deployment complete");
