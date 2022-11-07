@@ -29,9 +29,11 @@ export default function(config: Config){
             testCommand;
     }
 
-    let env = process.env;
-    env["NODE_OPTIONS"] = "--no-experimental-fetch";
-    execSync(testCommand, {stdio: "inherit", env: env});
+    if(parseInt(process.version.split(".").at(0).match(/\d+/).at(0)) >= 18){
+        let env = process.env;
+        env["NODE_OPTIONS"] = "--no-experimental-fetch";
+        execSync(testCommand, {stdio: "inherit", env: env});
+    }
 
     if(config.coverage && !config.testMode){
         glob.sync(path.resolve(config.src, ".nyc_output", "*.json")).forEach(file => {
