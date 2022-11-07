@@ -35,8 +35,9 @@ function getProcessedEnv(config: Config){
 
 // bundles the server
 async function buildServer(config: Config, watcher){
+    const fullstackedServerFile = path.resolve(__dirname, "..", "server", "index.ts");
     const options = {
-        entryPoints: [ path.resolve(config.src, "server", "index.ts") ],
+        entryPoints: [ fullstackedServerFile ],
         outfile: path.resolve(config.out, "index.js"),
         platform: "node" as Platform,
         bundle: true,
@@ -44,6 +45,27 @@ async function buildServer(config: Config, watcher){
         sourcemap: !config.production,
 
         define: getProcessedEnv(config),
+
+        plugins: [{
+            name: 'fullstacked-bundled-server',
+            setup(build) {
+                const fs = require('fs')
+                build.onLoad({ filter: new RegExp(fullstackedServerFile) }, async (args) => {
+                    // load all entry points from server dir
+                    const serverFiles = glob.sync(path.resolve(config.src, "server", "**", "*.server.ts"));
+
+                    // well keep server/index.ts as an entrypoint also
+                    const indexServerFile = path.resolve(config.src, "server", "index.ts");
+                    if(fs.existsSync(indexServerFile))
+                        serverFiles.unshift(indexServerFile);
+
+                    return {
+                        contents: fs.readFileSync(fullstackedServerFile) + "\n" + serverFiles.map(file => `require("${file}");`).join("\n"),
+                        loader: 'ts',
+                    }
+                })
+            },
+        }],
 
         watch: watcher ? {
             onRebuild: async function(error, result){
@@ -53,7 +75,7 @@ async function buildServer(config: Config, watcher){
         } : false
     }
 
-    const result = await esbuild.build(options);
+    const result = await  esbuild.build(options);
 
     if(result.errors.length > 0)
         return;

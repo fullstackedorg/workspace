@@ -76,7 +76,7 @@ describe("Backup-Restore Test", function(){
         runProcess.kill();
     });
 
-    after(function() {
+    after(async function() {
         if(fs.existsSync(backupDir))
             fs.rmSync(backupDir, {force: true, recursive: true});
 

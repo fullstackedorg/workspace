@@ -1,13 +1,13 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
 import Helper from "fullstacked/tests/integration/Helper";
-import server from "./server/index";
 import {fetch} from "fullstacked/webapp/fetch";
+import Server from "fullstacked/server";
 
 Helper(describe("Files", function(){
     before(async function (){
-        server.publicDir = __dirname;
-        server.start({silent: true, testing: true});
+        Server.publicDir = __dirname
+        Server.start();
     });
 
     it('Should hit file in public directory', async function(){
@@ -16,6 +16,6 @@ Helper(describe("Files", function(){
     });
 
     after(async function(){
-        server.stop();
+        Server.stop();
     });
 }), __dirname);
