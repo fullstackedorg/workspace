@@ -10,7 +10,7 @@
 <a href="https://www.npmjs.com/package/fullstacked"><img src="https://img.shields.io/badge/version-0.8.0-01b0de" alt="version"/>
 <a href="https://www.npmjs.com/package/fullstacked?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-13-yellowgreen" alt="dependencies"/></a>
 <a href="https://npmgraph.js.org/?q=fullstacked"><img src="https://img.shields.io/badge/module%20deps-302-yellow" alt="module dependencies"/></a>
-<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-80.27%25-yellowgreen" alt="code coverage"/></a>
+<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-80.73%25-yellowgreen" alt="code coverage"/></a>
 </p>
 
 > **Warning** <br />
