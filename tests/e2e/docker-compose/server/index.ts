@@ -1,9 +1,7 @@
 import Server from "fullstacked/server";
 import {MongoClient} from 'mongodb';
 
-const server = new Server();
-
-server.addListener(async (req, res) => {
+Server.addListener(async (req, res) => {
     if(req.url === "/mongo-test-connection"){
         const uri = "mongodb://root:test@mongo:27017";
         const client = new MongoClient(uri);
@@ -20,5 +18,3 @@ server.addListener(async (req, res) => {
         res.end();
     }
 });
-
-server.start();

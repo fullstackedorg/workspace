@@ -6,7 +6,6 @@ import puppeteer from "puppeteer";
 import sleep from "fullstacked/scripts/sleep";
 import {cleanOutDir} from "../../../scripts/utils";
 import waitForServer from "fullstacked/scripts/waitForServer";
-import fs from "fs";
 
 describe("Run Test", function(){
     let runProcess, browser, page;

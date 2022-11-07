@@ -3,7 +3,7 @@ import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime-types";
 
-export default class Server {
+class ServerInstance {
     server: http.Server;
     watcher;
     port: number = 80;
@@ -29,16 +29,8 @@ export default class Server {
         });
     }
 
-    addListener(requestListener?: RequestListener<typeof IncomingMessage, typeof ServerResponse>){
-        this.reqListeners.push(requestListener);
-    }
 
-
-    start(args: {silent?: boolean, testing?: boolean} = {silent: false, testing: false}){
-        // prevent starting server by import
-        // source: https://stackoverflow.com/a/6398335
-        if (require.main !== module && !args.testing) return;
-
+    start(){
         this.addListener((req, res) => {
             if(res.headersSent) return;
 
@@ -71,7 +63,24 @@ export default class Server {
         }
     }
 
+    addListener(requestListener?: RequestListener<typeof IncomingMessage, typeof ServerResponse>){
+        server.reqListeners.unshift(requestListener);
+    }
+
     stop(){
-        this.server.close();
+        server.server.close()
     }
 }
+
+const server = new ServerInstance();
+
+(() => {
+    // prevent starting server by import
+    // source: https://stackoverflow.com/a/6398335
+    if (require.main !== module) return;
+
+    server.start();
+})()
+
+export default server;
+

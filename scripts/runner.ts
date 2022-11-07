@@ -119,7 +119,8 @@ export default class Runner {
         execSync(cmd, {stdio: this.config.silent ? "ignore" : "inherit"});
         return new Promise<void>(resolve => {
             const interval = setInterval(() => {
-                let logs = execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} logs`);
+                let logs = execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} logs`)
+                    .toString().trim().replace("Attaching to", "");
                 if(!logs) {
                     clearInterval(interval)
                     resolve();

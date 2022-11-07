@@ -1,8 +1,6 @@
 import Server from "fullstacked/server";
 import {MongoClient} from 'mongodb';
 
-const server = new Server();
-
 (async () => {
     const uri = "mongodb://username:password@mongo:27017";
     const client = new MongoClient(uri);
@@ -10,7 +8,7 @@ const server = new Server();
     const database = client.db("test");
     const collection = database.collection<{ test: number }>("tests");
 
-    server.addListener(async (req, res) => {
+    Server.addListener(async (req, res) => {
         if(req.url !== "/post" || req.method !== "POST") return;
 
         const result = await collection.insertOne({
@@ -22,7 +20,7 @@ const server = new Server();
         res.end();
     });
 
-    server.addListener(async (req, res) => {
+    Server.addListener(async (req, res) => {
         if(req.url !== "/get") return;
 
         const result = await collection.find();
@@ -32,7 +30,4 @@ const server = new Server();
         res.write(JSON.stringify(data));
         res.end();
     });
-
-
-    server.start();
 })()

@@ -1,12 +1,13 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
 import Helper from "fullstacked/tests/integration/Helper";
-import server from "./server/index";
-import {fetch} from "fullstacked/webapp/fetch"
+import {fetch} from "fullstacked/webapp/fetch";
+import Server from "fullstacked/server";
+import "./server/index";
 
 Helper(describe("Hello World", function(){
-    before(async function (){
-        server.start({silent: true, testing: true})
+    before(function (){
+        Server.start();
     });
 
     it('Should hit hello world endpoint', async function(){
@@ -14,7 +15,7 @@ Helper(describe("Hello World", function(){
         equal(response, "Hello World");
     });
 
-    after(async function(){
-        server.stop();
+    after(function(){
+        Server.stop();
     });
 }), __dirname);
