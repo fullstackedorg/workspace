@@ -10,6 +10,8 @@ describe("Build Test", function(){
     const prebuildAsyncOutputFile = path.resolve(__dirname, "prebuild-2.txt");
     const postbuildOutputFile = path.resolve(__dirname, "postbuild.txt");
     const postbuildAsyncOutputFile = path.resolve(__dirname, "postbuild-2.txt");
+    const testPostbuildOutputFile = path.resolve(__dirname, "test-postbuild.txt");
+    const testPostbuildAsyncOutputFile = path.resolve(__dirname, "test-postbuild-2.txt");
 
     before(function(){
         const logMessage = execSync(`node ${path.resolve(__dirname, "../../../cli")} build --src=${__dirname} --out=${__dirname} --silent --test-mode`).toString();
@@ -37,11 +39,23 @@ describe("Build Test", function(){
         equal(fs.readFileSync(postbuildAsyncOutputFile, {encoding: "utf8"}), "postbuild async");
     });
 
+    it('Should have executed test postbuild',  function (){
+        ok(fs.existsSync(testPostbuildOutputFile));
+        equal(fs.readFileSync(testPostbuildOutputFile, {encoding: "utf8"}), "test postbuild");
+    });
+
+    it('Should have awaited default export test postbuild', function(){
+        ok(fs.existsSync(testPostbuildAsyncOutputFile));
+        equal(fs.readFileSync(testPostbuildAsyncOutputFile, {encoding: "utf8"}), "test postbuild async");
+    });
+
     after( function() {
         fs.rmSync(prebuildOutputFile);
         fs.rmSync(prebuildAsyncOutputFile);
         fs.rmSync(postbuildOutputFile);
         fs.rmSync(postbuildAsyncOutputFile);
+        fs.rmSync(testPostbuildOutputFile);
+        fs.rmSync(testPostbuildAsyncOutputFile);
         cleanOutDir(path.resolve(__dirname, "dist"));
     });
 });

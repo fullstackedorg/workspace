@@ -8,6 +8,7 @@ import {Socket} from "net";
 import {FullStackedConfig} from "../index";
 import SFTP from "ssh2-sftp-client";
 import yaml from "yaml";
+import glob from "glob";
 
 // ask a question, resolve string answer
 export function askQuestion(question: string): Promise<string>{
@@ -96,7 +97,7 @@ export function copyRecursiveSync(src, dest) {
 export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
     return {
         entryPoints: [entrypoint],
-        outfile: entrypoint.slice(0, -2) + "js",
+        outfile: entrypoint.endsWith("x") ? entrypoint.slice(0, -3) : entrypoint.slice(0, -2) + "js",
         platform: "node",
         format: "cjs",
         sourcemap: true
@@ -119,31 +120,39 @@ export function execSSH(ssh2, cmd): Promise<string>{
     });
 }
 
-// exec .ts/.tsx file
+// exec filename.ts(x) and *.filename.ts(x) file
 export async function execScript(filePath: string, config: Config, ...args): Promise<void> {
-    // prioritize .tsx file
-    filePath = fs.existsSync(filePath + "x") ? filePath + "x" : filePath;
-    if(!fs.existsSync(filePath))
-        return;
+    const filePathComponents = filePath.split(path.sep)
+    const fileName = filePathComponents.pop().split(".").shift();
+
+    const filesToRun = glob.sync("*." + fileName + ".ts", {cwd: filePathComponents.join(path.sep)})
+        .map(file => filePathComponents.join(path.sep) + path.sep + file);
+    filesToRun.concat(glob.sync("*." + fileName + ".tsx", {cwd: filePathComponents.join(path.sep)})
+        .map(file => filePathComponents.join(path.sep) + path.sep + file))
+    if(fs.existsSync(filePath)) filesToRun.push(filePath);
+    if(!filePath.endsWith("x") && fs.existsSync(filePath + "x")) filesToRun.push(filePath + "x");
 
     // build file on the fly
-    const esbuildConfig = defaultEsbuildConfig(filePath);
-    buildSync(esbuildConfig);
+    const ranFiles = filesToRun.map(async file => {
+        const esbuildConfig = defaultEsbuildConfig(file);
+        buildSync(esbuildConfig);
 
-    // with test-mode, add istanbul ignore so the code coverage wont fail to parse deleted files
-    if(process.argv.includes("--test-mode")) {
-        const fileContent = fs.readFileSync(esbuildConfig.outfile, {encoding: "utf8"});
-        fs.writeFileSync(esbuildConfig.outfile, `/* istanbul ignore file */
+        // with test-mode, add istanbul ignore so the code coverage wont fail to parse deleted files
+        if(process.argv.includes("--test-mode")) {
+            const fileContent = fs.readFileSync(esbuildConfig.outfile, {encoding: "utf8"});
+            fs.writeFileSync(esbuildConfig.outfile, `/* istanbul ignore file */
 ${fileContent}`);
-    }
+        }
 
-    const importedScript = require(esbuildConfig.outfile);
-    if(typeof importedScript.default === 'function'){
-        const functionReturn = importedScript.default(config, ...args);
-        if(functionReturn instanceof Promise)
-            await functionReturn;
-    }
-    deleteBuiltTSFile(filePath);
+        const importedScript = require(esbuildConfig.outfile);
+        if(typeof importedScript.default === 'function'){
+            const functionReturn = importedScript.default(config, ...args);
+            if(functionReturn instanceof Promise)
+                await functionReturn;
+        }
+        deleteBuiltTSFile(file);
+    });
+    await Promise.all(ranFiles);
 }
 
 // delete .js and .js.map file
