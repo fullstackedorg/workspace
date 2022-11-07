@@ -22,7 +22,7 @@ describe("Backup-Restore Remotely Test", function(){
             if(sshServer === sshServer2)
                 await sleep(2000);
 
-            sshServer.init();
+            await sshServer.init();
             const deployment = exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
                 `--src=${__dirname}`,
                 `--out=${sshServer === sshServer1 ? outDir : __dirname}`,
