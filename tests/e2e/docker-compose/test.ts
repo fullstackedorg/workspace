@@ -1,4 +1,4 @@
-import {before, describe} from "mocha";
+import {before, after, describe, it} from 'mocha';
 import {equal} from "assert";
 import {exec} from "child_process";
 import path from "path";
@@ -11,7 +11,10 @@ describe("Docker-Compose Test", function(){
     let runProcess, browser, page;
 
     before(async function (){
-        runProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} run --src=${__dirname} --out=${__dirname} --test-mode`);
+        runProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} run --src=${__dirname} --out=${__dirname}`);
+        // runProcess.stdout.pipe(process.stdout);
+        // runProcess.stderr.pipe(process.stderr);
+
         await waitForServer(15000);
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();

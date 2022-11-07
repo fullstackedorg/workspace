@@ -1,17 +1,16 @@
-import {before, describe} from "mocha";
+import {before, after, describe, it} from "mocha";
 import {execSync} from "child_process";
 import path from "path";
 import {ok} from "assert";
 import fs from "fs";
-import {copyRecursiveSync} from "../../../scripts/utils";
 
 describe("Test Test", function(){
     const testDir = path.resolve(__dirname, "app");
     const testFile = path.resolve(testDir, "test.ts");
 
     before(async function (){
+        if(fs.existsSync(testDir)) fs.rmSync(testDir, {force: true, recursive: true})
         fs.mkdirSync(testDir);
-        copyRecursiveSync(path.resolve(__dirname, "app-template"), testDir);
         fs.copyFileSync(path.resolve(__dirname, "test-template.ts"), testFile);
     });
 

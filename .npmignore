@@ -21,6 +21,7 @@ docs
 mocha-reporter.ts
 
 tests/e2e/*/*
+tests/e2e/Dockerfile
 tests/e2e/Helper.js
 tests/e2e/SSH.ts
 tests/e2e/SSH.js
@@ -49,7 +50,6 @@ scripts/watch.ts
 
 cli.ts
 
-webapp/GlobalReact.d.ts
 webapp/fetch.js
 
 server/index.js

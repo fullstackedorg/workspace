@@ -1,4 +1,4 @@
-import {describe} from "mocha";
+import {describe, it, before, after} from 'mocha';
 import SSH from "../SSH";
 import {exec, execSync} from "child_process";
 import path from "path";
@@ -22,8 +22,8 @@ describe("Backup-Restore Remotely Test", function(){
             if(sshServer === sshServer2)
                 await sleep(2000);
 
-            sshServer.init();
-            exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
+            await sshServer.init();
+            const deployment = exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
                 `--src=${__dirname}`,
                 `--out=${sshServer === sshServer1 ? outDir : __dirname}`,
                 "--y",
@@ -33,6 +33,7 @@ describe("Backup-Restore Remotely Test", function(){
                 `--user=${sshServer.username}`,
                 `--pass=${sshServer.password}`,
                 `--ssh-port=${sshServer.sshPort}`].join(" "));
+            // deployment.stdout.pipe(process.stdout);
             try{
                 await waitForServer(150000, `http://localhost:${sshServer.httpPort}/get`);
             }catch (e){
@@ -65,7 +66,8 @@ describe("Backup-Restore Remotely Test", function(){
         this.timeout(100000);
 
         ok(testArr.length > 0);
-        notDeepEqual(await fetch.get(`http://localhost:${sshServer2.httpPort}/get`), testArr);
+        const response = await fetch.get(`http://localhost:${sshServer2.httpPort}/get`);
+        notDeepEqual(response, testArr);
 
         printLine("Backing Up");
         execSync([`node ${path.resolve(__dirname, "../../../", "cli")} backup`,
@@ -87,7 +89,8 @@ describe("Backup-Restore Remotely Test", function(){
         await waitForServer(10000, `http://localhost:${sshServer2.httpPort}/get`);
         clearLine();
 
-        deepEqual(await fetch.get(`http://localhost:${sshServer2.httpPort}/get`), testArr);
+        const response2 = await fetch.get(`http://localhost:${sshServer2.httpPort}/get`)
+        deepEqual(response2, testArr);
     });
 
     after(function(){

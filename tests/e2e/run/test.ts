@@ -1,4 +1,4 @@
-import {before, describe} from "mocha";
+import {describe, it, before, after} from 'mocha';
 import {equal} from "assert";
 import {exec} from "child_process";
 import path from "path";

@@ -1,4 +1,4 @@
-import {before, describe} from "mocha";
+import {describe, it, before, after} from 'mocha';
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
@@ -40,8 +40,11 @@ describe("Watch Test", function(){
 
         fs.writeFileSync(extraFile, "");
         fs.mkdirSync(extraDir);
+        fs.writeFileSync(path.resolve(extraDir, "file.txt"), "");
 
         watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent --watch-file=extra.txt --watch-dir=extra`);
+        // watchProcess.stdout.pipe(process.stdout);
+        // watchProcess.stderr.pipe(process.stderr);
 
         await waitForServer(15000);
 
@@ -136,11 +139,18 @@ describe("Watch Test", function(){
         const countBefore = await getReloadCount();
         await sleep(1000);
 
-        fs.writeFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
+
+        fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
         await sleep(1000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
+
+        fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
+        await sleep(1000);
+
+        const countAfter2 = await getReloadCount();
+        equal(countAfter2 - countAfter, 1);
     });
 
     after(async function(){

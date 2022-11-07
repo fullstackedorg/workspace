@@ -1,35 +1,50 @@
 import build from "./build";
 import run from "./run";
 import {WebSocket} from "ws";
-import waitForServer from "./waitForServer";
 import {execScript} from "./utils";
 import path from "path";
+import sleep from "./sleep";
 
 let globalConfig: Config,
-    ws: WebSocket;
+    ws: WebSocket,
+    msgQueue = [];
 
 async function watcher(isWebApp: boolean){
     await execScript(path.resolve(globalConfig.src, "postbuild.ts"), globalConfig);
 
     if(isWebApp) {
        console.log('\x1b[32m%s\x1b[0m', "WebApp Rebuilt");
-       ws.send(Date.now());
+       const msg = Date.now();
+
+       if(ws) ws.send(msg);
+       else msgQueue.push(msg);
+
        return;
     }
 
     console.log('\x1b[32m%s\x1b[0m', "Server Rebuilt");
     const runner = await run(globalConfig, false);
 
-    await connectToWatcher(runner.nodePort);
+    connectToWatcher(runner.nodePort);
 }
 
-async function connectToWatcher(port: number){
-    await waitForServer(globalConfig.timeout || 3000);
+function connectToWatcher(port: number){
     ws = new WebSocket(`ws://localhost:${port}/watcher`);
+    ws.addListener("open", () => {
+        if(!msgQueue.length) return;
+        msgQueue.forEach(msg => ws.send(msg));
+        msgQueue = [];
+    });
+    ws.addListener('error', async () => {
+        ws = null;
+        await sleep(globalConfig.timeout);
+        connectToWatcher(port);
+    });
 }
 
 export default async function(config: Config) {
     globalConfig = config;
+    globalConfig.timeout = globalConfig.timeout || 1000;
 
     // build with the watcher defined
     await build(config, watcher);

@@ -3,6 +3,7 @@ import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils";
 import yaml from "yaml";
+import glob from "glob";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -34,8 +35,9 @@ function getProcessedEnv(config: Config){
 
 // bundles the server
 async function buildServer(config: Config, watcher){
+    const fullstackedServerFile = path.resolve(__dirname, "..", "server", "index.ts");
     const options = {
-        entryPoints: [ path.resolve(config.src, "server", "index.ts") ],
+        entryPoints: [ fullstackedServerFile ],
         outfile: path.resolve(config.out, "index.js"),
         platform: "node" as Platform,
         bundle: true,
@@ -43,6 +45,27 @@ async function buildServer(config: Config, watcher){
         sourcemap: !config.production,
 
         define: getProcessedEnv(config),
+
+        plugins: [{
+            name: 'fullstacked-bundled-server',
+            setup(build) {
+                const fs = require('fs')
+                build.onLoad({ filter: new RegExp(fullstackedServerFile.replace(/\\/g, "\\\\")) }, async (args) => {
+                    // load all entry points from server dir
+                    const serverFiles = glob.sync(path.resolve(config.src, "server", "**", "*.server.ts"));
+
+                    // well keep server/index.ts as an entrypoint also
+                    const indexServerFile = path.resolve(config.src, "server", "index.ts");
+                    if(fs.existsSync(indexServerFile))
+                        serverFiles.unshift(indexServerFile);
+
+                    return {
+                        contents: fs.readFileSync(fullstackedServerFile) + "\n" + serverFiles.map(file => `require("${file.replace(/\\/g, "\\\\")}");`).join("\n"),
+                        loader: 'ts',
+                    }
+                })
+            },
+        }],
 
         watch: watcher ? {
             onRebuild: async function(error, result){
@@ -52,7 +75,7 @@ async function buildServer(config: Config, watcher){
         } : false
     }
 
-    const result = await esbuild.build(options);
+    const result = await  esbuild.build(options);
 
     if(result.errors.length > 0)
         return;
@@ -77,6 +100,22 @@ async function buildServer(config: Config, watcher){
     const userDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
     if(fs.existsSync(userDockerComposeFilePath)){
         const userDockerCompose = yaml.parse(fs.readFileSync(userDockerComposeFilePath, {encoding: "utf-8"}));
+
+        Object.keys(userDockerCompose.services).forEach(service => {
+            // no profile in service => always spawn
+            if(!userDockerCompose.services[service].profiles) return;
+
+            // if in prod and includes prod or not prod and include dev => remove profiles attribute and spawn
+            if(userDockerCompose.services[service].profiles.includes(config.production ? "production" : "development")){
+                delete userDockerCompose.services[service].profiles;
+                return;
+            }
+
+            // remove service here
+            delete userDockerCompose.services[service];
+        });
+
+
         if(userDockerCompose) {
             dockerCompose = {
                 ...dockerCompose,
@@ -102,6 +141,14 @@ async function buildServer(config: Config, watcher){
 // bundles the web app
 async function buildWebApp(config, watcher){
     const entrypoint = path.resolve(config.src, "webapp", "index.ts");
+
+    if(fs.existsSync(config.public)) fs.rmSync(config.public, {force: true, recursive: true});
+
+    if(!fs.existsSync(entrypoint)){
+        fs.mkdirSync(config.public, {recursive: true});
+        return fs.writeFileSync(path.resolve(config.public, "index.html"), "Nothing to see here...");
+    }
+
     const options = {
         entryPoints: [ entrypoint ],
         outdir: config.public,
@@ -114,10 +161,6 @@ async function buildWebApp(config, watcher){
 
         define: getProcessedEnv(config),
 
-        // assets like images are stored at dist/{VERSION}/public/assets
-        // and the server reroutes all asset request to this directory
-        // this is to avoid using publicPath and implies other issues
-        assetNames: "assets/[name]-[hash]",
         loader: {
             ".png": "file" as Loader,
             ".jpg": "file" as Loader,
@@ -128,7 +171,7 @@ async function buildWebApp(config, watcher){
 
         watch: watcher ? {
             onRebuild: async function(error, result){
-                if (error) return
+                if (error) return;
 
                 webAppPostBuild(config, watcher);
 
@@ -152,12 +195,14 @@ async function buildWebApp(config, watcher){
                         : [path.resolve(config.src, config.watchDir)]
                     : [];
 
+                const filesInDir = extraDirs.map(dir => glob.sync(path.resolve(dir, "**", "*"), {nodir: true})).flat();
+
                 build.onResolve({ filter: /.*/ }, args => {
                     return {
                         watchFiles: extraFiles.concat([
                             path.resolve(config.src, "webapp", "index.html"),
                             path.resolve(config.src, "webapp", "index.css")
-                        ]),
+                        ], filesInDir),
                         watchDirs: extraDirs
                     };
                 })
@@ -220,7 +265,6 @@ export function webAppPostBuild(config: Config, watcher){
         config.production 
             ? ""
             : "-" + randStr(6) )}"></script>`)
-
 
     // attach watcher if defined
     if(watcher){

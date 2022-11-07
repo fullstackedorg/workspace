@@ -1,3 +1,4 @@
+import {describe, it} from "mocha";
 import {ok} from "assert";
 
 describe("Testing test", function(){
