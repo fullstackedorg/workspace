@@ -97,7 +97,7 @@ export function copyRecursiveSync(src, dest) {
 export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
     return {
         entryPoints: [entrypoint],
-        outfile: entrypoint.endsWith("x") ? entrypoint.slice(0, -3) : entrypoint.slice(0, -2) + "js",
+        outfile: (entrypoint.endsWith("x") ? entrypoint.slice(0, -3) : entrypoint.slice(0, -2)) + "js",
         platform: "node",
         format: "cjs",
         sourcemap: true
@@ -131,6 +131,10 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
         .map(file => filePathComponents.join(path.sep) + path.sep + file))
     if(fs.existsSync(filePath)) filesToRun.push(filePath);
     if(!filePath.endsWith("x") && fs.existsSync(filePath + "x")) filesToRun.push(filePath + "x");
+
+    if(!filesToRun.length) return;
+
+    require("./register");
 
     // build file on the fly
     const ranFiles = filesToRun.map(async file => {

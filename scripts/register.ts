@@ -45,7 +45,7 @@ Module.prototype.require = function(){
 
     // build change .ts end for .js
     if(mustBeBuilt) {
-        arguments["0"] = filePath.slice(0, -2) + "js";
+        arguments["0"] = (filePath.endsWith("x") ? filePath.slice(0, -3) : filePath.slice(0, -2)) + "js";
 
         if(process.argv.includes("--test-mode"))
             return originalRequire.apply(this, arguments);
