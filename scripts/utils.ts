@@ -125,9 +125,9 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
     const filePathComponents = filePath.split(path.sep)
     const fileName = filePathComponents.pop().split(".").shift();
 
-    const filesToRun = glob.sync("*." + fileName + ".ts", {cwd: filePathComponents.join(path.sep)})
+    let filesToRun = glob.sync("*." + fileName + ".ts", {cwd: filePathComponents.join(path.sep)})
         .map(file => filePathComponents.join(path.sep) + path.sep + file);
-    filesToRun.concat(glob.sync("*." + fileName + ".tsx", {cwd: filePathComponents.join(path.sep)})
+    filesToRun = filesToRun.concat(glob.sync("*." + fileName + ".tsx", {cwd: filePathComponents.join(path.sep)})
         .map(file => filePathComponents.join(path.sep) + path.sep + file))
     if(fs.existsSync(filePath)) filesToRun.push(filePath);
     if(!filePath.endsWith("x") && fs.existsSync(filePath + "x")) filesToRun.push(filePath + "x");
