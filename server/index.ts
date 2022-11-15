@@ -25,8 +25,7 @@ class ServerInstance {
                 // break if response has managed to send
                 if(res.headersSent) return;
 
-                // send a copy of the request object (in case it get modified)
-                const maybePromise = reqListener({...req}, res);
+                const maybePromise = reqListener(req, res);
                 if(maybePromise instanceof Promise)
                     await maybePromise;
             }
