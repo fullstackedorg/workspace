@@ -22,37 +22,37 @@ class ServerInstance {
             if(this.logger) this.logger(req);
 
             for (const reqListener of this.reqListeners) {
-                const maybePromise = reqListener(req, res);
+                // break if response has managed to send
+                if(res.headersSent) return;
+
+                // send a copy of the request object (in case it get modified)
+                const maybePromise = reqListener({...req}, res);
                 if(maybePromise instanceof Promise)
                     await maybePromise;
             }
+
+            // response managed to send
+            if(res.headersSent) return;
+
+            // here we bottomed out of request listeners
+            res.writeHead(404);
+            res.end("Not Found");
         });
     }
 
 
     start(){
-        // mush always be last
-        this.reqListeners.push((req, res) => {
+        // default static file serving
+        this.reqListeners.unshift((req, res) => {
             if(res.headersSent) return;
 
             const url = new URL(this.publicDir + req.url, "http://localhost");
+            const filePath = url.pathname + (req.url.endsWith("/") ? "index.html" : "");
 
-            const filePath = url.pathname +
-                (url.pathname.endsWith("/")
-                    ? "index.html"
-                    : "");
+            if(!fs.existsSync(filePath)) return;
 
-            fs.readFile(filePath, (err,data) => {
-                if(res.headersSent) return;
-
-                if (err) {
-                    res.writeHead(404);
-                    return res.end(JSON.stringify(err));
-                }
-
-                res.writeHead(200, {"content-type": mime.lookup(filePath)});
-                res.end(data);
-            });
+            res.writeHead(200, {"content-type": mime.lookup(filePath)});
+            res.end(fs.readFileSync(filePath));
         });
 
         this.server.listen(this.port);
@@ -64,8 +64,11 @@ class ServerInstance {
         }
     }
 
-    addListener(requestListener?: RequestListener<typeof IncomingMessage, typeof ServerResponse>){
-        server.reqListeners.unshift(requestListener);
+    addListener(requestListener: RequestListener<typeof IncomingMessage, typeof ServerResponse>, prepend: boolean = false) {
+        if(prepend)
+            server.reqListeners.unshift(requestListener);
+        else
+            server.reqListeners.push(requestListener);
     }
 
     stop(){
