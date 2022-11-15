@@ -63,6 +63,24 @@ class ServerInstance {
         }
     }
 
+    promisify(requestListener: RequestListener<typeof IncomingMessage, typeof ServerResponse>): {promisifiedListener(req, res): Promise<void>, resolver(req, res): void}{
+        const requestMap = new Map<IncomingMessage, Function>();
+
+        return {
+            promisifiedListener: (req, res) => new Promise<void>(resolve => {
+                requestMap.set(req, resolve);
+                requestListener(req, res);
+            }),
+            resolver: (req, res) => {
+                // resolve promise
+                requestMap.get(req)();
+
+                // cleanup
+                requestMap.delete(req);
+            }
+        }
+    }
+
     addListener(requestListener: RequestListener<typeof IncomingMessage, typeof ServerResponse>, prepend: boolean = false) {
         if(prepend)
             server.reqListeners.unshift(requestListener);
