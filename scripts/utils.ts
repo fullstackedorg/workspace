@@ -9,6 +9,7 @@ import {FullStackedConfig} from "../index";
 import SFTP from "ssh2-sftp-client";
 import yaml from "yaml";
 import glob from "glob";
+import progress from "progress-stream";
 
 // ask a question, resolve string answer
 export function askQuestion(question: string): Promise<string>{
@@ -264,4 +265,25 @@ export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: stri
     }
 
     return volumesToBackup;
+}
+
+
+export async function uploadFileWithProgress(sftp: any, localFilePath: string, remoteFilePath: string, silent: boolean = false){
+    let ulStream = fs.createReadStream(localFilePath);
+
+    if(!silent){
+        const progressStream = progress({
+            length: fs.statSync(localFilePath).size
+        });
+
+        progressStream.on('progress', progress => {
+            printLine("Upload progress : " + progress.percentage.toFixed(2) + "%")
+        });
+
+        ulStream = ulStream.pipe(progressStream);
+    }
+
+    await sftp.put(ulStream, remoteFilePath);
+
+    clearLine();
 }

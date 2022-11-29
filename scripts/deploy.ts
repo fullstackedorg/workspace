@@ -1,7 +1,15 @@
 import path from "path";
 import fs from "fs";
 import glob from "glob";
-import {askQuestion, askToContinue, execScript, execSSH, getSFTPClient, printLine} from "./utils";
+import {
+    askQuestion,
+    askToContinue,
+    execScript,
+    execSSH,
+    getSFTPClient,
+    printLine,
+    uploadFileWithProgress
+} from "./utils";
 import build from "./build";
 import test from "./test";
 import yaml from "yaml";
@@ -208,7 +216,7 @@ export default async function (config: Config) {
         if(fileInfo.isDirectory())
             await sftp.mkdir(serverAppDistDir + "/" + files[i]);
         else
-            await sftp.put(localFiles[i], serverAppDistDir + "/" + files[i]);
+            await uploadFileWithProgress(sftp, localFiles[i], serverAppDistDir + "/" + files[i]);
 
         printLine("Progress: " + (i + 1) + "/" + files.length);
     }
