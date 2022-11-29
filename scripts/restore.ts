@@ -72,7 +72,7 @@ async function restoreRemote(config: FullStackedConfig){
             continue;
         }
 
-        await uploadFileWithProgress(sftp, backupFile, `/tmp/backup/${volume}.tar`, config.silent);
+        await uploadFileWithProgress(sftp, backupFile, `/tmp/backup/${volume}.tar`, `[${volume}] `,config.silent);
 
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${dockerComposeRemoteFile} stop -t 0`);
         await execSSH(sftp.client, `docker run -v ${config.name + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
