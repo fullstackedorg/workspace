@@ -216,9 +216,7 @@ export default async function (config: Config) {
         if(fileInfo.isDirectory())
             await sftp.mkdir(serverAppDistDir + "/" + files[i]);
         else
-            await uploadFileWithProgress(sftp, localFiles[i], serverAppDistDir + "/" + files[i]);
-
-        printLine("Progress: " + (i + 1) + "/" + files.length);
+            await uploadFileWithProgress(sftp, localFiles[i], serverAppDistDir + "/" + files[i], `[${i + 1}/${files.length}] `);
     }
     console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
 
