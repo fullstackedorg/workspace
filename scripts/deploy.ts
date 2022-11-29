@@ -216,7 +216,7 @@ export default async function (config: Config) {
 
 
     // 13.
-    await execScript(path.resolve(config.src, "predeploy.ts"), config);
+    await execScript(path.resolve(config.src, "predeploy.ts"), config, sftp);
 
     // 14.
     if(config.pull){
@@ -234,7 +234,7 @@ export default async function (config: Config) {
     await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
 
     // 16.
-    await execScript(path.resolve(config.src, "postdeploy.ts"), config);
+    await execScript(path.resolve(config.src, "postdeploy.ts"), config, sftp);
 
     // 17.
     await sftp.end();
