@@ -20,14 +20,13 @@ import certs from "./certs";
 * 8. Certs script (if no-https, ship fullstacked-nginx)
 * 9. save hostnames info locally (.fullstacked.json)
 * 10. setup project docker-compose and nginx.conf files
-* 11. predeploy script
-* 12. ship fullstacked-nginx files
-* 13. ship project docker-compose and nginx.conf files
-* 14. ship built app
-* 15. pull/up/restart built app
-* 16. pull/up/restart fullstacked-nginx
-* 17. postdeploy script
-* 18. clean up
+* 11. ship project docker-compose and nginx.conf files
+* 12. ship built app
+* 13. predeploy script
+* 14. pull/up/restart built app
+* 15. pull/up/restart fullstacked-nginx
+* 16. postdeploy script
+* 17. clean up
 *
  */
 
@@ -193,15 +192,12 @@ export default async function (config: Config) {
     fs.writeFileSync(nginxFile, nginxConf);
 
     // 11.
-    await execScript(path.resolve(config.src, "predeploy.ts"), config);
-
-    // 13.
     if(await sftp.exists(serverAppDir)) await execSSH(sftp.client, `sudo chown ${config.user}:${config.user} ${serverAppDir}`);
     else await sftp.mkdir(serverAppDir, true);
     await sftp.put(dockerComposeFile, serverAppDir + "/docker-compose.yml");
     await sftp.put(nginxFile, serverAppDir + "/nginx.conf");
 
-    // 14.
+    // 12.
     if(mustOverWriteCurrentVersion) await sftp.rmdir(serverAppDistDir, true);
     await sftp.mkdir(serverAppDistDir, true);
     const files = glob.sync("**/*", {cwd: config.out})
@@ -219,7 +215,10 @@ export default async function (config: Config) {
     console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
 
 
-    // 15.
+    // 13.
+    await execScript(path.resolve(config.src, "predeploy.ts"), config);
+
+    // 14.
     if(config.pull){
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml stop`);
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml rm -f`);
@@ -230,14 +229,14 @@ export default async function (config: Config) {
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml restart`);
     }
 
-    // 16.
+    // 15.
     await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml up -d`);
     await execSSH(sftp.client, `docker-compose -p fullstacked-nginx -f ${config.appDir}/docker-compose.yml restart`);
 
-    // 17.
+    // 16.
     await execScript(path.resolve(config.src, "postdeploy.ts"), config);
 
-    // 18.
+    // 17.
     await sftp.end();
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', config.name + " v" + config.version + " deployed!");
