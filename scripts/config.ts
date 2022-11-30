@@ -1,7 +1,7 @@
-import {getPackageJSON} from "./utils";
 import path from "path";
 import crypto from "crypto";
 import {execSync} from "child_process";
+import getPackageJSON from "../getPackageJSON";
 
 const defaultConfig: Config = {
     src: process.cwd(),
