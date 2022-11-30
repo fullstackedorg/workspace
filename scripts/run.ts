@@ -16,7 +16,7 @@ export default async function(config: Config, build: boolean = true){
         console.log("Web App Running at http://localhost:" + runner.nodePort);
 
         if(config.restored)
-            await restore(config)
+            await restore(config);
     }else{
         runner.restart();
     }

@@ -65,4 +65,5 @@ process.argv.forEach(arg => {
     });
 });
 
-require(scripts[script]).default(defaultConfig(config));
+defaultConfig(config).then(configReady => require(scripts[script]).default(configReady));
+

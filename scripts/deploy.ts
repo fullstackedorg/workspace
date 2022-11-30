@@ -12,7 +12,7 @@ import {
 } from "./utils";
 import build from "./build";
 import test from "./test";
-import yaml from "yaml";
+import yaml from "js-yaml";
 import Docker from "./docker";
 import certs from "./certs";
 

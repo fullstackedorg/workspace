@@ -7,7 +7,7 @@ import {BuildOptions, buildSync} from "esbuild";
 import {Socket} from "net";
 import {FullStackedConfig} from "../index";
 import SFTP from "ssh2-sftp-client";
-import yaml from "yaml";
+import yaml from "js-yaml";
 import glob from "glob";
 import progress from "progress-stream";
 
@@ -32,15 +32,6 @@ export async function askToContinue(question: string): Promise<boolean> {
 
     const answer = await askQuestion(question + ' (y/n): ');
     return answer === "y" || answer === "Y" || answer === "yes";
-}
-
-// get package json data from package.json at project root
-export function getPackageJSON():{[key:string]: any} {
-    const packageJSONPath = path.resolve(process.cwd(), "package.json");
-    if(!fs.existsSync(packageJSONPath))
-        throw Error("Cannot find package.json file. Please run fullstacked commands at your project root");
-
-    return JSON.parse(fs.readFileSync(packageJSONPath, {encoding: "utf-8"}));
 }
 
 export function silenceCommandLine(cmd: string){

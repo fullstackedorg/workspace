@@ -2,7 +2,8 @@ import {ChildProcess, exec, execSync} from "child_process";
 import {execScript, getNextAvailablePort, isDockerInstalled, silenceCommandLine} from "./utils";
 import path from "path";
 import fs from "fs";
-import yaml from "yaml";
+import yaml from "js-yaml";
+import DockerCompose from "dockerode-compose";
 
 // helper to start/restart/attach/stop your app
 export default class Runner {
@@ -11,6 +12,7 @@ export default class Runner {
     attachedProcess: ChildProcess = null;
     lastLogDate: Date = new Date();
     nodePort: number;
+    dockerCompose: any;
 
     constructor(config: Config) {
         this.config = config;
@@ -24,7 +26,7 @@ export default class Runner {
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
         // get compose content
-        const dockerCompose = yaml.parse(fs.readFileSync(this.composeFilePath, {encoding: "utf-8"}));
+        const dockerCompose = yaml.load(fs.readFileSync(this.composeFilePath, {encoding: "utf-8"}));
 
         // setup exposed ports
         const services = Object.keys(dockerCompose.services);
@@ -48,11 +50,14 @@ export default class Runner {
 
         this.nodePort = parseInt(dockerCompose.services["node"].ports[0].split(":").shift());
 
-        fs.writeFileSync(this.composeFilePath, yaml.stringify(dockerCompose));
+        fs.writeFileSync(this.composeFilePath, yaml.dump(dockerCompose));
+
+        this.dockerCompose = new DockerCompose(this.config.docker, this.composeFilePath, this.config.name);
+        console.log(this.dockerCompose.recipe.services.node)
 
         // force pull process
         if(this.config.pull) {
-            execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} pull`, {stdio: "inherit"});
+            await this.dockerCompose.pull();
         }
 
         // check if all images are pulled
@@ -66,14 +71,7 @@ export default class Runner {
             }
         });
 
-        // output the pulling process if needed
-        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} up -d -t 0`;
-        if(this.config.silent && !pullNeeded)
-            cmd = silenceCommandLine(cmd);
-
-        execSync(cmd, {
-            stdio: this.config.silent && !pullNeeded ? "ignore" : "inherit"
-        });
+        await this.dockerCompose.up();
 
         await execScript(path.resolve(this.config.src, "postrun.ts"), this.config);
 
@@ -113,19 +111,9 @@ export default class Runner {
         });
     }
 
-    stop(){
+    async stop(){
         // stop docker-compose and remove all volumes (cleaner)
-        let cmd = `docker-compose -p ${this.config.name} -f ${this.composeFilePath} down -t 0 -v`;
-        execSync(cmd, {stdio: this.config.silent ? "ignore" : "inherit"});
-        return new Promise<void>(resolve => {
-            const interval = setInterval(() => {
-                let logs = execSync(`docker-compose -p ${this.config.name} -f ${this.composeFilePath} logs`)
-                    .toString().trim().replace("Attaching to", "");
-                if(!logs) {
-                    clearInterval(interval)
-                    resolve();
-                }
-            }, 100);
-        });
+        await this.config.docker.getContainer(this.dockerCompose.projectName + '_node_1').stop({t: 0});
+        await this.dockerCompose.down();
     }
 }

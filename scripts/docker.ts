@@ -1,37 +1,42 @@
-import {askToContinue, execSSH} from "./utils";
+import Docker from "dockerode";
+import {execSync} from "child_process";
+/**
+ *
+ * 1. Check if docker is locally installed
+ * 2. Check if docker is running
+ * 3. return dockerode instance
+ *
+ */
 
-// check if docker is installed on remote host
-async function isDockerInstalledOnRemote(ssh2): Promise<boolean>{
-    const dockerVersion = await execSSH(ssh2, "docker -v");
-    return dockerVersion !== "";
+function checkIfDockerCLIIsInstalled(){
+    try{
+        execSync("docker --version", {stdio: "ignore"});
+    }catch (e) {
+        return false;
+    }
+    return true;
 }
 
-// install docker on remote host
-async function installDocker(ssh2) {
-    let commands = [
-        "yum install docker -y",
-        "wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)",
-        "mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose",
-        "chmod -v +x /usr/local/bin/docker-compose",
-        "systemctl enable docker.service",
-        "systemctl start docker.service",
-        "chmod 666 /var/run/docker.sock"
-    ]
-
-    for (let i = 0; i < commands.length; i++) {
-        await execSSH(ssh2, "sudo " + commands[i]);
+async function pingDocker(docker){
+    try{
+        await docker.ping();
+    }catch (e) {
+        return false;
     }
+    return true;
 }
 
-export default async function(sftp){
-    // check if docker is installed on remote
-    if(!await isDockerInstalledOnRemote(sftp.client)) {
-        console.log('\x1b[33m%s\x1b[0m', "You are about to install Docker on your remote host");
-        if(!await askToContinue("Continue"))
-            return;
-
-        await installDocker(sftp.client);
-        if(!await isDockerInstalledOnRemote(sftp.client))
-            return console.log('\x1b[31m%s\x1b[0m', "Could not install Docker on remote host");
+export default async function(){
+    const docker = new Docker();
+    // 1.
+    if(!checkIfDockerCLIIsInstalled()){
+        console.log("Docker is a requirement for FullStacked. Please install Docker Desktop from here: https://www.docker.com/");
+        process.exit(1);
+    }else if(!await pingDocker(docker)){
+        console.log("Make sure Docker is running...");
+        process.exit(1);
     }
+
+    //2.
+    return docker;
 }
