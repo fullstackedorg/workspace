@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.8.3-alpha7",
+  "version": "0.8.3",
   "description": "A full stack web app tool and development kit",
   "types": "index.d.ts",
   "scripts": {
