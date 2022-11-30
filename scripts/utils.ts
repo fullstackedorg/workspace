@@ -34,15 +34,6 @@ export async function askToContinue(question: string): Promise<boolean> {
     return answer === "y" || answer === "Y" || answer === "yes";
 }
 
-// get package json data from package.json at project root
-export function getPackageJSON():{[key:string]: any} {
-    const packageJSONPath = path.resolve(process.cwd(), "package.json");
-    if(!fs.existsSync(packageJSONPath))
-        throw Error("Cannot find package.json file. Please run fullstacked commands at your project root");
-
-    return JSON.parse(fs.readFileSync(packageJSONPath, {encoding: "utf-8"}));
-}
-
 export function silenceCommandLine(cmd: string){
     if(os.platform() === "win32")
         return cmd + " >nul 2>nul";
