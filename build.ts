@@ -2,13 +2,8 @@ import esbuild from "esbuild";
 import glob from "glob";
 import path from "path"
 import fs from "fs";
-import {getPackageJSON} from "./scripts/utils";
 
 (async function() {
-    const testingTypesFile = path.resolve(__dirname, "node_modules", "@types", "fullstacked");
-    if(fs.existsSync(testingTypesFile))
-        fs.rmSync(testingTypesFile, {force: true, recursive: true});
-
     const scripts = glob.sync(path.resolve(__dirname, "./scripts") + "/**/*.ts")
         .filter(file => !file.endsWith(".d.ts"));
 
@@ -16,6 +11,7 @@ import {getPackageJSON} from "./scripts/utils";
         path.resolve(__dirname, "./cli.ts"),
         path.resolve(__dirname, "./.mocharc.ts"),
         path.resolve(__dirname, "./mocha-reporter.ts"),
+        path.resolve(__dirname, "./getPackageJSON.ts"),
     ];
 
     const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {
@@ -30,6 +26,6 @@ import {getPackageJSON} from "./scripts/utils";
     await Promise.all(buildPromises);
     console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 
-    fs.writeFileSync(path.resolve(__dirname, "version.ts"), `const version = "${getPackageJSON().version}";
+    fs.writeFileSync(path.resolve(__dirname, "version.ts"), `const version = "${require("./getPackageJSON").default().version}";
 export default version;`);
 })()

@@ -15,6 +15,7 @@ declare type ConfigBuild = {
 
 declare type ConfigRun = {
     restored?: boolean
+    docker?: any
 }
 
 declare type ConfigWatch = {

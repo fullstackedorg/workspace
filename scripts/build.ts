@@ -2,7 +2,7 @@ import path from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils";
-import yaml from "yaml";
+import yaml from "js-yaml";
 import glob from "glob";
 
 // load .env located at root of src
@@ -82,7 +82,7 @@ async function buildServer(config: Config, watcher){
 
     // get docker-compose.yml template file
     let dockerComposeRaw = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
-    let dockerCompose = yaml.parse(dockerComposeRaw);
+    let dockerCompose = yaml.load(dockerComposeRaw);
 
     if(watcher){
         dockerCompose.services["node"].command += " --development";
@@ -99,7 +99,7 @@ async function buildServer(config: Config, watcher){
     // merge with user defined docker-compose if existent
     const userDockerComposeFilePath = path.resolve(config.src, "docker-compose.yml");
     if(fs.existsSync(userDockerComposeFilePath)){
-        const userDockerCompose = yaml.parse(fs.readFileSync(userDockerComposeFilePath, {encoding: "utf-8"}));
+        const userDockerCompose = yaml.load(fs.readFileSync(userDockerComposeFilePath, {encoding: "utf-8"}));
 
         Object.keys(userDockerCompose.services).forEach(service => {
             // no profile in service => always spawn
@@ -129,7 +129,7 @@ async function buildServer(config: Config, watcher){
     }
 
     // replace version directory
-    const dockerComposeStr = yaml.stringify(dockerCompose).replace(/\$\{VERSION\}/g, config.version);
+    const dockerComposeStr = yaml.dump(dockerCompose).replace(/\$\{VERSION\}/g, config.version);
 
     // output docker-compose result to dist directory
     fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), dockerComposeStr);
