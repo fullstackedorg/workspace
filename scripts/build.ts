@@ -4,6 +4,7 @@ import fs from "fs";
 import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils";
 import yaml from "js-yaml";
 import glob from "glob";
+import docker from "./docker";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -80,12 +81,26 @@ async function buildServer(config: Config, watcher){
     if(result.errors.length > 0)
         return;
 
-    // get docker-compose.yml template file
-    let dockerComposeRaw = fs.readFileSync(path.resolve(__dirname, "../docker-compose.yml"), {encoding: "utf-8"});
-    let dockerCompose = yaml.load(dockerComposeRaw);
+    let dockerCompose = {
+        version: '3.7',
+        services: {
+            node: {
+                image: 'node:18-alpine',
+                working_dir: '/app',
+                command: [
+                    'index',
+                    (!config.production ? "--development" : "")
+                ],
+                restart: 'unless-stopped',
+                expose: ["80"],
+                ports: ["80"],
+                volumes: [`./${config.version}:/app`]
+            }
+        }
+    }
+
 
     if(watcher){
-        dockerCompose.services["node"].command += " --development";
         buildSync({
             entryPoints: [ path.resolve(__dirname, "..", "server", "watcher.ts") ],
             outfile: path.resolve(config.out, "watcher.js"),
@@ -128,11 +143,8 @@ async function buildServer(config: Config, watcher){
         }
     }
 
-    // replace version directory
-    const dockerComposeStr = yaml.dump(dockerCompose).replace(/\$\{VERSION\}/g, config.version);
-
     // output docker-compose result to dist directory
-    fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), dockerComposeStr);
+    fs.writeFileSync(path.resolve(config.dist, "docker-compose.yml"), yaml.dump(dockerCompose));
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "Server Built");

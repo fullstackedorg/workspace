@@ -18,10 +18,10 @@ export default async function(config: Config, build: boolean = true){
         if(config.restored)
             await restore(config);
     }else{
-        runner.restart();
+        await runner.restart();
     }
 
-    runner.attach(process.stdout);
+    await runner.attach(process.stdout);
 
     // set exit hook only once
     if(!didSetExitHook){
