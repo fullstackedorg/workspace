@@ -19,6 +19,7 @@ d.ts
 docs
 
 mocha-reporter.ts
+getPackageJSON.ts
 
 tests/e2e/*/*
 tests/e2e/Dockerfile
