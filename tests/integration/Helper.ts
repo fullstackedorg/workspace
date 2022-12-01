@@ -2,11 +2,11 @@ import {it, Suite} from "mocha";
 import yaml from "js-yaml";
 import fs from "fs";
 import path from "path";
-import {getPackageJSON} from "../../scripts/utils";
 import {execSync} from "child_process";
 import build from "../../scripts/build";
 import config from "../../scripts/config";
 import Runner from "../../scripts/runner";
+import getPackageJSON from "../../getPackageJSON";
 
 export default function(testSuite: Suite, srcDir: string = null){
     if(process.argv.includes("--test-mode"))

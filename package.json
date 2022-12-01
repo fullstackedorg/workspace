@@ -1,11 +1,10 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "A full stack web app tool and development kit",
   "types": "index.d.ts",
   "scripts": {
-    "preinstall": "npm config set puppeteer_product=chrome",
     "build": "npx esbuild build.ts --outfile=build.js --format=cjs && node build",
     "pretest": "npm run build",
     "test": "node cli test --headless",
