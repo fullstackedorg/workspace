@@ -248,11 +248,10 @@ export function webAppPostBuild(config: Config, watcher){
     const parser = new Parser();
 
     const userDefinedIndexHTMLFilePath = path.resolve(config.src, "webapp", "index.html");
-    const root = fs.existsSync(userDefinedIndexHTMLFilePath)
+    const root: any = fs.existsSync(userDefinedIndexHTMLFilePath)
         ? parse(fs.readFileSync(userDefinedIndexHTMLFilePath, {encoding: "utf-8"}))
         : parser.treeAdapter.createDocument();
 
-    // @ts-ignore
     root.attrs = root.attrs ?? [];
 
     if(!getDescendantByTag(root, "html")){
@@ -296,8 +295,8 @@ export function webAppPostBuild(config: Config, watcher){
     if(watcher){
         buildSync({
             entryPoints: [path.resolve(__dirname, "../webapp/watcher.ts")],
-            minify: true,
             outfile: path.resolve(config.public, "watcher.js"),
+            minify: true,
             bundle: true
         });
 
@@ -364,7 +363,7 @@ export function webAppPostBuild(config: Config, watcher){
             entryPoints: [serviceWorkerFilePath],
             outfile: path.resolve(config.public, "service-worker-entrypoint.js"),
             bundle: true,
-            minify: true,
+            minify: config.production,
             sourcemap: true
         });
     }
