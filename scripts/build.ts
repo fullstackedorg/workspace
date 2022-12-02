@@ -4,7 +4,8 @@ import fs from "fs";
 import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils";
 import yaml from "js-yaml";
 import glob from "glob";
-import docker from "./docker";
+import {parse, parseFragment, Parser, serialize} from "parse5";
+import {NS} from "../node_modules/parse5/dist/cjs/common/html";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -82,7 +83,6 @@ async function buildServer(config: Config, watcher){
         return;
 
     let dockerCompose = {
-        version: '3.7',
         services: {
             node: {
                 image: 'node:18-alpine',
@@ -233,43 +233,57 @@ async function buildWebApp(config, watcher){
         console.log('\x1b[32m%s\x1b[0m', "WebApp Built");
 }
 
+const getDescendantByTag = (node, tag) => {
+    for (let i = 0; i < node.childNodes?.length; i++) {
+        if (node.childNodes[i].tagName === tag) return node.childNodes[i];
+
+        const result = getDescendantByTag(node.childNodes[i], tag);
+        if (result) return result;
+    }
+
+    return null;
+};
 
 export function webAppPostBuild(config: Config, watcher){
-    let indexHTML = `<!DOCTYPE html><html><head></head><body></body></html>`;
+    const parser = new Parser();
+
     const userDefinedIndexHTMLFilePath = path.resolve(config.src, "webapp", "index.html");
-    if(fs.existsSync(userDefinedIndexHTMLFilePath)){
-        indexHTML = fs.readFileSync(userDefinedIndexHTMLFilePath, {encoding: "utf-8"});
+    const root = fs.existsSync(userDefinedIndexHTMLFilePath)
+        ? parse(fs.readFileSync(userDefinedIndexHTMLFilePath, {encoding: "utf-8"}))
+        : parser.treeAdapter.createDocument();
+
+    // @ts-ignore
+    root.attrs = root.attrs ?? [];
+
+    if(!getDescendantByTag(root, "html")){
+        parser.treeAdapter.appendChild(root, parser.treeAdapter.createElement("html", NS.HTML, []));
     }
 
     const addInHEAD = (contentHTML: string) => {
-        const closingHeadIndex = indexHTML.indexOf("</head>");
-
-        if(closingHeadIndex === -1){
-            indexHTML += contentHTML;
-            return;
+        let head = getDescendantByTag(root, "head");
+        if(!head){
+            head = parser.treeAdapter.createElement("head", NS.HTML, []);
+            parser.treeAdapter.appendChild(getDescendantByTag(root, "html"), head);
         }
-
-        const preHTML = indexHTML.slice(0, closingHeadIndex);
-        const postHTML = indexHTML.slice(closingHeadIndex, indexHTML.length);
-        indexHTML = preHTML + contentHTML + postHTML;
+        parseFragment(contentHTML).childNodes.forEach(node => {
+            parser.treeAdapter.appendChild(head, node)
+        });
     }
 
     const addInBODY = (contentHTML: string) => {
-        const closingBodyIndex = indexHTML.indexOf("</body>");
-
-        if(closingBodyIndex === -1){
-            indexHTML += contentHTML;
-            return;
+        let body = getDescendantByTag(root, "body");
+        if(!body){
+            body = parser.treeAdapter.createElement("body", NS.HTML, []);
+            parser.treeAdapter.appendChild(getDescendantByTag(root, "html"), body);
         }
-
-        const preHTML = indexHTML.slice(0, closingBodyIndex);
-        const postHTML = indexHTML.slice(closingBodyIndex, indexHTML.length);
-        indexHTML = preHTML + contentHTML + postHTML;
+        parseFragment(contentHTML).childNodes.forEach(node => {
+            parser.treeAdapter.appendChild(body, node)
+        });
     }
 
     // add title
-    if(!indexHTML.includes("<title>")){
-        addInHEAD(`<title>${config.title ?? config.name ?? "FullStacked WebApp"}</title>`)
+    if(!getDescendantByTag(root, "title")){
+        addInHEAD(`<title>${config.title ?? config.name ?? "FullStacked WebApp"}</title>`);
     }
 
     // add js entrypoint
@@ -357,7 +371,7 @@ export function webAppPostBuild(config: Config, watcher){
 
     // output index.html
     fs.mkdirSync(config.public, {recursive: true});
-    fs.writeFileSync(path.resolve(config.public, "index.html"), indexHTML);
+    fs.writeFileSync(path.resolve(config.public, "index.html"), serialize(root));
 }
 
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
