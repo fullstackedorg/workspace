@@ -2,7 +2,6 @@ import {describe, it, before, after} from 'mocha';
 import {exec, execSync} from "child_process";
 import path from "path";
 import waitForServer from "fullstacked/scripts/waitForServer";
-import sleep from "fullstacked/scripts/sleep";
 import {notDeepEqual, deepEqual, ok} from "assert";
 import fs from "fs";
 import Runner from "../../../scripts/runner";
@@ -45,10 +44,8 @@ describe("Backup-Restore Test", function(){
         ok(fs.statSync(backupFile).size > 0);
         await runner.stop();
         printLine("Restarting");
-        await sleep(5000)
         await runner.start();
-        await waitForServer(10000);
-        await sleep(3000);
+        await waitForServer(30000, `http://localhost:${runner.nodePort}/get`);
 
         const response = await fetch.get(`http://localhost:${runner.nodePort}/get`);
         notDeepEqual(response, testArr);
@@ -68,9 +65,9 @@ describe("Backup-Restore Test", function(){
         execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
 
         const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);
-        await waitForServer(30000, `http://localhost:${runner.nodePort + 1}/get`);
+        await waitForServer(30000, `http://localhost:${runner.nodePort}/get`);
 
-        const response = await fetch.get(`http://localhost:${runner.nodePort + 1}/get`);
+        const response = await fetch.get(`http://localhost:${runner.nodePort}/get`);
         deepEqual(response, testArr);
 
         runProcess.kill();

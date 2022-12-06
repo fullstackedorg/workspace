@@ -46,9 +46,9 @@ class ServerInstance {
             if(res.headersSent) return;
 
             const url = new URL(this.publicDir + req.url, "http://localhost");
-            const filePath = url.pathname + (req.url.endsWith("/") ? "index.html" : "");
+            const filePath = url.pathname + (url.pathname.endsWith("/") ? "index.html" : "");
 
-            if(!fs.existsSync(filePath)) return;
+            if(!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
 
             res.writeHead(200, {"content-type": mime.lookup(filePath)});
             res.end(fs.readFileSync(filePath));
@@ -98,7 +98,7 @@ const server = new ServerInstance();
 (() => {
     // prevent starting server by import
     // source: https://stackoverflow.com/a/6398335
-    if (require.main !== module) return;
+    if (require.main !== module || process.argv.includes("--prevent-auto-start")) return;
 
     server.start();
 })()

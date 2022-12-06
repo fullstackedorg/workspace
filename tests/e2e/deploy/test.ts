@@ -23,7 +23,6 @@ describe("Deploy Test",  function(){
             "--y",
             "--skip-test",
             "--host=localhost",
-            "--no-https",
             `--ssh-port=${sshServer.sshPort}`,
             `--user=${sshServer.username}`,
             `--pass=${sshServer.password}`]);

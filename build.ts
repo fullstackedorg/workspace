@@ -12,6 +12,7 @@ import fs from "fs";
         path.resolve(__dirname, "./.mocharc.ts"),
         path.resolve(__dirname, "./mocha-reporter.ts"),
         path.resolve(__dirname, "./getPackageJSON.ts"),
+        path.resolve(__dirname, "./version.ts"),
     ];
 
     const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {
