@@ -4,7 +4,7 @@ import os from "os";
 import readline from "readline";
 import restore from "./restore";
 
-let runner: Runner = null, didSetExitHook = false;
+let runner: Runner = null, didSetExitHook = false, printStopOnce = false;
 
 export default async function(config: Config, build: boolean = true){
     if(build)
@@ -25,7 +25,6 @@ export default async function(config: Config, build: boolean = true){
 
     // set exit hook only once
     if(!didSetExitHook){
-
         if(os.platform() === "win32"){
             //source : https://stackoverflow.com/a/48837698
             readline.createInterface({
@@ -36,13 +35,17 @@ export default async function(config: Config, build: boolean = true){
             })
         }
 
-        process.on("SIGINT", () => {
-            if(!config.silent)
+        process.on("SIGINT", async () => {
+            if(!config.silent && !printStopOnce) {
                 console.log('\x1b[33m%s\x1b[0m', "Stopping!");
+                printStopOnce = true;
+            }
 
             if(runner)
-                runner.stop().then(() => process.exit(0));
+                await runner.stop()
+            process.exit(0);
         });
+
         didSetExitHook = true;
     }
 
