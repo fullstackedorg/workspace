@@ -4,8 +4,7 @@ import fs from "fs";
 import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils";
 import yaml from "js-yaml";
 import glob from "glob";
-import {parse, parseFragment, Parser, serialize} from "parse5";
-import {NS} from "../node_modules/parse5/dist/cjs/common/html";
+import {parse, parseFragment, Parser, serialize, html} from "parse5";
 
 // load .env located at root of src
 function loadEnvVars(srcDir: string){
@@ -24,7 +23,7 @@ function getProcessedEnv(config: Config){
     let processEnv = {};
     Object.keys(process.env).forEach(envKey => {
         // keys with parenthesis causes problems
-        if(envKey.includes("(") || envKey.includes(")") || envKey.includes("-"))
+        if(envKey.includes("(") || envKey.includes(")") || envKey.includes("-") || envKey.includes("%"))
             return;
 
         processEnv['process.env.' + envKey] = "'" + escape(process.env[envKey].trim()) + "'";
@@ -255,13 +254,13 @@ export function webAppPostBuild(config: Config, watcher){
     root.attrs = root.attrs ?? [];
 
     if(!getDescendantByTag(root, "html")){
-        parser.treeAdapter.appendChild(root, parser.treeAdapter.createElement("html", NS.HTML, []));
+        parser.treeAdapter.appendChild(root, parser.treeAdapter.createElement("html", html.NS.HTML, []));
     }
 
     const addInHEAD = (contentHTML: string) => {
         let head = getDescendantByTag(root, "head");
         if(!head){
-            head = parser.treeAdapter.createElement("head", NS.HTML, []);
+            head = parser.treeAdapter.createElement("head", html.NS.HTML, []);
             parser.treeAdapter.appendChild(getDescendantByTag(root, "html"), head);
         }
         parseFragment(contentHTML).childNodes.forEach(node => {
@@ -272,7 +271,7 @@ export function webAppPostBuild(config: Config, watcher){
     const addInBODY = (contentHTML: string) => {
         let body = getDescendantByTag(root, "body");
         if(!body){
-            body = parser.treeAdapter.createElement("body", NS.HTML, []);
+            body = parser.treeAdapter.createElement("body", html.NS.HTML, []);
             parser.treeAdapter.appendChild(getDescendantByTag(root, "html"), body);
         }
         parseFragment(contentHTML).childNodes.forEach(node => {
