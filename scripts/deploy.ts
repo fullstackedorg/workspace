@@ -7,7 +7,6 @@ import {
     execScript,
     execSSH,
     getSFTPClient,
-    printLine,
     uploadFileWithProgress
 } from "./utils";
 import build from "./build";
