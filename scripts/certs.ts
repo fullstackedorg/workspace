@@ -5,7 +5,6 @@ import fs from "fs";
 import Docker from "./docker";
 import axios from "axios";
 import {X509Certificate} from "crypto";
-import {uploadFullStackedNginx} from "./deploy";
 
 function compareArrays(arr1, arr2){
     if(arr1.length !== arr2.length) return false;

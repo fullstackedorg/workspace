@@ -5,6 +5,6 @@ services:
     image: nginx
     network_mode: host
     volumes:
-      - ./:/apps
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ../:/apps
+      - ./nginx-root.conf:/etc/nginx/nginx.conf
     restart: always

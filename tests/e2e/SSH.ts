@@ -1,5 +1,6 @@
 import {execSync} from "child_process";
 import {printLine, silenceCommandLine} from "../../scripts/utils";
+import path from "path";
 
 export default class {
     containerName = "dind";
@@ -22,6 +23,11 @@ export default class {
                 try{
                     execSync(silenceCommandLine(`docker exec ${this.containerName} docker ps`))
                     clearInterval(interval);
+
+                    console.log(" ")
+                    console.log("Deploy an app with :")
+                    console.log(`node ${path.resolve(__dirname, "..", "..", "cli")} deploy --host=localhost --ssh-port=${this.sshPort} --user=${this.username} --pass=${this.password} --skip-test --y`);
+
                     return resolve();
                 }catch (e) {}
             }, 200);

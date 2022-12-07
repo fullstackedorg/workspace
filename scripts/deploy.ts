@@ -30,7 +30,7 @@ import version from "../version";
 * 11. ship built app
 * 12. predeploy script
 * 13. pull/up/restart built app
-* 14. build, ship and up/restart fullstacked-server
+* 14. ship and up/restart fullstacked-server
 * 15. postdeploy script
 * 16. clean up
 *
@@ -201,27 +201,19 @@ export default async function (config: Config) {
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml up -d`);
     }else{
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml up -d`);
-        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml restart`);
+        await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${serverAppDir}/docker-compose.yml restart -t 0`);
     }
 
     // 14.
-    const fullstackedServerOut = path.resolve(__dirname, "..", "fullstacked-server-dist");
-    // build
-    await build({
-        ...config,
-        src: path.resolve(__dirname, "..", "fullstacked-server"),
-        dist: fullstackedServerOut,
-        out: path.resolve(fullstackedServerOut, version),
-        public: path.resolve(fullstackedServerOut, version, "public"),
-        version: version,
-        production: true
-    });
+    const fullstackedServerDist = path.resolve(__dirname, "..", "fullstacked-server", "dist");
     console.log("Uploading FullStacked Server");
     // ship
-    await uploadFilesToServer(fullstackedServerOut, config.appDir, sftp);
+    const fullstackedServerRemoteDir = config.appDir + "/fullstacked-server";
+    await sftp.mkdir(fullstackedServerRemoteDir, true);
+    await uploadFilesToServer(fullstackedServerDist, fullstackedServerRemoteDir, sftp);
     // up/restart
-    await execSSH(sftp.client, `docker-compose -p fullstacked-server -f ${config.appDir}/docker-compose.yml up -d`);
-    await execSSH(sftp.client, `docker-compose -p fullstacked-server -f ${config.appDir}/docker-compose.yml restart -t 0`);
+    await execSSH(sftp.client, `docker-compose -p fullstacked-server -f ${fullstackedServerRemoteDir}/docker-compose.yml up -d`);
+    await execSSH(sftp.client, `docker-compose -p fullstacked-server -f ${fullstackedServerRemoteDir}/docker-compose.yml restart -t 0`);
 
 
     // 15.
@@ -229,7 +221,6 @@ export default async function (config: Config) {
 
     // 16.
     await sftp.end();
-    fs.rmSync(fullstackedServerOut, {recursive: true, force: true});
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', config.name + " v" + config.version + " deployed!");
     return process.exit(0);
