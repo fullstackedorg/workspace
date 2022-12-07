@@ -1,79 +1,163 @@
+import "./mockingFS";
 import Server from "fullstacked/server";
-import { Low } from 'lowdb'
-// @ts-ignore
-import { JSONFile } from 'lowdb/node'
-import httpProxy from "http-proxy";
-import path from "path";
-import cookie from "cookie";
+import {resolve} from "path";
 import fs from "fs";
+import {fetch} from "fullstacked/webapp/fetch";
+import Express, {json} from 'express';
+import {exec, execSync} from "child_process";
 
 Server.port = 8000;
 
-Server.start();
-
-async function readBody(req){
-    return new Promise<any>(resolve => {
-        let data = "";
-        req.on('data', chunk => data += chunk);
-        req.on('end', () => resolve(JSON.parse(data)));
-    });
+try{
+    execSync("docker --version");
+    execSync("docker compose");
+}catch (e){
+    const dockerCLIInstallation = exec(`apk update && apk add --no-cache docker-cli docker-cli-compose`);
+    dockerCLIInstallation.stdout.pipe(process.stdout);
+    dockerCLIInstallation.stderr.pipe(process.stderr);
 }
 
-const adapter = new JSONFile(path.resolve("/data", "db.json"));
-const db: any = new Low(adapter);
+function waitForDocker(){
+    return new Promise<void>(resolve => {
+        try{
+            execSync("docker --version");
+            execSync("docker compose");
+            resolve();
+        } catch (e){}
 
+        const interval = setInterval(() => {
+            try{
+                execSync("docker --version");
+                execSync("docker compose");
+            } catch (e){
+                return;
+            }
+            clearInterval(interval);
+            resolve();
+        }, 100)
+    })
+}
+
+
+Server.start();
+
+const express = Express();
+
+const {promisifiedListener, resolver} = Server.promisify(express);
+
+export const localAppDir = "/apps";
+
+function inspectNodeService(appID){
+    const containerID = execSync(`docker compose -p ${appID} -f ${resolve(localAppDir, appID, "docker-compose.yml")} ps -q node`).toString();
+    const dockerInspect = JSON.parse(execSync(`docker inspect ${containerID}`).toString());
+    if(!dockerInspect?.length) return null;
+    return dockerInspect;
+}
+
+
+let serverAppDir;
 (async () => {
-    await db.read();
-    db.data ||= { apps: {} };
+    await waitForDocker();
+    const dockerInspect = inspectNodeService("fullstacked-server");
+    if(!dockerInspect?.length) return null;
+
+    const mounts = dockerInspect.at(0).Mounts;
+    for(const mount of mounts) {
+        if (mount.Destination === "/app") {
+            const pathComponents = mount.Source.split("/");
+            pathComponents.pop(); // version
+            pathComponents.pop(); // appID
+            serverAppDir = pathComponents.join("/");
+            console.log(serverAppDir)
+            return;
+        }
+    }
 })()
 
-
-const endpoints = [
-    {
-        path: "/apps",
-        method: "GET",
-        callback: async (req) => {
-            return db.data.apps;
-        }
-    },
-    {
-        path: "/apps",
-        method: "POST",
-        callback: async (req) => {
-            const body = await readBody(req);
-            db.data.apps[body.label] = body.port;
-            await db.write();
-            return {};
-        }
-    }
-]
-
-Server.addListener(async (req, res) => {
-    for(const endpoint of endpoints){
-        if(res.headersSent) return;
-
-        if(req.url === endpoint.path && req.method === endpoint.method){
-            res.writeHead(200, "content-type: application/json");
-            res.end(JSON.stringify(await endpoint.callback(req)));
-        }
-    }
+express.get("/apps", (req, res) => {
+    res.json(fs.readdirSync(localAppDir).filter(appName => {
+        return appName !== "fullstacked-server"
+            && fs.statSync(resolve(localAppDir, appName)).isDirectory()
+            && !appName.startsWith(".")
+            && fs.existsSync(resolve(localAppDir, appName, "docker-compose.yml"));
+    }));
 });
 
+function getCurrentRunningAppVersion(appID: string){
+    const dockerInspect = inspectNodeService(appID);
+    if(!dockerInspect?.length) return null;
 
-const proxy = httpProxy.createServer();
+    const mounts = dockerInspect.at(0).Mounts;
+    for(const mount of mounts)
+        if(mount.Destination === "/app")
+            return mount.Source.split("/").pop();
 
-proxy.on("proxyRes", (proxyRes, req, res) => {
-    if(proxyRes.headers["content-type"] === "text/html"){
-        res.write("<script>" + fs.readFileSync(path.resolve(__dirname, "AppsMenu.js")) + "</script>");
-    }
-})
+    return null;
+}
 
-Server.addListener((req, res) => {
-    const cookies = cookie.parse(req?.headers?.cookie ?? "");
-    const appProxy = db.data.apps[cookies?.app];
-    if(!appProxy) return;
-    return new Promise<void>(resolve => {
-        proxy.web(req, res, {target: appProxy}, resolve as any);
+function getStringBetween(str, start, end){
+    const regex = new RegExp(start + ".*?" + end);
+    const match = str.match(regex);
+
+    if(!match) return "";
+
+    return match[0].slice(start.length, -end.length);
+}
+
+express.get("/apps/:appID", (req, res) => {
+    const appID = req.params.appID;
+    const version = getCurrentRunningAppVersion(appID);
+
+    const nginx = fs.readFileSync(resolve(localAppDir, appID, "nginx.conf"), {encoding: "utf-8"});
+
+    const port = getStringBetween(nginx, "proxy_pass", ";").trim().split(":").pop();
+    const serverName = getStringBetween(nginx, "server_name", ";").trim();
+
+    res.json({
+        version,
+        date: fs.statSync(resolve(localAppDir, appID, version)).mtimeMs,
+        serverName,
+        port
+    })
+});
+
+express.get("/ip", async (req, res) => {
+    res.json((await fetch.get("https://api.ipify.org/?format=json")).ip);
+});
+
+express.post("/certs", json(), async (req, res) => {
+    const email = req.body.email;
+    const appID = req.body.appID;
+    const hostnames = req.body.hostnames;
+
+    const currentAppDir = resolve(serverAppDir, appID);
+    const currentAppCertsDir = resolve(serverAppDir, appID, "certs");
+
+    if(fs.existsSync(currentAppCertsDir)) fs.mkdirSync(currentAppCertsDir);
+
+    const currentAppPublicDir = resolve(currentAppDir, getCurrentRunningAppVersion(appID), "public");
+
+    const certbotCMD = [
+        "docker run --rm --name certbot",
+        `-v ${currentAppPublicDir}:/html`,
+        `-v ${currentAppCertsDir}:/etc/letsencrypt/live`,
+        `-v ${resolve(currentAppCertsDir, "..", "archive")}:/etc/letsencrypt/archive`,
+        `certbot/certbot certonly --webroot --agree-tos --no-eff-email -m ${email} -w /html`,
+        hostnames.map(hostname => `-d ${hostname}`).join(" ")
+    ];
+
+    await new Promise<void>(resolve => {
+        let certbotProcess = exec(certbotCMD.join(" "));
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Transfer-Encoding', 'chunked');
+        certbotProcess.stdout.on("data", chunk => res.write(chunk));
+        certbotProcess.stderr.on("data", chunk => res.write(chunk));
+        certbotProcess.on("exit", resolve);
     });
-}, true);
 
+    res.end();
+});
+
+express.use(resolver);
+
+Server.addListener(promisifiedListener);

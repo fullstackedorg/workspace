@@ -55,3 +55,6 @@ webapp/fetch.js
 
 server/index.js
 server/watcher.js
+
+fullstacked-server/**/*
+!fullstacked-server/dist/**/*

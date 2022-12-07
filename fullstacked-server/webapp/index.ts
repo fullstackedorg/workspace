@@ -1,16 +1,6 @@
-import {ProxyForm} from "./src/ProxyForm";
-import {ProxyList} from "./src/ProxyList";
+import main from "./main";
 
-class FullStackedPortal extends HTMLElement {
-    list = new ProxyList();
-    form = new ProxyForm(this.list.reloadList.bind(this.list));
+const savedTheme = window.localStorage.getItem("theme");
+if(savedTheme === "dark") document.body.classList.add("theme-dark");
 
-    constructor() {
-        super();
-
-        this.append(this.form);
-        this.append(this.list);
-    }
-}
-
-customElements.define("fullstacked-root", FullStackedPortal);
+main();
