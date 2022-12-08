@@ -7,8 +7,6 @@ services:
     command: node index
     restart: unless-stopped
     ports:
-      - "80"
+      - "${PORT}:80"
     volumes:
-      - ./app:/app
-    environment:
-      VERSION: ${VERSION}
+      - ./${VERSION}:/app
