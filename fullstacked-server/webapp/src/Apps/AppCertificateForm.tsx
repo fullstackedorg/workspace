@@ -1,47 +1,20 @@
-import React, {useEffect, useRef, useState} from "react";
-import {DataStore} from "../DataStore";
+import React, {useRef, useState} from "react";
 
-export default function (){
-    if(window.location.protocol === "https:")
-        return <></>
-
-    const [ip, setIp] = useState();
-    const [open, setOpen] = useState(true);
-    const [showForm, setShowForm] = useState(false);
-
-    useEffect(() => {
-        DataStore.getIP().then(setIp);
-    }, [])
-
-    if(!ip || window.location.host === ip || !open) return <></>
-
-    return <>
-        <div className="alert alert-warning alert-dismissible" role="alert">
-            <h3 className="mb-1 fw-bold">Generate SSL certificates for your FullStacked Portal</h3>
-            <p>You are using FullStacked Portal with a custom domain, but without SSL certificates. Please take the time to generate SSL certificate.</p>
-            <div className="btn-list">
-                <button onClick={() => setShowForm(true)} className="btn btn-warning">Generate</button>
-            </div>
-            <div onClick={() => setOpen(false)} className="btn-close" data-bs-dismiss="alert" aria-label="close"></div>
-        </div>
-        {showForm && <CertificatesForm onClose={() => setShowForm(false)}/>}
-    </>
-}
-
-
-function CertificatesForm({onClose}){
-    const [showLogs, setShowLogs] = useState(false);
+export default function ({appID, onClose}){
+    const [showLogs, setShowLogs] = useState(true);
     const logsRef = useRef();
     const emailRef = useRef();
 
+    if(!appID) return <></>
+
     return <>
-        <div className="modal-backdrop fade show"></div>
-        <div className="modal modal-blur fade show" id="modal-team" tabIndex="-1" role="dialog" aria-modal="true"
-                style={{display: "block"}}>
+        <div className={`modal-backdrop fade show`}></div>
+        <div className={`modal modal-blur fade show`} id="modal-team" tabIndex="-1" role="dialog" aria-modal="true"
+             style={{display: "block"}}>
             <div className="modal-dialog modal-dialog-centered" role="document">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h5 className="modal-title">Generate SSL certificates for FullStacked Portal</h5>
+                        <h5 className="modal-title">Generate SSL certificates for {appID}</h5>
                     </div>
                     <div className="modal-body">
                         <form>
@@ -53,7 +26,7 @@ function CertificatesForm({onClose}){
                         {showLogs && <pre ref={logsRef} style={{maxHeight: 300}} />}
                     </div>
                     <div className="modal-footer">
-                        <button onClick={onClose} type="button" className="btn me-auto" data-bs-dismiss="modal">Close</button>
+                        <button onClick={onClose} type="button" className="btn me-auto" data-bs-dismiss="modal">Cancel</button>
                         <button onClick={async () => {
                             const stream = await fetch("/certs", {
                                 method: "POST",
