@@ -1,8 +1,10 @@
 //@ts-nocheck
 import fs from "fs";
 import {resolve} from "path"
-import {localAppDir} from "./index";
+import {localAppDir} from "./express";
 import child_process from "child_process";
+import crypto from "crypto";
+import glob from "glob";
 
 const tree = [
     'foo',
@@ -11,6 +13,9 @@ const tree = [
     'fullstacked-server'
 ];
 
+function randomIntFromInterval(min, max) { // min and max included
+    return Math.floor(Math.random() * (max - min + 1) + min)
+}
 
 if(process.argv.includes("--development")){
     fs.readdirSync = function(path){
@@ -40,12 +45,15 @@ if(process.argv.includes("--development")){
 
     const originalExistsSync = fs.existsSync;
     fs.existsSync = function (path){
+        if(path.endsWith("nginx-extra.conf")) return true;
         if(!path.endsWith("docker-compose.yml")) return originalExistsSync(path);
         return true;
     }
 
     const originalReadFileSync = fs.readFileSync;
     fs.readFileSync = function (path, options){
+        if(path.endsWith(".pem")) return "";
+        if(path.endsWith("nginx-extra.conf")) return `proxy_set_header Host $host;`;
         if(!path.endsWith("nginx.conf")) return originalReadFileSync(path, options);
         const appID = path.split("/").at(-2);
         return `server {
@@ -53,7 +61,7 @@ if(process.argv.includes("--development")){
     listen              80;
 
     # Server Name
-    server_name         ${appID}.test.com;
+    server_name         ${appID}.test.com www.${appID}.test.com;
 
     # Certificates
 
@@ -110,5 +118,21 @@ if(process.argv.includes("--development")){
         if(!cmd.includes("certbot")) return originalExec(cmd);
 
         return originalExec("cat index.js");
+    }
+
+
+    crypto.X509Certificate = class {
+        constructor() {
+            this.subjectAltName = 'DNS:foo.test.com,DNS:www.bar.test.com'
+            this.validTo = randomIntFromInterval(1, 2) === 1
+                ? 'Mar  7 19:19:23 2023 GMT'
+                : 'Mar  7 19:19:23 2020 GMT'
+        }
+    }
+
+    const originalGlobSync = glob.sync;
+    glob.sync = function(path){
+        if(!path.endsWith("fullchain.pem")) return originalGlobSync(path);
+        return ["fullchain1.pem", "fullchain2.pem"]
     }
 }
