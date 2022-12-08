@@ -46,7 +46,7 @@
     "mocha": "^10.1.0",
     "nyc": "^15.1.0",
     "progress-stream": "^2.0.0",
-    "puppeteer": "^13.7.0",
+    "puppeteer": "^19.4.0",
     "ssh2-sftp-client": "^9.0.4",
     "v8-to-istanbul": "^8.1.1",
     "ws": "^8.5.0",
