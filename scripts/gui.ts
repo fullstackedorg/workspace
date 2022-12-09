@@ -15,7 +15,7 @@ const endpoints = [
         path: "/ssh",
         callback: async (req, res) => {
             try{
-                return await testSSHConnection(req.body);
+                return JSON.stringify({success: await testSSHConnection(req.body)});
             }catch (e){
                 return JSON.stringify({error: e.message});
             }
