@@ -14,6 +14,9 @@ import test from "./test";
 import yaml from "yaml";
 import Docker from "./docker";
 import version from "../version";
+import Runner from "./runner";
+import Config from "./config"
+import open from "open";
 
 /*
 *
@@ -68,6 +71,16 @@ async function uploadFilesToServer(localPath, remotePath, sftp){
 }
 
 export default async function (config: Config) {
+    if(config.gui){
+        const runner = new Runner(Config({
+            src: path.resolve(__dirname, "..", "gui"),
+            out: path.resolve(__dirname, "..", "gui")
+        }));
+        await runner.start();
+        return open(`http://localhost:${runner.nodePort}`);
+    }
+
+
     console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + config.name + " v" + config.version);
     if(!await askToContinue("Continue"))
         return;
