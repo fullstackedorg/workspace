@@ -78,7 +78,7 @@ export default function ({defaultData, updateData}){
                    })} />
         </div>
 
-        <div className="btn btn-success w-100">
+        <div className="btn btn-success w-100 mt-3">
             Test Connection
         </div>
     </div>
