@@ -106,7 +106,9 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
 
                  const data = getSteps().at(0).data;
                  const formData = new FormData();
-                 Object.keys(data).forEach(key => formData.append(key, data[key]))
+                 Object.keys(data).forEach(key => {
+                     if(data[key]) formData.append(key, data[key])
+                 })
                  setTestResponse(await fullstackedFetch.post(`${baseUrl}/ssh`, formData, null, {
                      headers: {'Content-Type': 'multipart/form-data'}
                  }));
@@ -133,7 +135,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                                  const data = getSteps().at(0).data;
                                  const formData = new FormData();
                                  Object.keys(data).forEach(key => formData.append(key, data[key]));
-                                 const stream = await fetch(`${baseUrl}/docker`, {
+                                 const stream = await fetch(`${baseUrl}/docker-install`, {
                                      method: "POST",
                                      body: formData
                                  });
@@ -152,7 +154,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                                 ? <div className="spinner-border" role="status"></div>
                                 : "Install Docker"}
                         </div>
-                        <pre ref={logsRef}>{testResponse.error.docker}</pre>
+                        <pre style={{maxHeight: 300, overflow: "auto"}} ref={logsRef}>{testResponse.error.docker}</pre>
                     </>)}
         </>}
     </div>
