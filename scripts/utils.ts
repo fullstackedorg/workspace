@@ -211,7 +211,14 @@ export function randStr(length) {
 }
 
 
-export async function getSFTPClient(config: FullStackedConfig){
+export async function getSFTPClient(config: {
+    host?: string,
+    user?: string,
+    sshPort?: number,
+    pass?: string,
+    privateKey?: string,
+    privateKeyFile?: string
+}){
     const sftp = new SFTP();
 
     // setup ssh connection

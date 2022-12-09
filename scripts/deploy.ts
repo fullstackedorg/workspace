@@ -18,6 +18,7 @@ import Runner from "./runner";
 import Config from "./config"
 import open from "open";
 import waitForServer from "./waitForServer";
+import gui from "./gui";
 
 /*
 *
@@ -40,13 +41,48 @@ import waitForServer from "./waitForServer";
 *
  */
 
+
+/**
+ *
+ * Test out if your SSH credentials work with the remote host.
+ * Make sure the App Directory is writable to publish web apps.
+ *
+ * @param credentials
+ */
+
+export async function testSSHConnection(credentials: {
+    host: string,
+    port: string,
+    user: string,
+    pass?: string,
+    privateKey?: string,
+    privateKeyFile?: string,
+    appDir: string
+}){
+    let sftp;
+    try{
+        sftp = await getSFTPClient(credentials);
+    }catch (e){
+        return e;
+    }
+    return "success";
+}
+
+
+
+
+
+
+
+
+
 async function getAvailablePorts(ssh2, count: number, startingPort: number = 8001): Promise<string[]> {
     const dockerContainerPorts = await execSSH(ssh2, "docker container ls --format \"{{.Ports}}\" -a");
     const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
         portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
         .map(port => parseInt(port)) // cast to number
         .filter(port => port || !isNaN(port)); // filter empty strings
-    
+
     const availablePorts = [];
     while (availablePorts.length < count){
         if(!portsInUse.includes(startingPort))
@@ -72,13 +108,7 @@ async function uploadFilesToServer(localPath, remotePath, sftp){
 
 export default async function (config: Config) {
     if(config.gui){
-        const runner = new Runner(Config({
-            src: path.resolve(__dirname, "..", "gui"),
-            out: path.resolve(__dirname, "..", "gui")
-        }));
-        await runner.start();
-        await waitForServer(3000, `http://localhost:${runner.nodePort}`);
-        return open(`http://localhost:${runner.nodePort}`);
+        return await gui();
     }
 
 
