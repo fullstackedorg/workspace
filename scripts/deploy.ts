@@ -20,6 +20,7 @@ import Config from "./config"
 import open from "open";
 import waitForServer from "./waitForServer";
 import gui from "./gui";
+import DockerInstallScripts from "../DockerInstallScripts";
 
 /*
 *
@@ -47,13 +48,13 @@ import gui from "./gui";
  *
  * Test out if your SSH credentials work with the remote host.
  * Make sure the App Directory is writable to publish web apps.
+ * Make sure Docker and Docker Compose is installed on remote host.
  *
  * @param credentials
  */
-
 export async function testSSHConnection(credentials: {
     host: string,
-    port: string,
+    sshPort?: number,
     user: string,
     pass?: string,
     privateKey?: string,
@@ -61,18 +62,90 @@ export async function testSSHConnection(credentials: {
     appDir: string
 }){
     let sftp;
-    sftp = await getSFTPClient(credentials);
+    const getSFTPClientIn3s = new Promise<void>(async (resolve, reject) => {
+        let rejected = false;
+        const testTimeout = setTimeout(async () => {
+            rejected = true;
+            reject(Error(`Hanging more than 3s to connect.`));
+        }, 3000);
+        try{
+            sftp = await getSFTPClient(credentials);
+            if(rejected)
+                await sftp.end();
+        }catch (e) {
+            reject(e);
+        }
+        clearTimeout(testTimeout);
+        resolve();
+    });
+    try{
+        await getSFTPClientIn3s;
+    }catch (e){
+        throw e;
+    }
     const testDir = `${credentials.appDir}/${randStr(10)}`;
-    sftp.mkdir(testDir, true);
-    sftp.rmdir(testDir);
-    await sftp.close();
-    return true;
+    if(await sftp.exists(testDir)){
+        throw Error(`Test directory ${testDir} exist. Exiting to prevent any damage to remote server.`);
+        return false;
+    }
+    await sftp.mkdir(testDir, true);
+    await sftp.rmdir(testDir);
+
+    const dockerTest = await testDockerOnRemoteHost(sftp);
+
+    await sftp.end();
+
+    return dockerTest || {success: true};
+}
+
+export async function testDockerOnRemoteHost(sftp){
+    const dockerTest = await execSSH(sftp.client, `docker version`);
+    if(!dockerTest) {
+        return {
+            error: {
+                docker: "Docker is not installed on the remote host."
+            }
+        };
+    }
+    const dockerComposeTest = await execSSH(sftp.client, `docker compose version`);
+    if(!dockerComposeTest){
+        return {
+            error: {
+                docker: "Docker Compose v2 is not installed on the remote host."
+            }
+        }
+    }
+
+    return "";
 }
 
 
+export async function tryToInstallDockerOnRemoteHost(sftpCreds, pipeStream){
+    const sftp = await getSFTPClient(sftpCreds);
+    const distroNameRaw = await execSSH(sftp.client, "cat /etc/*-release");
 
+    let distroName;
+    if(distroNameRaw.includes("Amazon Linux release 2"))
+        distroName = "Amazon Linux 2";
+    else if(distroNameRaw.includes("Rocky Linux"))
+        distroName = "Rocky Linux";
 
+    if(!DockerInstallScripts[distroName]) {
+        throw Error(`Don't know the command to install Docker and Docker Compose v2`);
+        return false;
+    }
 
+    for(const cmd of DockerInstallScripts[distroName]) {
+        pipeStream.write(cmd);
+        await execSSH(sftp.client, cmd, pipeStream);
+    }
+
+    const dockerTest = await testDockerOnRemoteHost(sftp);
+
+    await sftp.end();
+
+    return dockerTest || {success: true};
+}
 
 
 

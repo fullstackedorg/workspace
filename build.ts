@@ -22,6 +22,7 @@ async function buildFile(file){
         path.resolve(__dirname, "mocha-reporter.ts"),
         path.resolve(__dirname, "getPackageJSON.ts"),
         path.resolve(__dirname, "server", "index.ts"),
+        path.resolve(__dirname, "DockerInstallScripts.ts"),
     ];
 
     const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {

@@ -97,14 +97,16 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
 }
 
 // exec command on remote host over ssh
-export function execSSH(ssh2, cmd): Promise<string>{
+export function execSSH(ssh2, cmd, pipeStream?): Promise<string>{
     return new Promise(resolve => {
         let message = "";
         ssh2.exec(cmd, (err, stream) => {
             if (err) throw err;
 
             stream.on('data', data => {
-                process.stdout.write(data);
+                if(pipeStream)
+                    pipeStream.write(data);
+                
                 message += data.toString();
             });
             stream.on('close', () => resolve(message));

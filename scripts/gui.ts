@@ -8,14 +8,36 @@ import open from "open";
 import fs from "fs";
 import yaml from "yaml";
 import {IncomingMessage} from "http";
-import {testSSHConnection} from "./deploy";
+import {testSSHConnection, tryToInstallDockerOnRemoteHost} from "./deploy";
+import multer from "multer";
 
 const endpoints = [
     {
         path: "/ssh",
         callback: async (req, res) => {
+            let sshCredentials = req.body;
+
+            if (req.file) {
+                sshCredentials.privateKey = req.file.buffer
+            }
+
+            try {
+                return JSON.stringify(await testSSHConnection(req.body));
+            } catch (e) {
+                return JSON.stringify({error: e.message});
+            }
+        }
+    },{
+        path: "/docker",
+        callback: async (req, res) => {
+            let sshCredentials = req.body;
+
+            if (req.file) {
+                sshCredentials.privateKey = req.file.buffer
+            }
+            
             try{
-                return JSON.stringify({success: await testSSHConnection(req.body)});
+                return JSON.stringify(await tryToInstallDockerOnRemoteHost(req.body, res));
             }catch (e){
                 return JSON.stringify({error: e.message});
             }
@@ -49,8 +71,14 @@ export default async function (){
         for(const endpoint of endpoints) {
             if(endpoint.path !== req.url || res.headersSent) continue;
 
-            if(req.method === "POST")
-                req.body = await readBody(req);
+            if(req.method === "POST") {
+                if(req.headers["content-type"].startsWith('multipart/form-data'))
+                    await new Promise((resolve) => {
+                        multer({ storage: multer.memoryStorage() }).single("file")(req, res, resolve)
+                    });
+                else
+                    req.body = await readBody(req);
+            }
 
             res.writeHead(200, {
                 ...headers,
