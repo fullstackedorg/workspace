@@ -10,7 +10,7 @@ import {
     uploadFileWithProgress,
     randStr
 } from "./utils";
-import build from "./build";
+import Build from "./build";
 import test from "./test";
 import yaml from "yaml";
 import Docker from "./docker";
@@ -98,6 +98,12 @@ export async function testSSHConnection(credentials: {
     return dockerTest || {success: true};
 }
 
+/**
+ *
+ * Reusable function to test Docker and Docker Compose v2 installation on remote host
+ *
+ * @param sftp
+ */
 export async function testDockerOnRemoteHost(sftp){
     const dockerTest = await execSSH(sftp.client, `docker version`);
     if(!dockerTest) {
@@ -119,7 +125,13 @@ export async function testDockerOnRemoteHost(sftp){
     return "";
 }
 
-
+/**
+ *
+ * Try to install docker and docker-compose v2 on remote host for specific distro
+ *
+ * @param sftpCreds
+ * @param pipeStream
+ */
 export async function tryToInstallDockerOnRemoteHost(sftpCreds, pipeStream){
     const sftp = await getSFTPClient(sftpCreds);
     const distroNameRaw = await execSSH(sftp.client, "cat /etc/*-release");
@@ -129,9 +141,14 @@ export async function tryToInstallDockerOnRemoteHost(sftpCreds, pipeStream){
         distroName = "Amazon Linux 2";
     else if(distroNameRaw.includes("Rocky Linux"))
         distroName = "Rocky Linux";
+    else if(distroNameRaw.includes("Ubuntu"))
+        distroName = "Ubuntu";
+    else if(distroNameRaw.includes("Debian"))
+        distroName = "Debian";
+
 
     if(!DockerInstallScripts[distroName]) {
-        throw Error(`Don't know the command to install Docker and Docker Compose v2`);
+        throw Error(`Don't know the command to install Docker and Docker Compose v2 on ${distroName || distroNameRaw}`);
         return false;
     }
 
@@ -147,6 +164,24 @@ export async function tryToInstallDockerOnRemoteHost(sftpCreds, pipeStream){
     return dockerTest || {success: true};
 }
 
+/**
+ *
+ * Get Docker Compose content in JS object format
+ *
+ */
+export async function getBuiltDockerCompose(){
+    await Build({
+        ...globalConfig,
+        production: true
+    });
+
+    const dockerComposeFilePath = path.resolve(globalConfig.dist, "docker-compose.yml");
+    if(!fs.existsSync(dockerComposeFilePath)) {
+        throw Error(`Cannot find docker-compose.yml at path ${dockerComposeFilePath}`);
+    }
+    const dockerComposeStr = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
+    return yaml.parse(dockerComposeStr);
+}
 
 
 
@@ -180,7 +215,9 @@ async function uploadFilesToServer(localPath, remotePath, sftp){
     }
 }
 
+let globalConfig;
 export default async function (config: Config) {
+    globalConfig = config;
     if(config.gui){
         return await gui();
     }
@@ -223,7 +260,7 @@ export default async function (config: Config) {
     }
 
     // 5.
-    await build({
+    await Build({
         ...config,
         production: true
     });

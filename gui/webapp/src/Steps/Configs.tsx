@@ -1,24 +1,95 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
+import {fetch} from "../../../../webapp/fetch";
 
-export default function (){
-    
+let dockerCompose;
+const getDockerCompose = url => {
+    if(!dockerCompose)
+        dockerCompose = fetch.get(url);
+    return dockerCompose;
+}
+
+export default function ({baseUrl, defaultData, updateData, getSteps}){
+    const [dockerCompose, setDockerCompose] = useState(null);
+    const [activeServiceIndex, setActiveServiceIndex] = useState(0);
+
+    useEffect(() => {
+        getDockerCompose(`${baseUrl}/docker-compose`).then(setDockerCompose);
+    }, []);
+
+    if(!dockerCompose) return <></>;
+
+    const services: {
+        name: string,
+        port: string
+    }[] = Object.keys(dockerCompose.services).map(serviceName => {
+        const ports = dockerCompose.services[serviceName].ports;
+        return ports
+            ? ports.map(port => ({
+                name: serviceName,
+                port: port.split(":").pop()
+            }))
+            : []
+    }).flat();
+
+    const onInputChange = (service, serviceIndex) => {
+        const data = getSteps().at(1).data ?? {};
+        const existingDataForService = data[service.name] ?? {};
+        const existingDataForServiceAtPort = existingDataForService[service.port] ?? {};
+
+        let server_names = [];
+        document.querySelectorAll(`#server-name-inputs-${serviceIndex} input`).forEach((input: HTMLInputElement) => {
+            server_names.push(input.value);
+        });
+
+        updateData({
+            [service.name]: {
+                ...existingDataForService,
+                [service.port]: {
+                    ...existingDataForServiceAtPort,
+                    server_names
+                }
+            }
+        });
+    }
+
     return <div>
         <div className="card">
             <div className="card-header">
                 <ul className="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
-                    <li className="nav-item" role="presentation">
-                        <div className="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">node</div>
-                    </li>
+                    {
+                        services.map((service, serviceIndex) => <li className="nav-item" role="presentation">
+                            <div className={`nav-link d-block cursor-pointer ${serviceIndex === activeServiceIndex && "active"}`}
+                                 onClick={() => setActiveServiceIndex(serviceIndex)}>
+                                <div>{service.name}</div>
+                                <div><small className={"text-muted"}>Port: {service.port}</small></div>
+                            </div>
+                        </li>)
+                    }
                 </ul>
             </div>
             <div className="card-body">
                 <div className="tab-content">
-                    <div className="tab-pane active show" id="tabs-home-11" role="tabpanel">
-                        <div>
+                    {services.map((service, serviceIndex) => <div className={`tab-pane ${serviceIndex === activeServiceIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
+                        <div id={`server-name-inputs-${serviceIndex}`}>
                             <label className="form-label">Server Name</label>
-                            <input type="text" className="form-control" placeholder="foo.example.com" />
+                            {defaultData
+                                ? defaultData[service.name]
+                                    ? defaultData[service.name][service.port]?.server_names?.map(server_name =>
+                                        <input type="text" className="form-control mb-2" defaultValue={server_name} placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>)
+                                    : <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>
+                                : <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>}
+
+
+
                         </div>
-                        <div className={"text-center mt-1"}>
+                        <div className={"text-center mt-1"} onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "text";
+                            input.classList.add("form-control", "mb-2");
+                            input.placeholder = "foo.example.com";
+                            input.addEventListener('change', () => onInputChange(service, serviceIndex))
+                            document.querySelector(`#server-name-inputs-${serviceIndex}`).append(input);
+                        }}>
                             <div className="btn btn-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="m-0 icon icon-tabler icon-tabler-plus" width="24"
                                      height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none"
@@ -31,10 +102,30 @@ export default function (){
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Nginx Extra Configs</label>
-                            <textarea className="form-control" name="example-textarea-input" rows="6" placeholder="proxy_set_header Host $host;
-proxy_set_header X-Real-IP $remote_addr;"></textarea>
-                        </div>
-                    </div>
+                            <textarea className="form-control" rows={6} defaultValue={
+                                defaultData
+                                    ? defaultData[service.name]
+                                        ? defaultData[service.name][service.port]?.nginx_extra_configs?.join("\n")
+                                        : ""
+                                    : ""}
+                                      placeholder="proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;" onChange={(e) => {
+                                const data = getSteps().at(1).data ?? {};
+                                const existingDataForService = data[service.name] ?? {};
+                                const existingDataForServiceAtPort = existingDataForService[service.port] ?? {};
+
+                                updateData({
+                                    [service.name]: {
+                                        ...existingDataForService,
+                                        [service.port]: {
+                                            ...existingDataForServiceAtPort,
+                                            nginx_extra_configs: e.target.value.split("\n")
+                                        }
+                                    }
+                                });
+                            }}></textarea>
+                                </div>
+                        </div>)}
                 </div>
             </div>
         </div>
