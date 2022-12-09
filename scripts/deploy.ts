@@ -17,6 +17,7 @@ import version from "../version";
 import Runner from "./runner";
 import Config from "./config"
 import open from "open";
+import waitForServer from "./waitForServer";
 
 /*
 *
@@ -45,8 +46,7 @@ async function getAvailablePorts(ssh2, count: number, startingPort: number = 800
         portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
         .map(port => parseInt(port)) // cast to number
         .filter(port => port || !isNaN(port)); // filter empty strings
-
-
+    
     const availablePorts = [];
     while (availablePorts.length < count){
         if(!portsInUse.includes(startingPort))
@@ -77,6 +77,7 @@ export default async function (config: Config) {
             out: path.resolve(__dirname, "..", "gui")
         }));
         await runner.start();
+        await waitForServer(3000, `http://localhost:${runner.nodePort}`);
         return open(`http://localhost:${runner.nodePort}`);
     }
 

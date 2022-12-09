@@ -1,3 +1,4 @@
+import version from "../../../version";
 import React from "react";
 
 export default function (){
@@ -15,6 +16,9 @@ export default function (){
                         FullStacked GUI
                     </a>
                 </h1>
+                <div>
+                    <small className={"text-muted"}>v{version}</small>
+                </div>
             </div>
             <div className="navbar-nav flex-row order-md-last">
                 <div className="nav-item d-none d-md-flex me-3">
