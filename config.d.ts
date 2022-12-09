@@ -62,5 +62,6 @@ declare type ConfigBackup = {
 
 declare type Config = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigCerts & ConfigBackup & {
     silent? : boolean, // silence logging
-    allYes? : boolean
+    allYes? : boolean,
+    gui?    : boolean, 
 }
