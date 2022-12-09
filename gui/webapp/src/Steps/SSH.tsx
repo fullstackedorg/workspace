@@ -1,17 +1,36 @@
 import React, {useState} from "react";
+import {steps} from "fullstacked/gui/webapp/src/App";
 
-export default function (){
+export default function ({defaultData, updateData}){
     const [authOption, setAuthOption] = useState(false);
     const [sshKeyOption, setSshKeyOption] = useState(false);
 
     return <div>
         <div>
             <label className="form-label">Server IP Address</label>
-            <input type="text" className="form-control" placeholder="XXX.XXX.XXX.XXX" />
+            <input type="text" className="form-control" placeholder="XXX.XXX.XXX.XXX"
+                   defaultValue={defaultData?.host}
+                   onChange={e => updateData({
+                       host: e.target.value
+                   })}
+            />
+        </div>
+        <div>
+            <label className="form-label">Port</label>
+            <input type="text" className="form-control" placeholder="22"
+                   defaultValue={defaultData?.port}
+                   onChange={e => updateData({
+                       port: e.target.value
+                   })}
+            />
         </div>
         <div>
             <label className="form-label">Username</label>
-            <input type="text" className="form-control" placeholder="root" />
+            <input type="text" className="form-control" placeholder="root"
+                   defaultValue={defaultData?.user}
+                   onChange={e => updateData({
+                       user: e.target.value
+                   })} />
         </div>
         <label className="form-label">Authentication</label>
         <div className="btn-group w-100" role="group">
@@ -43,13 +62,24 @@ export default function (){
             </div>
             : <div>
                 <label className="form-label">Password</label>
-                <input type="text" className="form-control" placeholder="********" />
+                <input type="password" className="form-control" placeholder="********"
+                       defaultValue={defaultData?.pass}
+                       onChange={e => updateData({
+                           pass: e.target.value
+                       })}/>
             </div>}
 
         <div>
             <label className="form-label">App Directory</label>
-            <input type="text" className="form-control" placeholder="/home" />
-            <small className={"text-muted"}>Default Value: /home</small>
+            <input type="text" className="form-control" placeholder="/home"
+                   defaultValue={defaultData?.appDir}
+                   onChange={e => updateData({
+                       appDir: e.target.value
+                   })} />
+        </div>
+
+        <div className="btn btn-success w-100">
+            Test Connection
         </div>
     </div>
 }
