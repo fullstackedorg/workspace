@@ -8,7 +8,7 @@ import SSL from "./Steps/SSL";
 
 export const steps: {
     title: string,
-    component({updateData, defaultData}): ReactElement,
+    component({updateData, defaultData, getSteps}): ReactElement,
     data?: any
 }[] = [
     {
@@ -38,10 +38,12 @@ export default function (){
         <Header />
         <Steps stepIndex={stepIndex} />
         <div className={"container col-lg-6 col-md-8 mt-3"}>
-            <View defaultData={steps[stepIndex].data} updateData={data => steps[stepIndex].data = {
-                ...steps[stepIndex].data,
-                ...data
-            }} />
+            <View defaultData={steps[stepIndex].data}
+                  getSteps={() => steps}
+                  updateData={data => steps[stepIndex].data = {
+                      ...steps[stepIndex].data,
+                      ...data
+                  }} />
             <div className={"d-flex justify-content-between mt-3"}>
                 {stepIndex > 0
                     ? <div onClick={() => setStepIndex(stepIndex - 1)} className="btn btn-outline-secondary">
