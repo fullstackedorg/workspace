@@ -12,7 +12,7 @@ class ServerInstance {
     reqListeners = [];
 
     constructor() {
-        if(process.argv.includes("--development")){
+        if(process.argv.includes("--development") || process.argv.includes("--gui")){
             this.logger = (req: IncomingMessage) => {
                 console.log(req.method, req.url);
             }

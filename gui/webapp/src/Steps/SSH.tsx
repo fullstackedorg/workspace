@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import {fetch} from "../../../../webapp/fetch";
 
-export default function ({defaultData, updateData, getSteps}){
+export default function ({baseUrl, defaultData, updateData, getSteps}){
     const [authOption, setAuthOption] = useState(false);
     const [sshKeyOption, setSshKeyOption] = useState(false);
 
@@ -80,7 +80,7 @@ export default function ({defaultData, updateData, getSteps}){
 
         <div className="btn btn-success w-100 mt-3"
              onClick={async () => {
-                const response = await fetch.post("/ssh", getSteps().at(0).data);
+                const response = await fetch.post(`${baseUrl}/ssh`, getSteps().at(0).data);
             }} >
             Test Connection
         </div>
