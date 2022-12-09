@@ -1,7 +1,7 @@
 import React, {useState} from "react";
-import {steps} from "fullstacked/gui/webapp/src/App";
+import {fetch} from "../../../../webapp/fetch";
 
-export default function ({defaultData, updateData}){
+export default function ({defaultData, updateData, getSteps}){
     const [authOption, setAuthOption] = useState(false);
     const [sshKeyOption, setSshKeyOption] = useState(false);
 
@@ -78,7 +78,10 @@ export default function ({defaultData, updateData}){
                    })} />
         </div>
 
-        <div className="btn btn-success w-100 mt-3">
+        <div className="btn btn-success w-100 mt-3"
+             onClick={async () => {
+                const response = await fetch.post("/ssh", getSteps().at(0).data);
+            }} >
             Test Connection
         </div>
     </div>
