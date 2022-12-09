@@ -4,6 +4,7 @@ import {fetch} from "../../../../webapp/fetch";
 export default function ({baseUrl, defaultData, updateData, getSteps}){
     const [authOption, setAuthOption] = useState(false);
     const [sshKeyOption, setSshKeyOption] = useState(false);
+    const [testing, setTesting] = useState(false);
 
     return <div>
         <div>
@@ -78,11 +79,16 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                    })} />
         </div>
 
-        <div className="btn btn-success w-100 mt-3"
+        <div className={`btn btn-success w-100 mt-3 ${testing && "disabled"}`}
              onClick={async () => {
-                const response = await fetch.post(`${baseUrl}/ssh`, getSteps().at(0).data);
+                 setTesting(true);
+                 const response = await fetch.post(`${baseUrl}/ssh`, getSteps().at(0).data);
+                 console.log(response)
+                 setTesting(false);
             }} >
-            Test Connection
+            {testing
+                ? <div className="spinner-border" role="status"></div>
+                : "Test Connection"}
         </div>
     </div>
 }
