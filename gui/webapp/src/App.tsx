@@ -8,7 +8,7 @@ import SSL from "./Steps/SSL";
 
 export const steps: {
     title: string,
-    component({updateData, defaultData, getSteps}): ReactElement,
+    component({baseUrl, updateData, defaultData, getSteps}): ReactElement,
     data?: any
 }[] = [
     {
@@ -29,7 +29,7 @@ export const steps: {
     }
 ]
 
-export default function (){
+export default function ({port}){
     const [stepIndex, setStepIndex] = useState(0);
 
     const View = steps[stepIndex].component;
@@ -38,7 +38,8 @@ export default function (){
         <Header />
         <Steps stepIndex={stepIndex} />
         <div className={"container col-lg-6 col-md-8 mt-3"}>
-            <View defaultData={steps[stepIndex].data}
+            <View baseUrl={`http://localhost:${port}`}
+                  defaultData={steps[stepIndex].data}
                   getSteps={() => steps}
                   updateData={data => steps[stepIndex].data = {
                       ...steps[stepIndex].data,

@@ -7,7 +7,8 @@ import {
     execScript,
     execSSH,
     getSFTPClient,
-    uploadFileWithProgress
+    uploadFileWithProgress,
+    randStr
 } from "./utils";
 import build from "./build";
 import test from "./test";
@@ -60,12 +61,12 @@ export async function testSSHConnection(credentials: {
     appDir: string
 }){
     let sftp;
-    try{
-        sftp = await getSFTPClient(credentials);
-    }catch (e){
-        return e;
-    }
-    return "success";
+    sftp = await getSFTPClient(credentials);
+    const testDir = `${credentials.appDir}/${randStr(10)}`;
+    sftp.mkdir(testDir, true);
+    sftp.rmdir(testDir);
+    await sftp.close();
+    return true;
 }
 
 
