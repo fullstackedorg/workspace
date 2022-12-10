@@ -10,7 +10,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
 
     return <div>
         <div>
-            <label className="form-label">Server IP Address</label>
+            <label className="form-label">Server IP Address or Hostname</label>
             <input type="text" className="form-control" placeholder="XXX.XXX.XXX.XXX"
                    defaultValue={defaultData?.host}
                    onChange={e => updateData({
@@ -19,7 +19,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
             />
         </div>
         <div>
-            <label className="form-label">Port</label>
+            <label className="form-label">SSH Port</label>
             <input type="text" className="form-control" placeholder="22"
                    defaultValue={defaultData?.sshPort}
                    onChange={e => updateData({
@@ -38,8 +38,8 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
         <label className="form-label">Authentication</label>
         <div className="btn-group w-100" role="group">
             <input onClick={() => setAuthOption(false)} type="radio" className="btn-check" name="auth-option" id="btn-radio-basic-1" autoComplete="off"
-                   defaultChecked={defaultData?.password ||
-                       (!defaultData?.password && !defaultData?.privateKey && !defaultData?.file)} />
+                   defaultChecked={defaultData?.pass ||
+                       (!defaultData?.pass && !defaultData?.privateKey && !defaultData?.file)} />
             <label htmlFor="btn-radio-basic-1" className="btn">Password</label>
             <input onClick={() => setAuthOption(true)} type="radio" className="btn-check" name="auth-option" id="btn-radio-basic-2" autoComplete="off" defaultChecked={defaultData?.privateKey || defaultData?.file} />
             <label htmlFor="btn-radio-basic-2" className="btn">SSH Key</label>
@@ -60,7 +60,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                                       defaultValue={defaultData?.privateKey}
                                       onChange={e => updateData({
                                           file: null,
-                                          password: null,
+                                          pass: null,
                                           privateKey: e.target.value
                                       })}
                             ></textarea>
@@ -70,7 +70,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                             {defaultData?.file && <div>File: {defaultData.file.name}</div>}
                             <input type="file" className="form-control"
                                    onChange={e => updateData({
-                                       password: null,
+                                       pass: null,
                                        privateKey: null,
                                        file: e.target.files[0]
                                    })}

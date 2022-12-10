@@ -106,7 +106,7 @@ export function execSSH(ssh2, cmd, pipeStream?): Promise<string>{
             stream.on('data', data => {
                 if(pipeStream)
                     pipeStream.write(data);
-                
+
                 message += data.toString();
             });
             stream.on('close', () => resolve(message));
