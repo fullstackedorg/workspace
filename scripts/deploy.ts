@@ -21,7 +21,6 @@ import open from "open";
 import waitForServer from "./waitForServer";
 import gui from "./gui";
 import DockerInstallScripts from "../DockerInstallScripts";
-import sleep from "./sleep";
 
 /*
 *
@@ -187,35 +186,12 @@ export async function getBuiltDockerCompose(){
 
 /**
  *
- * Core deploy method
+ * @return an array of available ports on remote host
  *
- * @param sshCreds
- * @param nginxConfigs
- * @param pipeStream
+ * @param ssh2
+ * @param count
+ * @param startingPort
  */
-
-export async function deploy(sshCreds, nginxConfigs, pipeStream){
-    await testSSHConnection(sshCreds);
-    const sftp = await getSFTPClient(sshCreds);
-    pipeStream.write(JSON.stringify({success: "Connected to Remote Host"}));
-    const dockerTestError = await testDockerOnRemoteHost(sftp);
-    if(dockerTestError){
-        throw Error(dockerTestError.error.docker);
-        return;
-    }
-    pipeStream.write(JSON.stringify({success: "Docker and Docker Compose v2 is installed"}));
-    await Build({...globalConfig, silent: true, production: true});
-    pipeStream.write(JSON.stringify({success: "Web App is built production mode"}));
-    await sleep(1);
-    console.log(nginxConfigs)
-    return {success: "Deployment Successfull"};
-    // setup nginx-*.conf files
-    // await uploadFilesToServer(globalConfig.dist, `${sshCreds.appDir}/${globalConfig.name}`, sftp);
-    // await execScript(path.resolve(globalConfig.src, "predeploy.ts"), globalConfig, sftp);
-    // // start webapp on remote host
-    // await execScript(path.resolve(globalConfig.src, "postdeploy.ts"), globalConfig, sftp);
-}
-
 
 async function getAvailablePorts(ssh2, count: number, startingPort: number = 8001): Promise<string[]> {
     const dockerContainerPorts = await execSSH(ssh2, "docker container ls --format \"{{.Ports}}\" -a");
@@ -234,7 +210,97 @@ async function getAvailablePorts(ssh2, count: number, startingPort: number = 800
     return availablePorts;
 }
 
-async function uploadFilesToServer(localPath, remotePath, sftp){
+/**
+ *
+ * Find available ports on remote host,
+ * then setup docker-compose.yml and nginx-{service}-{port}.conf files.
+ *
+ * @param nginxConf
+ */
+
+async function setupDockerComposeAndNginx(sshCreds, nginxConf, sftp){
+    const servicesWithServerNames = nginxConf.filter(service => service.server_names?.length);
+    const availablePorts = await getAvailablePorts(sftp.client, servicesWithServerNames.length);
+    const dockerCompose = await getBuiltDockerCompose();
+    const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx.conf"), {encoding: "utf-8"});
+    servicesWithServerNames.forEach((service, serviceIndex) => {
+        const port = availablePorts[serviceIndex];
+        const nginx = nginxTemplate
+            .replace(/\{SERVER_NAME\}/g, service.server_names?.join(" ") ?? "localhost")
+            .replace(/\{PORT\}/g, port)
+            .replace(/\{EXTRA_CONFIGS\}/g, service.nginx_extra_configs?.join("\n") ?? "");
+        fs.writeFileSync(path.resolve(globalConfig.dist, `nginx-${service.name}-${service.port}.conf`), nginx);
+        for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
+            if(!dockerCompose.services[service.name].ports[i].endsWith(`:${service.port}`)) continue;
+            dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
+        }
+    });
+    fs.writeFileSync(path.resolve(globalConfig.dist, "docker-compose.yml"), yaml.stringify(dockerCompose));
+}
+
+/**
+ *
+ * Start up app on remote server
+ *
+ */
+async function startAppOnRemoteServer(appDir, sftp){
+    await execSSH(sftp.client, `docker compose -p ${globalConfig.name} -f ${appDir}/${globalConfig.name}/docker-compose.yml up -d`);
+    await execSSH(sftp.client, `docker compose -p ${globalConfig.name} -f ${appDir}/${globalConfig.name}/docker-compose.yml restart -t 0`);
+
+    await sftp.put(path.resolve(__dirname, "..", "nginx", "nginx.conf"), `${appDir}/nginx.conf`);
+    await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${appDir}/docker-compose.yml`);
+    await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${appDir}/docker-compose.yml up -d`);
+    await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${appDir}/docker-compose.yml restart -t 0`);
+}
+
+
+/**
+ *
+ * Core deploy method
+ *
+ * @param sshCreds
+ * @param nginxConfigs
+ * @param pipeStream
+ */
+export async function deploy(sshCreds, nginxConfigs, pipeStream){
+    await testSSHConnection(sshCreds);
+    const sftp = await getSFTPClient(sshCreds);
+    pipeStream.write(JSON.stringify({success: "Connected to Remote Host"}));
+
+    const dockerTestError = await testDockerOnRemoteHost(sftp);
+    if(dockerTestError){
+        throw Error(dockerTestError.error.docker);
+        return;
+    }
+    pipeStream.write(JSON.stringify({success: "Docker and Docker Compose v2 is installed"}));
+
+    await Build({...globalConfig, silent: true, production: true});
+    pipeStream.write(JSON.stringify({success: "Web App is built production mode"}));
+
+    await setupDockerComposeAndNginx(sshCreds, nginxConfigs, sftp);
+    pipeStream.write(JSON.stringify({success: "Docker Compose and Nginx is setup"}));
+
+    if(!await sftp.exists(`${sshCreds.appDir}/${globalConfig.name}`))
+        await sftp.mkdir(`${sshCreds.appDir}/${globalConfig.name}`, true);
+    await uploadFilesToServer(globalConfig.dist, `${sshCreds.appDir}/${globalConfig.name}`, sftp, (progressStr) => {
+        pipeStream.write(JSON.stringify({progress: progressStr}))
+    });
+    pipeStream.write(JSON.stringify({success: "Web App is uploaded to the remote server"}));
+
+    await execScript(path.resolve(globalConfig.src, "predeploy.ts"), globalConfig, sftp);
+    pipeStream.write(JSON.stringify({success: "Ran predeploy scripts"}));
+
+    await startAppOnRemoteServer(sshCreds.appDir, sftp);
+    pipeStream.write(JSON.stringify({success: "Web App Deployed"}));
+
+    await execScript(path.resolve(globalConfig.src, "postdeploy.ts"), globalConfig, sftp);
+    pipeStream.write(JSON.stringify({success: "Ran postdeploy scripts"}));
+
+    await sftp.end();
+    return {success: "Deployment Successfull"};
+}
+
+async function uploadFilesToServer(localPath, remotePath, sftp, progressCallback: (progress: string) => void){
     const files = glob.sync("**/*", {cwd: localPath})
     const localFiles = files.map(file => path.resolve(localPath, file));
 
@@ -243,7 +309,9 @@ async function uploadFilesToServer(localPath, remotePath, sftp){
         if(fileInfo.isDirectory())
             await sftp.mkdir(remotePath + "/" + files[i]);
         else
-            await uploadFileWithProgress(sftp, localFiles[i], remotePath + "/" + files[i], `[${i + 1}/${files.length}] `);
+            await uploadFileWithProgress(sftp, localFiles[i], remotePath + "/" + files[i], (progress) => {
+                progressCallback(`[${i + 1}/${files.length}] Uploading File ${progress.toFixed(2)}%`);
+            });
     }
 }
 
@@ -374,7 +442,7 @@ export default async function (config: Config) {
     // 11.
     if(mustOverWriteCurrentVersion) await sftp.rmdir(serverAppDistDir, true);
     await sftp.mkdir(serverAppDistDir, true);
-    await uploadFilesToServer(config.dist, serverAppDir, sftp);
+    // await uploadFilesToServer(config.dist, serverAppDir, sftp);
     console.log('\x1b[32m%s\x1b[0m', "\nUpload completed");
 
     // 12.
@@ -397,7 +465,7 @@ export default async function (config: Config) {
     // ship
     const fullstackedServerRemoteDir = config.appDir + "/fullstacked-server";
     await sftp.mkdir(fullstackedServerRemoteDir, true);
-    await uploadFilesToServer(fullstackedServerDist, fullstackedServerRemoteDir, sftp);
+    // await uploadFilesToServer(fullstackedServerDist, fullstackedServerRemoteDir, sftp);
     // up/restart
     await execSSH(sftp.client, `docker-compose -p fullstacked-server -f ${fullstackedServerRemoteDir}/docker-compose.yml up -d`);
     await execSSH(sftp.client, `docker-compose -p fullstacked-server -f ${fullstackedServerRemoteDir}/docker-compose.yml restart -t 0`);

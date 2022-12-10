@@ -268,7 +268,7 @@ export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: stri
 }
 
 
-export async function uploadFileWithProgress(sftp: any, localFilePath: string, remoteFilePath: string, prefixLog = "", silent= false){
+export async function uploadFileWithProgress(sftp: any, localFilePath: string, remoteFilePath: string, progressCallback: (progress: number) => void, silent = false){
     let ulStream = fs.createReadStream(localFilePath);
 
     if(!silent){
@@ -276,14 +276,10 @@ export async function uploadFileWithProgress(sftp: any, localFilePath: string, r
             length: fs.statSync(localFilePath).size
         });
 
-        progressStream.on('progress', progress => {
-            printLine(prefixLog + "Upload progress : " + progress.percentage.toFixed(2) + "%")
-        });
+        progressStream.on('progress', progress => progressCallback(progress.percentage));
 
         ulStream = ulStream.pipe(progressStream);
     }
 
     await sftp.put(ulStream, remoteFilePath);
-
-    clearLine();
 }
