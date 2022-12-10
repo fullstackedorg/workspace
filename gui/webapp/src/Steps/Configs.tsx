@@ -9,46 +9,41 @@ const getDockerCompose = url => {
 }
 
 export default function ({baseUrl, defaultData, updateData, getSteps}){
-    const [dockerCompose, setDockerCompose] = useState(null);
+    const [services, setServices] = useState([]);
     const [activeServiceIndex, setActiveServiceIndex] = useState(0);
 
     useEffect(() => {
-        getDockerCompose(`${baseUrl}/docker-compose`).then(setDockerCompose);
+        if(defaultData?.nginxConfigs) return setServices(defaultData.nginxConfigs);
+
+        getDockerCompose(`${baseUrl}/docker-compose`).then(dockerCompose => {
+            const services: {
+                name: string,
+                port: string
+            }[] = Object.keys(dockerCompose.services).map(serviceName => {
+                const ports = dockerCompose.services[serviceName].ports;
+                return ports
+                    ? ports.map(port => ({
+                        name: serviceName,
+                        port: port.split(":").pop()
+                    }))
+                    : []
+            }).flat();
+
+            updateData({nginxConfigs: services})
+            setServices(services);
+        });
     }, []);
 
-    if(!dockerCompose) return <></>;
-
-    const services: {
-        name: string,
-        port: string
-    }[] = Object.keys(dockerCompose.services).map(serviceName => {
-        const ports = dockerCompose.services[serviceName].ports;
-        return ports
-            ? ports.map(port => ({
-                name: serviceName,
-                port: port.split(":").pop()
-            }))
-            : []
-    }).flat();
-
     const onInputChange = (service, serviceIndex) => {
-        const data = getSteps().at(1).data ?? {};
-        const existingDataForService = data[service.name] ?? {};
-        const existingDataForServiceAtPort = existingDataForService[service.port] ?? {};
-
         let server_names = [];
         document.querySelectorAll(`#server-name-inputs-${serviceIndex} input`).forEach((input: HTMLInputElement) => {
             server_names.push(input.value);
         });
 
+        services[serviceIndex].server_names = server_names;
+
         updateData({
-            [service.name]: {
-                ...existingDataForService,
-                [service.port]: {
-                    ...existingDataForServiceAtPort,
-                    server_names
-                }
-            }
+            nginxConfigs: services
         });
     }
 
@@ -72,12 +67,9 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                     {services.map((service, serviceIndex) => <div className={`tab-pane ${serviceIndex === activeServiceIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
                         <div id={`server-name-inputs-${serviceIndex}`}>
                             <label className="form-label">Server Name</label>
-                            {defaultData
-                                ? defaultData[service.name]
-                                    ? defaultData[service.name][service.port]?.server_names?.map(server_name =>
-                                        <input type="text" className="form-control mb-2" defaultValue={server_name} placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>)
-                                    : <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>
-                                : <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>}
+                            {defaultData?.nginxConfigs?.at(serviceIndex)?.server_names?.map(server_name =>
+                                <input type="text" className="form-control mb-2" defaultValue={server_name} placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>)
+                                ?? <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>}
 
 
 
@@ -102,26 +94,13 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Nginx Extra Configs</label>
-                            <textarea className="form-control" rows={6} defaultValue={
-                                defaultData
-                                    ? defaultData[service.name]
-                                        ? defaultData[service.name][service.port]?.nginx_extra_configs?.join("\n")
-                                        : ""
-                                    : ""}
+                            <textarea className="form-control" rows={6}
+                                      defaultValue={defaultData?.nginxConfigs?.at(serviceIndex)?.nginx_extra_configs?.join("\n")}
                                       placeholder="proxy_set_header Host $host;
 proxy_set_header X-Real-IP $remote_addr;" onChange={(e) => {
-                                const data = getSteps().at(1).data ?? {};
-                                const existingDataForService = data[service.name] ?? {};
-                                const existingDataForServiceAtPort = existingDataForService[service.port] ?? {};
-
+                                services[serviceIndex].nginx_extra_configs = e.target.value.split("\n");
                                 updateData({
-                                    [service.name]: {
-                                        ...existingDataForService,
-                                        [service.port]: {
-                                            ...existingDataForServiceAtPort,
-                                            nginx_extra_configs: e.target.value.split("\n")
-                                        }
-                                    }
+                                    nginxConfigs: services
                                 });
                             }}></textarea>
                                 </div>

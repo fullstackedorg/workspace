@@ -43,7 +43,7 @@ export default function ({baseUrl, getSteps}) {
 
                  const data = {
                      ...getSteps().at(0).data,
-                     nginxConfigs: JSON.stringify(getSteps().at(1).data)
+                     nginxConfigs: JSON.stringify(getSteps().at(1).data.nginxConfigs)
                  };
                  const formData = new FormData();
                  Object.keys(data).forEach(key => {
@@ -60,11 +60,39 @@ export default function ({baseUrl, getSteps}) {
                  let done, value;
                  while (!done) {
                      ({ value, done } = await reader.read());
-                     const data = JSON.parse(td.decode(value));
-                     const message = data.error || data.success;
-                     logsRef.current.innerHTML += `<div class="${data.error ? "text-danger" : "text-success"}">${message}</div>`;
-                     if(data.success) setDeploymentStepIndex(deploymentStepIndex => deploymentStepIndex + 1);
-                     logsRef.current.scrollTo(0, logsRef.current.scrollHeight);
+
+                     let dataRaw = td.decode(value).split("}{");
+
+                     if(dataRaw.length > 1)
+                         dataRaw = dataRaw.map((chunk, i) =>
+                             (i !== 0 ? "{" : "") + chunk + (i !== dataRaw.length - 1 ? "}" : ""));
+
+                     const dataChunks = dataRaw.map(chunk => {
+                         if(!chunk.trim()) return null;
+                         return JSON.parse(chunk);
+                     });
+                     for (const data of dataChunks) {
+                         if(!data) continue;
+                         
+                         const message = data.error || data.success || data.progress;
+
+                         if(data.progress){
+                             let lastLog = Array.from(logsRef.current.querySelectorAll("div")).at(-1);
+                             if(!lastLog.classList.contains("upload-progress")) {
+                                 lastLog = document.createElement("div");
+                                 lastLog.classList.add("upload-progress");
+                                 logsRef.current.append(lastLog);
+                             }
+                             lastLog.innerText = data.progress;
+                         }else{
+                             logsRef.current.innerHTML += `<div class="${data.error ? "text-danger" : "text-success"}">${message}</div>`;
+                         }
+
+                         if(data.success) setDeploymentStepIndex(deploymentStepIndex => deploymentStepIndex + 1);
+                         logsRef.current.scrollTo(0, logsRef.current.scrollHeight);
+                     }
+
+
                  }
 
                  setDeploying(false);
