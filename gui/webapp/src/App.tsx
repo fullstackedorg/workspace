@@ -37,7 +37,7 @@ export default function ({port}){
     return <>
         <Header />
         <Steps stepIndex={stepIndex} />
-        <div className={"container col-lg-6 col-md-8 mt-3"}>
+        <div className={"container col-lg-6 col-md-8 mt-3 pb-3"}>
             <View baseUrl={`http://localhost:${port}`}
                   defaultData={steps[stepIndex].data}
                   getSteps={() => steps}

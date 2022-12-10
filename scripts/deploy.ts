@@ -21,6 +21,7 @@ import open from "open";
 import waitForServer from "./waitForServer";
 import gui from "./gui";
 import DockerInstallScripts from "../DockerInstallScripts";
+import sleep from "./sleep";
 
 /*
 *
@@ -172,6 +173,7 @@ export async function tryToInstallDockerOnRemoteHost(sftpCreds, pipeStream){
 export async function getBuiltDockerCompose(){
     await Build({
         ...globalConfig,
+        silent: true,
         production: true
     });
 
@@ -183,6 +185,36 @@ export async function getBuiltDockerCompose(){
     return yaml.parse(dockerComposeStr);
 }
 
+/**
+ *
+ * Core deploy method
+ *
+ * @param sshCreds
+ * @param nginxConfigs
+ * @param pipeStream
+ */
+
+export async function deploy(sshCreds, nginxConfigs, pipeStream){
+    await testSSHConnection(sshCreds);
+    const sftp = await getSFTPClient(sshCreds);
+    pipeStream.write(JSON.stringify({success: "Connected to Remote Host"}));
+    const dockerTestError = await testDockerOnRemoteHost(sftp);
+    if(dockerTestError){
+        throw Error(dockerTestError.error.docker);
+        return;
+    }
+    pipeStream.write(JSON.stringify({success: "Docker and Docker Compose v2 is installed"}));
+    await Build({...globalConfig, silent: true, production: true});
+    pipeStream.write(JSON.stringify({success: "Web App is built production mode"}));
+    await sleep(1);
+    console.log(nginxConfigs)
+    return {success: "Deployment Successfull"};
+    // setup nginx-*.conf files
+    // await uploadFilesToServer(globalConfig.dist, `${sshCreds.appDir}/${globalConfig.name}`, sftp);
+    // await execScript(path.resolve(globalConfig.src, "predeploy.ts"), globalConfig, sftp);
+    // // start webapp on remote host
+    // await execScript(path.resolve(globalConfig.src, "postdeploy.ts"), globalConfig, sftp);
+}
 
 
 async function getAvailablePorts(ssh2, count: number, startingPort: number = 8001): Promise<string[]> {

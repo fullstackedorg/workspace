@@ -8,7 +8,7 @@ import open from "open";
 import fs from "fs";
 import yaml from "yaml";
 import {IncomingMessage} from "http";
-import {testSSHConnection, tryToInstallDockerOnRemoteHost, getBuiltDockerCompose} from "./deploy";
+import {testSSHConnection, tryToInstallDockerOnRemoteHost, getBuiltDockerCompose, deploy} from "./deploy";
 import multer from "multer";
 
 const endpoints = [
@@ -47,6 +47,23 @@ const endpoints = [
         callback: async (req, res) => {
             try{
                 return JSON.stringify(await getBuiltDockerCompose());
+            }catch (e){
+                return JSON.stringify({error: e.message});
+            }
+        }
+    },{
+        path: "/deploy",
+        callback: async (req, res) => {
+            let sshCredentials = req.body;
+
+            if (req.file) {
+                sshCredentials.privateKey = req.file.buffer
+            }
+
+            let nginxConfigs = JSON.parse(req.body.nginxConfigs);
+
+            try{
+                return JSON.stringify(await deploy(sshCredentials, nginxConfigs, res));
             }catch (e){
                 return JSON.stringify({error: e.message});
             }
