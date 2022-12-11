@@ -10,6 +10,7 @@ import yaml from "yaml";
 import {IncomingMessage} from "http";
 import {testSSHConnection, tryToInstallDockerOnRemoteHost, getBuiltDockerCompose, deploy, saveConfigs, loadConfigs, hasSavedConfigs} from "./deploy";
 import multer from "multer";
+import {fetch} from "../webapp/fetch"
 
 const endpoints = [
     {
@@ -79,6 +80,31 @@ const endpoints = [
             }catch (e){
                 return JSON.stringify({error: e.message});
             }
+        }
+    },{
+        path: "/test",
+        callback: async (req, res) => {
+            const url = req.body.url;
+            let test = {
+                http: false,
+                https: false
+            }
+
+            try{
+                await fetch.get(`http://${url}`, null, {
+                    timeout: 3000
+                });
+                test.http = true;
+            }catch (e) {}
+
+            try{
+                await fetch.get(`https://${url}`, null, {
+                    timeout: 3000
+                });
+                test.https = true;
+            }catch (e) {}
+
+            return JSON.stringify(test);
         }
     },{
         path: "/save",
