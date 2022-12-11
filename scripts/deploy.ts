@@ -21,6 +21,7 @@ import open from "open";
 import waitForServer from "./waitForServer";
 import gui from "./gui";
 import DockerInstallScripts from "../DockerInstallScripts";
+import crypto from "crypto";
 
 /*
 *
@@ -253,6 +254,25 @@ async function startAppOnRemoteServer(appDir, sftp){
     await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${appDir}/docker-compose.yml restart -t 0`);
 }
 
+const algorithm = 'aes256';
+const getConfigFilePath = () => path.resolve(globalConfig.src, ".fullstacked");
+
+export function hasSavedConfigs(){
+    return fs.existsSync(getConfigFilePath());
+}
+
+export function loadConfigs(password){
+    const hashedConfigs = fs.readFileSync(getConfigFilePath()).toString();
+    const decipher = crypto.createDecipher(algorithm, password);
+    const decrypted = decipher.update(hashedConfigs, 'hex', 'utf8') + decipher.final('utf8');
+    return JSON.parse(decrypted);
+}
+
+export function saveConfigs(configs, password){
+    const cipher = crypto.createCipher(algorithm, password);
+    const encrypted = cipher.update(JSON.stringify(configs), 'utf8', 'hex') + cipher.final('hex');
+    fs.writeFileSync(getConfigFilePath(), encrypted);
+}
 
 /**
  *
