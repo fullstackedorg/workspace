@@ -5,6 +5,8 @@ import SSH from "./Steps/SSH";
 import Configs from "./Steps/Configs";
 import Deployment from "./Steps/Deployment";
 import SSL from "./Steps/SSL";
+import Save from "./Steps/Save";
+import LoadConfigs from "./LoadConfigs";
 
 export const steps: {
     title: string,
@@ -25,40 +27,51 @@ export const steps: {
         component: SSL
     },{
         title: "Save",
-        component: SSL
+        component: Save
     }
 ]
 
-export default function ({port}){
-    const [stepIndex, setStepIndex] = useState(0);
+export default function ({baseUrl, hasSavedConfigs}){
+    const [stepIndex, setStepIndex] = useState(hasSavedConfigs ? null : 0);
 
-    const View = steps[stepIndex].component;
+    let View;
+    if(stepIndex !== null)
+        View = steps[stepIndex].component;
 
     return <>
         <Header />
         <Steps stepIndex={stepIndex} />
-        <div className={"container col-lg-6 col-md-8 mt-3 pb-3"}>
-            <View baseUrl={`http://localhost:${port}`}
-                  defaultData={steps[stepIndex].data}
-                  getSteps={() => steps}
-                  updateData={data => steps[stepIndex].data = {
-                      ...steps[stepIndex].data,
-                      ...data
-                  }} />
-            <div className={"d-flex justify-content-between mt-3"}>
-                {stepIndex > 0
-                    ? <div onClick={() => setStepIndex(stepIndex - 1)} className="btn btn-outline-secondary">
-                        Previous
-                    </div>
-                    : <div />}
 
-                <div onClick={() => {
-                    console.log(steps[stepIndex].data)
-                    setStepIndex(stepIndex + 1)
-                }} className="btn btn-primary">
-                    Next
-                </div>
-            </div>
+        <div className={"container col-lg-6 col-md-8 mt-3 pb-3"}>
+            {
+                hasSavedConfigs
+                    ? <LoadConfigs baseUrl={baseUrl} />
+                    : <>
+                        <View baseUrl={baseUrl}
+                              defaultData={steps[stepIndex].data}
+                              getSteps={() => steps}
+                              updateData={data => steps[stepIndex].data = {
+                                  ...steps[stepIndex].data,
+                                  ...data
+                              }} />
+                        <div className={"d-flex justify-content-between mt-3"}>
+                            {stepIndex > 0
+                                ? <div onClick={() => setStepIndex(stepIndex - 1)} className="btn btn-outline-secondary">
+                                    Previous
+                                </div>
+                                : <div />}
+
+                            {stepIndex < steps.length - 1
+                                ? <div onClick={() => {
+                                    console.log(steps[stepIndex].data)
+                                    setStepIndex(stepIndex + 1)
+                                }} className="btn btn-primary">
+                                    Next
+                                </div>
+                                : <div />}
+                        </div>
+                    </>
+            }
         </div>
     </>
 }

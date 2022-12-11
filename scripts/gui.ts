@@ -8,10 +8,22 @@ import open from "open";
 import fs from "fs";
 import yaml from "yaml";
 import {IncomingMessage} from "http";
-import {testSSHConnection, tryToInstallDockerOnRemoteHost, getBuiltDockerCompose, deploy} from "./deploy";
+import {testSSHConnection, tryToInstallDockerOnRemoteHost, getBuiltDockerCompose, deploy, saveConfigs, loadConfigs, hasSavedConfigs} from "./deploy";
 import multer from "multer";
 
 const endpoints = [
+    {
+        path: "/check",
+        callback: async (req, res) => {
+            return JSON.stringify({hasSavedConfigs: hasSavedConfigs()});
+        }
+    },
+    {
+        path: "/load",
+        callback: async (req, res) => {
+            return JSON.stringify(loadConfigs(req.body.password));
+        }
+    },
     {
         path: "/ssh",
         callback: async (req, res) => {
@@ -67,6 +79,30 @@ const endpoints = [
             }catch (e){
                 return JSON.stringify({error: e.message});
             }
+        }
+    },{
+        path: "/save",
+        callback: async (req, res) => {
+            const password = req.body.password;
+
+            let sshCredentials = req.body;
+
+            if (req.file) {
+                sshCredentials.privateKey = req.file.buffer.toString();
+            }
+
+            let nginxConfigs = JSON.parse(req.body.nginxConfigs);
+            delete sshCredentials.nginxConfigs;
+            delete sshCredentials.password;
+
+            const configs = {
+                sshCredentials,
+                nginxConfigs
+            };
+
+            saveConfigs(configs, password);
+
+            return JSON.stringify({success: true});
         }
     }
 ]
