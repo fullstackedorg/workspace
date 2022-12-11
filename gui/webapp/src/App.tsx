@@ -44,8 +44,16 @@ export default function ({baseUrl, hasSavedConfigs}){
 
         <div className={"container col-lg-6 col-md-8 mt-3 pb-3"}>
             {
-                hasSavedConfigs
-                    ? <LoadConfigs baseUrl={baseUrl} />
+                stepIndex === null
+                    ? <LoadConfigs baseUrl={baseUrl}
+                                   loadData={({sshCredentials, nginxConfigs}) => {
+                                       console.log(sshCredentials, nginxConfigs)
+                                       if(sshCredentials) steps.at(0).data = sshCredentials;
+                                       if(nginxConfigs) steps.at(1).data = { nginxConfigs };
+                                       console.log(steps)
+                                       setStepIndex(0);
+                                   }}
+                    />
                     : <>
                         <View baseUrl={baseUrl}
                               defaultData={steps[stepIndex].data}

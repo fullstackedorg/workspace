@@ -13,8 +13,6 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
     const [activeServiceIndex, setActiveServiceIndex] = useState(0);
 
     useEffect(() => {
-        if(defaultData?.nginxConfigs) return setServices(defaultData.nginxConfigs);
-
         getDockerCompose(`${baseUrl}/docker-compose`).then(dockerCompose => {
             const services: {
                 name: string,
@@ -22,10 +20,18 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
             }[] = Object.keys(dockerCompose.services).map(serviceName => {
                 const ports = dockerCompose.services[serviceName].ports;
                 return ports
-                    ? ports.map(port => ({
-                        name: serviceName,
-                        port: port.split(":").pop()
-                    }))
+                    ? ports.map(port => {
+                        const internalPort = port.split(":").pop();
+
+                        const existing = defaultData?.nginxConfigs?.find(service => service.name === serviceName && service.port === internalPort)
+                            ?? {}
+
+                        return {
+                            ...existing,
+                            name: serviceName,
+                            port: internalPort
+                        }
+                    })
                     : []
             }).flat();
 
