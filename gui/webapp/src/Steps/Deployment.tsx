@@ -43,7 +43,8 @@ export default function ({baseUrl, getSteps}) {
 
                  const data = {
                      ...getSteps().at(0).data,
-                     nginxConfigs: JSON.stringify(getSteps().at(1).data.nginxConfigs)
+                     nginxConfigs: JSON.stringify(getSteps().at(1).data.nginxConfigs),
+                     certificate: JSON.stringify(getSteps().at(2).data?.certificate)
                  };
                  const formData = new FormData();
                  Object.keys(data).forEach(key => {
@@ -73,7 +74,7 @@ export default function ({baseUrl, getSteps}) {
                      });
                      for (const data of dataChunks) {
                          if(!data) continue;
-                         
+
                          const message = data.error || data.success || data.progress;
 
                          if(data.progress){
