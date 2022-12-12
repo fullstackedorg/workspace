@@ -73,11 +73,9 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                     {services.map((service, serviceIndex) => <div className={`tab-pane ${serviceIndex === activeServiceIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
                         <div id={`server-name-inputs-${serviceIndex}`}>
                             <label className="form-label">Server Name</label>
-                            {defaultData?.nginxConfigs?.at(serviceIndex)?.server_names?.map(server_name =>
+                            {defaultData?.nginxConfigs?.at(serviceIndex)?.server_names?.filter(server_name => server_name !== "").map(server_name =>
                                 <input type="text" className="form-control mb-2" defaultValue={server_name} placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>)
                                 ?? <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>}
-
-
 
                         </div>
                         <div className={"text-center mt-1"} onClick={() => {

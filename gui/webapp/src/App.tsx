@@ -20,11 +20,11 @@ export const steps: {
         title: "Configurations",
         component: Configs
     },{
-        title: "Deployment",
-        component: Deployment
-    },{
         title: "SSL Certificates",
         component: SSL
+    },{
+        title: "Deployment",
+        component: Deployment
     },{
         title: "Save",
         component: Save
@@ -38,6 +38,8 @@ export default function ({baseUrl, hasSavedConfigs}){
     if(stepIndex !== null)
         View = steps[stepIndex].component;
 
+    console.log(steps);
+
     return <>
         <Header />
         <Steps stepIndex={stepIndex} />
@@ -46,10 +48,11 @@ export default function ({baseUrl, hasSavedConfigs}){
             {
                 stepIndex === null
                     ? <LoadConfigs baseUrl={baseUrl}
-                                   loadData={({sshCredentials, nginxConfigs}) => {
+                                   loadData={({sshCredentials, nginxConfigs, certificate}) => {
                                        console.log(sshCredentials, nginxConfigs)
                                        if(sshCredentials) steps.at(0).data = sshCredentials;
                                        if(nginxConfigs) steps.at(1).data = { nginxConfigs };
+                                       if(certificate) steps.at(2).data = { certificate };
                                        console.log(steps)
                                        setStepIndex(0);
                                    }}

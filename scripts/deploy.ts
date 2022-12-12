@@ -22,6 +22,7 @@ import waitForServer from "./waitForServer";
 import gui from "./gui";
 import DockerInstallScripts from "../DockerInstallScripts";
 import crypto from "crypto";
+import { Writable } from "stream";
 
 
 /**
@@ -198,18 +199,38 @@ async function getAvailablePorts(ssh2, count: number, startingPort: number = 800
  * @param nginxConf
  */
 
-async function setupDockerComposeAndNginx(sshCreds, nginxConf, sftp){
+async function setupDockerComposeAndNginx(sshCreds, nginxConf, certificate, sftp){
     const servicesWithServerNames = nginxConf.filter(service => service.server_names?.length);
     const availablePorts = await getAvailablePorts(sftp.client, servicesWithServerNames.length);
     const dockerCompose = await getBuiltDockerCompose();
+    const nginxDir = path.resolve(globalConfig.dist, "nginx");
+    if(fs.existsSync(nginxDir)) fs.rmSync(nginxDir, {recursive: true, force: true});
+    fs.mkdirSync(nginxDir);
+
+    if(certificate){
+        fs.writeFileSync(path.resolve(nginxDir, "fullchain.pem"), certificate.fullchain);
+        fs.writeFileSync(path.resolve(nginxDir, "privkey.pem"), certificate.privkey);
+    }
+
     const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx.conf"), {encoding: "utf-8"});
+    const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx-ssl.conf"), {encoding: "utf-8"});
     servicesWithServerNames.forEach((service, serviceIndex) => {
         const port = availablePorts[serviceIndex];
         const nginx = nginxTemplate
             .replace(/\{SERVER_NAME\}/g, service.server_names?.join(" ") ?? "localhost")
             .replace(/\{PORT\}/g, port)
             .replace(/\{EXTRA_CONFIGS\}/g, service.nginx_extra_configs?.join("\n") ?? "");
-        fs.writeFileSync(path.resolve(globalConfig.dist, `nginx-${service.name}-${service.port}.conf`), nginx);
+        fs.writeFileSync(path.resolve(globalConfig.dist, "nginx", `${service.name}-${service.port}.conf`), nginx);
+
+        if(certificate){
+            const nginxSSL = nginxSSLTemplate
+                .replace(/\{SERVER_NAME\}/g, service.server_names?.join(" ") ?? "localhost")
+                .replace(/\{PORT\}/g, port)
+                .replace(/\{EXTRA_CONFIGS\}/g, service.nginx_extra_configs?.join("\n") ?? "")
+                .replace(/\{APP_NAME\}/g, globalConfig.name);
+            fs.writeFileSync(path.resolve(globalConfig.dist, "nginx", `${service.name}-${service.port}-ssl.conf`), nginxSSL);
+        }
+
         for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
             if(!dockerCompose.services[service.name].ports[i].endsWith(`:${service.port}`)) continue;
             dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
@@ -226,7 +247,10 @@ async function setupDockerComposeAndNginx(sshCreds, nginxConf, sftp){
 async function startAppOnRemoteServer(appDir, sftp){
     await execSSH(sftp.client, `docker compose -p ${globalConfig.name} -f ${appDir}/${globalConfig.name}/docker-compose.yml up -d`);
     await execSSH(sftp.client, `docker compose -p ${globalConfig.name} -f ${appDir}/${globalConfig.name}/docker-compose.yml restart -t 0`);
+}
 
+async function startFullStackedNginxOnRemoteHost(appDir, sftp){
+    await execSSH(sftp.client, `sudo chmod -R 755 ${appDir}`);
     await sftp.put(path.resolve(__dirname, "..", "nginx", "nginx.conf"), `${appDir}/nginx.conf`);
     await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${appDir}/docker-compose.yml`);
     await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${appDir}/docker-compose.yml up -d`);
@@ -295,7 +319,7 @@ export function saveConfigs(configs, password){
  * @param nginxConfigs
  * @param pipeStream
  */
-export async function deploy(sshCreds, nginxConfigs, pipeStream){
+export async function deploy(sshCreds, nginxConfigs, certificate, pipeStream){
     await testSSHConnection(sshCreds);
     const sftp = await getSFTPClient(sshCreds);
     pipeStream.write(JSON.stringify({success: "Connected to Remote Host"}));
@@ -310,7 +334,7 @@ export async function deploy(sshCreds, nginxConfigs, pipeStream){
     await Build({...globalConfig, silent: true, production: true});
     pipeStream.write(JSON.stringify({success: "Web App is built production mode"}));
 
-    await setupDockerComposeAndNginx(sshCreds, nginxConfigs, sftp);
+    await setupDockerComposeAndNginx(sshCreds, nginxConfigs, certificate, sftp);
     pipeStream.write(JSON.stringify({success: "Docker Compose and Nginx is setup"}));
 
     if(!await sftp.exists(`${sshCreds.appDir}/${globalConfig.name}`))
@@ -324,6 +348,7 @@ export async function deploy(sshCreds, nginxConfigs, pipeStream){
     pipeStream.write(JSON.stringify({success: "Ran predeploy scripts"}));
 
     await startAppOnRemoteServer(sshCreds.appDir, sftp);
+    await startFullStackedNginxOnRemoteHost(sshCreds.appDir, sftp);
     pipeStream.write(JSON.stringify({success: "Web App Deployed"}));
 
     await execScript(path.resolve(globalConfig.src, "postdeploy.ts"), globalConfig, sftp);
@@ -331,6 +356,117 @@ export async function deploy(sshCreds, nginxConfigs, pipeStream){
 
     await sftp.end();
     return {success: "Deployment Successfull"};
+}
+
+/**
+ *
+ * Get certificate information
+ *
+ */
+export function getCertificateData(fullchain){
+    const cert = new crypto.X509Certificate(fullchain);
+    return {
+        subject: cert.subject,
+        validTo: cert.validTo,
+        subjectAltName: cert.subjectAltName
+    };
+}
+
+/**
+ *
+ * Generate SSL certificate on remote host using certbot
+ *
+ */
+export async function generateCertificateOnRemoteHost(sshCreds, email, serverNames, pipeStream){
+    const sftp = await getSFTPClient(sshCreds);
+    pipeStream.write(JSON.stringify({log: "Connected to remote host"}));
+
+    let tempNginxDirRenamed = false;
+    const nginxDir = `${sshCreds.appDir}/${globalConfig.name}/nginx`;
+    if(await sftp.exists(nginxDir)){
+        tempNginxDirRenamed = true;
+        await sftp.rename(nginxDir, `${sshCreds.appDir}/${globalConfig.name}/_nginx`);
+    }
+
+    await sftp.mkdir(nginxDir, true);
+
+    await sftp.put(Buffer.from(`server {
+    listen              80;
+    server_name         ${serverNames.join(" ")};
+    root /apps/${globalConfig.name}/nginx;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+`), `${nginxDir}/nginx.conf`);
+
+    await startFullStackedNginxOnRemoteHost(sshCreds.appDir, sftp);
+    pipeStream.write(JSON.stringify({log: "Uploaded nginx setup"}));
+
+    const command = [
+        "docker run --rm --name certbot",
+        `-v ${nginxDir}:/html`,
+        `-v ${nginxDir}/certs:/etc/letsencrypt/archive`,
+        `certbot/certbot certonly --webroot --agree-tos --no-eff-email -n -m ${email} -w /html`,
+        `--cert-name certbot`,
+        serverNames.map(serverName => `-d ${serverName}`).join(" ")
+    ];
+
+    const cmd = new Writable({
+        write: function(chunk, encoding, next) {
+            pipeStream.write(JSON.stringify({log: chunk.toString()}));
+            next();
+        }
+    });
+    await execSSH(sftp.client, command.join(" "), cmd);
+
+    await execSSH(sftp.client, `sudo chmod 777 ${nginxDir} -R`);
+
+    pipeStream.write(JSON.stringify({log: "Downloading certificates"}));
+
+    const fullchainPath = `${nginxDir}/certs/certbot/fullchain1.pem`;
+    let fullchain = "";
+    const stream = new Writable({
+        write: function(chunk, encoding, next) {
+            fullchain += chunk.toString()
+            next();
+        }
+    });
+    await sftp.get(fullchainPath, stream);
+
+    const privkeyPath = `${nginxDir}/certs/certbot/privkey1.pem`;
+    let privkey = "";
+    const stream2 = new Writable({
+        write: function(chunk, encoding, next) {
+            privkey += chunk.toString()
+            next();
+        }
+    });
+    await sftp.get(privkeyPath, stream2);
+
+    await sftp.rmdir(nginxDir, true);
+
+    pipeStream.write(JSON.stringify({log: "Cleaning Up"}));
+    if(tempNginxDirRenamed){
+        await sftp.rename(`${sshCreds.appDir}/${globalConfig.name}/_nginx`, nginxDir);
+    }
+
+    pipeStream.write(JSON.stringify({log: "Done"}));
+    await sftp.end();
+
+    return {fullchain, privkey};
+}
+
+export async function getCertificateOnRemoteHost(sshCreds){
+    const sftp = await getSFTPClient(sshCreds);
+    //
+    // const certsDir = `${sshCreds.appDir}/${globalConfig.name}/certs`;
+    // if(!await sftp.exists(certsDir))
+    //     return [];
+    //
+    // const certsList = await sftp.list(certsDir);
+    // return certsList;
 }
 
 async function uploadFilesToServer(localPath, remotePath, sftp, progressCallback: (progress: string) => void){
@@ -364,8 +500,6 @@ export default async function (config: Config) {
     console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + config.name + " v" + config.version);
     if(!await askToContinue("Continue"))
         return;
-
-
 
 }
 

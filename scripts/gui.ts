@@ -8,7 +8,11 @@ import open from "open";
 import fs from "fs";
 import yaml from "yaml";
 import {IncomingMessage} from "http";
-import {testSSHConnection, tryToInstallDockerOnRemoteHost, getBuiltDockerCompose, deploy, saveConfigs, loadConfigs, hasSavedConfigs} from "./deploy";
+import {
+    testSSHConnection, tryToInstallDockerOnRemoteHost, getBuiltDockerCompose,
+    deploy, saveConfigs, loadConfigs, hasSavedConfigs, generateCertificateOnRemoteHost,
+    getCertificateData
+} from "./deploy";
 import multer from "multer";
 import {fetch} from "../webapp/fetch"
 
@@ -75,8 +79,10 @@ const endpoints = [
 
             let nginxConfigs = JSON.parse(req.body.nginxConfigs);
 
+            const certificate = JSON.parse(req.body.certificate);
+
             try{
-                return JSON.stringify(await deploy(sshCredentials, nginxConfigs, res));
+                return JSON.stringify(await deploy(sshCredentials, nginxConfigs, certificate, res));
             }catch (e){
                 return JSON.stringify({error: e.message});
             }
@@ -107,6 +113,22 @@ const endpoints = [
             return JSON.stringify(test);
         }
     },{
+        path: "/cert",
+        callback: (req, res) => {
+            return JSON.stringify(getCertificateData(req.body.fullchain))
+        }
+    },{
+        path: "/new-cert",
+        callback: async (req, res) => {
+            let sshCredentials = req.body;
+
+            if (req.file) {
+                sshCredentials.privateKey = req.file.buffer
+            }
+
+            return JSON.stringify(await generateCertificateOnRemoteHost(sshCredentials, req.body.email, JSON.parse(req.body.serverNames), res))
+        }
+    },{
         path: "/save",
         callback: async (req, res) => {
             const password = req.body.password;
@@ -121,9 +143,12 @@ const endpoints = [
             delete sshCredentials.nginxConfigs;
             delete sshCredentials.password;
 
+            const certificate = JSON.parse(req.body.certificate);
+
             const configs = {
                 sshCredentials,
-                nginxConfigs
+                nginxConfigs,
+                certificate
             };
 
             saveConfigs(configs, password);
