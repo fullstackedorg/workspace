@@ -45,6 +45,12 @@ export default async function (command: CommandInterface){
 
         ws.onmessage = async (event) => {
             const {cmd, id, data}: MESSAGE_FROM_GUI = JSON.parse(event.data as string);
+
+            if(cmd === DEPLOY_CMD.END){
+                await runner.stop();
+                process.exit(0);
+            }
+
             for (const guiCommand of command.guiCommands()) {
                 if(cmd !== guiCommand.cmd) continue;
 

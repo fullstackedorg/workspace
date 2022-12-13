@@ -1,4 +1,4 @@
-import React, {useState, ReactElement, useRef, useEffect} from "react";
+import React, {ReactElement, useEffect, useRef, useState} from "react";
 import Header from "./Header";
 import Steps from "./Steps";
 import SSH from "./Steps/SSH";
@@ -8,6 +8,7 @@ import SSL from "./Steps/SSL";
 import Save from "./Steps/Save";
 import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
+import {DEPLOY_CMD} from "fullstacked/types/deploy";
 
 export const steps: {
     title: string,
@@ -58,8 +59,6 @@ export default function ({hasSavedConfigs}){
                                 if(nginxConfigs) steps.at(1).data = {nginxConfigs};
                                 if(certificate) steps.at(2).data = {certificate};
 
-                                console.log(steps);
-
                                 setStepIndex(0);
                             }}
                             />
@@ -84,7 +83,12 @@ export default function ({hasSavedConfigs}){
                                         }} className="btn btn-primary">
                                             Next
                                         </div>
-                                        : <div />}
+                                        : <div onClick={() => {
+                                            WS.cmd(DEPLOY_CMD.END);
+                                            window.close();
+                                        }} className="btn btn-warning">
+                                            Close
+                                        </div>}
                                 </div>
                             </>
                     }
