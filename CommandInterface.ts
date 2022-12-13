@@ -8,7 +8,7 @@ export abstract class CommandInterface {
     config: FullStackedConfig;
     write: (str) => void = process.stdout.write;
     printLine: (str) => void = printLine;
-    endLine: () => void = () => process.stdout.write("\m")
+    endLine: () => void = () => process.stdout.write("\n\r")
 
     protected constructor(config: FullStackedConfig) {
         this.config = config;
@@ -18,6 +18,6 @@ export abstract class CommandInterface {
     abstract runCLI(): void;
     abstract guiCommands(): {
         cmd: CMD,
-        callback(data): any
+        callback(data, tick?: () => void): any
     }[]
 }

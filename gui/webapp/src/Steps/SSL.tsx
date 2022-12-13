@@ -41,7 +41,6 @@ export default function ({getSteps, defaultData, updateData}){
 
     const serverNames = getSteps().at(1)?.data?.nginxConfigs?.map(service => service.server_names).flat();
 
-    console.log(certificate)
 
     return <div>
         <div className={"d-flex justify-content-between"}>

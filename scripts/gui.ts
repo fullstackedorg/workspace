@@ -10,7 +10,7 @@ import yaml from "yaml";
 import {WebSocketServer} from "ws";
 import {CommandInterface} from "../CommandInterface";
 import {MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
-import {Writable} from "stream";
+import {DEPLOY_CMD} from "fullstacked/types/deploy";
 
 export default async function (command: CommandInterface){
     Server.port = await getNextAvailablePort();
@@ -48,7 +48,10 @@ export default async function (command: CommandInterface){
             for (const guiCommand of command.guiCommands()) {
                 if(cmd !== guiCommand.cmd) continue;
 
-                let response = guiCommand.callback(data);
+                let response = guiCommand.callback(data, () => ws.send(JSON.stringify({
+                    type: MESSAGE_TYPE.TICK,
+                    id
+                })));
 
                 if(response instanceof Promise) response = await response;
 
