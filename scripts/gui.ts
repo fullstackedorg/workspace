@@ -6,7 +6,7 @@ import path from "path";
 import waitForServer from "./waitForServer";
 import open from "open";
 import fs from "fs";
-import yaml from "yaml";
+import yaml from "js-yaml";
 import {WebSocketServer} from "ws";
 import {CommandInterface} from "../CommandInterface";
 import {MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
@@ -82,10 +82,11 @@ export default async function (command: CommandInterface){
     });
 
     const dockerComposeFile = path.resolve(__dirname, "..", "gui", "dist", "docker-compose.yml");
-    const dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFile, {encoding: "utf-8"}));
-    dockerCompose.services.node.command = `node index --port=${Server.port}`;
-    fs.writeFileSync(dockerComposeFile, yaml.stringify(dockerCompose));
-    const runner = await Run(Config({
+    const dockerCompose: any = yaml.load(fs.readFileSync(dockerComposeFile, {encoding: "utf-8"}));
+    dockerCompose.services.node.command = ["index", `--port=${Server.port}`];
+    dockerCompose.services.node.ports = ["80"];
+    fs.writeFileSync(dockerComposeFile, yaml.dump(dockerCompose));
+    const runner = await Run(await Config({
         src: path.resolve(__dirname, "..", "gui"),
         out: path.resolve(__dirname, "..", "gui")
     }), false);

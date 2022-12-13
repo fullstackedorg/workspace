@@ -6,7 +6,7 @@ import {execSync} from "child_process";
 import {BuildOptions, buildSync} from "esbuild";
 import {Socket} from "net";
 import SFTP from "ssh2-sftp-client";
-import yaml from "yaml";
+import yaml from "js-yaml";
 import glob from "glob";
 import progress from "progress-stream";
 import {WrappedSFTP} from "./deploy";
@@ -231,7 +231,7 @@ export async function getSFTPClient(sshCredentials: sshCredentials): Promise<Wra
 }
 
 export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: string | string[]): string[]{
-    const dockerCompose = yaml.parse(dockerComposeStr);
+    const dockerCompose = yaml.load(dockerComposeStr) as any;
     const volumes = Object.keys(dockerCompose.volumes);
 
     if(!volumes.length)

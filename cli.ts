@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import defaultConfig from "./scripts/config";
-import {CommandInterface} from "./CommandInterface";
 
 const scripts = {
     "build"     : "./scripts/build",
@@ -66,16 +65,18 @@ process.argv.forEach(arg => {
     });
 });
 
-const CommandClass = require(scripts[script]).default;
-let command;
-if(script === "deploy")
-    command = new CommandClass(defaultConfig(config));
-else
-    CommandClass(defaultConfig(config));
+defaultConfig(config).then(configReady => {
+    const CommandClass = require(scripts[script]).default;
+    let command;
+    if(script === "deploy")
+        command = new CommandClass(configReady);
+    else
+        CommandClass(configReady);
+
+    if(config.gui)
+        require("./scripts/gui").default(command);
+    else if(command?.runCLI)
+        command.runCLI();
+});
 
 
-
-if(config.gui)
-    require("./scripts/gui").default(command);
-else if(command?.runCLI)
-    command.runCLI();
