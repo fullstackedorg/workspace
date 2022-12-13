@@ -1,6 +1,7 @@
 import path from "path";
 import crypto from "crypto";
 import {execSync} from "child_process";
+import docker from "./docker";
 import getPackageJSON from "../getPackageJSON";
 
 const defaultConfig: Config = {
@@ -19,11 +20,12 @@ function getGitShortCommitHash(){
     }
 }
 
-export default function(config) {
+export default async function(config) {
     // spread defaults with values caught in flags
     config = {
         ...defaultConfig,
-        ...config
+        ...config,
+        docker: await docker()
     }
 
     // always add dist to the out dir

@@ -7,7 +7,7 @@ import {
     getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword
 } from "./utils";
 import Build from "./build";
-import yaml from "yaml";
+import yaml from "js-yaml";
 import DockerInstallScripts from "../DockerInstallScripts";
 import { Writable } from "stream";
 import {CommandInterface} from "../CommandInterface";
@@ -184,7 +184,7 @@ export default class Deploy extends CommandInterface {
             throw Error(`Cannot find docker-compose.yml at path ${dockerComposeFilePath}. Maybe run build command before.`);
 
         const dockerComposeStr = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
-        return yaml.parse(dockerComposeStr);
+        return yaml.load(dockerComposeStr) as any;
     }
 
     /**
@@ -258,7 +258,7 @@ export default class Deploy extends CommandInterface {
                 dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
             }
         });
-        fs.writeFileSync(path.resolve(this.config.dist, "docker-compose.yml"), yaml.stringify(dockerCompose));
+        fs.writeFileSync(path.resolve(this.config.dist, "docker-compose.yml"), yaml.dump(dockerCompose));
         console.log("Generated docker-compose.yml");
     }
 

@@ -1,5 +1,5 @@
 import {it, Suite} from "mocha";
-import yaml from "yaml";
+import yaml from "js-yaml";
 import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
@@ -31,7 +31,7 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
 
     fs.mkdirSync(testDir);
 
-    const localConfig = config({
+    const localConfig = await config({
         name: "test",
         src: srcDir ?? process.cwd(),
         out: testDir,
