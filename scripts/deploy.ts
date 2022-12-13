@@ -104,6 +104,8 @@ export default class Deploy extends CommandInterface {
         fs.writeFileSync(this.configFilePath, iv.toString('hex') + ":" + encrypted.toString('hex'));
 
         console.log("Saved deploy configuration");
+
+        return true;
     }
 
 
@@ -306,8 +308,8 @@ export default class Deploy extends CommandInterface {
         const sftp = await getSFTPClient(this.sshCredentials);
 
         console.log(`Starting ${this.config.name} v${this.config.version} on remote server`);
-        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml up -d`);
-        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml restart -t 0`);
+        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml up -d`, this.write);
+        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml restart -t 0`, this.write);
     }
 
     /**
@@ -322,8 +324,8 @@ export default class Deploy extends CommandInterface {
         await execSSH(sftp.client, `sudo chmod -R 755 ${this.sshCredentials.appDir}`);
         await sftp.put(path.resolve(__dirname, "..", "nginx", "nginx.conf"), `${this.sshCredentials.appDir}/nginx.conf`);
         await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${this.sshCredentials.appDir}/docker-compose.yml`);
-        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml up -d`);
-        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart -t 0`);
+        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml up -d`, this.write);
+        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart -t 0`, this.write);
     }
 
     async uploadFilesToRemoteServer(){
@@ -391,7 +393,7 @@ export default class Deploy extends CommandInterface {
             serverNames.map(serverName => `-d ${serverName}`).join(" ")
         ];
 
-        await execSSH(sftp.client, command.join(" "), this.printLine);
+        await execSSH(sftp.client, command.join(" "), this.write);
 
         await execSSH(sftp.client, `sudo chmod 777 ${nginxDir} -R`);
 
@@ -426,10 +428,7 @@ export default class Deploy extends CommandInterface {
 
         console.log("Done");
 
-        return {
-            fullchain,
-            privkey
-        };
+        return {fullchain, privkey};
     }
 
 
@@ -515,23 +514,17 @@ export default class Deploy extends CommandInterface {
                 }
             },{
                 cmd: DEPLOY_CMD.CERT,
-                callback: ({certificate}) => {
-                    this.certificate = certificate;
-                    return getCertificateData(this.certificate.fullchain);
-                }
+                callback: ({fullchain}) => getCertificateData(fullchain)
             },{
                 cmd: DEPLOY_CMD.NEW_CERT,
-                callback: async ({sshCredentials, email, serverNames}) => {
-                    this.sshCredentials = sshCredentials;
-                    await this.generateCertificateOnRemoteHost(email, serverNames)
-                }
+                callback: async ({email, serverNames}) => await this.generateCertificateOnRemoteHost(email, serverNames)
             },{
                 cmd: DEPLOY_CMD.SAVE,
                 callback: async ({sshCredentials, nginxConfigs, certificate, password}) => {
                     this.sshCredentials = sshCredentials;
                     this.nginxConfigs = nginxConfigs;
                     this.certificate = certificate;
-                    await this.saveConfigs(password);
+                    return await this.saveConfigs(password)
                 }
             }
         ];

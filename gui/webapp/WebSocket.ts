@@ -41,7 +41,7 @@ export class WS {
                         break
                 }
 
-                this.logs.scrollTo(0, this.logs.scrollHeight);
+                this.logs?.scrollTo(0, this.logs.scrollHeight);
             };
 
             this.ws.onopen = resolve;

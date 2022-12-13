@@ -11,7 +11,8 @@ export default function ({loadData}){
         </p>
         <form onSubmit={async e => {
             e.preventDefault();
-            const configs = await WS.cmd(DEPLOY_CMD.LOAD_CONFIG, {password: passRef.current.value})
+            const configs = await WS.cmd(DEPLOY_CMD.LOAD_CONFIG, {password: passRef.current.value});
+            console.log(configs);
             loadData(configs);
         }}>
             <div className="mb-3">

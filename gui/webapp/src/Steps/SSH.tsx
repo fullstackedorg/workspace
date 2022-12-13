@@ -105,7 +105,7 @@ export default function ({defaultData, updateData, getSteps}){
 
                  const data = {...getSteps().at(0).data};
 
-                 if(data.file)
+                 if(data?.file?.text)
                      data.privateKey = await data.file.text();
 
                  const sshCredentials: sshCredentials = data;
