@@ -110,6 +110,11 @@ export function execSSH(ssh2, cmd, logger?: (str) => void): Promise<string>{
 
                 message += data.toString();
             });
+            stream.on('error', data => {
+                if(logger) logger(data.toString());
+
+                message += data.toString();
+            })
             stream.on('close', () => resolve(message));
         });
     });

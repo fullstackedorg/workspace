@@ -1,5 +1,6 @@
-import React, {useState, useEffect, useRef} from "react";
-import {fetch as fullstackedFetch} from "../../../../webapp/fetch"
+import React, {useEffect, useRef, useState} from "react";
+import {WS} from "../../WebSocket";
+import {DEPLOY_CMD} from "../../../../types/deploy";
 
 const months = [
     "January",
@@ -22,24 +23,20 @@ const dateToHuman = (date: Date) => {
     return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} ${date.getHours()}:${minutes}:${seconds}`;
 }
 
-export default function ({baseUrl, getSteps, defaultData, updateData}){
+export default function ({getSteps, defaultData, updateData}){
     const [certificate, setCertificate] = useState(null);
     const [showNewCertForm, setShowNewCertForm] = useState(false);
 
-    const newCert = ({fullchain, privkey}) => {
-        fullstackedFetch.post(`${baseUrl}/cert`, {fullchain}).then(data => {
-            setCertificate({
-                fullchain,
-                privkey,
-                data
-            })
+    const getCertData = ({fullchain, privkey}) => {
+        WS.cmd(DEPLOY_CMD.CERT, {fullchain}).then(data => {
+            setCertificate({fullchain, privkey, data})
         });
     }
 
     useEffect(() => {
         if(!defaultData?.certificate) return;
 
-        newCert(defaultData.certificate);
+        getCertData(defaultData.certificate);
     }, [])
 
     const serverNames = getSteps().at(1)?.data?.nginxConfigs?.map(service => service.server_names).flat();
@@ -101,25 +98,22 @@ export default function ({baseUrl, getSteps, defaultData, updateData}){
         {showNewCertForm && <NewCertForm
             close={() => setShowNewCertForm(false)}
             serverNames={serverNames}
-            getSteps={getSteps}
-            baseUrl={baseUrl}
-            newCert={(certificate) => {
-                newCert(certificate);
-                updateData({
-                    certificate
-                });
+            addNewCert={certificate => {
+                getCertData(certificate);
+                updateData({certificate});
             }}
         />}
     </div>
 }
 
 
-function NewCertForm({close, serverNames, getSteps, baseUrl, newCert}){
-    const logsRef = useRef<HTMLPreElement>();
-
+function NewCertForm({close, serverNames, addNewCert}){
+    serverNames = serverNames.filter(serverName => serverName);
     return <>
-        <div className="modal-backdrop fade show"></div>
-        <div className="modal modal-blur fade show" style={{display: "block"}} id="modal-report" tabIndex={-1} role="dialog" aria-modal="true">
+        <div className="modal-backdrop fade show w-50" style={{bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}></div>
+        <div className="modal modal-blur fade show w-50 p-3"
+             style={{display: "block", bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}
+             tabIndex={-1}>
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -133,8 +127,9 @@ function NewCertForm({close, serverNames, getSteps, baseUrl, newCert}){
                         </div>
                         <div id="server-names-select" className="form-selectgroup form-selectgroup-boxes d-flex flex-column">
                             <label className="form-label">Domains</label>
-                            {serverNames.filter(serverName => serverName !== "").map((serverName, index) => {
-                                return <label className="form-selectgroup-item flex-fill">
+                            {serverNames.length
+                                ? serverNames.map((serverName) =>
+                                <label className="form-selectgroup-item flex-fill">
                                     <input type="checkbox" value={serverName} className="form-selectgroup-input" />
                                     <div className="form-selectgroup-label d-flex align-items-center p-3">
                                         <div className="me-3">
@@ -146,10 +141,9 @@ function NewCertForm({close, serverNames, getSteps, baseUrl, newCert}){
                                             </div>
                                         </div>
                                     </div>
-                                </label>
-                            })}
+                                </label>)
+                            : <div>No domain entered in configurations</div>}
                         </div>
-                        <pre className={"mt-2"} ref={logsRef}/>
                     </div>
                     <div className="modal-footer">
                         <div onClick={close} className="btn btn-link link-secondary" data-bs-dismiss="modal">
@@ -163,49 +157,11 @@ function NewCertForm({close, serverNames, getSteps, baseUrl, newCert}){
 
                             const email = (document.querySelector("#input-email") as HTMLInputElement).value;
 
-                            const data = {
-                                ...getSteps().at(0).data,
-                                serverNames: JSON.stringify(serverNames),
-                                email
-                            };
-                            const formData = new FormData();
-                            Object.keys(data).forEach(key => {
-                                if(!data[key]) return;
+                            const newCert = await WS.cmd(DEPLOY_CMD.NEW_CERT, {serverNames, email})
 
-                                formData.append(key, data[key]);
-                            });
-                            const stream = await fetch(`${baseUrl}/new-cert`, {
-                                method: "POST",
-                                body: formData
-                            });
-
-                            const reader = stream.body.getReader();
-                            const td = new TextDecoder();
-                            let done, value;
-                            while (!done) {
-                                ({ value, done } = await reader.read());
-
-                                let dataRaw = td.decode(value).split("}{");
-
-                                if(dataRaw.length > 1)
-                                    dataRaw = dataRaw.map((chunk, i) =>
-                                        (i !== 0 ? "{" : "") + chunk + (i !== dataRaw.length - 1 ? "}" : ""));
-
-                                const dataChunks = dataRaw.map(chunk => {
-                                    if(!chunk.trim()) return null;
-                                    return JSON.parse(chunk);
-                                });
-                                for (const data of dataChunks) {
-                                    if(!data) continue;
-
-                                    if(data.fullchain){
-                                        newCert(data);
-                                    }else{
-                                        logsRef.current.innerText += data.log + "\n";
-                                    }
-                                }
-
-
+                            if(newCert) {
+                                addNewCert(newCert);
+                                close();
                             }
                         }} className="btn btn-primary ms-auto" data-bs-dismiss="modal">
                             Create new certificate

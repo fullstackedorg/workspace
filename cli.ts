@@ -17,30 +17,21 @@ let config: Config = {}
 const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
-    "--host=": value => config.host = value,
-    "--ssh-port=": value => config.sshPort = parseInt(value),
-    "--user=": value => config.user = value,
     "--pass=": value => config.pass = value,
-    "--private-key=": value => config.privateKey = value,
-    "--private-key-file=": value => config.privateKeyFile = value,
-    "--app-dir=": value => config.appDir = value,
     "--silent": () => config.silent = true,
     "--coverage": () => config.coverage = true,
     "--headless": () => config.headless = true,
     "--test-mode": () => config.testMode = true,
     "--test-file=": value => config.testFile = value,
     "--test-suite=": value => config.testSuite = value,
-    "--skip-test": () => config.skipTest = true,
     "--y": () => config.allYes = true,
     "--version=": value => config.version = value,
     "--hash=": value => config.hash = value,
     "--name=": value => config.name = value,
     "--title=": value => config.title = value,
-    "--no-https": () => config.noHttps = true,
     "--pull": () => config.pull = true,
     "--volume=": value => config.volume = upgradeToArray(value),
     "--backup-dir=": value => config.backupDir = value,
-    "--timeout=": value => config.timeout = parseInt(value),
     "--watch-file=": value => config.watchFile = upgradeToArray(value),
     "--watch-dir=": value => config.watchDir = upgradeToArray(value),
     "--restored": () => config.restored = true,
@@ -72,3 +63,5 @@ const command: CommandInterface = new CommandClass(defaultConfig(config));
 
 if(config.gui)
     require("./scripts/gui").default(command);
+else if(command.runCLI)
+    command.runCLI();
