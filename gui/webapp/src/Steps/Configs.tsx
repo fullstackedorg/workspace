@@ -1,10 +1,11 @@
-import React, {useState, useEffect} from "react";
-import {fetch} from "../../../../webapp/fetch";
+import React, {useEffect, useState} from "react";
+import {WS} from "../../WebSocket";
+import {DEPLOY_CMD} from "../../../../types/deploy";
 
 let dockerCompose;
-const getDockerCompose = url => {
+const getDockerCompose = () => {
     if(!dockerCompose)
-        dockerCompose = fetch.get(url);
+        dockerCompose = WS.cmd(DEPLOY_CMD.DOCKER_COMPOSE);
     return dockerCompose;
 }
 
@@ -13,7 +14,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
     const [activeServiceIndex, setActiveServiceIndex] = useState(0);
 
     useEffect(() => {
-        getDockerCompose(`${baseUrl}/docker-compose`).then(dockerCompose => {
+        getDockerCompose().then(dockerCompose => {
             const services: {
                 name: string,
                 port: string

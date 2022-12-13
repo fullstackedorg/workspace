@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import defaultConfig from "./scripts/config";
+import {CommandInterface} from "./CommandInterface";
 
 const scripts = {
     "build"     : "./scripts/build",
@@ -66,4 +67,8 @@ process.argv.forEach(arg => {
     });
 });
 
-require(scripts[script]).default(defaultConfig(config));
+const CommandClass = require(scripts[script]).default;
+const command: CommandInterface = new CommandClass(defaultConfig(config));
+
+if(config.gui)
+    require("./scripts/gui").default(command);

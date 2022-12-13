@@ -101,21 +101,11 @@ export default function ({baseUrl, getSteps}) {
             Launch Deployment
         </div>
 
-        <div className={"d-flex mt-3"}>
-            <div className={"col-4 pe-2"}>
-                <ul className="steps steps-vertical">
-                    {steps.map((step, stepIndex) =>  <li className={`step-item ${deploymentStepIndex === stepIndex && "active"}`}>
-                        <div className="h4 m-0">{step.title}</div>
-                        <small className="text-muted">{step.description}</small>
-                    </li>)}
-                </ul>
-            </div>
-            <div className={"col-8"}>
-                <pre ref={logsRef} style={{
-                    minHeight: "100%",
-                    maxHeight: 600
-                }}></pre>
-            </div>
-        </div>
+        <ul className="steps steps-vertical">
+            {steps.map((step, stepIndex) =>  <li className={`step-item ${deploymentStepIndex === stepIndex && "active"}`}>
+                <div className="h4 m-0">{step.title}</div>
+                <small className="text-muted">{step.description}</small>
+            </li>)}
+        </ul>
     </div>
 }

@@ -1,19 +1,17 @@
 import React from "react"
 import {createRoot} from "react-dom/client";
 import App from "./src/App";
-import LoadConfigs from "./src/LoadConfigs";
-import {fetch} from "../../webapp/fetch"
+import {WS} from "./WebSocket";
+import {DEPLOY_CMD} from "../../types/deploy";
 
 export default async function (){
     const root = createRoot(document.querySelector("fullstacked-root"));
 
-    const port = await fetch.get("/port");
-    if(!port)
-        return root.render(<>Cannot get local node port</>);
+    await WS.init();
 
-    const baseUrl = `http://localhost:${port}`
+    const hasSavedConfigs = await WS.cmd(DEPLOY_CMD.CHECK_SAVED_CONFIG);
 
-    const {hasSavedConfigs} = await fetch.get(`${baseUrl}/check`);
+    console.log(hasSavedConfigs);
 
-    root.render(<App baseUrl={baseUrl} hasSavedConfigs={hasSavedConfigs} />);
+    root.render(<App hasSavedConfigs={hasSavedConfigs} />);
 }

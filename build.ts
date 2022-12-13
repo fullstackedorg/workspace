@@ -16,6 +16,8 @@ async function buildFile(file){
     const scripts = glob.sync(path.resolve(__dirname, "./scripts") + "/**/*.ts")
         .filter(file => !file.endsWith(".d.ts"));
 
+    const types = glob.sync(path.resolve(__dirname, "./types") + "/**/*.ts");
+
     const otherScripts = [
         path.resolve(__dirname, "cli.ts"),
         path.resolve(__dirname, ".mocharc.ts"),
@@ -24,9 +26,10 @@ async function buildFile(file){
         path.resolve(__dirname, "server", "index.ts"),
         path.resolve(__dirname, "webapp", "fetch.ts"),
         path.resolve(__dirname, "DockerInstallScripts.ts"),
+        path.resolve(__dirname, "CommandInterface.ts"),
     ];
 
-    const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {
+    const buildPromises: Promise<any>[] = scripts.concat(types).concat(otherScripts).map(file => {
         return buildFile(file);
     });
 

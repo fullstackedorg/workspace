@@ -5,11 +5,13 @@ import os from "os";
 import {execSync} from "child_process";
 import {BuildOptions, buildSync} from "esbuild";
 import {Socket} from "net";
-import {FullStackedConfig} from "../index";
 import SFTP from "ssh2-sftp-client";
 import yaml from "yaml";
 import glob from "glob";
 import progress from "progress-stream";
+import {WrappedSFTP} from "./deploy";
+import crypto from "crypto";
+import {sshCredentials} from "../types/deploy";
 
 // ask a question, resolve string answer
 export function askQuestion(question: string): Promise<string>{
@@ -97,15 +99,14 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
 }
 
 // exec command on remote host over ssh
-export function execSSH(ssh2, cmd, pipeStream?): Promise<string>{
+export function execSSH(ssh2, cmd, logger?: (str) => void): Promise<string>{
     return new Promise(resolve => {
         let message = "";
         ssh2.exec(cmd, (err, stream) => {
             if (err) throw err;
 
             stream.on('data', data => {
-                if(pipeStream)
-                    pipeStream.write(data);
+                if(logger) logger(data.toString());
 
                 message += data.toString();
             });
@@ -213,37 +214,15 @@ export function randStr(length) {
 }
 
 
-export async function getSFTPClient(config: {
-    host?: string,
-    user?: string,
-    sshPort?: number,
-    pass?: string,
-    privateKey?: string,
-    privateKeyFile?: string
-}){
+export async function getSFTPClient(sshCredentials: sshCredentials): Promise<WrappedSFTP>{
     const sftp = new SFTP();
 
-    // setup ssh connection
-    let connectionConfig: any = {
-        host: config.host,
-        username: config.user
-    }
+    if(sshCredentials.privateKeyFile)
+        sshCredentials.privateKey = fs.readFileSync(path.resolve(process.cwd(), sshCredentials.privateKeyFile));
 
-    if(config.sshPort)
-        connectionConfig.port = config.sshPort;
+    await sftp.connect(sshCredentials);
 
-    if(config.pass)
-        connectionConfig.password = config.pass;
-
-    if(config.privateKey)
-        connectionConfig.privateKey = config.privateKey;
-
-    if(config.privateKeyFile)
-        connectionConfig.privateKey = fs.readFileSync(path.resolve(process.cwd(), config.privateKeyFile));
-
-    await sftp.connect(connectionConfig);
-
-    return sftp;
+    return sftp as WrappedSFTP;
 }
 
 export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: string | string[]): string[]{
@@ -282,4 +261,14 @@ export async function uploadFileWithProgress(sftp: any, localFilePath: string, r
     }
 
     await sftp.put(ulStream, remoteFilePath);
+}
+
+// get data detail in fullchain cert
+export function getCertificateData(fullchain){
+    const cert = new crypto.X509Certificate(fullchain);
+    return {
+        subject: cert.subject,
+        validTo: cert.validTo,
+        subjectAltName: cert.subjectAltName
+    };
 }

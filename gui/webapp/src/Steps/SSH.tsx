@@ -1,12 +1,12 @@
-import React, {useState, useRef} from "react";
-import {fetch as fullstackedFetch} from "../../../../webapp/fetch";
+import React, {useState} from "react";
+import {DEPLOY_CMD, sshCredentials} from "../../../../types/deploy";
+import {WS} from "../../WebSocket";
 
-export default function ({baseUrl, defaultData, updateData, getSteps}){
+export default function ({defaultData, updateData, getSteps}){
     const [authOption, setAuthOption] = useState(defaultData?.file || defaultData?.privateKey);
     const [sshKeyOption, setSshKeyOption] = useState(defaultData?.privateKey);
     const [testing, setTesting] = useState(false);
-    const [testResponse, setTestResponse] = useState(null);
-    const logsRef = useRef<HTMLPreElement>()
+    const [showInstallDocker, setShowInstallDocker] = useState(false);
 
     return <div>
         <div>
@@ -30,9 +30,9 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
         <div>
             <label className="form-label">Username</label>
             <input type="text" className="form-control" placeholder="root"
-                   defaultValue={defaultData?.user}
+                   defaultValue={defaultData?.username}
                    onChange={e => updateData({
-                       user: e.target.value
+                       username: e.target.value
                    })} />
         </div>
         <label className="form-label">Authentication</label>
@@ -60,7 +60,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                                       defaultValue={defaultData?.privateKey}
                                       onChange={e => updateData({
                                           file: null,
-                                          pass: null,
+                                          password: null,
                                           privateKey: e.target.value
                                       })}
                             ></textarea>
@@ -70,7 +70,7 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                             {defaultData?.file && <div>File: {defaultData.file.name}</div>}
                             <input type="file" className="form-control"
                                    onChange={e => updateData({
-                                       pass: null,
+                                       password: null,
                                        privateKey: null,
                                        file: e.target.files[0]
                                    })}
@@ -82,11 +82,11 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
             : <div>
                 <label className="form-label">Password</label>
                 <input type="password" className="form-control" placeholder="********"
-                       defaultValue={defaultData?.pass}
+                       defaultValue={defaultData?.password}
                        onChange={e => updateData({
                            privateKey: null,
                            file: null,
-                           pass: e.target.value
+                           password: e.target.value
                        })}/>
             </div>}
 
@@ -101,17 +101,24 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
 
         <div className={`btn btn-success w-100 mt-3 ${testing && "disabled"}`}
              onClick={async () => {
-                 setTestResponse(null);
                  setTesting(true);
 
-                 const data = getSteps().at(0).data;
-                 const formData = new FormData();
-                 Object.keys(data).forEach(key => {
-                     if(data[key]) formData.append(key, data[key])
-                 })
-                 setTestResponse(await fullstackedFetch.post(`${baseUrl}/ssh`, formData, null, {
-                     headers: {'Content-Type': 'multipart/form-data'}
-                 }));
+                 const data = {...getSteps().at(0).data};
+
+                 if(data.file)
+                     data.privateKey = await data.file.text();
+
+                 const sshCredentials: sshCredentials = data;
+
+                 const success = await WS.cmd(DEPLOY_CMD.TEST_REMOTE_SERVER, {sshCredentials});
+
+                 if(!success)
+                    return setTesting(false);
+
+                 const success2 = await WS.cmd(DEPLOY_CMD.TEST_DOCKER);
+
+                 if(!success2)
+                     setShowInstallDocker(true);
 
                  setTesting(false);
             }} >
@@ -119,43 +126,17 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                 ? <div className="spinner-border" role="status"></div>
                 : "Test Connection"}
         </div>
-
-        {testResponse && <>
-            {testResponse.success && <div className={"text-center"}>✅</div>}
-            {testResponse.error &&
-                (typeof testResponse.error === 'string'
-                    ? <pre>{testResponse.error}</pre>
-                    : <>
-                        <div className={`btn btn-warning w-100 mt-1 ${testing && "disabled"}`}
-                             onClick={async () => {
-                                 setTesting(true);
-
-                                 logsRef.current.innerText = "";
-
-                                 const data = getSteps().at(0).data;
-                                 const formData = new FormData();
-                                 Object.keys(data).forEach(key => formData.append(key, data[key]));
-                                 const stream = await fetch(`${baseUrl}/docker-install`, {
-                                     method: "POST",
-                                     body: formData
-                                 });
-                                 const reader = stream.body.getReader();
-                                 const td = new TextDecoder();
-                                 let done, value;
-                                 while (!done) {
-                                     ({ value, done } = await reader.read());
-                                     logsRef.current.innerText += td.decode(value) + "\n";
-                                     logsRef.current.scrollTo(0, logsRef.current.scrollHeight);
-                                 }
-
-                                 setTesting(false);
-                             }}>
-                            {testing
-                                ? <div className="spinner-border" role="status"></div>
-                                : "Install Docker"}
-                        </div>
-                        <pre style={{maxHeight: 300, overflow: "auto"}} ref={logsRef}>{testResponse.error.docker}</pre>
-                    </>)}
-        </>}
+        {showInstallDocker && <div className={`btn btn-warning w-100 mt-3 ${testing && "disabled"}`}
+                                   onClick={async () => {
+                                       setTesting(true);
+                                       const success = await WS.cmd(DEPLOY_CMD.DOCKER_INSTALL);
+                                       if(success)
+                                           setShowInstallDocker(false);
+                                       setTesting(false);
+                                   }} >
+            {testing
+                ? <div className="spinner-border" role="status"></div>
+                : "Install Docker"}
+        </div>}
     </div>
 }
