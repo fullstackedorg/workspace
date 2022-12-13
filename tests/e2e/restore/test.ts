@@ -5,25 +5,26 @@ import waitForServer from "fullstacked/scripts/waitForServer";
 import {notDeepEqual, deepEqual, ok} from "assert";
 import fs from "fs";
 import Runner from "../../../scripts/runner";
-import config from "../../../scripts/config";
-import build from "../../../scripts/build";
+import Config from "../../../scripts/config";
+import Build from "../../../scripts/build";
 import {clearLine, printLine} from "../../../scripts/utils";
 import {fetch} from "fullstacked/webapp/fetch";
 
 describe("Backup-Restore Test", function(){
     let testArr;
     let runner: Runner;
-    const localConfig = config({
-        src: __dirname,
-        silent: true
-    });
+    let localConfig;
     const backupDir = path.resolve(process.cwd(), "backup");
     const backupFile = path.resolve(backupDir, "mongo-data.tar");
 
     before(async function (){
         this.timeout(30000);
 
-        await build({...localConfig, testMode: true});
+        localConfig = await Config({
+            src: __dirname,
+            silent: true
+        });
+        await Build({...localConfig, testMode: true});
         runner = new Runner(localConfig);
         await runner.start();
         printLine("Generating data");

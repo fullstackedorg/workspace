@@ -3,8 +3,8 @@ import yaml from "js-yaml";
 import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
-import build from "../../scripts/build";
-import config from "../../scripts/config";
+import Build from "../../scripts/build";
+import Config from "../../scripts/config";
 import Runner from "../../scripts/runner";
 import getPackageJSON from "../../getPackageJSON";
 
@@ -31,16 +31,16 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
 
     fs.mkdirSync(testDir);
 
-    const localConfig = await config({
+    const localConfig = await Config({
         name: "test",
         src: srcDir ?? process.cwd(),
         out: testDir,
         silent: true
     });
-    await build(localConfig);
+    await Build(localConfig);
 
     const dockerComposeFilePath = path.resolve(testDir, "dist", "docker-compose.yml");
-    let dockerCompose = yaml.parse(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
+    let dockerCompose: any = yaml.load(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
 
     dockerCompose.services.node.volumes = [
         process.cwd() + ":/app"
@@ -70,11 +70,16 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
 
     delete dockerCompose.services.node.restart;
 
-    fs.writeFileSync(dockerComposeFilePath, yaml.stringify(dockerCompose));
+    fs.writeFileSync(dockerComposeFilePath, yaml.dump(dockerCompose));
 
     const runner = new Runner(localConfig);
     await runner.start();
-    const results = execSync(`docker-compose -p ${localConfig.name} -f ${dockerComposeFilePath} logs --no-log-prefix -f node`).toString();
+    let results = ""
+    await new Promise(async resolve => {
+        const logsStream = (await (await localConfig.docker.getContainer(localConfig.name + '_node_1')).logs({stdout: true, stderr: true, follow: true}));
+        logsStream.on("data", chunk => results += chunk.toString());
+        logsStream.on("end", resolve)
+    });
     await runner.stop();
 
     const passingMatches = Array.from(results.matchAll(/\d+ passing/g));

@@ -1,7 +1,6 @@
 import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
-import {execSync} from "child_process";
 import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, printLine} from "./utils";
 import progress from "progress-stream";
 import {sshCredentials} from "../types/deploy";
@@ -13,25 +12,24 @@ export default async function (config: FullStackedConfig) {
     if(!fs.existsSync(path.resolve(config.dist, "docker-compose.yml")))
         return console.log("Could not find built docker-compose file");
 
-    const dockerComposeStr = fs.readFileSync(path.resolve(config.dist, "docker-compose.yml"), {encoding: "utf-8"});
-    const volumesToBackup = getVolumesToBackup(dockerComposeStr, config.volume);
+    const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
+    const volumesToBackup = getVolumesToBackup(fs.readFileSync(dockerComposeFile, {encoding: "utf8"}), config.volume);
 
     for(const volume of volumesToBackup){
         if(!config.silent)
             console.log(`Backing up ${volume} from local host`);
 
-        const commandArr = ["docker", "run",
-            "-v", config.name + "_" + volume + ":/data",
-            "-v", config.backupDir ?? path.resolve(process.cwd(), "backup") + ":/backup",
-            "--name=fullstacked-backup",
-            "busybox",
-            "tar cvf backup/" + volume + ".tar data"]
-
-        execSync(commandArr.join(" "), {
-            stdio: config.silent ? "ignore" : "inherit"
+        const [output, container] = await config.docker.run("busybox", ["/bin/sh", "-c", "sleep 5 && tar cvf /backup/" + volume + ".tar /data"], process.stdout, {
+            name: "fullstacked-backup",
+            HostConfig: {
+                Binds: [
+                    config.name + "_" + volume + ":/data",
+                    config.backupDir ?? path.resolve(process.cwd(), "backup") + ":/backup"
+                ],
+            }
         });
 
-        execSync(`docker rm fullstacked-backup -f -v`);
+        await container.remove({v: true});
     }
 }
 

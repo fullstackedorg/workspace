@@ -25,7 +25,7 @@ export default async function(config) {
     config = {
         ...defaultConfig,
         ...config,
-        docker: await docker()
+        docker: config.testMode ? null : await docker()
     }
 
     // always add dist to the out dir
