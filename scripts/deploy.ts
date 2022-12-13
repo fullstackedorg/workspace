@@ -254,7 +254,7 @@ export default class Deploy extends CommandInterface {
             }
 
             for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
-                if(!dockerCompose.services[service.name].ports[i].endsWith(`:${service.port}`)) continue;
+                if(dockerCompose.services[service.name].ports[i] !== service.port.toString()) continue;
                 dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
             }
         });

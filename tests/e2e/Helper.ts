@@ -2,8 +2,8 @@ import puppeteer, {Browser, Page} from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
 import Runner from "../../scripts/runner";
-import build from "../../scripts/build";
-import config from "../../scripts/config";
+import Build from "../../scripts/build";
+import Config from "../../scripts/config";
 import {cleanOutDir} from "../../scripts/utils";
 import waitForServer from "../../scripts/waitForServer";
 
@@ -19,13 +19,13 @@ export default class Helper {
     }
 
     async start(pathURL: string = ""){
-        this.localConfig = config({
+        this.localConfig = await Config({
             name: "test",
             src: this.dir,
             out: this.dir,
             silent: true
         });
-        await build(this.localConfig);
+        await Build(this.localConfig);
         this.runner = new Runner(this.localConfig);
         await this.runner.start();
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});

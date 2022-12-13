@@ -1,10 +1,10 @@
 import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
-import {execSync} from "child_process";
 import {getSFTPClient, getVolumesToBackup, printLine, silenceCommandLine, uploadFileWithProgress} from "./utils";
 import {execSSH} from "./utils";
 import {sshCredentials} from "../types/deploy";
+import DockerCompose from "dockerode-compose";
 
 export default async function (config: FullStackedConfig) {
     if(config.host)
@@ -13,8 +13,8 @@ export default async function (config: FullStackedConfig) {
     const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
     const volumesToRestore = getVolumesToBackup(fs.readFileSync(dockerComposeFile, {encoding: "utf-8"}), config.volume);
 
-    const stopCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} stop -t 0`;
-    execSync(config.silent ? silenceCommandLine(stopCommand) : stopCommand);
+    const dockerCompose = new DockerCompose(config.docker, dockerComposeFile, config.name);
+    await dockerCompose.down();
 
     for(const volume of volumesToRestore){
         if(!config.silent)
@@ -28,23 +28,20 @@ export default async function (config: FullStackedConfig) {
             continue;
         }
 
-        const commandArr = [
-            "docker", "run",
-            "-v", config.name + "_" + volume + ":/data",
-            "-v", backupDir + ":/backup",
-            "--name=fullstacked-restore busybox",
-            "sh -c \"cd data && rm -rf ./* && tar xvf /backup/" + volume + ".tar --strip 1\""
-        ];
-
-        execSync(commandArr.join(" "), {
-            stdio: config.silent ? "ignore" : "inherit"
+        const [output, container] = await config.docker.run("busybox", ["/bin/sh", "-c", "sleep 5 && cd data && rm -rf ./* && tar xvf /backup/" + volume + ".tar --strip 1"], process.stdout, {
+            name: "fullstacked-restore",
+            HostConfig: {
+                Binds: [
+                    config.name + "_" + volume + ":/data",
+                    backupDir + ":/backup"
+                ],
+            }
         });
 
-        execSync(`docker rm fullstacked-restore -f -v`);
+        await container.remove({v: true});
     }
 
-    const upCommand = `docker-compose -p ${config.name} -f ${dockerComposeFile} start`;
-    execSync(config.silent ? silenceCommandLine(upCommand) : upCommand);
+    await dockerCompose.up();
 }
 
 async function restoreRemote(config: FullStackedConfig){

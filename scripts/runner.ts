@@ -78,7 +78,9 @@ export default class Runner {
 
     async stop(){
         // stop docker-compose and remove all volumes (cleaner)
-        await this.config.docker.getContainer(this.dockerCompose.projectName + '_node_1').stop({t: 0});
+        const nodeContainer = await this.config.docker.getContainer(this.dockerCompose.projectName + '_node_1');
+        if((await nodeContainer.inspect()).State.Status === 'running')
+            await nodeContainer.stop({t: 0});
         await this.dockerCompose.down({ volumes: true });
     }
 }
