@@ -6,6 +6,7 @@ export enum MESSAGE_TYPE {
     RESPONSE,
     LINE,
     END_LINE,
+    TICK
 }
 
 export type MESSAGE_FROM_BACKEND = {

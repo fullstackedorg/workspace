@@ -18,6 +18,7 @@ export class WS {
     static ws;
     static logs: HTMLPreElement;
     static activeRequest = new Map<string, (data?: any) => void>();
+    static tickSubscribers = new Map<string, () => void>();
 
     static init(){
         return new Promise(async resolve => {
@@ -31,6 +32,16 @@ export class WS {
                         const resolver = this.activeRequest.get(id);
                         resolver(data)
                         this.activeRequest.delete(id);
+                        this.tickSubscribers.delete(id);
+                        break;
+                    case MESSAGE_TYPE.LINE:
+                        let lastDiv = Array.from(this.logs.querySelectorAll("div")).at(-1);
+                        if(!lastDiv || !lastDiv.classList.contains("line")) {
+                            lastDiv = document.createElement("div");
+                            lastDiv.classList.add("line");
+                            this.logs.append(lastDiv);
+                        }
+                        lastDiv.innerText = data;
                         break;
                     case MESSAGE_TYPE.LOG:
                         this.logs.innerHTML += `<div>${data}</div>`;
@@ -38,7 +49,11 @@ export class WS {
                     case MESSAGE_TYPE.ERROR:
                         this.logs.innerHTML += `<div class="text-danger">${data}</div>`;
                         Array.from(this.activeRequest.values()).forEach((resolver) => resolver());
-                        break
+                        break;
+                    case MESSAGE_TYPE.TICK:
+                        const tickSubscription = this.tickSubscribers.get(id);
+                        if(tickSubscription) tickSubscription();
+                        break;
                 }
 
                 this.logs?.scrollTo(0, this.logs.scrollHeight);
@@ -48,10 +63,14 @@ export class WS {
         });
     }
 
-    static cmd(cmd: DEPLOY_CMD, data?: any){
+    static cmd(cmd: DEPLOY_CMD, data?: any, tickSubscription?: () => void){
         return new Promise<any>(resolve => {
             const id = randStr(10);
             this.activeRequest.set(id, resolve);
+
+            if(tickSubscription)
+                this.tickSubscribers.set(id, tickSubscription)
+
             this.ws.send(JSON.stringify({cmd, id, data}));
         })
     }

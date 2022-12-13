@@ -1,4 +1,6 @@
-import React, {useState, useRef} from "react";
+import React, {useRef, useState} from "react";
+import {DEPLOY_CMD} from "../../../../types/deploy";
+import { WS } from "../../WebSocket";
 
 const steps = [
     {
@@ -34,71 +36,27 @@ export default function ({baseUrl, getSteps}) {
     const logsRef = useRef<HTMLPreElement>();
 
     return <div>
-        <div className="btn btn-success w-100"
+        <div className={`btn btn-success w-100 ${deploying && "disabled"}`}
              onClick={async () => {
                  setDeploying(true);
                  setDeploymentStepIndex(0);
 
-                 logsRef.current.innerText = "";
+                 const sshCredentials = {...getSteps().at(0).data};
 
-                 const data = {
-                     ...getSteps().at(0).data,
-                     nginxConfigs: JSON.stringify(getSteps().at(1).data.nginxConfigs),
-                     certificate: JSON.stringify(getSteps().at(2).data?.certificate)
-                 };
-                 const formData = new FormData();
-                 Object.keys(data).forEach(key => {
-                     if(!data[key]) return;
+                 if(sshCredentials?.file?.text)
+                     sshCredentials.privateKey = await sshCredentials.file.text();
 
-                     formData.append(key, data[key]);
-                 });
-                 const stream = await fetch(`${baseUrl}/deploy`, {
-                     method: "POST",
-                     body: formData
-                 });
-                 const reader = stream.body.getReader();
-                 const td = new TextDecoder();
-                 let done, value;
-                 while (!done) {
-                     ({ value, done } = await reader.read());
+                 const nginxConfigs = getSteps().at(1).data.nginxConfigs;
+                 const certificate = getSteps().at(2).data.certificate;
 
-                     let dataRaw = td.decode(value).split("}{");
-
-                     if(dataRaw.length > 1)
-                         dataRaw = dataRaw.map((chunk, i) =>
-                             (i !== 0 ? "{" : "") + chunk + (i !== dataRaw.length - 1 ? "}" : ""));
-
-                     const dataChunks = dataRaw.map(chunk => {
-                         if(!chunk.trim()) return null;
-                         return JSON.parse(chunk);
-                     });
-                     for (const data of dataChunks) {
-                         if(!data) continue;
-
-                         const message = data.error || data.success || data.progress;
-
-                         if(data.progress){
-                             let lastLog = Array.from(logsRef.current.querySelectorAll("div")).at(-1);
-                             if(!lastLog.classList.contains("upload-progress")) {
-                                 lastLog = document.createElement("div");
-                                 lastLog.classList.add("upload-progress");
-                                 logsRef.current.append(lastLog);
-                             }
-                             lastLog.innerText = data.progress;
-                         }else{
-                             logsRef.current.innerHTML += `<div class="${data.error ? "text-danger" : "text-success"}">${message}</div>`;
-                         }
-
-                         if(data.success) setDeploymentStepIndex(deploymentStepIndex => deploymentStepIndex + 1);
-                         logsRef.current.scrollTo(0, logsRef.current.scrollHeight);
-                     }
-
-
-                 }
-
+                 await WS.cmd(DEPLOY_CMD.DEPLOY, {sshCredentials, nginxConfigs, certificate}, () => {
+                     setDeploymentStepIndex(prevState => prevState + 1);
+                 })
                  setDeploying(false);
              }}>
-            Launch Deployment
+            {deploying
+                ? <div className="spinner-border" role="status"></div>
+                : "Launch Deployment"}
         </div>
 
         <ul className="steps steps-vertical">

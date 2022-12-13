@@ -9,7 +9,7 @@ const getDockerCompose = () => {
     return dockerCompose;
 }
 
-export default function ({baseUrl, defaultData, updateData, getSteps}){
+export default function ({defaultData, updateData, getSteps}){
     const [services, setServices] = useState([]);
     const [activeServiceIndex, setActiveServiceIndex] = useState(0);
 
@@ -42,16 +42,14 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
     }, []);
 
     const onInputChange = (service, serviceIndex) => {
-        let server_names = [];
+        let serverNames = [];
         document.querySelectorAll(`#server-name-inputs-${serviceIndex} input`).forEach((input: HTMLInputElement) => {
-            server_names.push(input.value);
+            serverNames.push(input.value);
         });
 
-        services[serviceIndex].server_names = server_names;
+        services[serviceIndex].serverNames = serverNames;
 
-        updateData({
-            nginxConfigs: services
-        });
+        updateData({nginxConfigs: services});
     }
 
     return <div>
@@ -74,8 +72,8 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                     {services.map((service, serviceIndex) => <div className={`tab-pane ${serviceIndex === activeServiceIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
                         <div id={`server-name-inputs-${serviceIndex}`}>
                             <label className="form-label">Server Name</label>
-                            {defaultData?.nginxConfigs?.at(serviceIndex)?.server_names?.filter(server_name => server_name !== "").map(server_name =>
-                                <input type="text" className="form-control mb-2" defaultValue={server_name} placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>)
+                            {defaultData?.nginxConfigs?.at(serviceIndex)?.serverNames?.filter(serverName => serverName).map(serverName =>
+                                <input type="text" className="form-control mb-2" defaultValue={serverName} placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>)
                                 ?? <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>}
 
                         </div>
@@ -100,10 +98,10 @@ export default function ({baseUrl, defaultData, updateData, getSteps}){
                         <div className="mb-3">
                             <label className="form-label">Nginx Extra Configs</label>
                             <textarea className="form-control" rows={6}
-                                      defaultValue={defaultData?.nginxConfigs?.at(serviceIndex)?.nginx_extra_configs?.join("\n")}
+                                      defaultValue={defaultData?.nginxConfigs?.at(serviceIndex)?.nginxExtraConfigs?.join("\n")}
                                       placeholder="proxy_set_header Host $host;
 proxy_set_header X-Real-IP $remote_addr;" onChange={(e) => {
-                                services[serviceIndex].nginx_extra_configs = e.target.value.split("\n");
+                                services[serviceIndex].nginxExtraConfigs = e.target.value.split("\n");
                                 updateData({
                                     nginxConfigs: services
                                 });

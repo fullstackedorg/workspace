@@ -55,8 +55,8 @@ export default function ({hasSavedConfigs}){
                         stepIndex === null
                             ? <LoadConfigs loadData={({sshCredentials, nginxConfigs, certificate}) => {
                                 if(sshCredentials) steps.at(0).data = sshCredentials;
-                                if(nginxConfigs) steps.at(1).data = nginxConfigs;
-                                if(certificate) steps.at(2).data = certificate;
+                                if(nginxConfigs) steps.at(1).data = {nginxConfigs};
+                                if(certificate) steps.at(2).data = {certificate};
 
                                 console.log(steps);
 

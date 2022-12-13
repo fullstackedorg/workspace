@@ -59,9 +59,15 @@ process.argv.forEach(arg => {
 });
 
 const CommandClass = require(scripts[script]).default;
-const command: CommandInterface = new CommandClass(defaultConfig(config));
+let command;
+if(script === "deploy")
+    command = new CommandClass(defaultConfig(config));
+else
+    CommandClass(defaultConfig(config));
+    
+
 
 if(config.gui)
     require("./scripts/gui").default(command);
-else if(command.runCLI)
+else if(command?.runCLI)
     command.runCLI();

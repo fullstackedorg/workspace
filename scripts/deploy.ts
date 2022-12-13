@@ -139,17 +139,17 @@ export default class Deploy extends CommandInterface {
         }
 
         console.log("Testing connection with remote host");
-        const sftp = await this.getSFTP();
+        this.sftp = await this.getSFTP();
         console.log("Success!");
 
         console.log("Testing mkdir in App Directory")
         const testDir = `${this.sshCredentials.appDir}/${randStr(10)}`;
-        if(await sftp.exists(testDir)){
+        if(await this.sftp.exists(testDir)){
             throw Error(`Test directory ${testDir} exist. Exiting to prevent any damage to remote server.`);
         }
 
-        await sftp.mkdir(testDir, true);
-        await sftp.rmdir(testDir);
+        await this.sftp.mkdir(testDir, true);
+        await this.sftp.rmdir(testDir);
         console.log("Success!");
 
         return true;
@@ -270,6 +270,7 @@ export default class Deploy extends CommandInterface {
         if(this.certificate){
             fs.writeFileSync(path.resolve(nginxDir, "fullchain.pem"), this.certificate.fullchain);
             fs.writeFileSync(path.resolve(nginxDir, "privkey.pem"), this.certificate.privkey);
+            console.log("Added certificate")
         }
 
         const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx.conf"), {encoding: "utf-8"});
@@ -297,6 +298,7 @@ export default class Deploy extends CommandInterface {
             }
         });
         fs.writeFileSync(path.resolve(this.config.dist, "docker-compose.yml"), yaml.stringify(dockerCompose));
+        console.log("Generated docker-compose.yml");
     }
 
     /**
@@ -305,7 +307,7 @@ export default class Deploy extends CommandInterface {
      *
      */
     async startAppOnRemoteServer(){
-        const sftp = await getSFTPClient(this.sshCredentials);
+        const sftp = await this.getSFTP();
 
         console.log(`Starting ${this.config.name} v${this.config.version} on remote server`);
         await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml up -d`, this.write);
@@ -437,32 +439,39 @@ export default class Deploy extends CommandInterface {
      * Core deploy method
      *
      */
-    async run(){
+    async run(tick?: () => void){
         await this.testRemoteServer();
         console.log("Connected to Remote Host");
+        if(tick) tick();
 
         await this.testDockerOnRemoteHost();
+        if(tick) tick();
 
         await Build({...this.config, silent: true, production: true});
         console.log(`Web App ${this.config.name} v${this.config.version} built production mode`);
+        if(tick) tick();
 
         await this.setupDockerComposeAndNginx();
         console.log("Docker Compose and Nginx is setup");
+        if(tick) tick();
 
         await this.uploadFilesToRemoteServer();
         console.log("Web App is uploaded to the remote server");
+        if(tick) tick();
 
         await execScript(path.resolve(this.config.src, "predeploy.ts"), this.config, await this.getSFTP());
         console.log("Ran predeploy scripts");
+        if(tick) tick();
 
         await this.startAppOnRemoteServer();
         await this.startFullStackedNginxOnRemoteHost();
         console.log("Web App Deployed");
+        if(tick) tick();
 
         await execScript(path.resolve(this.config.src, "postdeploy.ts"), this.config, await this.getSFTP());
         console.log("Ran postdeploy scripts");
+        if(tick) tick();
 
-        await this.sftp.end();
         console.log("Deployment Successfull");
     }
 
@@ -478,6 +487,8 @@ export default class Deploy extends CommandInterface {
         this.loadConfigs(password);
 
         await this.run();
+
+        await this.sftp.end();
     }
 
     guiCommands() {
@@ -505,12 +516,12 @@ export default class Deploy extends CommandInterface {
                 callback: async () => await this.getBuiltDockerCompose()
             },{
                 cmd: DEPLOY_CMD.DEPLOY,
-                callback: async ({sshCredentials, nginxConfigs, certificate}) => {
+                callback: async ({sshCredentials, nginxConfigs, certificate}, tick: () => void) => {
                     this.sshCredentials = sshCredentials;
                     this.nginxConfigs = nginxConfigs;
                     this.certificate = certificate;
 
-                    await this.run();
+                    await this.run(tick);
                 }
             },{
                 cmd: DEPLOY_CMD.CERT,

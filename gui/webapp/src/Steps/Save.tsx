@@ -21,9 +21,13 @@ export default function ({getSteps}) {
                     setSaving(true);
                     const password = passRef.current.value;
 
-                    const sshCredentials = getSteps().at(0).data;
-                    const nginxConfigs = getSteps().at(1).data;
-                    const certificate = getSteps().at(2).data;
+                    const sshCredentials = {...getSteps().at(0).data};
+
+                    if(sshCredentials?.file?.text)
+                        sshCredentials.privateKey = await sshCredentials.file.text();
+
+                    const nginxConfigs = getSteps().at(1).data.nginxConfigs;
+                    const certificate = getSteps().at(2).data.certificate;
 
                     const success = await WS.cmd(DEPLOY_CMD.SAVE, {
                         sshCredentials,
