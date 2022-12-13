@@ -4,6 +4,7 @@ import path from "path";
 import {execSync} from "child_process";
 import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, printLine} from "./utils";
 import progress from "progress-stream";
+import {sshCredentials} from "../types/deploy";
 
 export default async function (config: FullStackedConfig) {
     if(config.host)
@@ -35,7 +36,10 @@ export default async function (config: FullStackedConfig) {
 }
 
 async function backupRemote(config: FullStackedConfig){
-    const sftp = await getSFTPClient(config);
+    const sftp = await getSFTPClient({
+        ...config,
+        port: config.sshPort
+    } as sshCredentials);
 
     const remoteDockerComposeFilePath = config.appDir + "/" + config.name + "/docker-compose.yml";
     if(!await sftp.exists(remoteDockerComposeFilePath))

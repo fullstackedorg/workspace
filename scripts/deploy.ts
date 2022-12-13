@@ -2,16 +2,13 @@ import path from "path";
 import fs from "fs";
 import glob from "glob";
 import {
-    execScript,
-    execSSH,
-    getSFTPClient,
-    uploadFileWithProgress,
-    randStr, askQuestion, getCertificateData
+    execScript, execSSH, getSFTPClient,
+    uploadFileWithProgress, randStr, askQuestion,
+    getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword
 } from "./utils";
 import Build from "./build";
 import yaml from "yaml";
 import DockerInstallScripts from "../DockerInstallScripts";
-import crypto from "crypto";
 import { Writable } from "stream";
 import {CommandInterface} from "../CommandInterface";
 import SFTP from "ssh2-sftp-client";
@@ -24,7 +21,6 @@ export type WrappedSFTP = SFTP & {
 
 export default class Deploy extends CommandInterface {
     sftp: WrappedSFTP;
-    algorithm = 'aes-256-cbc';
     configFilePath: string;
 
     sshCredentials: sshCredentials;
@@ -38,39 +34,13 @@ export default class Deploy extends CommandInterface {
     }
 
     /**
-     * Check if project has saved configs
-     */
-    hasSavedConfigs(){
-        return fs.existsSync(this.configFilePath);
-    }
-
-    /**
      *
      * Load saved configs
      *
      */
     loadConfigs(password){
-        if(!this.hasSavedConfigs())
-            throw Error("Trying to load deploy config while no saved config in project.")
+        const {sshCredentials, nginxConfigs, certificate} = loadDataEncryptedWithPassword(this.configFilePath, password);
 
-        const hashedParts = fs.readFileSync(this.configFilePath).toString().split(":");
-        const hashedIv = hashedParts.shift();
-        const encryptedData = hashedParts.join(":");
-
-        const iv = Buffer.from(hashedIv, 'hex');
-        const encryptedText = Buffer.from(encryptedData, 'hex');
-
-        const key = crypto.createHash('md5').update(password).digest("hex");
-
-        const decipher = crypto.createDecipheriv(this.algorithm, Buffer.from(key), iv);
-        let decrypted = decipher.update(encryptedText);
-        decrypted = Buffer.concat([decrypted, decipher.final()]);
-        let sshCredentials, nginxConfigs, certificate;
-        try{
-            ({sshCredentials, nginxConfigs, certificate} = JSON.parse(decrypted.toString()));
-        }catch (e) {
-            throw Error("Wrong password or corrupt deploy config file");
-        }
         this.sshCredentials = sshCredentials;
         this.nginxConfigs = nginxConfigs;
         this.certificate = certificate;
@@ -90,25 +60,22 @@ export default class Deploy extends CommandInterface {
      *
      */
     async saveConfigs(password){
-        const key = crypto.createHash('md5').update(password).digest("hex");
-        const iv = crypto.randomBytes(16);
-
-        const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
-        let encrypted = cipher.update(JSON.stringify({
+        saveDataEncryptedWithPassword(this.configFilePath, password, {
             sshCredentials: this.sshCredentials,
             nginxConfigs: this.nginxConfigs,
             certificate: this.certificate,
-        }));
-        encrypted = Buffer.concat([encrypted, cipher.final()]);
-
-        fs.writeFileSync(this.configFilePath, iv.toString('hex') + ":" + encrypted.toString('hex'));
+        })
 
         console.log("Saved deploy configuration");
 
         return true;
     }
 
-
+    /**
+     *
+     * Get sftp client in less than 3s
+     *
+     */
     private async getSFTP(): Promise<WrappedSFTP>{
         if(this.sftp) return this.sftp;
 
@@ -212,15 +179,9 @@ export default class Deploy extends CommandInterface {
      *
      */
     async getBuiltDockerCompose(){
-        await Build({
-            ...this.config,
-            silent: true,
-            production: true
-        });
-
         const dockerComposeFilePath = path.resolve(this.config.dist, "docker-compose.yml");
         if(!fs.existsSync(dockerComposeFilePath))
-            throw Error(`Cannot find docker-compose.yml at path ${dockerComposeFilePath}`);
+            throw Error(`Cannot find docker-compose.yml at path ${dockerComposeFilePath}. Maybe run build command before.`);
 
         const dockerComposeStr = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
         return yaml.parse(dockerComposeStr);
@@ -311,7 +272,7 @@ export default class Deploy extends CommandInterface {
 
         console.log(`Starting ${this.config.name} v${this.config.version} on remote server`);
         await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml up -d`, this.write);
-        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml restart -t 0`, this.write);
+        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml restart`, this.write);
     }
 
     /**
@@ -327,7 +288,7 @@ export default class Deploy extends CommandInterface {
         await sftp.put(path.resolve(__dirname, "..", "nginx", "nginx.conf"), `${this.sshCredentials.appDir}/nginx.conf`);
         await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${this.sshCredentials.appDir}/docker-compose.yml`);
         await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml up -d`, this.write);
-        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart -t 0`, this.write);
+        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart`, this.write);
     }
 
     async uploadFilesToRemoteServer(){
@@ -476,13 +437,13 @@ export default class Deploy extends CommandInterface {
     }
 
     async runCLI(){
-        if(!this.hasSavedConfigs()){
+        if(!fs.existsSync(this.configFilePath)){
             console.log("No deploy config saved in project. Please run deployment with GUI once.")
             console.log("Run: npx fullstacked deploy --gui");
             return;
         }
 
-        const password = this.config.pass || await askQuestion("Password:");
+        const password = this.config.password || await askQuestion("Password:");
 
         this.loadConfigs(password);
 
@@ -495,7 +456,7 @@ export default class Deploy extends CommandInterface {
         return [
             {
                 cmd: DEPLOY_CMD.CHECK_SAVED_CONFIG,
-                callback: () => this.hasSavedConfigs()
+                callback: () => fs.existsSync(this.configFilePath)
             }, {
                 cmd: DEPLOY_CMD.LOAD_CONFIG,
                 callback: ({password}) => this.loadConfigs(password)
@@ -513,7 +474,14 @@ export default class Deploy extends CommandInterface {
                 callback: async () => await this.tryToInstallDockerOnRemoteHost()
             },{
                 cmd: DEPLOY_CMD.DOCKER_COMPOSE,
-                callback: async () => await this.getBuiltDockerCompose()
+                callback: async () => {
+                    await Build({
+                        ...this.config,
+                        production: true,
+                        silent: true
+                    })
+                    return await this.getBuiltDockerCompose();
+                }
             },{
                 cmd: DEPLOY_CMD.DEPLOY,
                 callback: async ({sshCredentials, nginxConfigs, certificate}, tick: () => void) => {

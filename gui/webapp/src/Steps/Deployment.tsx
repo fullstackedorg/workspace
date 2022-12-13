@@ -30,7 +30,7 @@ const steps = [
     }
 ]
 
-export default function ({baseUrl, getSteps}) {
+export default function ({getSteps}) {
     const [deploying, setDeploying] = useState(false);
     const [deploymentStepIndex, setDeploymentStepIndex] = useState(null);
     const logsRef = useRef<HTMLPreElement>();

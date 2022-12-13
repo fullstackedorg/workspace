@@ -41,14 +41,12 @@ declare type ConfigDeploy = {
     // ssh credentials
     host?           : string,
     sshPort?        : number,
-    user?           : string,
-    pass?           : string,
+    username?           : string,
+    password?           : string,
     privateKey?     : string,
     privateKeyFile? : string,
 
     appDir?     : string, // directory in server
-
-    skipTest?   : boolean, // skip testing
 
     noHttps?    : boolean // skip cert setup
 
@@ -63,5 +61,5 @@ declare type ConfigBackup = {
 declare type Config = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigCerts & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean,
-    gui?    : boolean, 
+    gui?    : boolean,
 }

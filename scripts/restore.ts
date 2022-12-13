@@ -2,8 +2,9 @@ import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
 import {execSync} from "child_process";
-import {getSFTPClient, getVolumesToBackup, silenceCommandLine, uploadFileWithProgress} from "./utils";
+import {getSFTPClient, getVolumesToBackup, printLine, silenceCommandLine, uploadFileWithProgress} from "./utils";
 import {execSSH} from "./utils";
+import {sshCredentials} from "../types/deploy";
 
 export default async function (config: FullStackedConfig) {
     if(config.host)
@@ -47,7 +48,10 @@ export default async function (config: FullStackedConfig) {
 }
 
 async function restoreRemote(config: FullStackedConfig){
-    const sftp = await getSFTPClient(config);
+    const sftp = await getSFTPClient({
+        ...config,
+        port: config.sshPort
+    } as sshCredentials);
 
     const dockerComposeRemoteFile = config.appDir + "/" + config.name + "/docker-compose.yml";
 
@@ -72,7 +76,9 @@ async function restoreRemote(config: FullStackedConfig){
             continue;
         }
 
-        await uploadFileWithProgress(sftp, backupFile, `/tmp/backup/${volume}.tar`, `[${volume}] `,config.silent);
+        await uploadFileWithProgress(sftp, backupFile, `/tmp/backup/${volume}.tar`, progress => {
+            printLine(`[${volume}] ${progress}`)
+        });
 
         await execSSH(sftp.client, `docker-compose -p ${config.name} -f ${dockerComposeRemoteFile} stop -t 0`);
         await execSSH(sftp.client, `docker run -v ${config.name + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
