@@ -10,7 +10,7 @@ import yaml from "yaml";
 import {WebSocketServer} from "ws";
 import {CommandInterface} from "../CommandInterface";
 import {MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
-import {DEPLOY_CMD} from "fullstacked/types/deploy";
+import {DEPLOY_CMD} from "../types/deploy";
 
 export default async function (command: CommandInterface){
     Server.port = await getNextAvailablePort();
