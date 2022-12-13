@@ -2,280 +2,58 @@ import path from "path";
 import fs from "fs";
 import glob from "glob";
 import {
-    askQuestion,
-    askToContinue,
     execScript,
     execSSH,
     getSFTPClient,
     uploadFileWithProgress,
-    randStr
+    randStr, askQuestion, getCertificateData
 } from "./utils";
 import Build from "./build";
-import test from "./test";
 import yaml from "yaml";
-import Docker from "./docker";
-import version from "../version";
-import Runner from "./runner";
-import Config from "./config"
-import open from "open";
-import waitForServer from "./waitForServer";
-import gui from "./gui";
 import DockerInstallScripts from "../DockerInstallScripts";
 import crypto from "crypto";
 import { Writable } from "stream";
+import {CommandInterface} from "../CommandInterface";
+import SFTP from "ssh2-sftp-client";
+import {Client} from "ssh2";
+import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy";
 
-
-/**
- *
- * Test out if your SSH credentials work with the remote host.
- * Make sure the App Directory is writable to publish web apps.
- * Make sure Docker and Docker Compose is installed on remote host.
- *
- * @param credentials
- */
-export async function testSSHConnection(credentials: {
-    host: string,
-    sshPort?: number,
-    user: string,
-    pass?: string,
-    privateKey?: string,
-    privateKeyFile?: string,
-    appDir: string
-}){
-    let sftp;
-    const getSFTPClientIn3s = new Promise<void>(async (resolve, reject) => {
-        let rejected = false;
-        const testTimeout = setTimeout(async () => {
-            rejected = true;
-            reject(Error(`Hanging more than 3s to connect.`));
-        }, 3000);
-        try{
-            sftp = await getSFTPClient(credentials);
-            if(rejected)
-                await sftp.end();
-        }catch (e) {
-            reject(e);
-        }
-        clearTimeout(testTimeout);
-        resolve();
-    });
-    try{
-        await getSFTPClientIn3s;
-    }catch (e){
-        throw e;
-    }
-    const testDir = `${credentials.appDir}/${randStr(10)}`;
-    if(await sftp.exists(testDir)){
-        throw Error(`Test directory ${testDir} exist. Exiting to prevent any damage to remote server.`);
-        return false;
-    }
-    await sftp.mkdir(testDir, true);
-    await sftp.rmdir(testDir);
-
-    const dockerTest = await testDockerOnRemoteHost(sftp);
-
-    await sftp.end();
-
-    return dockerTest || {success: true};
+export type WrappedSFTP = SFTP & {
+    client: Client
 }
 
-/**
- *
- * Reusable function to test Docker and Docker Compose v2 installation on remote host
- *
- * @param sftp
- */
-export async function testDockerOnRemoteHost(sftp){
-    const dockerTest = await execSSH(sftp.client, `docker version`);
-    if(!dockerTest) {
-        return {
-            error: {
-                docker: "Docker is not installed on the remote host."
-            }
-        };
-    }
-    const dockerComposeTest = await execSSH(sftp.client, `docker compose version`);
-    if(!dockerComposeTest){
-        return {
-            error: {
-                docker: "Docker Compose v2 is not installed on the remote host."
-            }
-        }
+export default class Deploy extends CommandInterface {
+    sftp: WrappedSFTP;
+    algorithm = 'aes-256-cbc';
+    configFilePath: string;
+
+    sshCredentials: sshCredentials;
+    nginxConfigs: nginxConfig[];
+    certificate: certificate;
+
+    constructor(config) {
+        super(config);
+
+        this.configFilePath = path.resolve(config.src, ".fullstacked");
     }
 
-    return "";
-}
-
-/**
- *
- * Try to install docker and docker-compose v2 on remote host for specific distro
- *
- * @param sftpCreds
- * @param pipeStream
- */
-export async function tryToInstallDockerOnRemoteHost(sftpCreds, pipeStream){
-    const sftp = await getSFTPClient(sftpCreds);
-    const distroNameRaw = await execSSH(sftp.client, "cat /etc/*-release");
-
-    let distroName;
-    if(distroNameRaw.includes("Amazon Linux release 2"))
-        distroName = "Amazon Linux 2";
-    else if(distroNameRaw.includes("Rocky Linux"))
-        distroName = "Rocky Linux";
-    else if(distroNameRaw.includes("Ubuntu"))
-        distroName = "Ubuntu";
-    else if(distroNameRaw.includes("Debian"))
-        distroName = "Debian";
-
-
-    if(!DockerInstallScripts[distroName]) {
-        throw Error(`Don't know the command to install Docker and Docker Compose v2 on ${distroName || distroNameRaw}`);
-        return false;
+    /**
+     * Check if project has saved configs
+     */
+    hasSavedConfigs(){
+        return fs.existsSync(this.configFilePath);
     }
 
-    for(const cmd of DockerInstallScripts[distroName]) {
-        pipeStream.write(cmd);
-        await execSSH(sftp.client, cmd, pipeStream);
-    }
+    /**
+     *
+     * Load saved configs
+     *
+     */
+    loadConfigs(password){
+        if(!this.hasSavedConfigs())
+            throw Error("Trying to load deploy config while no saved config in project.")
 
-    const dockerTest = await testDockerOnRemoteHost(sftp);
-
-    await sftp.end();
-
-    return dockerTest || {success: true};
-}
-
-/**
- *
- * Get Docker Compose content in JS object format
- *
- */
-export async function getBuiltDockerCompose(){
-    await Build({
-        ...globalConfig,
-        silent: true,
-        production: true
-    });
-
-    const dockerComposeFilePath = path.resolve(globalConfig.dist, "docker-compose.yml");
-    if(!fs.existsSync(dockerComposeFilePath)) {
-        throw Error(`Cannot find docker-compose.yml at path ${dockerComposeFilePath}`);
-    }
-    const dockerComposeStr = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
-    return yaml.parse(dockerComposeStr);
-}
-
-/**
- *
- * @return an array of available ports on remote host
- *
- * @param ssh2
- * @param count
- * @param startingPort
- */
-
-async function getAvailablePorts(ssh2, count: number, startingPort: number = 8001): Promise<string[]> {
-    const dockerContainerPorts = await execSSH(ssh2, "docker container ls --format \"{{.Ports}}\" -a");
-    const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
-        portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
-        .map(port => parseInt(port)) // cast to number
-        .filter(port => port || !isNaN(port)); // filter empty strings
-
-    const availablePorts = [];
-    while (availablePorts.length < count){
-        if(!portsInUse.includes(startingPort))
-            availablePorts.push(startingPort);
-        startingPort++;
-    }
-
-    return availablePorts;
-}
-
-/**
- *
- * Find available ports on remote host,
- * then setup docker-compose.yml and nginx-{service}-{port}.conf files.
- *
- * @param nginxConf
- */
-
-async function setupDockerComposeAndNginx(sshCreds, nginxConf, certificate, sftp){
-    const servicesWithServerNames = nginxConf.filter(service => service.server_names?.length);
-    const availablePorts = await getAvailablePorts(sftp.client, servicesWithServerNames.length);
-    const dockerCompose = await getBuiltDockerCompose();
-    const nginxDir = path.resolve(globalConfig.dist, "nginx");
-    if(fs.existsSync(nginxDir)) fs.rmSync(nginxDir, {recursive: true, force: true});
-    fs.mkdirSync(nginxDir);
-
-    if(certificate){
-        fs.writeFileSync(path.resolve(nginxDir, "fullchain.pem"), certificate.fullchain);
-        fs.writeFileSync(path.resolve(nginxDir, "privkey.pem"), certificate.privkey);
-    }
-
-    const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx.conf"), {encoding: "utf-8"});
-    const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx-ssl.conf"), {encoding: "utf-8"});
-    servicesWithServerNames.forEach((service, serviceIndex) => {
-        const port = availablePorts[serviceIndex];
-        const nginx = nginxTemplate
-            .replace(/\{SERVER_NAME\}/g, service.server_names?.join(" ") ?? "localhost")
-            .replace(/\{PORT\}/g, port)
-            .replace(/\{EXTRA_CONFIGS\}/g, service.nginx_extra_configs?.join("\n") ?? "");
-        fs.writeFileSync(path.resolve(globalConfig.dist, "nginx", `${service.name}-${service.port}.conf`), nginx);
-
-        if(certificate){
-            const nginxSSL = nginxSSLTemplate
-                .replace(/\{SERVER_NAME\}/g, service.server_names?.join(" ") ?? "localhost")
-                .replace(/\{PORT\}/g, port)
-                .replace(/\{EXTRA_CONFIGS\}/g, service.nginx_extra_configs?.join("\n") ?? "")
-                .replace(/\{APP_NAME\}/g, globalConfig.name);
-            fs.writeFileSync(path.resolve(globalConfig.dist, "nginx", `${service.name}-${service.port}-ssl.conf`), nginxSSL);
-        }
-
-        for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
-            if(!dockerCompose.services[service.name].ports[i].endsWith(`:${service.port}`)) continue;
-            dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
-        }
-    });
-    fs.writeFileSync(path.resolve(globalConfig.dist, "docker-compose.yml"), yaml.stringify(dockerCompose));
-}
-
-/**
- *
- * Start up app on remote server
- *
- */
-async function startAppOnRemoteServer(appDir, sftp){
-    await execSSH(sftp.client, `docker compose -p ${globalConfig.name} -f ${appDir}/${globalConfig.name}/docker-compose.yml up -d`);
-    await execSSH(sftp.client, `docker compose -p ${globalConfig.name} -f ${appDir}/${globalConfig.name}/docker-compose.yml restart -t 0`);
-}
-
-async function startFullStackedNginxOnRemoteHost(appDir, sftp){
-    await execSSH(sftp.client, `sudo chmod -R 755 ${appDir}`);
-    await sftp.put(path.resolve(__dirname, "..", "nginx", "nginx.conf"), `${appDir}/nginx.conf`);
-    await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${appDir}/docker-compose.yml`);
-    await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${appDir}/docker-compose.yml up -d`);
-    await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${appDir}/docker-compose.yml restart -t 0`);
-}
-
-const algorithm = 'aes-256-cbc';
-const getConfigFilePath = () => path.resolve(globalConfig.src, ".fullstacked");
-
-/**
- * Check if project has saved configs
- */
-export function hasSavedConfigs(){
-    return fs.existsSync(getConfigFilePath());
-}
-
-/**
- *
- * Load saved configs
- *
- * @param password
- */
-export function loadConfigs(password){
-    try{
-        const hashedParts = fs.readFileSync(getConfigFilePath()).toString().split(":");
+        const hashedParts = fs.readFileSync(this.configFilePath).toString().split(":");
         const hashedIv = hashedParts.shift();
         const encryptedData = hashedParts.join(":");
 
@@ -284,116 +62,316 @@ export function loadConfigs(password){
 
         const key = crypto.createHash('md5').update(password).digest("hex");
 
-        const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+        const decipher = crypto.createDecipheriv(this.algorithm, Buffer.from(key), iv);
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
-        return JSON.parse(decrypted.toString());
-    }catch (e) {
-        return {error: "Wrong password or corrupt file"};
-    }
-}
+        let sshCredentials, nginxConfigs, certificate;
+        try{
+            ({sshCredentials, nginxConfigs, certificate} = JSON.parse(decrypted.toString()));
+        }catch (e) {
+            throw Error("Wrong password or corrupt deploy config file");
+        }
+        this.sshCredentials = sshCredentials;
+        this.nginxConfigs = nginxConfigs;
+        this.certificate = certificate;
 
-/**
- *
- * Save config to project
- *
- * @param configs
- * @param password
- */
-export function saveConfigs(configs, password){
-    const key = crypto.createHash('md5').update(password).digest("hex");
-    const iv = crypto.randomBytes(16);
+        console.log("Loaded deploy configuration");
 
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
-    let encrypted = cipher.update(JSON.stringify(configs));
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
-
-    fs.writeFileSync(getConfigFilePath(), iv.toString('hex') + ":" + encrypted.toString('hex'));
-}
-
-/**
- *
- * Core deploy method
- *
- * @param sshCreds
- * @param nginxConfigs
- * @param pipeStream
- */
-export async function deploy(sshCreds, nginxConfigs, certificate, pipeStream){
-    await testSSHConnection(sshCreds);
-    const sftp = await getSFTPClient(sshCreds);
-    pipeStream.write(JSON.stringify({success: "Connected to Remote Host"}));
-
-    const dockerTestError = await testDockerOnRemoteHost(sftp);
-    if(dockerTestError){
-        throw Error(dockerTestError.error.docker);
-        return;
-    }
-    pipeStream.write(JSON.stringify({success: "Docker and Docker Compose v2 is installed"}));
-
-    await Build({...globalConfig, silent: true, production: true});
-    pipeStream.write(JSON.stringify({success: "Web App is built production mode"}));
-
-    await setupDockerComposeAndNginx(sshCreds, nginxConfigs, certificate, sftp);
-    pipeStream.write(JSON.stringify({success: "Docker Compose and Nginx is setup"}));
-
-    if(!await sftp.exists(`${sshCreds.appDir}/${globalConfig.name}`))
-        await sftp.mkdir(`${sshCreds.appDir}/${globalConfig.name}`, true);
-    await uploadFilesToServer(globalConfig.dist, `${sshCreds.appDir}/${globalConfig.name}`, sftp, (progressStr) => {
-        pipeStream.write(JSON.stringify({progress: progressStr}))
-    });
-    pipeStream.write(JSON.stringify({success: "Web App is uploaded to the remote server"}));
-
-    await execScript(path.resolve(globalConfig.src, "predeploy.ts"), globalConfig, sftp);
-    pipeStream.write(JSON.stringify({success: "Ran predeploy scripts"}));
-
-    await startAppOnRemoteServer(sshCreds.appDir, sftp);
-    await startFullStackedNginxOnRemoteHost(sshCreds.appDir, sftp);
-    pipeStream.write(JSON.stringify({success: "Web App Deployed"}));
-
-    await execScript(path.resolve(globalConfig.src, "postdeploy.ts"), globalConfig, sftp);
-    pipeStream.write(JSON.stringify({success: "Ran postdeploy scripts"}));
-
-    await sftp.end();
-    return {success: "Deployment Successfull"};
-}
-
-/**
- *
- * Get certificate information
- *
- */
-export function getCertificateData(fullchain){
-    const cert = new crypto.X509Certificate(fullchain);
-    return {
-        subject: cert.subject,
-        validTo: cert.validTo,
-        subjectAltName: cert.subjectAltName
-    };
-}
-
-/**
- *
- * Generate SSL certificate on remote host using certbot
- *
- */
-export async function generateCertificateOnRemoteHost(sshCreds, email, serverNames, pipeStream){
-    const sftp = await getSFTPClient(sshCreds);
-    pipeStream.write(JSON.stringify({log: "Connected to remote host"}));
-
-    let tempNginxDirRenamed = false;
-    const nginxDir = `${sshCreds.appDir}/${globalConfig.name}/nginx`;
-    if(await sftp.exists(nginxDir)){
-        tempNginxDirRenamed = true;
-        await sftp.rename(nginxDir, `${sshCreds.appDir}/${globalConfig.name}/_nginx`);
+        return {
+            sshCredentials,
+            nginxConfigs,
+            certificate
+        }
     }
 
-    await sftp.mkdir(nginxDir, true);
+    /**
+     *
+     * Save config to project
+     *
+     */
+    async saveConfigs(password){
+        const key = crypto.createHash('md5').update(password).digest("hex");
+        const iv = crypto.randomBytes(16);
 
-    await sftp.put(Buffer.from(`server {
+        const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
+        let encrypted = cipher.update(JSON.stringify({
+            sshCredentials: this.sshCredentials,
+            nginxConfigs: this.nginxConfigs,
+            certificate: this.certificate,
+        }));
+        encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+        fs.writeFileSync(this.configFilePath, iv.toString('hex') + ":" + encrypted.toString('hex'));
+
+        console.log("Saved deploy configuration");
+    }
+
+
+    private async getSFTP(): Promise<WrappedSFTP>{
+        if(this.sftp) return this.sftp;
+
+        if(!this.sshCredentials)
+            throw Error("Trying to get connection to remote server without having set ssh credentials");
+
+        const timeout = setTimeout(() => {
+            throw Error("Hanging 3s to connect to remote server");
+        }, 3000);
+        this.sftp = await getSFTPClient(this.sshCredentials);
+        clearTimeout(timeout);
+
+        return this.sftp;
+    }
+
+    /**
+     *
+     * Test out if your SSH credentials work with the remote host.
+     * Make sure the App Directory is writable to publish web apps.
+     * Make sure Docker and Docker Compose is installed on remote host.
+     *
+     */
+    async testRemoteServer(){
+        // reset sftp
+        if(this.sftp) {
+            await this.sftp.end();
+            this.sftp = null;
+        }
+
+        console.log("Testing connection with remote host");
+        const sftp = await this.getSFTP();
+        console.log("Success!");
+
+        console.log("Testing mkdir in App Directory")
+        const testDir = `${this.sshCredentials.appDir}/${randStr(10)}`;
+        if(await sftp.exists(testDir)){
+            throw Error(`Test directory ${testDir} exist. Exiting to prevent any damage to remote server.`);
+        }
+
+        await sftp.mkdir(testDir, true);
+        await sftp.rmdir(testDir);
+        console.log("Success!");
+
+        return true;
+    }
+
+    /**
+     *
+     * Reusable function to test Docker and Docker Compose v2 installation on remote host
+     *
+     */
+    private async testDockerOnRemoteHost(){
+        const sftp = await this.getSFTP();
+
+        const dockerTest = await execSSH(sftp.client, `docker version`);
+        if(!dockerTest) {
+            throw Error("Docker is not installed on the remote host.")
+        }
+        const dockerComposeTest = await execSSH(sftp.client, `docker compose version`);
+        if(!dockerComposeTest){
+            throw Error("Docker Compose v2 is not installed on the remote host.")
+        }
+
+        console.log("Docker and Docker Compose v2 is Installed");
+        return true;
+    }
+
+    /**
+     *
+     * Try to install docker and docker-compose v2 on remote host for specific distro
+     *
+     */
+    async tryToInstallDockerOnRemoteHost(){
+        const sftp = await this.getSFTP();
+        const distroNameRaw = await execSSH(sftp.client, "cat /etc/*-release");
+
+        let distroName;
+        if(distroNameRaw.includes("Amazon Linux release 2"))
+            distroName = "Amazon Linux 2";
+        else if(distroNameRaw.includes("Rocky Linux"))
+            distroName = "Rocky Linux";
+        else if(distroNameRaw.includes("Ubuntu"))
+            distroName = "Ubuntu";
+        else if(distroNameRaw.includes("Debian"))
+            distroName = "Debian";
+
+        if(!DockerInstallScripts[distroName])
+            throw Error(`Don't know the command to install Docker and Docker Compose v2 on ${distroName || distroNameRaw}`);
+
+        for(const cmd of DockerInstallScripts[distroName]) {
+            console.log(cmd)
+            await execSSH(sftp.client, cmd, this.write);
+        }
+
+        return await this.testDockerOnRemoteHost();
+    }
+
+    /**
+     *
+     * Get Docker Compose content in JS object format
+     *
+     */
+    async getBuiltDockerCompose(){
+        await Build({
+            ...this.config,
+            silent: true,
+            production: true
+        });
+
+        const dockerComposeFilePath = path.resolve(this.config.dist, "docker-compose.yml");
+        if(!fs.existsSync(dockerComposeFilePath))
+            throw Error(`Cannot find docker-compose.yml at path ${dockerComposeFilePath}`);
+
+        const dockerComposeStr = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
+        return yaml.parse(dockerComposeStr);
+    }
+
+    /**
+     *
+     * @return an array of available ports on remote host
+     *
+     */
+    private async getAvailablePorts(sftp: WrappedSFTP, count: number, startingPort: number = 8001): Promise<string[]> {
+        const dockerContainerPorts = await execSSH(sftp.client, "docker container ls --format \"{{.Ports}}\" -a");
+        const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
+            portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
+            .map(port => parseInt(port)) // cast to number
+            .filter(port => port || !isNaN(port)); // filter empty strings
+
+        const availablePorts = [];
+        while (availablePorts.length < count){
+            if(!portsInUse.includes(startingPort))
+                availablePorts.push(startingPort);
+            startingPort++;
+        }
+
+        return availablePorts;
+    }
+
+    /**
+     *
+     * Find available ports on remote host,
+     * then setup docker-compose.yml and nginx-{service}-{port}.conf files.
+     *
+     */
+    private async setupDockerComposeAndNginx(){
+        const sftp = await this.getSFTP();
+
+        const dockerCompose = await this.getBuiltDockerCompose();
+        // set default to node if no nginx configs
+        const nginxConfigs = this.nginxConfigs || [{name: "node", port: 80}];
+        const availablePorts = await this.getAvailablePorts(sftp, nginxConfigs.length);
+        const nginxDir = path.resolve(this.config.dist, "nginx");
+
+        if(fs.existsSync(nginxDir)) fs.rmSync(nginxDir, {recursive: true, force: true});
+
+        fs.mkdirSync(nginxDir);
+
+        if(this.certificate){
+            fs.writeFileSync(path.resolve(nginxDir, "fullchain.pem"), this.certificate.fullchain);
+            fs.writeFileSync(path.resolve(nginxDir, "privkey.pem"), this.certificate.privkey);
+        }
+
+        const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx.conf"), {encoding: "utf-8"});
+        const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx-ssl.conf"), {encoding: "utf-8"});
+        nginxConfigs.forEach((service, serviceIndex) => {
+            const port = availablePorts[serviceIndex];
+            const nginx = nginxTemplate
+                .replace(/\{SERVER_NAME\}/g, service.serverNames?.join(" ") ?? "localhost")
+                .replace(/\{PORT\}/g, port)
+                .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "");
+            fs.writeFileSync(path.resolve(this.config.dist, "nginx", `${service.name}-${service.port}.conf`), nginx);
+
+            if(this.certificate){
+                const nginxSSL = nginxSSLTemplate
+                    .replace(/\{SERVER_NAME\}/g, service.serverNames?.join(" ") ?? "localhost")
+                    .replace(/\{PORT\}/g, port)
+                    .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "")
+                    .replace(/\{APP_NAME\}/g, this.config.name);
+                fs.writeFileSync(path.resolve(this.config.dist, "nginx", `${service.name}-${service.port}-ssl.conf`), nginxSSL);
+            }
+
+            for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
+                if(!dockerCompose.services[service.name].ports[i].endsWith(`:${service.port}`)) continue;
+                dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
+            }
+        });
+        fs.writeFileSync(path.resolve(this.config.dist, "docker-compose.yml"), yaml.stringify(dockerCompose));
+    }
+
+    /**
+     *
+     * Start up app on remote server
+     *
+     */
+    async startAppOnRemoteServer(){
+        const sftp = await getSFTPClient(this.sshCredentials);
+
+        console.log(`Starting ${this.config.name} v${this.config.version} on remote server`);
+        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml up -d`);
+        await execSSH(sftp.client, `docker compose -p ${this.config.name} -f ${this.sshCredentials.appDir}/${this.config.name}/docker-compose.yml restart -t 0`);
+    }
+
+    /**
+     *
+     * Start FullStacked nginx on remote server
+     *
+     */
+    async startFullStackedNginxOnRemoteHost(){
+        const sftp = await this.getSFTP();
+
+        console.log(`Starting FullStacked Nginx on remote server`);
+        await execSSH(sftp.client, `sudo chmod -R 755 ${this.sshCredentials.appDir}`);
+        await sftp.put(path.resolve(__dirname, "..", "nginx", "nginx.conf"), `${this.sshCredentials.appDir}/nginx.conf`);
+        await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${this.sshCredentials.appDir}/docker-compose.yml`);
+        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml up -d`);
+        await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart -t 0`);
+    }
+
+    async uploadFilesToRemoteServer(){
+        const sftp = await this.getSFTP()
+
+        if(!await sftp.exists(`${this.sshCredentials.appDir}/${this.config.name}`))
+            await sftp.mkdir(`${this.sshCredentials.appDir}/${this.config.name}`, true);
+
+        const files = glob.sync("**/*", {cwd: this.config.dist})
+        const localFiles = files.map(file => path.resolve(this.config.dist, file));
+        const remotePath = `${this.sshCredentials.appDir}/${this.config.name}`;
+
+        for (let i = 0; i < files.length; i++) {
+            const fileInfo = fs.statSync(localFiles[i]);
+            if(fileInfo.isDirectory())
+                await sftp.mkdir(remotePath + "/" + files[i]);
+            else
+                await uploadFileWithProgress(sftp, localFiles[i], remotePath + "/" + files[i], (progress) => {
+                    this.printLine(`[${i + 1}/${files.length}] Uploading File ${progress.toFixed(2)}%`);
+                });
+        }
+
+        this.endLine();
+    }
+
+
+    /**
+     *
+     * Generate SSL certificate on remote host using certbot
+     *
+     */
+    async generateCertificateOnRemoteHost(email: string, serverNames: string[]){
+        const sftp = await this.getSFTP();
+        console.log("Connected to remote host");
+
+        let tempNginxDirRenamed = false;
+        const nginxDir = `${this.sshCredentials.appDir}/${this.config.name}/nginx`;
+        if(await sftp.exists(nginxDir)){
+            tempNginxDirRenamed = true;
+            await sftp.rename(nginxDir, `${this.sshCredentials.appDir}/${this.config.name}/_nginx`);
+        }
+
+        await sftp.mkdir(nginxDir, true);
+
+        await sftp.put(Buffer.from(`server {
     listen              80;
     server_name         ${serverNames.join(" ")};
-    root /apps/${globalConfig.name}/nginx;
+    root /apps/${this.config.name}/nginx;
 
     location / {
         try_files $uri $uri/ =404;
@@ -401,126 +379,161 @@ export async function generateCertificateOnRemoteHost(sshCreds, email, serverNam
 }
 `), `${nginxDir}/nginx.conf`);
 
-    await startFullStackedNginxOnRemoteHost(sshCreds.appDir, sftp);
-    pipeStream.write(JSON.stringify({log: "Uploaded nginx setup"}));
+        await this.startFullStackedNginxOnRemoteHost();
+        console.log("Uploaded nginx setup");
 
-    const command = [
-        "docker run --rm --name certbot",
-        `-v ${nginxDir}:/html`,
-        `-v ${nginxDir}/certs:/etc/letsencrypt/archive`,
-        `certbot/certbot certonly --webroot --agree-tos --no-eff-email -n -m ${email} -w /html`,
-        `--cert-name certbot`,
-        serverNames.map(serverName => `-d ${serverName}`).join(" ")
-    ];
+        const command = [
+            "docker run --rm --name certbot",
+            `-v ${nginxDir}:/html`,
+            `-v ${nginxDir}/certs:/etc/letsencrypt/archive`,
+            `certbot/certbot certonly --webroot --agree-tos --no-eff-email -n -m ${email} -w /html`,
+            `--cert-name certbot`,
+            serverNames.map(serverName => `-d ${serverName}`).join(" ")
+        ];
 
-    const cmd = new Writable({
-        write: function(chunk, encoding, next) {
-            pipeStream.write(JSON.stringify({log: chunk.toString()}));
-            next();
+        await execSSH(sftp.client, command.join(" "), this.printLine);
+
+        await execSSH(sftp.client, `sudo chmod 777 ${nginxDir} -R`);
+
+        console.log("Downloading certificates");
+
+        const fullchainPath = `${nginxDir}/certs/certbot/fullchain1.pem`;
+        let fullchain = "";
+        const stream = new Writable({
+            write: function(chunk, encoding, next) {
+                fullchain += chunk.toString();
+                next();
+            }
+        });
+        await sftp.get(fullchainPath, stream);
+
+        const privkeyPath = `${nginxDir}/certs/certbot/privkey1.pem`;
+        let privkey = "";
+        const stream2 = new Writable({
+            write: function(chunk, encoding, next) {
+                privkey += chunk.toString()
+                next();
+            }
+        });
+        await sftp.get(privkeyPath, stream2);
+
+        await sftp.rmdir(nginxDir, true);
+
+        console.log("Cleaning Up");
+        if(tempNginxDirRenamed){
+            await sftp.rename(`${this.sshCredentials.appDir}/${this.config.name}/_nginx`, nginxDir);
         }
-    });
-    await execSSH(sftp.client, command.join(" "), cmd);
 
-    await execSSH(sftp.client, `sudo chmod 777 ${nginxDir} -R`);
+        console.log("Done");
 
-    pipeStream.write(JSON.stringify({log: "Downloading certificates"}));
+        return {
+            fullchain,
+            privkey
+        };
+    }
 
-    const fullchainPath = `${nginxDir}/certs/certbot/fullchain1.pem`;
-    let fullchain = "";
-    const stream = new Writable({
-        write: function(chunk, encoding, next) {
-            fullchain += chunk.toString()
-            next();
+
+    /**
+     *
+     * Core deploy method
+     *
+     */
+    async run(){
+        await this.testRemoteServer();
+        console.log("Connected to Remote Host");
+
+        await this.testDockerOnRemoteHost();
+
+        await Build({...this.config, silent: true, production: true});
+        console.log(`Web App ${this.config.name} v${this.config.version} built production mode`);
+
+        await this.setupDockerComposeAndNginx();
+        console.log("Docker Compose and Nginx is setup");
+
+        await this.uploadFilesToRemoteServer();
+        console.log("Web App is uploaded to the remote server");
+
+        await execScript(path.resolve(this.config.src, "predeploy.ts"), this.config, await this.getSFTP());
+        console.log("Ran predeploy scripts");
+
+        await this.startAppOnRemoteServer();
+        await this.startFullStackedNginxOnRemoteHost();
+        console.log("Web App Deployed");
+
+        await execScript(path.resolve(this.config.src, "postdeploy.ts"), this.config, await this.getSFTP());
+        console.log("Ran postdeploy scripts");
+
+        await this.sftp.end();
+        console.log("Deployment Successfull");
+    }
+
+    async runCLI(){
+        if(!this.hasSavedConfigs()){
+            console.log("No deploy config saved in project. Please run deployment with GUI once.")
+            console.log("Run: npx fullstacked deploy --gui");
+            return;
         }
-    });
-    await sftp.get(fullchainPath, stream);
 
-    const privkeyPath = `${nginxDir}/certs/certbot/privkey1.pem`;
-    let privkey = "";
-    const stream2 = new Writable({
-        write: function(chunk, encoding, next) {
-            privkey += chunk.toString()
-            next();
-        }
-    });
-    await sftp.get(privkeyPath, stream2);
+        const password = this.config.pass || await askQuestion("Password:");
 
-    await sftp.rmdir(nginxDir, true);
+        this.loadConfigs(password);
 
-    pipeStream.write(JSON.stringify({log: "Cleaning Up"}));
-    if(tempNginxDirRenamed){
-        await sftp.rename(`${sshCreds.appDir}/${globalConfig.name}/_nginx`, nginxDir);
+        await this.run();
     }
 
-    pipeStream.write(JSON.stringify({log: "Done"}));
-    await sftp.end();
+    guiCommands() {
+        return [
+            {
+                cmd: DEPLOY_CMD.CHECK_SAVED_CONFIG,
+                callback: () => this.hasSavedConfigs()
+            }, {
+                cmd: DEPLOY_CMD.LOAD_CONFIG,
+                callback: ({password}) => this.loadConfigs(password)
+            },{
+                cmd: DEPLOY_CMD.TEST_REMOTE_SERVER,
+                callback: async ({sshCredentials}) => {
+                    this.sshCredentials = sshCredentials;
+                    return await this.testRemoteServer();
+                }
+            },{
+                cmd: DEPLOY_CMD.TEST_DOCKER,
+                callback: async () => await this.testDockerOnRemoteHost()
+            },{
+                cmd: DEPLOY_CMD.DOCKER_INSTALL,
+                callback: async () => await this.tryToInstallDockerOnRemoteHost()
+            },{
+                cmd: DEPLOY_CMD.DOCKER_COMPOSE,
+                callback: async () => await this.getBuiltDockerCompose()
+            },{
+                cmd: DEPLOY_CMD.DEPLOY,
+                callback: async ({sshCredentials, nginxConfigs, certificate}) => {
+                    this.sshCredentials = sshCredentials;
+                    this.nginxConfigs = nginxConfigs;
+                    this.certificate = certificate;
 
-    return {fullchain, privkey};
-}
-
-export async function getCertificateOnRemoteHost(sshCreds){
-    const sftp = await getSFTPClient(sshCreds);
-    //
-    // const certsDir = `${sshCreds.appDir}/${globalConfig.name}/certs`;
-    // if(!await sftp.exists(certsDir))
-    //     return [];
-    //
-    // const certsList = await sftp.list(certsDir);
-    // return certsList;
-}
-
-async function uploadFilesToServer(localPath, remotePath, sftp, progressCallback: (progress: string) => void){
-    const files = glob.sync("**/*", {cwd: localPath})
-    const localFiles = files.map(file => path.resolve(localPath, file));
-
-    for (let i = 0; i < files.length; i++) {
-        const fileInfo = fs.statSync(localFiles[i]);
-        if(fileInfo.isDirectory())
-            await sftp.mkdir(remotePath + "/" + files[i]);
-        else
-            await uploadFileWithProgress(sftp, localFiles[i], remotePath + "/" + files[i], (progress) => {
-                progressCallback(`[${i + 1}/${files.length}] Uploading File ${progress.toFixed(2)}%`);
-            });
+                    await this.run();
+                }
+            },{
+                cmd: DEPLOY_CMD.CERT,
+                callback: ({certificate}) => {
+                    this.certificate = certificate;
+                    return getCertificateData(this.certificate.fullchain);
+                }
+            },{
+                cmd: DEPLOY_CMD.NEW_CERT,
+                callback: async ({sshCredentials, email, serverNames}) => {
+                    this.sshCredentials = sshCredentials;
+                    await this.generateCertificateOnRemoteHost(email, serverNames)
+                }
+            },{
+                cmd: DEPLOY_CMD.SAVE,
+                callback: async ({sshCredentials, nginxConfigs, certificate, password}) => {
+                    this.sshCredentials = sshCredentials;
+                    this.nginxConfigs = nginxConfigs;
+                    this.certificate = certificate;
+                    await this.saveConfigs(password);
+                }
+            }
+        ];
     }
 }
-
-let globalConfig;
-export default async function (config: Config) {
-    globalConfig = config;
-    if(config.gui){
-        return await gui();
-    }
-
-    if(!hasSavedConfigs()) {
-        console.log("No saved configuration in project. Please use the GUI once to set up configurations.");
-        console.log("Run : npx fullstacked deploy --gui");
-        return process.exit(0);
-    }
-
-    console.log('\x1b[33m%s\x1b[0m', "You are about to deploy " + config.name + " v" + config.version);
-    if(!await askToContinue("Continue"))
-        return;
-
-}
-
-
-
-/*
-* e.g.,
-* {APP_DIR} <-- config.appDir
-* ├── nginx.conf
-* ├── docker-compose.yml
-* ├── /project-1 <-- serverAppDir
-* │   ├── docker-compose.yml
-* │   ├── nginx.conf
-* │   ├── /0.0.1 <-- serverAppDistDir
-* │   │   ├── index.js
-* │   │   └── /public
-* │   │       └── ...
-* │   └── /0.0.2
-* │      ├── index.js
-* │      └── /public
-* │          └── ...
-* └── /project-2
-*     └── ...
-*/
