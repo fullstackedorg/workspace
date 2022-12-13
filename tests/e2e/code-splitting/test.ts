@@ -3,6 +3,7 @@ import Helper from "fullstacked/tests/e2e/Helper"
 import {glob} from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";
+import sleep from "fullstacked/scripts/sleep";
 
 describe("Code Splitting", function(){
     let test: Helper;
@@ -13,6 +14,7 @@ describe("Code Splitting", function(){
     })
 
     it('Should lazy load the component', async function(){
+        await sleep(500);
         const root = await test.page.$("lazy-loaded");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();

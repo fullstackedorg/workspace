@@ -4,7 +4,7 @@ import {exec, execSync} from "child_process";
 import path from "path";
 import fs from "fs";
 import waitForServer from "fullstacked/scripts/waitForServer";
-import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../scripts/utils";
 import {deepEqual, notDeepEqual, ok} from "assert";
 import sleep from "fullstacked/scripts/sleep";
 import {fetch} from "fullstacked/webapp/fetch";
@@ -12,7 +12,6 @@ import {fetch} from "fullstacked/webapp/fetch";
 describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();
     const sshServer2 = new SSH();
-    const serverNameFile = path.resolve(__dirname, ".fullstacked.json");
     const backupDir = path.resolve(process.cwd(), "backup");
     const outDir = path.resolve(__dirname, "out");
     let testArr = [];
@@ -23,17 +22,30 @@ describe("Backup-Restore Remotely Test", function(){
                 await sleep(2000);
 
             await sshServer.init();
+
+            saveDataEncryptedWithPassword(path.resolve(__dirname, ".fullstacked"), "test", {
+                sshCredentials: {
+                    host: "localhost",
+                    port: sshServer.sshPort,
+                    username: sshServer.username,
+                    password: sshServer.password,
+                    appDir: "/home"
+                },
+                nginxConfigs: [
+                    {
+                        name: "node",
+                        port: 80,
+                        serverNames: ["localhost"]
+                    }
+                ]
+            })
+
             const deployment = exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
                 `--src=${__dirname}`,
                 `--out=${sshServer === sshServer1 ? outDir : __dirname}`,
-                "--y",
-                "--skip-test",
-                "--no-https",
-                "--host=localhost",
-                `--user=${sshServer.username}`,
-                `--pass=${sshServer.password}`,
-                `--ssh-port=${sshServer.sshPort}`].join(" "));
+                "--password=test"].join(" "));
             // deployment.stdout.pipe(process.stdout);
+            printLine("Deployment Completed");
             try{
                 await waitForServer(150000, `http://localhost:${sshServer.httpPort}/get`);
             }catch (e){
@@ -50,7 +62,6 @@ describe("Backup-Restore Remotely Test", function(){
         sshServer2.sshPort = 2223;
         sshServer2.httpPort = 8001;
 
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"${PORT}:80": { server_name: "localhost" } } }));
         fs.mkdirSync(outDir);
 
         await Promise.all([
@@ -72,8 +83,8 @@ describe("Backup-Restore Remotely Test", function(){
         printLine("Backing Up");
         execSync([`node ${path.resolve(__dirname, "../../../", "cli")} backup`,
             "--host=localhost",
-            `--user=${sshServer1.username}`,
-            `--pass=${sshServer1.password}`,
+            `--username=${sshServer1.username}`,
+            `--password=${sshServer1.password}`,
             `--ssh-port=${sshServer1.sshPort}`].join(" "));
 
         const backupFile = path.resolve(backupDir, "mongo-data.tar");
@@ -83,8 +94,8 @@ describe("Backup-Restore Remotely Test", function(){
         printLine("Restoring");
         execSync([`node ${path.resolve(__dirname, "../../../", "cli")} restore`,
             "--host=localhost",
-            `--user=${sshServer2.username}`,
-            `--pass=${sshServer2.password}`,
+            `--username=${sshServer2.username}`,
+            `--password=${sshServer2.password}`,
             `--ssh-port=${sshServer2.sshPort}`].join(" "));
         await waitForServer(10000, `http://localhost:${sshServer2.httpPort}/get`);
         clearLine();
@@ -94,7 +105,6 @@ describe("Backup-Restore Remotely Test", function(){
     });
 
     after(function(){
-        fs.rmSync(serverNameFile);
         cleanOutDir(outDir);
         cleanOutDir(backupDir);
         cleanOutDir(path.resolve(__dirname, "dist"));

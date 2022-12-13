@@ -8,7 +8,7 @@ import SSL from "./Steps/SSL";
 import Save from "./Steps/Save";
 import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
-import {DEPLOY_CMD} from "fullstacked/types/deploy";
+import {DEPLOY_CMD} from "../../../types/deploy";
 
 export const steps: {
     title: string,

@@ -14,7 +14,7 @@ export enum DEPLOY_CMD {
 
 export type sshCredentials = {
     host: string,
-    sshPort?: number,
+    port?: number,
     username: string,
     password?: string,
     privateKey?: string | Buffer,

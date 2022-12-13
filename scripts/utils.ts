@@ -277,3 +277,40 @@ export function getCertificateData(fullchain){
         subjectAltName: cert.subjectAltName
     };
 }
+
+
+const algorithm = 'aes-256-cbc';
+
+export function loadDataEncryptedWithPassword(filePath: string, password: string){
+    if(!fs.existsSync(filePath))
+        throw Error(`Trying to load ${filePath}, but does not exists.`);
+
+    const hashedParts = fs.readFileSync(filePath).toString().split(":");
+    const hashedIv = hashedParts.shift();
+    const encryptedData = hashedParts.join(":");
+
+    const iv = Buffer.from(hashedIv, 'hex');
+    const encryptedText = Buffer.from(encryptedData, 'hex');
+
+    const key = crypto.createHash('md5').update(password).digest("hex");
+
+    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    try{
+        return JSON.parse(decrypted.toString());
+    }catch (e) {
+        throw Error("Wrong password or corrupt file");
+    }
+}
+
+export function saveDataEncryptedWithPassword(filePath: string, password: string, data: any){
+    const key = crypto.createHash('md5').update(password).digest("hex");
+    const iv = crypto.randomBytes(16);
+
+    const cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+    let encrypted = cipher.update(JSON.stringify(data));
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+    fs.writeFileSync(filePath, iv.toString('hex') + ":" + encrypted.toString('hex'));
+}

@@ -17,7 +17,13 @@ let config: Config = {}
 const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
-    "--pass=": value => config.pass = value,
+    "--host=": value => config.host = value,
+    "--ssh-port=": value => config.sshPort = parseInt(value),
+    "--username=": value => config.username = value,
+    "--password=": value => config.password = value,
+    "--private-key=": value => config.privateKey = value,
+    "--private-key-file=": value => config.privateKeyFile = value,
+    "--app-dir=": value => config.appDir = value,
     "--silent": () => config.silent = true,
     "--coverage": () => config.coverage = true,
     "--headless": () => config.headless = true,
@@ -29,14 +35,16 @@ const args = {
     "--hash=": value => config.hash = value,
     "--name=": value => config.name = value,
     "--title=": value => config.title = value,
+    "--no-https": () => config.noHttps = true,
     "--pull": () => config.pull = true,
     "--volume=": value => config.volume = upgradeToArray(value),
     "--backup-dir=": value => config.backupDir = value,
+    "--timeout=": value => config.timeout = parseInt(value),
     "--watch-file=": value => config.watchFile = upgradeToArray(value),
     "--watch-dir=": value => config.watchDir = upgradeToArray(value),
     "--restored": () => config.restored = true,
     "--production": () => config.production = true,
-    "--gui": () => config.gui = true,
+    "--gui": () => config.gui = true
 };
 
 function upgradeToArray(rawValue: string): string | string[]{
@@ -64,7 +72,7 @@ if(script === "deploy")
     command = new CommandClass(defaultConfig(config));
 else
     CommandClass(defaultConfig(config));
-    
+
 
 
 if(config.gui)

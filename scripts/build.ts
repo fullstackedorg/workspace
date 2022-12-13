@@ -36,6 +36,7 @@ function getProcessedEnv(config: Config){
 // bundles the server
 async function buildServer(config: Config, watcher){
     const fullstackedServerFile = path.resolve(__dirname, "..", "server", "index.ts");
+
     const options = {
         entryPoints: [ fullstackedServerFile ],
         outfile: path.resolve(config.out, "index.js"),
