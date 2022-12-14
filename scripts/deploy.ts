@@ -443,7 +443,7 @@ export default class Deploy extends CommandInterface {
             return;
         }
 
-        const password = this.config.password || await askQuestion("Password:");
+        const password = this.config.password || await askQuestion("Password:", true);
 
         this.loadConfigs(password);
 
