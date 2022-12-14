@@ -1,8 +1,6 @@
 import {FullStackedConfig} from "./index";
 import {printLine} from "./scripts/utils";
-import {DEPLOY_CMD} from "./types/deploy";
-
-type CMD = DEPLOY_CMD;
+import {CMD} from "./types/gui";
 
 export abstract class CommandInterface {
     config: FullStackedConfig;

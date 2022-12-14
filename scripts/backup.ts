@@ -83,9 +83,7 @@ async function backupRemote(config: FullStackedConfig){
             if(!config.silent) {
                 const fileStat = await sftp.stat(tarFilePath);
 
-                const progressStream = progress({
-                    length: fileStat.size
-                });
+                const progressStream = progress({length: fileStat.size});
 
                 progressStream.on('progress', progress => {
                     printLine("Download progress : " + progress.percentage.toFixed(2) + "%")

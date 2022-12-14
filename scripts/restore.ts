@@ -6,7 +6,6 @@ import {
     getVolumesToBackup,
     maybePullDockerImage,
     printLine,
-    silenceCommandLine,
     uploadFileWithProgress
 } from "./utils";
 import {execSSH} from "./utils";

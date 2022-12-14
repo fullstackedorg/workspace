@@ -5,8 +5,8 @@
   "description": "A full stack web app tool and development kit",
   "types": "index.d.ts",
   "scripts": {
-    "build:server": "node cli build --src=gui --out=gui --production",
-    "build": "npx esbuild build.ts --outfile=build.js --format=cjs && node build && npm run build:server",
+    "build:gui": "node cli build --src=gui --out=gui --production",
+    "build": "npx esbuild build.ts --outfile=build.js --format=cjs && node build && npm run build:gui",
     "prestart": "npm run build",
     "start": "node cli watch --src=gui",
     "pretest": "npm run build && node testsDockerImage",
@@ -47,7 +47,6 @@
     "js-yaml": "^4.1.0",
     "mime-types": "^2.1.35",
     "mocha": "^10.1.0",
-    "multer": "^1.4.5-lts.1",
     "nyc": "^15.1.0",
     "open": "^8.4.0",
     "parse5": "^7.1.2",
