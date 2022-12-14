@@ -286,10 +286,15 @@ export function webAppPostBuild(config: Config, watcher){
     }
 
     // add js entrypoint
-    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + (
-        config.production 
-            ? ""
-            : "-" + randStr(6) )}"></script>`)
+    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + 
+        (config.production ? "" : "-" + randStr(6) )}"></script>`);
+
+    // if esbuild output any .css files, add them to index.html
+    const builtCSSFiles = glob.sync("*.css", {cwd: config.public});
+    builtCSSFiles.forEach(CSSFileName => addInHEAD(
+        `<link rel="stylesheet" href="/${CSSFileName}?v=${config.version + "-" + config.hash + (config.production ? "" : "-" + randStr(6) )}">`
+    ));
+
 
     // attach watcher if defined
     if(watcher){
@@ -323,14 +328,19 @@ export function webAppPostBuild(config: Config, watcher){
     // index.css root file
     const CSSFile = path.resolve(config.src, "webapp", "index.css");
     if(fs.existsSync(CSSFile)){
+        // make sure there is no overwriting
+        let indexCSSCount = 0, CSSFileName = "index.css";
+        while(fs.existsSync(path.resolve(config.public, CSSFileName))){
+            indexCSSCount++;
+            CSSFileName = `index-${indexCSSCount}.css`;
+        }
+
         // copy file to dist/public
-        fs.copyFileSync(CSSFile, path.resolve(config.public, "index.css"));
+        fs.copyFileSync(CSSFile, path.resolve(config.public, CSSFileName));
 
         // add link tag
-        addInHEAD(`<link rel="stylesheet" href="/index.css?v=${config.version + "-" + config.hash + (
-            config.production
-                ? ""
-                : "-" + randStr(6) )}">`)
+        addInHEAD(`<link rel="stylesheet" href="/${CSSFileName}?v=${config.version + "-" + config.hash + 
+            (config.production ? "" : "-" + randStr(6) )}">`);
     }
 
     // web app manifest
