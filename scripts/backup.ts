@@ -15,11 +15,31 @@ export default async function (config: FullStackedConfig) {
     const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
     const volumesToBackup = getVolumesToBackup(fs.readFileSync(dockerComposeFile, {encoding: "utf8"}), config.volume);
 
+    try{
+        await (await config.docker.getImage("busybox")).inspect()
+    }catch (e){
+        const pullStream = await config.docker.pull("busybox");
+        await new Promise<void>(resolve => {
+            pullStream.on("data", dataRaw => {
+                const dataParts = dataRaw.toString().match(/{.*}/g);
+                dataParts.forEach((part) => {
+                    const {status, progress} = JSON.parse(part);
+                    printLine(`${status} ${progress || " "}`);
+                });
+
+            })
+            pullStream.on("end", () => {
+                process.stdout.write("\n\r");
+                resolve();
+            });
+        });
+    }
+
     for(const volume of volumesToBackup){
         if(!config.silent)
             console.log(`Backing up ${volume} from local host`);
 
-        const [output, container] = await config.docker.run("busybox", ["/bin/sh", "-c", "sleep 5 && tar cvf /backup/" + volume + ".tar /data"], process.stdout, {
+        const [output, container] = await config.docker.run("busybox", ["/bin/sh", "-c", "sleep 5 && tar cvf backup/" + volume + ".tar data"], process.stdout, {
             name: "fullstacked-backup",
             HostConfig: {
                 Binds: [

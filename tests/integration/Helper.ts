@@ -70,7 +70,11 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
 
     delete dockerCompose.services.node.restart;
 
-    fs.writeFileSync(dockerComposeFilePath, yaml.dump(dockerCompose));
+    const dockerComposeStr = yaml.dump(dockerCompose, {forceQuotes: true})
+        // fix windows absolute path
+        .replace(/\\/g, "/").replace(/C:/, "/c");
+
+    fs.writeFileSync(dockerComposeFilePath, dockerComposeStr);
 
     const runner = new Runner(localConfig);
     await runner.start();
