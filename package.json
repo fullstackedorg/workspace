@@ -9,7 +9,7 @@
     "build": "npx esbuild build.ts --outfile=build.js --format=cjs && node build && npm run build:gui",
     "prestart": "npm run build",
     "start": "node cli watch --src=gui",
-    "pretest": "npm run build && node testsDockerImage",
+    "pretest": "npm run build && node testsDockerImages",
     "test": "node cli test --headless",
     "coverage": "npm test -- --coverage",
     "prepublishOnly": "npm run build"

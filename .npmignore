@@ -33,13 +33,16 @@ tests/integration/server.ts
 tests/integration/server.js
 tests/unit
 
+scripts/backup.ts
 scripts/build.ts
 scripts/certs.ts
 scripts/config.ts
 scripts/create.ts
 scripts/deploy.ts
 scripts/docker.ts
+scripts/gui.ts
 scripts/register.ts
+scripts/restore.ts
 scripts/run.ts
 scripts/runner.ts
 scripts/test.ts
@@ -47,14 +50,19 @@ scripts/utils.ts
 scripts/watch.ts
 scripts/watch.ts
 
+types/*.ts
+
 .mocharc.ts
 
 cli.ts
 
-webapp/fetch.js
-
-server/index.js
 server/watcher.js
 
 gui/**/*
 !gui/dist/**/*
+
+testsDockerImages.js
+testsDockerImages.ts
+
+DockerInstallScripts.ts
+CommandInterface.ts
