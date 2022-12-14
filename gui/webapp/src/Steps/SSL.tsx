@@ -178,7 +178,7 @@ function NewCertForm({close, serverNames, addNewCert}){
                                 addNewCert(newCert);
                                 close();
                             }
-                        }} className="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                        }} className={`btn btn-primary ms-auto ${loading ? "disabled" : ""}`} data-bs-dismiss="modal">
                             {loading
                                 ? <div className="spinner-border" role="status"></div>
                                 : "Create new certificate"}
