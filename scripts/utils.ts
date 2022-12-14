@@ -55,7 +55,7 @@ export function isDockerInstalled(): boolean{
 
 // print line at current cursor
 export function printLine(line: string) {
-    // hack for JetBrain WebStorm to printout when using test panel
+    // hack for JetBrain WebStorm to print out when using test panel
     if(process.argv.includes("--grep"))
         return console.log(line);
 
@@ -313,4 +313,27 @@ export function saveDataEncryptedWithPassword(filePath: string, password: string
     encrypted = Buffer.concat([encrypted, cipher.final()]);
 
     fs.writeFileSync(filePath, iv.toString('hex') + ":" + encrypted.toString('hex'));
+}
+
+
+export async function maybePullDockerImage(docker, image){
+    try{
+        await (await docker.getImage(image)).inspect()
+    }catch (e){
+        const pullStream = await docker.pull(image);
+        await new Promise<void>(resolve => {
+            pullStream.on("data", dataRaw => {
+                const dataParts = dataRaw.toString().match(/{.*}/g);
+                dataParts.forEach((part) => {
+                    const {status, progress} = JSON.parse(part);
+                    printLine(`[${image}] ${status} ${progress || " "}`);
+                });
+
+            })
+            pullStream.on("end", () => {
+                clearLine();
+                resolve();
+            });
+        });
+    }
 }

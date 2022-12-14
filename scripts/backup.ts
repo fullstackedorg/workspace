@@ -1,7 +1,7 @@
 import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
-import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, printLine} from "./utils";
+import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, maybePullDockerImage, printLine} from "./utils";
 import progress from "progress-stream";
 import {sshCredentials} from "../types/deploy";
 
@@ -15,25 +15,7 @@ export default async function (config: FullStackedConfig) {
     const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
     const volumesToBackup = getVolumesToBackup(fs.readFileSync(dockerComposeFile, {encoding: "utf8"}), config.volume);
 
-    try{
-        await (await config.docker.getImage("busybox")).inspect()
-    }catch (e){
-        const pullStream = await config.docker.pull("busybox");
-        await new Promise<void>(resolve => {
-            pullStream.on("data", dataRaw => {
-                const dataParts = dataRaw.toString().match(/{.*}/g);
-                dataParts.forEach((part) => {
-                    const {status, progress} = JSON.parse(part);
-                    printLine(`${status} ${progress || " "}`);
-                });
-
-            })
-            pullStream.on("end", () => {
-                process.stdout.write("\n\r");
-                resolve();
-            });
-        });
-    }
+    await maybePullDockerImage(config.docker, "busybox");
 
     for(const volume of volumesToBackup){
         if(!config.silent)

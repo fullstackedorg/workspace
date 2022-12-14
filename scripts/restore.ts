@@ -1,7 +1,14 @@
 import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
-import {getSFTPClient, getVolumesToBackup, printLine, silenceCommandLine, uploadFileWithProgress} from "./utils";
+import {
+    getSFTPClient,
+    getVolumesToBackup,
+    maybePullDockerImage,
+    printLine,
+    silenceCommandLine,
+    uploadFileWithProgress
+} from "./utils";
 import {execSSH} from "./utils";
 import {sshCredentials} from "../types/deploy";
 import DockerCompose from "dockerode-compose";
@@ -16,14 +23,7 @@ export default async function (config: FullStackedConfig) {
     const dockerCompose = new DockerCompose(config.docker, dockerComposeFile, config.name);
     await dockerCompose.down();
 
-    try{
-        await (await config.docker.getImage("busybox")).inspect()
-    }catch (e){
-        const pullStream = await config.docker.pull("busybox");
-        await new Promise(resolve => {
-            pullStream.on("end", resolve);
-        });
-    }
+    await maybePullDockerImage(config.docker, "busybox");
 
     for(const volume of volumesToRestore){
         if(!config.silent)

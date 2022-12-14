@@ -1,4 +1,4 @@
-import {execScript, getNextAvailablePort, isDockerInstalled} from "./utils";
+import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImage} from "./utils";
 import path from "path";
 import fs from "fs";
 import yaml from "js-yaml";
@@ -30,6 +30,8 @@ export default class Runner {
         let availablePort = 8000;
 
         for(const service of services){
+            await maybePullDockerImage(this.config.docker, dockerCompose.services[service].image);
+
             const serviceObject = dockerCompose.services[service];
             const exposedPorts = serviceObject.ports;
 

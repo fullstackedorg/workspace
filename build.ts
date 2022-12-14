@@ -27,6 +27,7 @@ async function buildFile(file){
         path.resolve(__dirname, "webapp", "fetch.ts"),
         path.resolve(__dirname, "DockerInstallScripts.ts"),
         path.resolve(__dirname, "CommandInterface.ts"),
+        path.resolve(__dirname, "testsDockerImage.ts"),
     ];
 
     const buildPromises: Promise<any>[] = scripts.concat(types).concat(otherScripts).map(file => {
