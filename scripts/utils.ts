@@ -12,19 +12,27 @@ import progress from "progress-stream";
 import {WrappedSFTP} from "./deploy";
 import crypto from "crypto";
 import {sshCredentials} from "../types/deploy";
+import {Writable} from "stream";
+
 
 // ask a question, resolve string answer
-export function askQuestion(question: string): Promise<string>{
-    const rl = createInterface({
+export function askQuestion(question: string, hideStdin: boolean = false): Promise<string>{
+    const rl : any = createInterface({
         input: process.stdin,
         output: process.stdout
     });
 
     return new Promise((resolve, reject) => {
+        rl.stdoutMuted = hideStdin;
+
         rl.question(question, (input) => {
             rl.close();
             resolve(input);
         });
+
+        rl._writeToOutput = function _writeToOutput(stringToWrite) {
+            if (!rl.stdoutMuted) rl.output.write(stringToWrite);
+        };
     });
 }
 
