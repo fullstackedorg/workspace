@@ -176,6 +176,54 @@ async function buildWebApp(config, watcher){
         return fs.writeFileSync(path.resolve(config.public, "index.html"), "Nothing to see here...");
     }
 
+    // pre/post build scripts
+    const plugins = [{
+        name: 'fullstacked-pre-post-scripts',
+        setup(build){
+            build.onStart(async () => {
+                // prebuild script, true for isWebApp
+                await execScript(path.resolve(config.src, "prebuild.ts"), config, true);
+            });
+            build.onEnd(async () => {
+                // postbuild script, true for isWebApp
+                await execScript(path.resolve(config.src, "postbuild.ts"), config, true);
+            });
+        }
+    }];
+
+    // extra files and dir to watch
+    if(watcher){
+        plugins.push({
+            name: 'watch-extra-files',
+            setup(build) {
+
+                const extraFiles = config.watchFile
+                    ? Array.isArray(config.watchFile)
+                        ? config.watchFile.map(file => path.resolve(config.src, file))
+                        : [path.resolve(config.src, config.watchFile)]
+                    : [];
+
+                const extraDirs = config.watchDir
+                    ? Array.isArray(config.watchDir)
+                        ? config.watchDir.map(dir => path.resolve(config.src, dir))
+                        : [path.resolve(config.src, config.watchDir)]
+                    : [];
+
+                const filesInDir = extraDirs.map(dir => glob.sync(path.resolve(dir, "**", "*"), {nodir: true})).flat();
+
+                build.onResolve({ filter: /.*/ }, args => {
+                    return {
+                        watchFiles: extraFiles.concat([
+                            path.resolve(config.src, "webapp", "index.html"),
+                            path.resolve(config.src, "webapp", "index.css")
+                        ], filesInDir),
+                        watchDirs: extraDirs
+                    };
+                })
+            },
+        });
+    }
+
     const options = {
         entryPoints: [ entrypoint ],
         outdir: config.public,
@@ -206,47 +254,7 @@ async function buildWebApp(config, watcher){
             }
         } : false,
 
-        plugins: watcher ? [{
-            name: 'fullstacked-pre-post-scripts',
-            setup(build){
-                build.onStart(async () => {
-                    // prebuild script, true for isWebApp
-                    await execScript(path.resolve(config.src, "prebuild.ts"), config, true);
-                });
-                build.onEnd(async () => {
-                    // postbuild script, true for isWebApp
-                    await execScript(path.resolve(config.src, "postbuild.ts"), config, true);
-                });
-            }
-        }, {
-            name: 'watch-extra-files',
-            setup(build) {
-
-                const extraFiles = config.watchFile
-                    ? Array.isArray(config.watchFile)
-                        ? config.watchFile.map(file => path.resolve(config.src, file))
-                        : [path.resolve(config.src, config.watchFile)]
-                    : [];
-
-                const extraDirs = config.watchDir
-                    ? Array.isArray(config.watchDir)
-                        ? config.watchDir.map(dir => path.resolve(config.src, dir))
-                        : [path.resolve(config.src, config.watchDir)]
-                    : [];
-
-                const filesInDir = extraDirs.map(dir => glob.sync(path.resolve(dir, "**", "*"), {nodir: true})).flat();
-
-                build.onResolve({ filter: /.*/ }, args => {
-                    return {
-                        watchFiles: extraFiles.concat([
-                            path.resolve(config.src, "webapp", "index.html"),
-                            path.resolve(config.src, "webapp", "index.css")
-                        ], filesInDir),
-                        watchDirs: extraDirs
-                    };
-                })
-            },
-        }] : []
+        plugins
     }
 
     const result = await esbuild.build(options);
