@@ -15,6 +15,7 @@ describe("Watch Test", function(){
     const indexCSS = path.resolve(__dirname, "webapp", "index.css");
     const serverFile = path.resolve(__dirname, "server", "index.ts");
 
+    const preTest = path.resolve(__dirname, "pre-test.txt");
     const postTest = path.resolve(__dirname, "post-test.txt");
 
     const extraFile = path.resolve(__dirname, "extra.txt");
@@ -25,6 +26,7 @@ describe("Watch Test", function(){
         if(fs.existsSync(indexHTML)) fs.rmSync(indexHTML);
         if(fs.existsSync(indexCSS)) fs.rmSync(indexCSS);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+        if(fs.existsSync(preTest)) fs.rmSync(preTest);
         if(fs.existsSync(postTest)) fs.rmSync(postTest);
         if(fs.existsSync(extraFile)) fs.rmSync(extraFile);
         if(fs.existsSync(extraDir)) fs.rmSync(extraDir, {force: true, recursive: true});
@@ -114,13 +116,16 @@ describe("Watch Test", function(){
     });
 
     it('Should re-execute pre and post build', async function(){
+        const getPreCount = () => parseInt(fs.readFileSync(postTest, {encoding: "utf-8"}));
         const getPostCount = () => parseInt(fs.readFileSync(postTest, {encoding: "utf-8"}));
 
+        const preCount = getPreCount();
         const postCount = getPostCount();
 
         fs.appendFileSync(webappFile, "\n// this is a test line");
         await sleep(1000);
 
+        ok(preCount < getPreCount());
         ok(postCount < getPostCount());
     });
 

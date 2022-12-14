@@ -49,10 +49,25 @@ async function buildServer(config: Config, watcher){
         define: getProcessedEnv(config),
 
         plugins: [{
+            name: 'fullstacked-pre-post-scripts',
+            setup(build){
+                build.onStart(async () => {
+                    // prebuild script, false for isWebApp
+                    await execScript(path.resolve(config.src, "prebuild.ts"), config, false);
+                });
+                build.onEnd(async () => {
+                    // postbuild script, false for isWebApp
+                    await execScript(path.resolve(config.src, "postbuild.ts"), config, false);
+                });
+            }
+        }, {
             name: 'fullstacked-bundled-server',
             setup(build) {
                 const fs = require('fs')
-                build.onLoad({ filter: new RegExp(fullstackedServerFile.replace(/\\/g, "\\\\")) }, async (args) => {
+                build.onLoad({ filter: new RegExp(fullstackedServerFile
+                        // windows file path...
+                        .replace(/\\/g, "\\\\")) }, async (args) => {
+
                     // load all entry points from server dir
                     const serverFiles = glob.sync(path.resolve(config.src, "server", "**", "*.server.ts"));
 
@@ -192,6 +207,18 @@ async function buildWebApp(config, watcher){
         } : false,
 
         plugins: watcher ? [{
+            name: 'fullstacked-pre-post-scripts',
+            setup(build){
+                build.onStart(async () => {
+                    // prebuild script, true for isWebApp
+                    await execScript(path.resolve(config.src, "prebuild.ts"), config, true);
+                });
+                build.onEnd(async () => {
+                    // postbuild script, true for isWebApp
+                    await execScript(path.resolve(config.src, "postbuild.ts"), config, true);
+                });
+            }
+        }, {
             name: 'watch-extra-files',
             setup(build) {
 
@@ -387,15 +414,9 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
     loadEnvVars(config.src);
     cleanOutDir(config.dist);
 
-    // prebuild script
-    await execScript(path.resolve(config.src, "prebuild.ts"), config);
-
     // build server and webapp
     await Promise.all([
         buildServer(config, watcher),
         buildWebApp(config, watcher)
     ]);
-
-    // postbuild script
-    await execScript(path.resolve(config.src, "postbuild.ts"), config);
 }
