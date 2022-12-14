@@ -26,8 +26,8 @@ export default function ({getSteps}) {
                     if(sshCredentials?.file?.text)
                         sshCredentials.privateKey = await sshCredentials.file.text();
 
-                    const nginxConfigs = getSteps().at(1).data.nginxConfigs;
-                    const certificate = getSteps().at(2).data.certificate;
+                    const nginxConfigs = getSteps().at(1).data?.nginxConfigs;
+                    const certificate = getSteps().at(2).data?.certificate;
 
                     const success = await WS.cmd(DEPLOY_CMD.SAVE, {
                         sshCredentials,
