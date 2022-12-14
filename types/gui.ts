@@ -1,5 +1,7 @@
 import {DEPLOY_CMD} from "./deploy";
 
+export type CMD = DEPLOY_CMD;
+
 export enum MESSAGE_TYPE {
     ERROR,
     LOG,
@@ -16,7 +18,7 @@ export type MESSAGE_FROM_BACKEND = {
 }
 
 export type MESSAGE_FROM_GUI = {
-    cmd: DEPLOY_CMD,
+    cmd: CMD,
     id: string,
     data?: any
 }

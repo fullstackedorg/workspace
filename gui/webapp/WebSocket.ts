@@ -1,6 +1,5 @@
 import {fetch} from "fullstacked/webapp/fetch";
-import {DEPLOY_CMD} from "../../types/deploy";
-import {MESSAGE_FROM_BACKEND, MESSAGE_TYPE} from "../../types/gui";
+import {CMD, MESSAGE_FROM_BACKEND, MESSAGE_TYPE} from "../../types/gui";
 
 // source : https://stackoverflow.com/a/1349426
 export function randStr(length) {
@@ -63,7 +62,7 @@ export class WS {
         });
     }
 
-    static cmd(cmd: DEPLOY_CMD, data?: any, tickSubscription?: () => void){
+    static cmd(cmd: CMD, data?: any, tickSubscription?: () => void){
         return new Promise<any>(resolve => {
             const id = randStr(10);
             this.activeRequest.set(id, resolve);
