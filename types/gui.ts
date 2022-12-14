@@ -1,6 +1,10 @@
 import {DEPLOY_CMD} from "./deploy";
 
-export type CMD = DEPLOY_CMD;
+export type CMD = GLOBAL_CMD | DEPLOY_CMD;
+
+export enum GLOBAL_CMD {
+    END
+}
 
 export enum MESSAGE_TYPE {
     ERROR,

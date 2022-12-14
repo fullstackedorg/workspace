@@ -9,6 +9,7 @@ import Save from "./Steps/Save";
 import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
 import {DEPLOY_CMD} from "../../../types/deploy";
+import {GLOBAL_CMD} from "../../../types/gui";
 
 export const steps: {
     title: string,
@@ -81,7 +82,7 @@ export default function ({hasSavedConfigs}){
                                             Next
                                         </div>
                                         : <div onClick={() => {
-                                            WS.cmd(DEPLOY_CMD.END);
+                                            WS.cmd(GLOBAL_CMD.END);
                                             window.close();
                                         }} className="btn btn-warning">
                                             Close
