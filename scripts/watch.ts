@@ -1,8 +1,6 @@
 import Build from "./build";
 import Run from "./run";
 import {WebSocket} from "ws";
-import {execScript} from "./utils";
-import path from "path";
 import sleep from "./sleep";
 
 let globalConfig: Config,
@@ -10,9 +8,6 @@ let globalConfig: Config,
     msgQueue = [];
 
 async function watcher(isWebApp: boolean, first = false){
-    if(!first)
-        await execScript(path.resolve(globalConfig.src, "postbuild.ts"), globalConfig);
-
     if(isWebApp) {
        console.log('\x1b[32m%s\x1b[0m', "WebApp Rebuilt");
        const msg = Date.now();
