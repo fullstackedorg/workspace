@@ -1,5 +1,5 @@
-import build from "./build";
-import run from "./run";
+import Build from "./build";
+import Run from "./run";
 import {WebSocket} from "ws";
 import {execScript} from "./utils";
 import path from "path";
@@ -28,7 +28,7 @@ async function watcher(isWebApp: boolean, first = false){
     else
         console.log('\x1b[33m%s\x1b[0m', "Watching...")
 
-    const runner = await run(globalConfig, false);
+    const runner = await Run(globalConfig, false);
 
     connectToWatcher(runner.nodePort);
 }
@@ -52,7 +52,7 @@ export default async function(config: Config) {
     globalConfig.timeout = globalConfig.timeout || 1000;
 
     // build with the watcher defined
-    await build(config, watcher);
+    await Build(config, watcher);
 
     await watcher(false, true);
 }
