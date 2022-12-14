@@ -36,7 +36,7 @@ describe("Backup-Restore Test", function(){
     });
 
     it("Should backup / restore volume",  async function(){
-        this.timeout(50000);
+        this.timeout(100000);
 
         ok(testArr.length > 0);
         printLine("Backing up");

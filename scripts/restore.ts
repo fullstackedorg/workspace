@@ -16,6 +16,15 @@ export default async function (config: FullStackedConfig) {
     const dockerCompose = new DockerCompose(config.docker, dockerComposeFile, config.name);
     await dockerCompose.down();
 
+    try{
+        await (await config.docker.getImage("busybox")).inspect()
+    }catch (e){
+        const pullStream = await config.docker.pull("busybox");
+        await new Promise(resolve => {
+            pullStream.on("end", resolve);
+        });
+    }
+
     for(const volume of volumesToRestore){
         if(!config.silent)
             console.log(`Restoring ${volume} on local host`);
