@@ -39,7 +39,7 @@ export default function ({getSteps, defaultData, updateData}){
         getCertData(defaultData.certificate);
     }, [])
 
-    const serverNames = getSteps().at(1)?.data?.nginxConfigs?.map(service => service.server_names).flat();
+    const serverNames = getSteps().at(1)?.data?.nginxConfigs?.map(service => service.serverNames).flat();
 
 
     return <div>

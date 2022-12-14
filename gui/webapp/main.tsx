@@ -10,8 +10,6 @@ export default async function (){
     await WS.init();
 
     const hasSavedConfigs = await WS.cmd(DEPLOY_CMD.CHECK_SAVED_CONFIG);
-
-    console.log(hasSavedConfigs);
-
+    
     root.render(<App hasSavedConfigs={hasSavedConfigs} />);
 }

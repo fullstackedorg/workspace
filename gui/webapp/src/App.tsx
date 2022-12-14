@@ -77,10 +77,7 @@ export default function ({hasSavedConfigs}){
                                         : <div />}
 
                                     {stepIndex < steps.length - 1
-                                        ? <div onClick={() => {
-                                            console.log(steps[stepIndex].data)
-                                            setStepIndex(stepIndex + 1)
-                                        }} className="btn btn-primary">
+                                        ? <div onClick={() => setStepIndex(stepIndex + 1)} className="btn btn-primary">
                                             Next
                                         </div>
                                         : <div onClick={() => {
