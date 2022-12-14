@@ -9,8 +9,7 @@ import fs from "fs";
 import yaml from "js-yaml";
 import {WebSocketServer} from "ws";
 import {CommandInterface} from "../CommandInterface";
-import {MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
-import {DEPLOY_CMD} from "../types/deploy";
+import {GLOBAL_CMD, MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
 
 export default async function (command: CommandInterface){
     Server.port = await getNextAvailablePort();
@@ -46,7 +45,7 @@ export default async function (command: CommandInterface){
         ws.onmessage = async (event) => {
             const {cmd, id, data}: MESSAGE_FROM_GUI = JSON.parse(event.data as string);
 
-            if(cmd === DEPLOY_CMD.END){
+            if(cmd === GLOBAL_CMD.END){
                 await runner.stop();
                 process.exit(0);
             }
