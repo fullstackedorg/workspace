@@ -1,7 +1,7 @@
 import path from "path";
 import crypto from "crypto";
 import {execSync} from "child_process";
-import docker from "./docker";
+import Docker from "./docker";
 import getPackageJSON from "../getPackageJSON";
 
 const defaultConfig: Config = {
@@ -25,7 +25,7 @@ export default async function(config) {
     config = {
         ...defaultConfig,
         ...config,
-        docker: config.testMode ? null : await docker()
+        docker: config.testMode ? null : await Docker()
     }
 
     // always add dist to the out dir

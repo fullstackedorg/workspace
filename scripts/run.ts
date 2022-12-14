@@ -2,7 +2,7 @@ import Build from "./build";
 import Runner from "./runner";
 import os from "os";
 import readline from "readline";
-import restore from "./restore";
+import Restore from "./restore";
 
 let runner: Runner = null, didSetExitHook = false, printStopOnce = false;
 
@@ -16,7 +16,7 @@ export default async function(config: Config, build: boolean = true){
         console.log("Web App Running at http://localhost:" + runner.nodePort);
 
         if(config.restored)
-            await restore(config);
+            await Restore(config);
     }else{
         await runner.restart();
     }
