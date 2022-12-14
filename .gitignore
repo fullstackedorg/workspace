@@ -15,5 +15,4 @@ coverage
 !./index.d.ts
 /version.ts
 /backup
-fullstacked-server-dist
 .fullstacked
