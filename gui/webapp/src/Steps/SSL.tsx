@@ -26,6 +26,7 @@ const dateToHuman = (date: Date) => {
 export default function ({getSteps, defaultData, updateData}){
     const [certificate, setCertificate] = useState(null);
     const [showNewCertForm, setShowNewCertForm] = useState(false);
+    const [showManualCert, setShowManualCert] = useState(false);
 
     const getCertData = ({fullchain, privkey}) => {
         WS.cmd(DEPLOY_CMD.CERT, {fullchain}).then(data => {
@@ -41,12 +42,13 @@ export default function ({getSteps, defaultData, updateData}){
 
     const serverNames = getSteps().at(1)?.data?.nginxConfigs?.map(service => service.serverNames).flat();
 
+    const domains = certificate?.data?.subjectAltName?.split(",").map(record => record.trim().substring("DNS:".length))
 
     return <div>
         <div className={"d-flex justify-content-between"}>
             <h4 className="card-title">Certificate</h4>
             <div>
-                <div onClick={() => setShowNewCertForm(true)} className="btn btn-outline-secondary d-none d-sm-inline-block me-2">
+                <div onClick={() => setShowManualCert(true)} className="btn btn-outline-secondary d-none d-sm-inline-block me-2">
                     Add manually
                 </div>
                 <div onClick={() => setShowNewCertForm(true)} className="btn btn-primary d-none d-sm-inline-block">
@@ -80,8 +82,9 @@ export default function ({getSteps, defaultData, updateData}){
                             </div>
                             <div>
                                 <dt>Domains</dt>
-                                <dd>{certificate.data.subjectAltName.split(",").map(record => record.trim().substring("DNS:".length)).map(domain =>
-                                    <div>{domain}</div>)}</dd>
+                                <dd>{domains && domains
+                                    ? domains.map(domain => <div>{domain}</div>)
+                                    : "None"}</dd>
                             </div>
 
                         </dl>
@@ -102,12 +105,22 @@ export default function ({getSteps, defaultData, updateData}){
                 updateData({certificate});
             }}
         />}
+
+        {showManualCert && <ManualCertForm
+            close={() => setShowManualCert(false)}
+            addNewCert={certificate => {
+                getCertData(certificate);
+                updateData({certificate});
+            }}
+        />}
     </div>
 }
 
 
 function NewCertForm({close, serverNames, addNewCert}){
+    const [loading, setLoading] = useState(false);
     serverNames = serverNames.filter(serverName => serverName);
+
     return <>
         <div className="modal-backdrop fade show w-50" style={{bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}></div>
         <div className="modal modal-blur fade show w-50 p-3"
@@ -149,6 +162,8 @@ function NewCertForm({close, serverNames, addNewCert}){
                             Cancel
                         </div>
                         <div onClick={async () => {
+                            setLoading(true);
+
                             let serverNames = [];
                             document.querySelectorAll("#server-names-select input").forEach((input: HTMLInputElement) => {
                                 if(input.checked) serverNames.push(input.value);
@@ -159,11 +174,59 @@ function NewCertForm({close, serverNames, addNewCert}){
                             const newCert = await WS.cmd(DEPLOY_CMD.NEW_CERT, {serverNames, email})
 
                             if(newCert) {
+                                setLoading(false);
                                 addNewCert(newCert);
                                 close();
                             }
                         }} className="btn btn-primary ms-auto" data-bs-dismiss="modal">
-                            Create new certificate
+                            {loading
+                                ? <div className="spinner-border" role="status"></div>
+                                : "Create new certificate"}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </>
+}
+
+function ManualCertForm({close, addNewCert}){
+    const fullchainRef = useRef<HTMLTextAreaElement>();
+    const privkeyRef = useRef<HTMLTextAreaElement>();
+
+    return <>
+        <div className="modal-backdrop fade show w-50" style={{bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}></div>
+        <div className="modal modal-blur fade show w-50 p-3"
+             style={{display: "block", bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}
+             tabIndex={-1}>
+            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">New Certificate</h5>
+                        <button onClick={close} type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div className="modal-body">
+                        <div className="mb-3">
+                            <label className="form-label">Fullchain</label>
+                            <textarea ref={fullchainRef} className="form-control" rows={6}></textarea>
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Privkey</label>
+                            <textarea ref={privkeyRef} className="form-control" rows={6}></textarea>
+                        </div>
+                    </div>
+                    <div className="modal-footer">
+                        <div onClick={close} className="btn btn-link link-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </div>
+                        <div onClick={async () => {
+                            addNewCert({
+                                fullchain: fullchainRef.current.value,
+                                privkey: privkeyRef.current.value,
+                            })
+                            close();
+                        }} className="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                            Add Certificate
                         </div>
                     </div>
                 </div>
