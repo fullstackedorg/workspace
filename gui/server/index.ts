@@ -1,9 +1,11 @@
-import Server from "../../server";
+import Server from "../../server/index";
 
 Server.addListener((req, res) => {
     if(req.url !== "/port") return;
 
     res.writeHead(200);
-    res.write(process.argv.find(arg => arg.startsWith("--port=")).slice("--port=".length));
+    const backendPort = process.argv?.find(arg => arg.startsWith("--port="))?.slice("--port=".length);
+    if(backendPort)
+        res.write(backendPort);
     res.end();
 });

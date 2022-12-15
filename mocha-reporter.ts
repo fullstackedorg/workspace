@@ -1,7 +1,5 @@
 import Mocha, {Runner} from "mocha";
 
-module.exports = specExt;
-
 function specExt(runner: Runner){
     runner.on(Mocha.Runner.constants.EVENT_RUN_END, function() {
         if(process.argv.includes("--test-mode")) return;
@@ -28,3 +26,5 @@ function specExt(runner: Runner){
 }
 
 (Mocha.utils as any).inherits(specExt, Mocha.reporters.Spec);
+
+export default specExt;

@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-import defaultConfig from "./scripts/config";
+import defaultConfig from "./scripts/config.js";
 
 const scripts = {
-    "build"     : "./scripts/build",
-    "run"       : "./scripts/run",
-    "watch"     : "./scripts/watch",
-    "test"      : "./scripts/test",
-    "deploy"    : "./scripts/deploy",
-    "backup"    : "./scripts/backup",
-    "restore"   : "./scripts/restore"
+    "build"     : "./scripts/build.js",
+    "run"       : "./scripts/run.js",
+    "watch"     : "./scripts/watch.js",
+    "test"      : "./scripts/test.js",
+    "deploy"    : "./scripts/deploy.js",
+    "backup"    : "./scripts/backup.js",
+    "restore"   : "./scripts/restore.js"
 };
 let script = "run"
 
@@ -65,17 +65,20 @@ process.argv.forEach(arg => {
     });
 });
 
-defaultConfig(config).then(configReady => {
-    const CommandClass = require(scripts[script]).default;
+defaultConfig(config).then(async configReady => {
+    const scriptModule = await import(scripts[script]);
+
+    const CommandClass = scriptModule.default;
     let command;
     if(script === "deploy")
         command = new CommandClass(configReady);
     else
         CommandClass(configReady);
 
-    if(config.gui)
-        require("./scripts/gui").default(command);
-    else if(command?.runCLI)
+    if(config.gui) {
+        const guiModule = await import("./scripts/gui.js");
+        await guiModule.default(command);
+    }else if(command?.runCLI)
         command.runCLI();
 });
 

@@ -1,8 +1,8 @@
 import path from "path";
 import crypto from "crypto";
 import {execSync} from "child_process";
-import Docker from "./docker";
-import getPackageJSON from "../getPackageJSON";
+import Docker from "./docker.js";
+import getPackageJSON from "../getPackageJSON.js";
 
 const defaultConfig: Config = {
     src: process.cwd(),

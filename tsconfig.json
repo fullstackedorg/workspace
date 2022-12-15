@@ -1,16 +1,16 @@
 {
     "compilerOptions": {
         "baseUrl": "./",
-        "module": "esnext",
-        "target": "ES6",
+        "module": "ES2022",
+        "target": "ES2022",
         "esModuleInterop": true,
         "moduleResolution": "node",
         "lib": [
-            "ES2020",
+            "ES2021",
             "dom"
         ],
         "typeRoots": ["./types"],
-        "jsx": "react-jsx",
+        "jsx": "react",
         "paths": {
             "fullstacked/server": ["./server/index.ts"],
             "fullstacked/webapp/fetch": ["./webapp/fetch.ts"],

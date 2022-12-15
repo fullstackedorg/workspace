@@ -101,7 +101,7 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
         entryPoints: [entrypoint],
         outfile: (entrypoint.endsWith("x") ? entrypoint.slice(0, -3) : entrypoint.slice(0, -2)) + "js",
         platform: "node",
-        format: "cjs",
+        format: "esm",
         sourcemap: true
     }
 }
@@ -142,7 +142,7 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
 
     if(!filesToRun.length) return;
 
-    require("./register");
+    await import("./register");
 
     // build file on the fly
     const ranFiles = filesToRun.map(async file => {
@@ -156,9 +156,9 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
 ${fileContent}`);
         }
 
-        const importedScript = require(esbuildConfig.outfile);
-        if(typeof importedScript.default === 'function'){
-            const functionReturn = importedScript.default(config, ...args);
+        const importedModule = await import(esbuildConfig.outfile);
+        if(typeof importedModule.default === 'function'){
+            const functionReturn = importedModule.default(config, ...args);
             if(functionReturn instanceof Promise)
                 await functionReturn;
         }

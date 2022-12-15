@@ -2,12 +2,15 @@ import esbuild from "esbuild";
 import glob from "glob";
 import path from "path"
 import fs from "fs";
+import {fileURLToPath} from "url";
+
+global.__dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function buildFile(file){
     return esbuild.build({
         entryPoints: [file],
         outfile: file.slice(0, -2) + "js",
-        format: "cjs",
+        format: "esm",
         sourcemap: true
     });
 }
@@ -33,7 +36,9 @@ async function buildFile(file){
     await Promise.all(buildPromises);
     console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 
-    fs.writeFileSync(path.resolve(__dirname, "version.ts"), `const version = "${require("./getPackageJSON").default().version}";
+    const version = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), {encoding: "utf8"})).version;
+
+    fs.writeFileSync(path.resolve(__dirname, "version.ts"), `const version = "${version}";
 export default version;`);
 
     await buildFile(path.resolve(__dirname, "./version.ts"));

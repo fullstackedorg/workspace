@@ -1,8 +1,8 @@
-import Build from "./build";
-import Runner from "./runner";
+import Build from "./build.js";
+import Runner from "./runner.js";
 import os from "os";
 import readline from "readline";
-import Restore from "./restore";
+import Restore from "./restore.js";
 
 let runner: Runner = null, didSetExitHook = false, printStopOnce = false;
 

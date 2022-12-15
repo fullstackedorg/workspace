@@ -7,7 +7,7 @@ const possibleLocation = [
     path.resolve(process.cwd(), "node_modules/fullstacked/scripts/register.js")
 ].filter(file => fs.existsSync(file));
 
-module.exports = {
+export default {
     require: possibleLocation,
     timeout: 20000,
     exclude: "**/node_modules/**",
