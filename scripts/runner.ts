@@ -1,4 +1,4 @@
-import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImage} from "./utils";
+import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImage} from "./utils.js";
 import path from "path";
 import fs from "fs";
 import yaml from "js-yaml";
@@ -22,17 +22,21 @@ export default class Runner {
     async start(): Promise<number> {
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
-        // get compose content
-        const dockerCompose: any = yaml.load(fs.readFileSync(this.composeFilePath, {encoding: "utf-8"}));
+        this.dockerCompose = new DockerCompose(this.config.docker, this.composeFilePath, this.config.name);
+
+        try{
+            await this.dockerCompose.down();
+        }catch(e){}
 
         // setup exposed ports
-        const services = Object.keys(dockerCompose.services);
+        const services = Object.keys(this.dockerCompose.recipe.services);
         let availablePort = 8000;
 
         for(const service of services){
-            await maybePullDockerImage(this.config.docker, dockerCompose.services[service].image);
+            const serviceObject = this.dockerCompose.recipe.services[service];
 
-            const serviceObject = dockerCompose.services[service];
+            await maybePullDockerImage(this.config.docker, serviceObject.image);
+
             const exposedPorts = serviceObject.ports;
 
             if(!exposedPorts) continue;
@@ -42,17 +46,13 @@ export default class Runner {
 
                 availablePort = await getNextAvailablePort(availablePort);
 
-                dockerCompose.services[service].ports[i] = `${availablePort}:${exposedPorts[i]}`;
+                serviceObject.ports[i] = `${availablePort}:${exposedPorts[i]}`;
 
                 if(service === "node") this.nodePort = availablePort;
 
                 availablePort++;
             }
         }
-
-        fs.writeFileSync(this.composeFilePath, yaml.dump(dockerCompose));
-
-        this.dockerCompose = new DockerCompose(this.config.docker, this.composeFilePath, this.config.name);
 
         // force pull process
         if(this.config.pull) {

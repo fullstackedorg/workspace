@@ -7,9 +7,9 @@ import {
     maybePullDockerImage,
     printLine,
     uploadFileWithProgress
-} from "./utils";
-import {execSSH} from "./utils";
-import {sshCredentials} from "../types/deploy";
+} from "./utils.js";
+import {execSSH} from "./utils.js";
+import {sshCredentials} from "../types/deploy.js";
 import DockerCompose from "dockerode-compose";
 
 export default async function (config: FullStackedConfig) {

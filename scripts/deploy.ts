@@ -5,15 +5,15 @@ import {
     execScript, execSSH, getSFTPClient,
     uploadFileWithProgress, randStr, askQuestion,
     getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword
-} from "./utils";
-import Build from "./build";
+} from "./utils.js";
+import Build from "./build.js";
 import yaml from "js-yaml";
-import DockerInstallScripts from "../DockerInstallScripts";
+import DockerInstallScripts from "../DockerInstallScripts.js";
 import { Writable } from "stream";
-import {CommandInterface} from "../CommandInterface";
+import {CommandInterface} from "../CommandInterface.js";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
-import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy";
+import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy.js";
 
 export type WrappedSFTP = SFTP & {
     client: Client

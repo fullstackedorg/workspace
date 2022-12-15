@@ -5,8 +5,8 @@
   "description": "A full stack web app tool and development kit",
   "types": "index.d.ts",
   "scripts": {
-    "build:gui": "node cli build --src=gui --out=gui --production",
-    "build": "npx esbuild build.ts --outfile=build.js --format=cjs && node build && npm run build:gui",
+    "build:gui": "node cli build --src=gui --out=gui",
+    "build": "npx esbuild build.ts --outfile=build.js --format=esm && node build && npm run build:gui",
     "prestart": "npm run build",
     "start": "node cli watch --src=gui",
     "pretest": "npm run build && node testsDockerImages",
@@ -14,6 +14,7 @@
     "coverage": "npm test -- --coverage",
     "prepublishOnly": "npm run build"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CPLepage/fullstacked.git"
@@ -35,7 +36,7 @@
   },
   "homepage": "https://fullstacked.org",
   "bin": {
-    "fullstacked": "cli.js"
+    "fullstacked": "cli.mjs"
   },
   "dependencies": {
     "axios": "^1.1.3",
@@ -45,7 +46,7 @@
     "esbuild": "^0.14.27",
     "glob": "^7.2.0",
     "js-yaml": "^4.1.0",
-    "mime-types": "^2.1.35",
+    "mime": "^3.0.0",
     "mocha": "^10.1.0",
     "nyc": "^15.1.0",
     "open": "^8.4.0",

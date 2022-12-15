@@ -1,6 +1,6 @@
 import {FullStackedConfig} from "./index";
-import {printLine} from "./scripts/utils";
-import {CMD} from "./types/gui";
+import {printLine} from "./scripts/utils.js";
+import {CMD} from "./types/gui.js";
 
 export abstract class CommandInterface {
     config: FullStackedConfig;

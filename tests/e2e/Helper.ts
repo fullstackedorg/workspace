@@ -1,11 +1,13 @@
 import puppeteer, {Browser, Page} from "puppeteer";
 import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import Runner from "../../scripts/runner";
-import Build from "../../scripts/build";
-import Config from "../../scripts/config";
-import {cleanOutDir} from "../../scripts/utils";
-import waitForServer from "../../scripts/waitForServer";
+import Runner from "../../scripts/runner.js";
+import Build from "../../scripts/build.js";
+import Config from "../../scripts/config.js";
+import {cleanOutDir} from "../../scripts/utils.js";
+import waitForServer from "../../scripts/waitForServer.js";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
 
 export default class Helper {
     dir: string;

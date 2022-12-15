@@ -1,13 +1,16 @@
-import path from "path";
+import path, {dirname} from "path";
 import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
-import mime from "mime-types";
+import mime from "mime";
+import {fileURLToPath, pathToFileURL} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 class ServerInstance {
     server: http.Server;
     watcher;
     port: number = 80;
-    publicDir = path.resolve(__dirname, './public');
+    publicDir = path.resolve(__dirname, 'public');
     logger: (req: IncomingMessage) => void = null;
     reqListeners = [];
 
@@ -50,16 +53,17 @@ class ServerInstance {
 
             if(!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
 
-            res.writeHead(200, {"content-type": mime.lookup(filePath)});
+            res.writeHead(200, {"content-type": mime.getType(filePath)});
             res.end(fs.readFileSync(filePath));
         });
 
         this.server.listen(this.port);
 
         if(process.argv.includes("--development")){
-            const watcherModule = require("./watcher");
-            this.watcher = new watcherModule.default();
-            this.watcher.init(this.server);
+            import("./watcher").then(watcherModule => {
+                this.watcher = new watcherModule.default();
+                this.watcher.init(this.server);
+            });
         }
     }
 
@@ -96,9 +100,10 @@ class ServerInstance {
 const server = new ServerInstance();
 
 (() => {
-    // prevent starting server by import
-    // source: https://stackoverflow.com/a/6398335
-    if (require.main !== module || process.argv.includes("--prevent-auto-start")) return;
+    // prevent from starting when imported
+    // https://stackoverflow.com/a/68848622
+    if (import.meta.url !== pathToFileURL(process.argv[1]).href || process.argv.includes("--prevent-auto-start"))
+        return;
 
     server.start();
 })()

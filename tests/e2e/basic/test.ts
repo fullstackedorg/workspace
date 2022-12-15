@@ -1,6 +1,10 @@
 import { describe, it, before, after } from 'mocha';
-import Helper from "fullstacked/tests/e2e/Helper"
+import Helper from "../Helper.js"
 import {equal} from "assert";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Basic Test", function(){
     let test = new Helper(__dirname);
