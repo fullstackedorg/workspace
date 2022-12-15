@@ -142,8 +142,6 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
 
     if(!filesToRun.length) return;
 
-    await import("./register");
-
     // build file on the fly
     const ranFiles = filesToRun.map(async file => {
         const esbuildConfig = defaultEsbuildConfig(file);

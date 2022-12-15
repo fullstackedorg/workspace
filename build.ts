@@ -22,7 +22,6 @@ async function buildFile(file){
 
     const otherScripts = [
         path.resolve(__dirname, "cli.ts"),
-        path.resolve(__dirname, ".mocharc.ts"),
         path.resolve(__dirname, "mocha-reporter.ts"),
         path.resolve(__dirname, "getPackageJSON.ts"),
         path.resolve(__dirname, "server", "index.ts"),

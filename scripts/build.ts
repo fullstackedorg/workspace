@@ -7,7 +7,6 @@ import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";
 import {fileURLToPath} from "url";
 
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // load .env located at root of src

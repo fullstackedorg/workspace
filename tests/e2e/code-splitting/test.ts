@@ -1,9 +1,13 @@
 import {before, describe, it, after} from 'mocha';
-import Helper from "fullstacked/tests/e2e/Helper"
-import {glob} from "glob";
+import Helper from "../Helper.js"
+import glob from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";
-import sleep from "fullstacked/scripts/sleep";
+import sleep from "../../../scripts/sleep.js";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Code Splitting", function(){
     let test: Helper;

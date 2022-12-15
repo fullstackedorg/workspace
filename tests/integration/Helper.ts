@@ -2,11 +2,11 @@ import {it, Suite} from "mocha";
 import yaml from "js-yaml";
 import fs from "fs";
 import path from "path";
-import {execSync} from "child_process";
-import Build from "../../scripts/build";
-import Config from "../../scripts/config";
-import Runner from "../../scripts/runner";
-import getPackageJSON from "../../getPackageJSON";
+import Build from "../../scripts/build.js";
+import Config from "../../scripts/config.js";
+import Runner from "../../scripts/runner.js";
+import getPackageJSON from "../../getPackageJSON.js";
+import {build} from "esbuild";
 
 export default function(testSuite: Suite, srcDir: string = null){
     if(process.argv.includes("--test-mode"))
@@ -81,8 +81,12 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
     let results = ""
     await new Promise(async resolve => {
         const logsStream = (await (await localConfig.docker.getContainer(localConfig.name + '_node_1')).logs({stdout: true, stderr: true, follow: true}));
-        logsStream.on("data", chunk => results += chunk.toString());
-        logsStream.on("end", resolve)
+        logsStream.on("data", chunk => {
+            if(!chunk.toString().match(/\d+ (passing|failing)/g))
+                process.stdout.write(chunk);
+            results += chunk.toString();
+        });
+        logsStream.on("end", resolve);
     });
     await runner.stop();
 
@@ -100,8 +104,6 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
 
     const endLineMatches = Array.from(sliced.matchAll(/\w\r?\n/g));
     const lastLine = endLineMatches.length ? endLineMatches.pop() : null;
-
-    console.log(sliced.slice(0, lastLine ? lastLine.index + lastLine[0].length : undefined).trim() + "\n");
 
     fs.rmSync(testDir, {force: true, recursive: true});
 }

@@ -20,7 +20,8 @@ export default async function (config: FullStackedConfig) {
     const volumesToRestore = getVolumesToBackup(fs.readFileSync(dockerComposeFile, {encoding: "utf-8"}), config.volume);
 
     const dockerCompose = new DockerCompose(config.docker, dockerComposeFile, config.name);
-    await dockerCompose.down();
+
+    const services = Object.keys(dockerCompose.recipe.services);
 
     await maybePullDockerImage(config.docker, "busybox");
 
@@ -36,6 +37,12 @@ export default async function (config: FullStackedConfig) {
             continue;
         }
 
+        await Promise.all(services.map(serviceName => new Promise<void>(async resolve => {
+            const container = await config.docker.getContainer(`${config.name}_${serviceName}_1`);
+            await container.stop();
+            resolve();
+        })));
+
         const [output, container] = await config.docker.run("busybox", ["/bin/sh", "-c", "sleep 5 && cd data && rm -rf ./* && tar xvf /backup/" + volume + ".tar --strip 1"], process.stdout, {
             name: "fullstacked-restore",
             HostConfig: {
@@ -47,9 +54,13 @@ export default async function (config: FullStackedConfig) {
         });
 
         await container.remove({v: true});
-    }
 
-    await dockerCompose.up();
+        await Promise.all(services.map(serviceName => new Promise<void>(async resolve => {
+            const container = await config.docker.getContainer(`${config.name}_${serviceName}_1`);
+            await container.start();
+            resolve();
+        })));
+    }
 }
 
 async function restoreRemote(config: FullStackedConfig){

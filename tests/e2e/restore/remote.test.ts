@@ -1,13 +1,16 @@
 import {describe, it, before, after} from 'mocha';
-import SSH from "../SSH";
+import SSH from "../SSH.js";
 import {exec, execSync} from "child_process";
-import path from "path";
+import path, {dirname} from "path";
 import fs from "fs";
-import waitForServer from "fullstacked/scripts/waitForServer";
-import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../scripts/utils";
+import waitForServer from "../../../scripts/waitForServer.js";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../scripts/utils.js";
 import {deepEqual, notDeepEqual, ok} from "assert";
-import sleep from "fullstacked/scripts/sleep";
-import {fetch} from "fullstacked/webapp/fetch";
+import sleep from "../../../scripts/sleep.js";
+import {fetch} from "../../../webapp/fetch.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Backup-Restore Remotely Test", function(){
     const sshServer1 = new SSH();

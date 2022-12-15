@@ -1,9 +1,12 @@
 import fs from "fs";
-import path from "path";
+import path, {dirname} from "path";
 import {execSync} from "child_process";
 import {equal, ok} from "assert";
-import {cleanOutDir} from "../../../scripts/utils";
+import {cleanOutDir} from "../../../scripts/utils.js";
 import {describe, it, before, after} from 'mocha';
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Build Test", function(){
     const prebuildOutputFile = path.resolve(__dirname, "prebuild.txt");
