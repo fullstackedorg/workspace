@@ -1,12 +1,16 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
-import Helper from "fullstacked/tests/integration/Helper";
-import {fetch} from "fullstacked/webapp/fetch";
-import Server from "fullstacked/server";
-import "./server/index";
+import Helper from "../Helper.js";
+import {fetch} from "../../../webapp/fetch.js";
+import Server from "../../../server/index.js";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+import "./server/index.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 Helper(describe("Hello World", function(){
-    before(function (){
+    before(async function (){
         Server.start();
     });
 
@@ -18,4 +22,4 @@ Helper(describe("Hello World", function(){
     after(function(){
         Server.stop();
     });
-}), __dirname);
+}), __dirname)

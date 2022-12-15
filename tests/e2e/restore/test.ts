@@ -1,14 +1,17 @@
 import {describe, it, before, after} from 'mocha';
 import {exec, execSync} from "child_process";
-import path from "path";
-import waitForServer from "fullstacked/scripts/waitForServer";
+import path, {dirname} from "path";
+import waitForServer from "../../../scripts/waitForServer.js";
 import {notDeepEqual, deepEqual, ok} from "assert";
 import fs from "fs";
-import Runner from "../../../scripts/runner";
-import Config from "../../../scripts/config";
-import Build from "../../../scripts/build";
-import {clearLine, printLine} from "../../../scripts/utils";
-import {fetch} from "fullstacked/webapp/fetch";
+import Runner from "../../../scripts/runner.js";
+import Config from "../../../scripts/config.js";
+import Build from "../../../scripts/build.js";
+import {clearLine, printLine} from "../../../scripts/utils.js";
+import {fetch} from "../../../webapp/fetch.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Backup-Restore Test", function(){
     let testArr;

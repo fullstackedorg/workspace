@@ -1,28 +1,65 @@
 import path, {dirname, resolve} from "path";
-import {execSync} from "child_process";
 import glob from "glob";
-import fs from "fs";
 import {fileURLToPath} from "url";
-import Mocha from "mocha";
-import {buildSync} from "esbuild";
+import Mocha, {Runner} from "mocha";
+import {buildSync, build} from "esbuild";
 import {defaultEsbuildConfig} from "./utils.js";
+import * as process from "process";
+import fs, {existsSync} from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export default function(config: Config){
+export default async function(config: Config){
     const mocha = new Mocha({
-        timeout: 20000
+        timeout: 20000,
+        reporter: specExt
     });
 
-    const testFile = resolve(__dirname, "..", "tests", "e2e", "basic", "test.ts");
+    const testFiles = config.testFile
+        ? [resolve(process.cwd(), config.testFile)]
+        : glob.sync(resolve(config.src, "**", "*test.ts"));
 
-    const buildConfig = defaultEsbuildConfig(testFile);
-    buildSync(buildConfig);
-    buildSync(defaultEsbuildConfig(resolve(__dirname, "..", "tests", "e2e", "Helper.ts")));
+    if(!process.argv.includes("--test-mode")){
+        const esbuildConfigs = testFiles.map(testFile => defaultEsbuildConfig(testFile));
+        await Promise.all(esbuildConfigs.map(esbuildConfig => {
+            return new Promise<void>(async res => {
+                await build(esbuildConfig);
 
-    mocha.addFile(buildConfig.outfile);
+                const bundlingFile = resolve(__dirname, ".bundling");
+                await build({
+                    entryPoints: esbuildConfig.entryPoints,
+                    outfile: bundlingFile,
+                    bundle: true,
+                    plugins: [{
+                        name: "build-needed-ts",
+                        setup(build){
+                            build.onResolve({filter: /.*/}, (args) => {
+                                if(args.kind === "entry-point") return null;
 
-    mocha.loadFilesAsync().then(() => mocha.run())
+                                if(!args.path.endsWith(".js") || !args.path.startsWith(".")) return {external: true};
+
+                                const filePathToBuild = resolve(path.dirname(esbuildConfig.entryPoints[0]), args.path);
+                                buildSync(defaultEsbuildConfig(filePathToBuild.replace(/\.js$/, ".ts")));
+
+                                return {external: true};
+                            })
+                        }
+                    }]
+                });
+
+                if(fs.existsSync(bundlingFile)) fs.rmSync(bundlingFile);
+                res();
+            });
+        }));
+
+        esbuildConfigs.forEach(esbuildConfig => {
+            mocha.addFile(esbuildConfig.outfile);
+        });
+    }else{
+        testFiles.forEach(testFile => mocha.addFile(testFile));
+    }
+
+    mocha.loadFilesAsync().then(() => mocha.run());
 
 
     // const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
@@ -74,3 +111,30 @@ export default function(config: Config){
     //         "--temp-dir " + path.resolve(config.src, ".nyc_output"), {stdio: "inherit"});
     // }
 }
+
+function specExt(runner: Runner){
+    runner.on(Mocha.Runner.constants.EVENT_RUN_END, function() {
+        if(process.argv.includes("--test-mode")) return;
+
+        if(!global.integrationTests)
+            global.integrationTests = {passes: 0, failures: 0};
+
+        runner.stats.passes += global.integrationTests.passes;
+        runner.stats.failures += global.integrationTests.failures;
+    });
+
+    Mocha.reporters.Spec.call(this, runner);
+
+    const passTestListeners = runner.listeners(Mocha.Runner.constants.EVENT_TEST_PASS);
+    runner.removeAllListeners(Mocha.Runner.constants.EVENT_TEST_PASS);
+    runner.on(Mocha.Runner.constants.EVENT_TEST_PASS, (test) => {
+        if(test.title.startsWith("Integration"))
+            return;
+
+        passTestListeners.forEach(listener => {
+            listener(test);
+        });
+    });
+}
+
+(Mocha.utils as any).inherits(specExt, Mocha.reporters.Spec);

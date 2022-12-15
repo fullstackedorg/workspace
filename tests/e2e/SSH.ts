@@ -1,5 +1,9 @@
 import {execSync} from "child_process";
-import {printLine, silenceCommandLine} from "../../scripts/utils";
+import {printLine, silenceCommandLine} from "../../scripts/utils.js";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default class {
     containerName = "dind";

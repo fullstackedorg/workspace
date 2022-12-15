@@ -1,7 +1,11 @@
 import fs from "fs";
+import {dirname, resolve} from "path";
+import {fileURLToPath} from "url";
 
-fs.writeFileSync(__dirname + "/prebuild.txt", "prebuild");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+fs.writeFileSync(resolve(__dirname, "prebuild.txt"), "prebuild");
 
 export default async function(){
-    fs.writeFileSync(__dirname + "/prebuild-2.txt", "prebuild async");
+    fs.writeFileSync(resolve(__dirname, "prebuild-2.txt"), "prebuild async");
 }

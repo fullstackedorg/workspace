@@ -1,11 +1,14 @@
 import {describe, it, before, after} from 'mocha';
 import {equal} from "assert";
 import {exec} from "child_process";
-import path from "path";
+import path, {dirname} from "path";
 import puppeteer from "puppeteer";
-import sleep from "fullstacked/scripts/sleep";
-import {cleanOutDir} from "../../../scripts/utils";
-import waitForServer from "fullstacked/scripts/waitForServer";
+import sleep from "../../../scripts/sleep.js";
+import {cleanOutDir} from "../../../scripts/utils.js";
+import waitForServer from "../../../scripts/waitForServer.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Run Test", function(){
     let runProcess, browser, page;

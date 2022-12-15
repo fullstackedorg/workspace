@@ -1,4 +1,4 @@
-import path from "path";
+import path, {dirname} from "path";
 import fs from "fs";
 import glob from "glob";
 import {
@@ -14,6 +14,9 @@ import {CommandInterface} from "../CommandInterface.js";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
 import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export type WrappedSFTP = SFTP & {
     client: Client
