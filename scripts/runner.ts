@@ -3,15 +3,16 @@ import path from "path";
 import fs from "fs";
 import yaml from "js-yaml";
 import DockerCompose from "dockerode-compose";
+import {FullStackedConfig} from "../index";
 
 // helper to start/restart/attach/stop your app
 export default class Runner {
-    config: Config;
+    config: FullStackedConfig;
     composeFilePath: string;
     nodePort: number;
     dockerCompose: any;
 
-    constructor(config: Config) {
+    constructor(config: FullStackedConfig) {
         this.config = config;
         this.composeFilePath = path.resolve(this.config.dist, "docker-compose.yml");
 

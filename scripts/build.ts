@@ -6,6 +6,7 @@ import yaml from "js-yaml";
 import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";
 import {fileURLToPath} from "url";
+import {FullStackedConfig} from "../index";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -19,7 +20,7 @@ async function loadEnvVars(srcDir: string){
 }
 
 // get all env variables in the form of an object
-function getProcessedEnv(config: Config){
+function getProcessedEnv(config: FullStackedConfig){
     let processEnv = {};
     Object.keys(process.env).forEach(envKey => {
         // keys with parenthesis causes problems
@@ -35,7 +36,7 @@ function getProcessedEnv(config: Config){
 }
 
 // bundles the server
-async function buildServer(config: Config, watcher){
+async function buildServer(config: FullStackedConfig, watcher){
     const fullstackedServerFile = resolve(__dirname, "..", "server", "index.ts");
 
     const fullstackedServerFileRegex =  new RegExp(fullstackedServerFile
@@ -288,7 +289,7 @@ const getDescendantByTag = (node, tag) => {
     return null;
 };
 
-export function webAppPostBuild(config: Config, watcher){
+export function webAppPostBuild(config: FullStackedConfig, watcher){
     const parser = new Parser();
 
     const userDefinedIndexHTMLFilePath = resolve(config.src, "webapp", "index.html");

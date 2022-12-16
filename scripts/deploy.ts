@@ -2,8 +2,7 @@ import path, {dirname} from "path";
 import fs from "fs";
 import glob from "glob";
 import {
-    execScript, execSSH, getSFTPClient,
-    uploadFileWithProgress, randStr, askQuestion,
+    execScript, execSSH, getSFTPClient, randStr, askQuestion,
     getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword
 } from "./utils.js";
 import Build from "./build.js";
@@ -15,6 +14,7 @@ import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
 import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy.js";
 import {fileURLToPath} from "url";
+import uploadFileWithProgress from "./uploadFileWithProgress";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

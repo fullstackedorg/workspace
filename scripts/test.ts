@@ -7,10 +7,11 @@ import {defaultEsbuildConfig, randStr} from "./utils.js";
 import fs from "fs";
 import {execSync} from "child_process";
 import v8toIstanbul from "v8-to-istanbul";
+import {FullStackedConfig} from "../index";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export default async function(config: Config){
+export default async function(config: FullStackedConfig){
     if(config.coverage){
         // make sure to disable experimental fetch if node >= 18
         // source: https://github.com/parcel-bundler/parcel/issues/8005#issuecomment-1120149358

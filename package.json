@@ -6,7 +6,7 @@
   "types": "index.d.ts",
   "scripts": {
     "build:gui": "node cli build --src=gui --out=gui",
-    "build": "npm run cleanup && npx esbuild build.ts --outfile=build.js --format=esm && node build && npm run build:gui",
+    "build": "npm run cleanup && npx esbuild build.ts --outfile=build.js --format=esm && node build && npx tsc && npm run build:gui",
     "cleanup": "npx esbuild cleanup.ts --outfile=cleanup.js --format=esm && node cleanup",
     "prestart": "npm run build",
     "start": "node cli watch --src=gui",
@@ -78,6 +78,7 @@
     "lowdb": "^5.0.5",
     "mongodb": "^4.6.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "typescript": "^4.9.4"
   }
 }
