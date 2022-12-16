@@ -7,6 +7,7 @@ import Config from "../../scripts/config.js";
 import Runner from "../../scripts/runner.js";
 import getPackageJSON from "../../getPackageJSON.js";
 import {build} from "esbuild";
+import * as process from "process";
 
 export default function(testSuite: Suite, srcDir: string = null){
     if(process.argv.includes("--test-mode"))
@@ -64,7 +65,7 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
         "test",
         "--test-file=" + testFilePath.join("/"),
         "--test-suite=" + testSuite.title,
-        (process.argv.includes("--coverage") ? "--coverage" : ""),
+        (process.argv.includes("--cover") ? "--coverage" : ""),
         "--test-mode"
     ];
 
@@ -98,12 +99,6 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
 
     global.integrationTests.passes += passing;
     global.integrationTests.failures += failing;
-
-    const beginning = Array.from(results.matchAll(new RegExp(".*" + testSuite.title, "g")));
-    const sliced = results.slice(beginning[0].index, failing === 0 ? passingMatches[0].index : undefined);
-
-    const endLineMatches = Array.from(sliced.matchAll(/\w\r?\n/g));
-    const lastLine = endLineMatches.length ? endLineMatches.pop() : null;
 
     fs.rmSync(testDir, {force: true, recursive: true});
 }
