@@ -75,8 +75,8 @@ export default async function(config: Config){
 
         execSync(reportCMD.join(" "), {stdio: "inherit"});
 
-        // fs.rmSync(c8DataDir, {recursive: true});
-        // fs.rmSync(istanbulDataDir, {recursive: true});
+        fs.rmSync(c8DataDir, {recursive: true});
+        fs.rmSync(istanbulDataDir, {recursive: true});
         return;
     }
 
