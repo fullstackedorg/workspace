@@ -3,8 +3,7 @@ import glob from "glob";
 import {fileURLToPath} from "url";
 import Mocha, {Runner} from "mocha";
 import {buildSync, build} from "esbuild";
-import {defaultEsbuildConfig} from "./utils.js";
-import * as process from "process";
+import {defaultEsbuildConfig, randStr} from "./utils.js";
 import fs from "fs";
 import {execSync} from "child_process";
 import v8toIstanbul from "v8-to-istanbul";
@@ -17,39 +16,29 @@ export default async function(config: Config){
         // source: https://github.com/parcel-bundler/parcel/issues/8005#issuecomment-1120149358
         if(parseInt(process.version.split(".").at(0).match(/\d+/).at(0)) >= 18 && !process.execArgv.includes("--no-experimental-fetch")){
             const args = [...process.argv];
-            const command = args.shift();
-            return execSync([command, "--no-experimental-fetch", args].flat().join(" "), {stdio: "inherit"});
+            args.shift();
+            return execSync(["node", "--no-experimental-fetch", args].flat().join(" "), {stdio: "inherit"});
         }
 
+        const testCommand = [...process.argv];
+        testCommand.shift();
 
-        const c8DataDir = resolve(config.src, ".c8");
+        const c8DataDir = config.c8OutDir || resolve(config.src, ".c8");
 
         const cmd = [
             "npx",
             "c8",
-            "-r none",
-            "--skip-full true",
+            "--reporter none",
             `--temp-directory ${c8DataDir}`,
             (config.testMode ? "--clean false" : ""),
-            ...process.argv,
+            "node",
+            ...testCommand,
             "--cover"
         ];
         cmd.splice(cmd.indexOf("--coverage"), 1);
         execSync(cmd.join(" "), {stdio: "inherit"});
 
         if(config.testMode) return;
-
-        glob.sync(path.resolve(config.src, ".c8", "*.json")).forEach(file => {
-            const content = fs.readFileSync(file, {encoding: 'utf-8'});
-            const updatedContent = content.replace(/\/app\/.*?\./g, value => {
-                const pathComponents = value.split("/");
-                pathComponents.shift(); // remove ""
-                pathComponents.shift(); // remove "app"
-                const updatedPath = path.resolve(config.src,  pathComponents.join(path.sep));
-                return path.sep === "\\" ? updatedPath.replace(/\\/g, "\\\\") : updatedPath;
-            });
-            fs.writeFileSync(file, updatedContent);
-        });
 
         const istanbulDataDir = resolve(config.src, ".nyc");
         if(fs.existsSync(istanbulDataDir)) fs.rmSync(istanbulDataDir, {recursive: true});
@@ -60,7 +49,9 @@ export default async function(config: Config){
         for (const file of coverageFiles){
             const jsCoverage = JSON.parse(fs.readFileSync(file, {encoding: "utf8"})).result;
             for (let i = 0; i < jsCoverage.length; i++) {
-                const modulePath = jsCoverage[i].url;
+                const modulePath = jsCoverage[i].url
+                    .replace("/C:", "");
+
                 if(!fs.existsSync(modulePath.slice("file://".length))
                     || modulePath.includes("node_modules")) continue;
 
@@ -82,7 +73,11 @@ export default async function(config: Config){
             `--report-dir=${coverageOutDir}`,
             `--temp-directory=${istanbulDataDir}`];
 
-        return execSync(reportCMD.join(" "), {stdio: "inherit"});
+        execSync(reportCMD.join(" "), {stdio: "inherit"});
+
+        // fs.rmSync(c8DataDir, {recursive: true});
+        // fs.rmSync(istanbulDataDir, {recursive: true});
+        return;
     }
 
     const mocha = new Mocha({
@@ -92,7 +87,7 @@ export default async function(config: Config){
     });
 
     const testFiles = config.testFile
-        ? [resolve(process.cwd(), config.testFile)]
+        ? glob.sync(resolve(process.cwd(), config.testFile))
         : glob.sync(resolve(config.src, "**", "*test.ts"));
 
     if(!process.argv.includes("--test-mode")){
@@ -101,7 +96,7 @@ export default async function(config: Config){
             return new Promise<void>(async res => {
                 await build(esbuildConfig);
 
-                const bundlingFile = resolve(__dirname, ".bundling");
+                const bundlingFile = resolve(__dirname, `.bundling-${randStr(5)}`);
                 await build({
                     entryPoints: esbuildConfig.entryPoints,
                     outfile: bundlingFile,

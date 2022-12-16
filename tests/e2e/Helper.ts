@@ -88,11 +88,24 @@ export default class Helper {
             return {
                 ...coverage,
                 scriptId: String(coverage.scriptId),
-                url: "file://" + dir + "/dist/" + localConfig.version + "/public" + file
+                url: [
+                    "file://",
+                    dir.replace(/\\/g, "/").replace("C:", "/C:"),
+                    "/dist/",
+                    localConfig.version,
+                    "/public",
+                    file
+                ].join("")
             }
         }).filter(Boolean);
 
-        const outFolder = resolve(process.cwd(), ".c8");
+        let srcDir = process.cwd();
+        process.argv.forEach(arg => {
+            if(!arg.startsWith("--src=")) return;
+            srcDir = resolve(process.cwd(), arg.slice("--src=".length));
+        });
+
+        const outFolder = resolve(srcDir, ".c8");
         if(!fs.existsSync(outFolder)) fs.mkdirSync(outFolder);
 
         const fileName = [

@@ -1,4 +1,4 @@
-import path from "path";
+import path, {resolve} from "path";
 import fs from "fs";
 import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
@@ -12,7 +12,6 @@ import progress from "progress-stream";
 import {WrappedSFTP} from "./deploy";
 import crypto from "crypto";
 import {sshCredentials} from "../types/deploy";
-import {Writable} from "stream";
 
 
 // ask a question, resolve string answer
@@ -154,7 +153,11 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
 ${fileContent}`);
         }
 
-        const importedModule = await import(esbuildConfig.outfile);
+        const outfile = esbuildConfig.outfile
+            // windows paths...
+            .replace(/C:/, "").replace(/\\/, "/");
+
+        const importedModule = await import(outfile);
         if(typeof importedModule.default === 'function'){
             const functionReturn = importedModule.default(config, ...args);
             if(functionReturn instanceof Promise)
