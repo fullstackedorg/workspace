@@ -46,7 +46,7 @@ describe("Deploy Test",  function(){
             "--y",
             "--password=test"
         ]);
-        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy ${args.join(" ")}`, {stdio: "ignore"});
+        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy ${args.join(" ")}`, {stdio: "inherit"});
     }
 
     before(async function (){

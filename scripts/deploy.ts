@@ -14,7 +14,7 @@ import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
 import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy.js";
 import {fileURLToPath} from "url";
-import uploadFileWithProgress from "./uploadFileWithProgress";
+import uploadFileWithProgress from "./uploadFileWithProgress.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
