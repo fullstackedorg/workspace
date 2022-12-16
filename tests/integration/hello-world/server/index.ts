@@ -1,4 +1,4 @@
-import Server from "../../../../server";
+import Server from "../../../../server/index";
 
 Server.addListener((req, res) => {
     if(req.url === "/hello-world"){
