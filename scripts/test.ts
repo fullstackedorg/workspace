@@ -5,14 +5,90 @@ import Mocha, {Runner} from "mocha";
 import {buildSync, build} from "esbuild";
 import {defaultEsbuildConfig} from "./utils.js";
 import * as process from "process";
-import fs, {existsSync} from "fs";
+import fs from "fs";
+import {execSync} from "child_process";
+import v8toIstanbul from "v8-to-istanbul";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default async function(config: Config){
+    if(config.coverage){
+        // make sure to disable experimental fetch if node >= 18
+        // source: https://github.com/parcel-bundler/parcel/issues/8005#issuecomment-1120149358
+        if(parseInt(process.version.split(".").at(0).match(/\d+/).at(0)) >= 18 && !process.execArgv.includes("--no-experimental-fetch")){
+            const args = [...process.argv];
+            const command = args.shift();
+            return execSync([command, "--no-experimental-fetch", args].flat().join(" "), {stdio: "inherit"});
+        }
+
+
+        const c8DataDir = resolve(config.src, ".c8");
+
+        const cmd = [
+            "npx",
+            "c8",
+            "-r none",
+            "--skip-full true",
+            `--temp-directory ${c8DataDir}`,
+            (config.testMode ? "--clean false" : ""),
+            ...process.argv,
+            "--cover"
+        ];
+        cmd.splice(cmd.indexOf("--coverage"), 1);
+        execSync(cmd.join(" "), {stdio: "inherit"});
+
+        if(config.testMode) return;
+
+        glob.sync(path.resolve(config.src, ".c8", "*.json")).forEach(file => {
+            const content = fs.readFileSync(file, {encoding: 'utf-8'});
+            const updatedContent = content.replace(/\/app\/.*?\./g, value => {
+                const pathComponents = value.split("/");
+                pathComponents.shift(); // remove ""
+                pathComponents.shift(); // remove "app"
+                const updatedPath = path.resolve(config.src,  pathComponents.join(path.sep));
+                return path.sep === "\\" ? updatedPath.replace(/\\/g, "\\\\") : updatedPath;
+            });
+            fs.writeFileSync(file, updatedContent);
+        });
+
+        const istanbulDataDir = resolve(config.src, ".nyc");
+        if(fs.existsSync(istanbulDataDir)) fs.rmSync(istanbulDataDir, {recursive: true});
+        fs.mkdirSync(istanbulDataDir);
+
+        const coverageFiles = glob.sync(resolve(c8DataDir, "*.json"));
+
+        for (const file of coverageFiles){
+            const jsCoverage = JSON.parse(fs.readFileSync(file, {encoding: "utf8"})).result;
+            for (let i = 0; i < jsCoverage.length; i++) {
+                const modulePath = jsCoverage[i].url;
+                if(!fs.existsSync(modulePath.slice("file://".length))
+                    || modulePath.includes("node_modules")) continue;
+
+                const script = v8toIstanbul(jsCoverage[i].url);
+                await script.load();
+                script.applyCoverage(jsCoverage[i].functions);
+                fs.writeFileSync(istanbulDataDir + "/coverage-" +
+                    Math.floor(Math.random() * 10000) + "-" + Date.now() + ".json", JSON.stringify(script.toIstanbul()))
+                script.destroy();
+            }
+        }
+
+        const coverageOutDir = resolve(config.src, "coverage");
+        if(fs.existsSync(coverageOutDir)) fs.rmSync(coverageOutDir, {recursive: true});
+
+        const reportCMD = ["npx nyc report",
+            "--reporter=html",
+            "--reporter=text-summary",
+            `--report-dir=${coverageOutDir}`,
+            `--temp-directory=${istanbulDataDir}`];
+
+        return execSync(reportCMD.join(" "), {stdio: "inherit"});
+    }
+
     const mocha = new Mocha({
         timeout: 20000,
-        reporter: specExt
+        reporter: specExt,
+        grep: config.testSuite
     });
 
     const testFiles = config.testFile
@@ -33,7 +109,7 @@ export default async function(config: Config){
                     plugins: [{
                         name: "build-needed-ts",
                         setup(build){
-                            build.onResolve({filter: /.*/}, (args) => {
+                            build.onResolve({filter: /.*/}, async (args) => {
                                 if(args.kind === "entry-point") return null;
 
                                 if(!args.path.endsWith(".js") || !args.path.startsWith(".")) return {external: true};
@@ -59,57 +135,8 @@ export default async function(config: Config){
         testFiles.forEach(testFile => mocha.addFile(testFile));
     }
 
-    mocha.loadFilesAsync().then(() => mocha.run());
-
-
-    // const mochaConfigFile = path.resolve(__dirname, "../.mocharc.js");
-    //
-    // // gather all test.ts files
-    // let testFiles = config.testFile ?? path.resolve(config.src, "**", "*test.ts");
-    //
-    // let testCommand = "npx mocha \"" + testFiles + "\" " +
-    //     "--config " + mochaConfigFile + " " +
-    //     "--reporter " + path.resolve(__dirname, "..", "mocha-reporter.js") + " " +
-    //     (config.testSuite ? "--grep \"" + config.testSuite + "\"" : "") + " " +
-    //     (config.headless ? "--headless" : "") + " " +
-    //     (config.coverage ? "--coverage" : "") + " " +
-    //     (config.testMode ? "--test-mode" : "") + " ";
-    //
-    // // use nyc for coverage
-    // if(config.coverage) {
-    //     testCommand = "npx nyc" + " " +
-    //         "--silent" + " " +
-    //         "--temp-dir " + path.resolve(config.src, ".nyc_output") + " " +
-    //         (config.testMode ? "--no-clean" : "") + " " +
-    //         testCommand;
-    // }
-    //
-    // let env = process.env;
-    // if(parseInt(process.version.split(".").at(0).match(/\d+/).at(0)) >= 18){
-    //     env["NODE_OPTIONS"] = "--no-experimental-fetch";
-    // }
-    // env["PUPPETEER_PRODUCT"] = "chrome";
-    // execSync(testCommand, {stdio: "inherit", env: env});
-    //
-    // if(config.coverage && !config.testMode){
-    //     glob.sync(path.resolve(config.src, ".nyc_output", "*.json")).forEach(file => {
-    //         const content = fs.readFileSync(file, {encoding: 'utf-8'});
-    //         const updatedContent = content.replace(/\/app\/.*?\./g, value => {
-    //             const pathComponents = value.split("/");
-    //             pathComponents.shift(); // remove ""
-    //             pathComponents.shift(); // remove "app"
-    //             const updatedPath = path.resolve(config.src,  pathComponents.join(path.sep));
-    //             return path.sep === "\\" ? updatedPath.replace(/\\/g, "\\\\") : updatedPath;
-    //         });
-    //         fs.writeFileSync(file, updatedContent);
-    //     });
-    //
-    //     execSync("npx nyc report" + " " +
-    //         "--reporter html" + " " +
-    //         "--reporter text-summary" + " " +
-    //         "--report-dir " + path.resolve(config.src, "coverage") + " " +
-    //         "--temp-dir " + path.resolve(config.src, ".nyc_output"), {stdio: "inherit"});
-    // }
+    await mocha.loadFilesAsync();
+    mocha.run();
 }
 
 function specExt(runner: Runner){

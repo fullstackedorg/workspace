@@ -2,7 +2,6 @@
 .github
 node_modules
 dist
-.nyc_output
 coverage
 **/*.js.map
 test.ts
