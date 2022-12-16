@@ -1,15 +1,14 @@
 import {it, Suite} from "mocha";
 import yaml from "js-yaml";
 import fs from "fs";
-import path from "path";
+import path, {dirname, resolve} from "path";
 import Build from "../../scripts/build.js";
 import Config from "../../scripts/config.js";
 import Runner from "../../scripts/runner.js";
 import getPackageJSON from "../../getPackageJSON.js";
-import {build} from "esbuild";
-import * as process from "process";
+import glob from "glob";
 
-export default function(testSuite: Suite, srcDir: string = null){
+export default function(testSuite: Suite, testDir: string = null){
     if(process.argv.includes("--test-mode"))
         return;
 
@@ -20,34 +19,40 @@ export default function(testSuite: Suite, srcDir: string = null){
 
     it(`Integration [${testSuite.title}]`, async function(){
         this.timeout(10000000)
-        await runIntegrationTest(testSuite, srcDir);
+        await runIntegrationTest(testSuite, testDir);
     });
 }
 
-async function runIntegrationTest(testSuite: Suite, srcDir: string){
-    const testDir = path.resolve(path.dirname(testSuite.file), ".test");
+async function runIntegrationTest(testSuite: Suite, testDir: string){
+    let srcDir = process.cwd();
+    process.argv.forEach(arg => {
+        if(!arg.startsWith("--src=")) return;
+        srcDir = resolve(process.cwd(), arg.slice("--src=".length));
+    });
 
-    if(fs.existsSync(testDir))
-        fs.rmSync(testDir, {force: true, recursive: true});
+    const tempTestDir = resolve(dirname(testSuite.file), ".test");
 
-    fs.mkdirSync(testDir);
+    if(fs.existsSync(tempTestDir))
+        fs.rmSync(tempTestDir, {force: true, recursive: true});
+
+    fs.mkdirSync(tempTestDir);
 
     const localConfig = await Config({
         name: "test",
-        src: srcDir ?? process.cwd(),
-        out: testDir,
+        src: testDir ?? process.cwd(),
+        out: tempTestDir,
         silent: true
     });
     await Build(localConfig);
 
-    const dockerComposeFilePath = path.resolve(testDir, "dist", "docker-compose.yml");
+    const dockerComposeFilePath = path.resolve(tempTestDir, "dist", "docker-compose.yml");
     let dockerCompose: any = yaml.load(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
 
     dockerCompose.services.node.volumes = [
         process.cwd() + ":/app"
     ];
 
-    const testFilePathComponents = testSuite.file.split(path.sep);
+    const testFilePathComponents = testSuite.file.split("/");
     const rootDirComponents = process.cwd().split(path.sep);
     const testFilePath = ["/app"];
     for (let i = 0; i < testFilePathComponents.length; i++) {
@@ -59,14 +64,18 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
 
     const isFullStackedProject = getPackageJSON().name === "fullstacked";
 
+    const c8OutDir = resolve(tempTestDir, ".c8");
+    const c8OutDirInContainer = c8OutDir.replace(process.cwd(), "/app");
+
     dockerCompose.services.node.command = [
         (isFullStackedProject ? "node" : "npx"),
         (isFullStackedProject ? "cli" : "fullstacked"),
         "test",
         "--test-file=" + testFilePath.join("/"),
         "--test-suite=" + testSuite.title,
+        "--test-mode",
         (process.argv.includes("--cover") ? "--coverage" : ""),
-        "--test-mode"
+        (process.argv.includes("--cover") ? `--c8-out-dir=${c8OutDirInContainer}` : ""),
     ];
 
     delete dockerCompose.services.node.restart;
@@ -100,5 +109,19 @@ async function runIntegrationTest(testSuite: Suite, srcDir: string){
     global.integrationTests.passes += passing;
     global.integrationTests.failures += failing;
 
-    fs.rmSync(testDir, {force: true, recursive: true});
+    glob.sync(resolve(c8OutDir, "*.json")).forEach(filePath => {
+        const content = fs.readFileSync(filePath, {encoding: 'utf-8'});
+        const updatedContent = content.replace(/\/app\/.*?\./g, value => {
+            const pathComponents = value.split("/");
+            pathComponents.shift(); // remove ""
+            pathComponents.shift(); // remove "app"
+            return resolve(process.cwd(),  pathComponents.join(path.sep))
+                // windows paths
+                .replace(/\\/g, "/").replace(/C:/g, "/C:");
+        });
+        const fileName = filePath.slice(c8OutDir.length + 1);
+        fs.writeFileSync(resolve(srcDir, ".c8", fileName), updatedContent);
+    });
+
+    fs.rmSync(tempTestDir, {recursive: true});
 }

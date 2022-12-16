@@ -30,7 +30,9 @@ declare type ConfigTest = {
 
     testMode? : boolean,
     testFile? : string,
-    testSuite? : string
+    testSuite? : string,
+
+    c8OutDir? : string
 }
 
 declare type ConfigCerts = {

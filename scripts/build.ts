@@ -13,8 +13,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 async function loadEnvVars(srcDir: string){
     const path = resolve(srcDir, ".env");
 
-    if(!fs.existsSync(path))
-        return
+    if(!fs.existsSync(path)) return;
 
     (await import('dotenv')).config({path});
 }

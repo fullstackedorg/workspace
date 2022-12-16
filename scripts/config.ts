@@ -12,7 +12,7 @@ const defaultConfig: Config = {
 
 function getGitShortCommitHash(){
     try{
-        const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
+        const commitHash = execSync("git rev-parse --short HEAD", {stdio: "ignore"}).toString().trim();
         return commitHash.startsWith("fatal") ? "" : commitHash;
     }
     catch (e){

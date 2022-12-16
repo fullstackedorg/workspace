@@ -43,7 +43,8 @@ const args = {
     "--watch-dir=": value => config.watchDir = upgradeToArray(value),
     "--restored": () => config.restored = true,
     "--production": () => config.production = true,
-    "--gui": () => config.gui = true
+    "--gui": () => config.gui = true,
+    "--c8-out-dir=": value => config.c8OutDir = value
 };
 
 function upgradeToArray(rawValue: string): string | string[]{
