@@ -1,4 +1,4 @@
-import path, {resolve} from "path";
+import path from "path";
 import fs from "fs";
 import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
@@ -8,10 +8,10 @@ import {Socket} from "net";
 import SFTP from "ssh2-sftp-client";
 import yaml from "js-yaml";
 import glob from "glob";
-import progress from "progress-stream";
 import {WrappedSFTP} from "./deploy";
 import crypto from "crypto";
 import {sshCredentials} from "../types/deploy";
+import {FullStackedConfig} from "../index";
 
 
 // ask a question, resolve string answer
@@ -128,7 +128,7 @@ export function execSSH(ssh2, cmd, logger?: (str) => void): Promise<string>{
 }
 
 // exec filename.ts(x) and *.filename.ts(x) file
-export async function execScript(filePath: string, config: Config, ...args): Promise<void> {
+export async function execScript(filePath: string, config: FullStackedConfig, ...args): Promise<void> {
     const filePathComponents = filePath.split(path.sep)
     const fileName = filePathComponents.pop().split(".").shift();
 
@@ -261,21 +261,6 @@ export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: stri
 }
 
 
-export async function uploadFileWithProgress(sftp: any, localFilePath: string, remoteFilePath: string, progressCallback: (progress: number) => void, silent = false){
-    let ulStream = fs.createReadStream(localFilePath);
-
-    if(!silent){
-        const progressStream = progress({
-            length: fs.statSync(localFilePath).size
-        });
-
-        progressStream.on('progress', progress => progressCallback(progress.percentage));
-
-        ulStream = ulStream.pipe(progressStream);
-    }
-
-    await sftp.put(ulStream, remoteFilePath);
-}
 
 // get data detail in fullchain cert
 export function getCertificateData(fullchain){

@@ -3,6 +3,7 @@
         return;
 
     // compare version
+    //@ts-ignore
     const currentVersion = process.env.VERSION;
     const lastVersion = window.localStorage.getItem("version");
 

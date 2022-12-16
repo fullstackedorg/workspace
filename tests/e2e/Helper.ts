@@ -1,5 +1,4 @@
 import puppeteer, {Browser, Page} from "puppeteer";
-import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
 import Runner from "../../scripts/runner.js";
 import Build from "../../scripts/build.js";
@@ -7,13 +6,14 @@ import Config from "../../scripts/config.js";
 import {cleanOutDir} from "../../scripts/utils.js";
 import waitForServer from "../../scripts/waitForServer.js";
 import {resolve} from "path";
+import {FullStackedConfig} from "../../index";
 
 export default class Helper {
     dir: string;
     runner: Runner;
     browser: Browser;
     page: Page;
-    localConfig: Config;
+    localConfig: FullStackedConfig;
 
     constructor(dir: string) {
         this.dir = dir;
@@ -117,7 +117,6 @@ export default class Helper {
             ".json"
         ];
         fs.writeFileSync(fileName.join(""), JSON.stringify({result: jsCoverage}));
-
     }
 
     async stop(){

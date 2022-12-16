@@ -17,19 +17,27 @@ async function buildFile(file){
 
 (async function() {
     const scripts = glob.sync(resolve(__dirname, "scripts", "**", "*.ts")).filter(file => !file.endsWith(".d.ts"));
-
     const types = glob.sync(resolve(__dirname, "types", "**", "*.ts"));
+    const server = glob.sync(resolve(__dirname, "server", "**", "*.ts"));
+    const webapp = glob.sync(resolve(__dirname, "webapp", "**", "*.ts"));
 
     const otherScripts = [
         resolve(__dirname, "cli.ts"),
         resolve(__dirname, "getPackageJSON.ts"),
-        resolve(__dirname, "server", "index.ts"),
+        resolve(__dirname, "tests", "e2e", "Helper.ts"),
+        resolve(__dirname, "tests", "integration", "Helper.ts"),
         resolve(__dirname, "DockerInstallScripts.ts"),
         resolve(__dirname, "CommandInterface.ts"),
         resolve(__dirname, "testsDockerImages.ts")
     ];
 
-    const buildPromises: Promise<any>[] = [...scripts, ...types, ...otherScripts].map(file => buildFile(file));
+    const buildPromises: Promise<any>[] = [
+        ...scripts,
+        ...types,
+        ...server,
+        ...webapp,
+        ...otherScripts
+    ].map(file => buildFile(file));
 
     await Promise.all(buildPromises);
     console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");

@@ -3,8 +3,9 @@ import crypto from "crypto";
 import {execSync} from "child_process";
 import Docker from "./docker.js";
 import getPackageJSON from "../getPackageJSON.js";
+import {FullStackedConfig} from "../index";
 
-const defaultConfig: Config = {
+const defaultConfig: FullStackedConfig = {
     src: process.cwd(),
     out: process.cwd(),
     appDir: "/home"
