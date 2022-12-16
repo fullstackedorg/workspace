@@ -65,6 +65,7 @@ describe("Backup-Restore Remotely Test", function(){
         sshServer2.sshPort = 2223;
         sshServer2.httpPort = 8001;
 
+        if(fs.existsSync(outDir)) fs.rmSync(outDir, {recursive: true});
         fs.mkdirSync(outDir);
 
         await Promise.all([
