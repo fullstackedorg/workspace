@@ -13,7 +13,7 @@
     "pretest": "npm run build && node testsDockerImages",
     "test": "node cli test --headless",
     "coverage": "npm test -- --coverage",
-    "prepublishOnly": "npm run build && npx tsc"
+    "prepare": "npm run build && npx tsc"
   },
   "type": "module",
   "repository": {
@@ -40,7 +40,6 @@
     "fullstacked": "cli.mjs"
   },
   "dependencies": {
-    "@types/node": "^18.11.16",
     "axios": "^1.1.3",
     "c8": "^7.12.0",
     "dockerode": "^3.3.4",
@@ -67,6 +66,7 @@
     "@types/glob": "^7.2.0",
     "@types/http-proxy": "^1.17.9",
     "@types/js-yaml": "^4.0.5",
+    "@types/node": "^18.11.16",
     "@types/react": "^18.0.26",
     "@types/semver": "^7.3.13",
     "@types/ssh2-sftp-client": "^9.0.0",

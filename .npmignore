@@ -104,8 +104,8 @@ tsconfig.json
 
 /types
 
-version.d.ts
-version.js
+version.js.map
+version.ts
 
 webapp/fetch.js.map
 webapp/fetch.ts

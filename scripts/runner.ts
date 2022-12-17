@@ -1,7 +1,5 @@
 import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImage} from "./utils.js";
 import path from "path";
-import fs from "fs";
-import yaml from "js-yaml";
 import DockerCompose from "dockerode-compose";
 import {FullStackedConfig} from "../index";
 

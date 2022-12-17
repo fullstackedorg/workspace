@@ -312,7 +312,7 @@ export function saveDataEncryptedWithPassword(filePath: string, password: string
 
 export async function maybePullDockerImage(docker, image){
     try{
-        await (await docker.getImage(image)).inspect()
+        await (await docker.getImage(image)).inspect();
     }catch (e){
         const pullStream = await docker.pull(image);
         await new Promise<void>(resolve => {
