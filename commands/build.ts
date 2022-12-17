@@ -1,7 +1,7 @@
 import {dirname, resolve} from "path"
 import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "./utils.js";
+import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "../utils/utils.js";
 import yaml from "js-yaml";
 import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";

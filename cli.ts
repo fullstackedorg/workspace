@@ -1,18 +1,19 @@
 #!/usr/bin/env node
-import defaultConfig from "./scripts/config.js";
+import defaultConfig from "./utils/config.js";
+import {FullStackedConfig} from "./index";
 
 const scripts = {
-    "build"     : "./scripts/build.js",
-    "run"       : "./scripts/run.js",
-    "watch"     : "./scripts/watch.js",
-    "test"      : "./scripts/test.js",
-    "deploy"    : "./scripts/deploy.js",
-    "backup"    : "./scripts/backup.js",
-    "restore"   : "./scripts/restore.js"
+    "build"     : "./commands/build.js",
+    "run"       : "./commands/run.js",
+    "watch"     : "./commands/watch.js",
+    "test"      : "./commands/test.js",
+    "deploy"    : "./commands/deploy.js",
+    "backup"    : "./commands/backup.js",
+    "restore"   : "./commands/restore.js"
 };
 let script = "run"
 
-let config: Config = {}
+let config: FullStackedConfig = {}
 const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
@@ -77,7 +78,7 @@ defaultConfig(config).then(async configReady => {
         CommandClass(configReady);
 
     if(config.gui) {
-        const guiModule = await import("./scripts/gui.js");
+        const guiModule = await import("./utils/gui.js");
         await guiModule.default(command);
     }else if(command?.runCLI)
         command.runCLI();

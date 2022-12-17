@@ -1,9 +1,10 @@
 import Build from "./build.js";
 import Run from "./run.js";
 import {WebSocket} from "ws";
-import sleep from "./sleep.js";
+import sleep from "../utils/sleep.js";
+import {FullStackedConfig} from "../index";
 
-let globalConfig: Config,
+let globalConfig: FullStackedConfig,
     ws: WebSocket,
     msgQueue = [];
 
@@ -42,7 +43,7 @@ function connectToWatcher(port: number){
     });
 }
 
-export default async function(config: Config) {
+export default async function(config: FullStackedConfig) {
     globalConfig = config;
     globalConfig.timeout = globalConfig.timeout || 1000;
 

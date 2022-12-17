@@ -1,4 +1,4 @@
-import {fetch} from "../../webapp/fetch";
+import {fetch} from "../../utils/fetch";
 import {CMD, MESSAGE_FROM_BACKEND, MESSAGE_TYPE} from "../../types/gui";
 
 // source : https://stackoverflow.com/a/1349426

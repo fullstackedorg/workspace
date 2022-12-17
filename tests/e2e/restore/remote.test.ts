@@ -3,10 +3,10 @@ import SSH from "../SSH.js";
 import {exec, execSync} from "child_process";
 import path, {dirname} from "path";
 import fs from "fs";
-import waitForServer from "../../../scripts/waitForServer.js";
-import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../scripts/utils.js";
+import waitForServer from "../../../utils/waitForServer.js";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils.js";
 import {deepEqual, notDeepEqual, ok} from "assert";
-import {fetch} from "../../../webapp/fetch.js";
+import {fetch} from "../../../utils/fetch.js";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

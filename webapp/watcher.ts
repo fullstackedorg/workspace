@@ -1,4 +1,4 @@
-import waitForServer from "../scripts/waitForServer";
+import waitForServer from "../utils/waitForServer";
 
 let webSocket;
 

@@ -8,7 +8,7 @@ import {Socket} from "net";
 import SFTP from "ssh2-sftp-client";
 import yaml from "js-yaml";
 import glob from "glob";
-import {WrappedSFTP} from "./deploy";
+import {WrappedSFTP} from "../commands/deploy";
 import crypto from "crypto";
 import {sshCredentials} from "../types/deploy";
 import {FullStackedConfig} from "../index";
