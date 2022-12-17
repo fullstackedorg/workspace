@@ -2,116 +2,55 @@
 .github
 node_modules
 
-CommandInterface.d.ts
-CommandInterface.js.map
-CommandInterface.ts
+/build.*
 
-DockerInstallScripts.d.ts
-DockerInstallScripts.js.map
-DockerInstallScripts.ts
+/cleanup.ts
 
-/build.js
-/build.ts
+/cli.js.map
+/cli.ts
 
-cleanup.ts
+/commands/**/*.js.map
+/commands/**/*.ts
+/commands/**/*.d.ts
 
-cli.js.map
-cli.ts
+/docs
 
-docs
-
-getPackageJSON.d.ts
-getPackageJSON.js.map
-getPackageJSON.ts
-
-gui/**/*
-!gui/dist/**/*
-gui/dist/**/*.map
+/gui/**/*
+!/gui/dist
+/gui/dist/**/*.map
 
 /index.ts
 
-scripts/backup.js.map
-scripts/backup.ts
+/server/index.js.map
+/server/index.ts
 
-scripts/build.d.ts
-scripts/build.js.map
-scripts/build.ts
+/server/watcher.d.ts
+/server/watcher.js.map
+/server/watcher.ts
 
-scripts/config.d.ts
-scripts/config.js.map
-scripts/config.ts
+/tests/**/*
+!/tests/e2e/Helper.d.ts
+!/tests/e2e/Helper.js
 
-scripts/deploy.d.ts
-scripts/deploy.js.map
-scripts/deploy.ts
+!/tests/integration/Helper.d.ts
+!/tests/integration/Helper.js
 
-scripts/docker.d.ts
-scripts/docker.js.map
-scripts/docker.ts
-
-scripts/gui.js.map
-scripts/gui.ts
-
-scripts/restore.js.map
-scripts/restore.ts
-
-scripts/run.js.map
-scripts/run.ts
-
-scripts/runner.d.ts
-scripts/runner.js.map
-scripts/runner.ts
-
-scripts/sleep.js.map
-scripts/sleep.ts
-
-scripts/test.js.map
-scripts/test.ts
-
-scripts/uploadFileWithProgress.js.map
-scripts/uploadFileWithProgress.ts
-
-scripts/utils.d.ts
-scripts/utils.js
-scripts/utils.js.map
-scripts/utils.ts
-
-scripts/waitForServer.js.map
-scripts/waitForServer.ts
-
-scripts/watch.js.map
-scripts/watch.ts
-server/index.d.ts
-
-server/index.js.map
-server/index.ts
-
-server/watcher.d.ts
-server/watcher.js.map
-server/watcher.ts
-
-tests/**/*
-!tests/e2e/Helper.d.ts
-!tests/e2e/Helper.js
-!tests/integration/Helper.d.ts
-!tests/integration/Helper.js
-
-testsDockerImages.js
-testsDockerImages.js.map
-testsDockerImages.ts
-
-tsconfig.json
+/tsconfig.json
 
 /types
 
-version.js.map
-version.ts
+/utils/**/*
+!/utils/**/*.js
 
-webapp/fetch.js.map
-webapp/fetch.ts
+!/utils/fetch.d.ts
+!/utils/sleep.d.ts
+!/utils/uploadFileWithProgress.d.ts
+!/utils/waitForServer.d.ts
 
-webapp/ServiceWorkerRegistration.js.map
-webapp/ServiceWorkerRegistration.ts
+/version.js.map
+/version.ts
 
-webapp/watcher.js.map
-webapp/watcher.ts
+/webapp/**/*.js.map
+/webapp/**/*.ts
+
+

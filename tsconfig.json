@@ -21,10 +21,10 @@
         "tests/e2e/Helper.ts",
         "tests/integration/Helper.ts",
         "server/index.ts",
-        "webapp/fetch.ts",
-        "scripts/sleep.ts",
-        "scripts/uploadFileWithProgress.ts",
-        "scripts/waitForServer.ts",
+        "utils/fetch.ts",
+        "utils/sleep.ts",
+        "utils/uploadFileWithProgress.ts",
+        "utils/waitForServer.ts",
         "version.ts"
     ]
 }
