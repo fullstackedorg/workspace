@@ -7,6 +7,8 @@ import fs from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const imageSafeName = (str) => str.replace(/:/g, "_");
+
 export default class {
     containers: {
         container: any,
@@ -24,10 +26,10 @@ export default class {
             for(const image of images){
                 await maybePullDockerImage(this.docker, image);
 
-                if(fs.existsSync(`${image}.tar`)) continue;
+                if(fs.existsSync(`${imageSafeName(image)}.tar`)) continue;
 
                 printLine(`Saving image ${image}`);
-                execSync(`docker save --output ${image}.tar ${image}`, {stdio: "inherit"});
+                execSync(`docker save --output ${imageSafeName(image)}.tar ${image}`, {stdio: "inherit"});
             }
         }
 
@@ -65,7 +67,7 @@ export default class {
                         ["80/tcp"]: [{ HostPort : container.httpPort.toString() }],
                     },
                     Binds: [
-                        `${resolve(process.cwd())}:/images`
+                        `${resolve(process.cwd()).replace(/\\/g, "/").replace(/C:/, "/c")}:/images`
                     ]
                 },
             }
@@ -97,7 +99,7 @@ export default class {
                 printLine("Loading Images")
                 await Promise.all(images.map(image => new Promise(async resolve => {
                     const loadExec = await container.container.exec({
-                        Cmd: ["docker", "load", "--input", `/images/${image}.tar`],
+                        Cmd: ["docker", "load", "--input", `/images/${imageSafeName(image)}.tar`],
                         AttachStdout: true,
                         AttachStderr: true,
                     });
