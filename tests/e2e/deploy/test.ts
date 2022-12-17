@@ -25,7 +25,7 @@ describe("Deploy Test",  function(){
         saveDataEncryptedWithPassword(path.resolve(src, ".fullstacked"), "test", {
             sshCredentials: {
                 host: "localhost",
-                port: sshServer.sshPort,
+                port: sshServer.containers.at(0).sshPort,
                 username: sshServer.username,
                 password: sshServer.password,
                 appDir: "/home"
@@ -46,7 +46,7 @@ describe("Deploy Test",  function(){
             "--y",
             "--password=test"
         ]);
-        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy ${args.join(" ")}`, {stdio: "inherit"});
+        execSync(`node ${path.resolve(__dirname, "../../../cli")} deploy ${args.join(" ")}`, {stdio: "ignore"});
     }
 
     before(async function (){

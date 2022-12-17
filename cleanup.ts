@@ -10,7 +10,10 @@ const jsFiles = glob.sync(resolve(__dirname, "**", "*.js"), {ignore: "**/node_mo
 const jsMapFiles = glob.sync(resolve(__dirname, "**", "*.js.map"), {ignore: "**/node_modules/**"});
 const typesDeclarationFiles = glob.sync(resolve(__dirname, "**", "*.d.ts"), {ignore: "**/node_modules/**"});
 const distDir = glob.sync(resolve(__dirname, "**", "dist"), {ignore: "**/node_modules/**"});
+const c8Dir = glob.sync(resolve(__dirname, "**", ".c8"), {ignore: "**/node_modules/**"});
+const nycDir = glob.sync(resolve(__dirname, "**", ".nyc"), {ignore: "**/node_modules/**"});
 const coverageDir = glob.sync(resolve(__dirname, "**", "coverage"), {ignore: "**/node_modules/**"});
+const tarFiles = glob.sync(resolve(__dirname, "**", "*.tar"), {ignore: "**/node_modules/**"});
 
 [
     ...fullstackedConfigs,
@@ -18,7 +21,10 @@ const coverageDir = glob.sync(resolve(__dirname, "**", "coverage"), {ignore: "**
     ...jsMapFiles,
     ...typesDeclarationFiles,
     ...distDir,
-    ...coverageDir
+    ...c8Dir,
+    ...nycDir,
+    ...coverageDir,
+    ...tarFiles
 ].forEach(file => fs.rmSync(file, {recursive: true}));
 
 
