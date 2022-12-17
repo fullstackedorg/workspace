@@ -41,7 +41,7 @@ describe("Backup-Restore Remotely Test", function(){
             "--password=test"].join(" "));
         // deployment.stdout.pipe(process.stdout);
 
-        await waitForServer(20000, `http://localhost:${sshServers.containers.at(index).httpPort}/get`);
+        await waitForServer(50000, `http://localhost:${sshServers.containers.at(index).httpPort}/get`);
         printLine("Deployment Completed");
     }
 
