@@ -5,12 +5,12 @@ import {
     getSFTPClient,
     getVolumesToBackup,
     maybePullDockerImage,
-    printLine
-} from "./utils.js";
-import {execSSH} from "./utils.js";
+    printLine,
+    execSSH,
+} from "../utils/utils.js";
 import {sshCredentials} from "../types/deploy.js";
 import DockerCompose from "dockerode-compose";
-import uploadFileWithProgress from "./uploadFileWithProgress.js";
+import uploadFileWithProgress from "../utils/uploadFileWithProgress.js";
 
 export default async function (config: FullStackedConfig) {
     if(config.host)

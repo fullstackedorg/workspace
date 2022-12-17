@@ -7,5 +7,5 @@ services:
     container_name: fullstacked-nginx
     volumes:
       - ./:/apps
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./root.conf:/etc/nginx/nginx.conf
     restart: always

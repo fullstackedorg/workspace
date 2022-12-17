@@ -1,6 +1,6 @@
 import Server from "../server/index.js";
 import {getNextAvailablePort} from "./utils.js";
-import Run from "./run.js";
+import Run from "../commands/run.js";
 import Config from "./config.js";
 import path, {dirname} from "path";
 import waitForServer from "./waitForServer.js";
@@ -8,7 +8,7 @@ import open from "open";
 import fs from "fs";
 import yaml from "js-yaml";
 import {WebSocketServer} from "ws";
-import {CommandInterface} from "../CommandInterface.js";
+import CommandInterface from "../commands/Interface.js";
 import {GLOBAL_CMD, MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui.js";
 import {fileURLToPath} from "url";
 

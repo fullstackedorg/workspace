@@ -1,7 +1,7 @@
 import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
-import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, maybePullDockerImage, printLine} from "./utils.js";
+import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, maybePullDockerImage, printLine} from "../utils/utils.js";
 import progress from "progress-stream";
 import {sshCredentials} from "../types/deploy.js";
 

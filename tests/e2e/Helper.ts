@@ -1,10 +1,10 @@
 import puppeteer, {Browser, Page} from "puppeteer";
 import fs from "fs";
-import Runner from "../../scripts/runner.js";
-import Build from "../../scripts/build.js";
-import Config from "../../scripts/config.js";
-import {cleanOutDir} from "../../scripts/utils.js";
-import waitForServer from "../../scripts/waitForServer.js";
+import Runner from "../../utils/runner.js";
+import Build from "../../commands/build.js";
+import Config from "../../utils/config.js";
+import {cleanOutDir} from "../../utils/utils.js";
+import waitForServer from "../../utils/waitForServer.js";
 import {resolve} from "path";
 import {FullStackedConfig} from "../../index";
 

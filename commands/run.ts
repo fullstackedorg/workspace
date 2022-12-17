@@ -1,12 +1,13 @@
 import Build from "./build.js";
-import Runner from "./runner.js";
+import Runner from "../utils/runner.js";
 import os from "os";
 import readline from "readline";
 import Restore from "./restore.js";
+import {FullStackedConfig} from "../index";
 
 let runner: Runner = null, didSetExitHook = false, printStopOnce = false;
 
-export default async function(config: Config, build: boolean = true){
+export default async function(config: FullStackedConfig, build: boolean = true){
     if(build)
         await Build(config);
 

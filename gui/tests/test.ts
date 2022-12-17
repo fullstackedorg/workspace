@@ -3,7 +3,7 @@ import Helper from "../../tests/e2e/Helper.js"
 import {ok} from "assert";
 import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
-import sleep from "../../scripts/sleep.js";
+import sleep from "../../utils/sleep.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

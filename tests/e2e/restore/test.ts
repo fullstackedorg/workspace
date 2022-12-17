@@ -1,14 +1,14 @@
 import {describe, it, before, after} from 'mocha';
 import {exec, execSync} from "child_process";
 import path, {dirname} from "path";
-import waitForServer from "../../../scripts/waitForServer.js";
+import waitForServer from "../../../utils/waitForServer.js";
 import {notDeepEqual, deepEqual, ok} from "assert";
 import fs from "fs";
-import Runner from "../../../scripts/runner.js";
-import Config from "../../../scripts/config.js";
-import Build from "../../../scripts/build.js";
-import {clearLine, printLine} from "../../../scripts/utils.js";
-import {fetch} from "../../../webapp/fetch.js";
+import Runner from "../../../utils/runner.js";
+import Config from "../../../utils/config.js";
+import Build from "../../../commands/build.js";
+import {clearLine, printLine} from "../../../utils/utils.js";
+import {fetch} from "../../../utils/fetch.js";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

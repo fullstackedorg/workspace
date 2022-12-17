@@ -1,7 +1,7 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
 import Helper from "../Helper.js";
-import {fetch} from "../../../webapp/fetch.js";
+import {fetch} from "../../../utils/fetch.js";
 import Server from "../../../server/index.js";
 import {dirname} from "path";
 import {fileURLToPath} from "url";

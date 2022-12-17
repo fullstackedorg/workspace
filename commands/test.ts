@@ -3,7 +3,7 @@ import glob from "glob";
 import {fileURLToPath} from "url";
 import Mocha, {Runner} from "mocha";
 import {buildSync, build} from "esbuild";
-import {defaultEsbuildConfig, randStr} from "./utils.js";
+import {defaultEsbuildConfig, randStr} from "../utils/utils.js";
 import fs from "fs";
 import {execSync} from "child_process";
 import v8toIstanbul from "v8-to-istanbul";

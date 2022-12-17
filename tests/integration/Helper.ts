@@ -2,10 +2,10 @@ import {it, Suite} from "mocha";
 import yaml from "js-yaml";
 import fs from "fs";
 import path, {dirname, resolve} from "path";
-import Build from "../../scripts/build.js";
-import Config from "../../scripts/config.js";
-import Runner from "../../scripts/runner.js";
-import getPackageJSON from "../../getPackageJSON.js";
+import Build from "../../commands/build.js";
+import Config from "../../utils/config.js";
+import Runner from "../../utils/runner.js";
+import getPackageJSON from "../../utils/getPackageJSON.js";
 import glob from "glob";
 
 export default function(testSuite: Suite, testDir: string = null){

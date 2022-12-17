@@ -2,7 +2,7 @@ import path from "path";
 import crypto from "crypto";
 import {execSync} from "child_process";
 import Docker from "./docker.js";
-import getPackageJSON from "../getPackageJSON.js";
+import getPackageJSON from "./getPackageJSON.js";
 import {FullStackedConfig} from "../index";
 
 const defaultConfig: FullStackedConfig = {

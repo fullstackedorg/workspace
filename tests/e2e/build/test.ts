@@ -2,7 +2,7 @@ import fs from "fs";
 import path, {dirname} from "path";
 import {execSync} from "child_process";
 import {equal, ok} from "assert";
-import {cleanOutDir} from "../../../scripts/utils.js";
+import {cleanOutDir} from "../../../utils/utils.js";
 import {describe, it, before, after} from 'mocha';
 import {fileURLToPath} from "url";
 

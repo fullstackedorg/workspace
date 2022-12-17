@@ -4,9 +4,9 @@ import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path, {dirname} from "path";
-import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../scripts/utils.js";
-import sleep from "../../../scripts/sleep.js";
-import waitForServer from "../../../scripts/waitForServer.js";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils.js";
+import sleep from "../../../utils/sleep.js";
+import waitForServer from "../../../utils/waitForServer.js";
 import SSH from "../SSH.js";
 import {fileURLToPath} from "url";
 
@@ -38,7 +38,6 @@ describe("Deploy Test",  function(){
                 }
             ]
         })
-
 
         args = args.concat([
             `--src=${src}`,

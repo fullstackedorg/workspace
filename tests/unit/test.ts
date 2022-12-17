@@ -1,7 +1,7 @@
 import {describe, it} from 'mocha';
 import {deepEqual, equal, notEqual, ok} from "assert";
-import sleep from "../../scripts/sleep.js";
-import waitForServer from "../../scripts/waitForServer.js";
+import sleep from "../../utils/sleep.js";
+import waitForServer from "../../utils/waitForServer.js";
 import fs from "fs";
 import path, {dirname} from "path";
 import {
@@ -9,7 +9,7 @@ import {
     loadDataEncryptedWithPassword,
     randStr,
     saveDataEncryptedWithPassword
-} from "../../scripts/utils.js";
+} from "../../utils/utils.js";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

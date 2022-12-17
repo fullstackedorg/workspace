@@ -3,7 +3,6 @@ import path from "path";
 import DockerCompose from "dockerode-compose";
 import {FullStackedConfig} from "../index";
 
-// helper to start/restart/attach/stop your app
 export default class Runner {
     config: FullStackedConfig;
     composeFilePath: string;
