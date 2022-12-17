@@ -77,10 +77,19 @@ export default class Runner {
     }
 
     async stop(){
-        // stop docker-compose and remove all volumes (cleaner)
-        const nodeContainer = await this.config.docker.getContainer(this.dockerCompose.projectName + '_node_1');
-        if((await nodeContainer.inspect()).State.Status === 'running')
-            await nodeContainer.stop({t: 0});
+        const services = Object.keys(this.dockerCompose.recipe.services);
+        await Promise.all(services.map(serviceName => new Promise<void>(async resolve => {
+            try{
+                const container = await this.config.docker.getContainer(`${this.dockerCompose.projectName}_${serviceName}_1`);
+                if((await container.inspect()).State.Status === 'running')
+                    await container.stop({t: 0});
+                await container.remove({force: true, v: true});
+            }catch (e) {
+                console.log(e);
+            }
+
+            resolve();
+        })));
         await this.dockerCompose.down({ volumes: true });
     }
 }
