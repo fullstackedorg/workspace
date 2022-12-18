@@ -37,7 +37,7 @@ function getProcessedEnv(config: FullStackedConfig){
 
 // bundles the server
 async function buildServer(config: FullStackedConfig, watcher){
-    const fullstackedServerFile = resolve(__dirname, "..", "server", "index.ts");
+    const fullstackedServerFile = resolve(__dirname, "..", "server", "index.js");
 
     const fullstackedServerFileRegex =  new RegExp(fullstackedServerFile
         // windows file path...
@@ -331,8 +331,8 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
     }
 
     // add js entrypoint
-    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash + 
-        (config.production ? "" : "-" + randStr(6) )}"></script>`);
+    addInBODY(`<script type="module" src="/index.js?v=${config.version + "-" + config.hash +
+    (config.production ? "" : "-" + randStr(6) )}"></script>`);
 
     // if esbuild output any .css files, add them to index.html
     const builtCSSFiles = glob.sync("*.css", {cwd: config.public});
@@ -384,8 +384,8 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
         fs.copyFileSync(CSSFile, resolve(config.public, CSSFileName));
 
         // add link tag
-        addInHEAD(`<link rel="stylesheet" href="/${CSSFileName}?v=${config.version + "-" + config.hash + 
-            (config.production ? "" : "-" + randStr(6) )}">`);
+        addInHEAD(`<link rel="stylesheet" href="/${CSSFileName}?v=${config.version + "-" + config.hash +
+        (config.production ? "" : "-" + randStr(6) )}">`);
     }
 
     // web app manifest
@@ -401,14 +401,8 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
     // build service-worker and reference in index.html
     const serviceWorkerFilePath = resolve(config.src, "webapp", "service-worker.ts");
     if(fs.existsSync(serviceWorkerFilePath)){
-        buildSync({
-            entryPoints: [resolve(__dirname, "../webapp/ServiceWorkerRegistration.ts")],
-            define: {
-                "process.env.VERSION": JSON.stringify(config.version)
-            },
-            minify: true,
-            outfile: resolve(config.public, "service-worker.js")
-        });
+        // copy service worker registration entrypoint
+        fs.cpSync(resolve(__dirname, "..", "webapp", "serviceWorkerRegistration.js"), resolve(config.public, "service-worker.js"))
 
         // add reference tag in head
         addInHEAD(`<script src="/service-worker.js"></script>`);
