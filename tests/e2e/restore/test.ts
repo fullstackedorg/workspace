@@ -10,12 +10,11 @@ import Build from "../../../commands/build.js";
 import {clearLine, printLine} from "../../../utils/utils.js";
 import {fetch} from "../../../utils/fetch.js";
 import {fileURLToPath} from "url";
+import sleep from "../../../utils/sleep.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Backup-Restore Test", function(){
-    let testArr;
-    let runner: Runner;
     let localConfig;
     const backupDir = path.resolve(process.cwd(), "backup");
     const backupFile = path.resolve(backupDir, "mongo-data.tar");
@@ -28,18 +27,18 @@ describe("Backup-Restore Test", function(){
             silent: true
         });
         await Build({...localConfig, testMode: true});
-        runner = new Runner(localConfig);
-        await runner.start();
-        printLine("Generating data");
-        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
-
-        await fetch.post(`http://localhost:${runner.nodePort}/post`);
-
-        testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
     });
 
     it("Should backup / restore volume",  async function(){
         this.timeout(100000);
+
+        const runner = new Runner(localConfig);
+        await runner.start();
+
+        printLine("Generating data");
+        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        await fetch.post(`http://localhost:${runner.nodePort}/post`);
+        const testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
 
         ok(testArr.length > 0);
         printLine("Backing up");
@@ -61,26 +60,44 @@ describe("Backup-Restore Test", function(){
         const response2 = await fetch.get(`http://localhost:${runner.nodePort}/get`);
         deepEqual(response2, testArr);
         clearLine();
+
+        await runner.stop();
     });
 
     it("Should start with volume restored",  async function(){
-        this.timeout(50000);
+        this.timeout(100000);
 
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
+        const runner = new Runner(localConfig);
+        await runner.start();
+
+        printLine("Generating data");
+        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        await fetch.post(`http://localhost:${runner.nodePort}/post`);
+        const testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
+
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`, {stdio: "ignore"});
+
+        await runner.stop();
+
+        clearLine();
 
         const runProcess = exec(`node ${path.resolve(__dirname, "../../../", "cli")} run --src=${localConfig.src} --restored`);
-        await waitForServer(30000, `http://localhost:${runner.nodePort}/get`);
+        // runProcess.stdout.pipe(process.stdout);
+        // runProcess.stderr.pipe(process.stderr);
+        let response;
+        while(!response || !response.length) {
+            await sleep(2000);
+            await waitForServer(30000, `http://localhost:${runner.nodePort}/get`);
+            response = await fetch.get(`http://localhost:${runner.nodePort}/get`);
+        }
 
-        const response = await fetch.get(`http://localhost:${runner.nodePort}/get`);
         deepEqual(response, testArr);
 
-        runProcess.kill();
+        await runner.stop();
     });
 
     after(async function() {
         if(fs.existsSync(backupDir))
             fs.rmSync(backupDir, {force: true, recursive: true});
-
-        await runner.stop();
     });
 });
