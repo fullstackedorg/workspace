@@ -1,68 +1,53 @@
 .idea
 .github
 node_modules
-dist
-.nyc_output
-coverage
-**/*.js.map
-test.ts
-/backup
 
-d.ts
+/build.*
 
-**/*.js.map
-**/*.tjs.map
+/cleanup.ts
 
-/build.js
-/build.ts
+/cli.js.map
+/cli.ts
 
-docs
+/commands/**/*.js.map
+/commands/**/*.ts
+/commands/**/*.d.ts
 
-mocha-reporter.ts
-getPackageJSON.ts
+/docs
 
-tests/e2e/*/*
-tests/e2e/Dockerfile
-tests/e2e/Helper.js
-tests/e2e/SSH.ts
-tests/e2e/SSH.js
-tests/integration/*/*
-tests/integration/Helper.js
-tests/integration/webapp.tsx
-tests/integration/server.ts
-tests/integration/server.js
-tests/unit
+/gui/**/*
+!/gui/dist
+/gui/dist/**/*.map
 
-scripts/backup.ts
-scripts/build.ts
-scripts/certs.ts
-scripts/config.ts
-scripts/create.ts
-scripts/deploy.ts
-scripts/docker.ts
-scripts/gui.ts
-scripts/register.ts
-scripts/restore.ts
-scripts/run.ts
-scripts/runner.ts
-scripts/test.ts
-scripts/utils.ts
-scripts/watch.ts
-scripts/watch.ts
+/index.ts
 
-types/*.ts
+/server/index.js.map
+/server/index.ts
 
-.mocharc.ts
+/server/watcher.d.ts
+/server/watcher.js.map
+/server/watcher.ts
 
-cli.ts
+/tests
 
-server/watcher.js
+/tsconfig.json
 
-gui/**/*
-!gui/dist/**/*
+/types
 
-testsDockerImages.js
-testsDockerImages.ts
+/utils/**/*
+!/utils/**/*.js
 
-DockerInstallScripts.ts
-CommandInterface.ts
+!/utils/fetch.d.ts
+!/utils/sleep.d.ts
+!/utils/testE2E.d.ts
+!/utils/testIntegration.d.ts
+!/utils/uploadFileWithProgress.d.ts
+!/utils/waitForServer.d.ts
+
+/version.js.map
+/version.ts
+
+/webapp/**/*.js.map
+/webapp/**/*.ts
+
+

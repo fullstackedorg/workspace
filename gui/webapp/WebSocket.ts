@@ -1,4 +1,4 @@
-import {fetch} from "fullstacked/webapp/fetch";
+import {fetch} from "../../utils/fetch";
 import {CMD, MESSAGE_FROM_BACKEND, MESSAGE_TYPE} from "../../types/gui";
 
 // source : https://stackoverflow.com/a/1349426
@@ -20,8 +20,11 @@ export class WS {
     static tickSubscribers = new Map<string, () => void>();
 
     static init(){
-        return new Promise(async resolve => {
+        return new Promise<void>(async resolve => {
             const backendPort = await fetch.get("/port");
+
+            if(!backendPort) resolve();
+
             this.ws = new WebSocket(`ws://localhost:${backendPort}`);
             this.ws.onmessage = (event) => {
                 const {data, type, id}: MESSAGE_FROM_BACKEND = JSON.parse(event.data);
@@ -63,6 +66,8 @@ export class WS {
     }
 
     static cmd(cmd: CMD, data?: any, tickSubscription?: () => void){
+        if(this.ws.readyState !== 1) return;
+
         return new Promise<any>(resolve => {
             const id = randStr(10);
             this.activeRequest.set(id, resolve);

@@ -1,23 +1,25 @@
 import { describe, it, before, after } from 'mocha';
-import {equal} from "assert";
-import {dirname} from "path";
+import {ok} from "assert";
+import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
-import TestE2E from "../../../utils/testE2E.js";
+import sleep from "../../utils/sleep.js";
+import TestE2E from "../../utils/testE2E.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-describe("Basic Test", function(){
-    let test = new TestE2E(__dirname);
+describe("GUI Test", function(){
+    let test = new TestE2E(resolve(__dirname, ".."));
 
     before(async function (){
         await test.start();
     });
 
-    it('Should load a basic web page', async function(){
-        const root = await test.page.$("#root");
+    it('Should load the gui', async function(){
+        await sleep(1000);
+        const root = await test.page.$("h1");
         const innerHTML = await root.getProperty('innerHTML');
         const value: string = await innerHTML.jsonValue();
-        equal(value.trim(), "<basic-test>Basic Test</basic-test>");
+        ok(value.includes("FullStacked GUI"));
     });
 
     after(async function(){

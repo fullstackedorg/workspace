@@ -1,9 +1,9 @@
 import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
-import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, maybePullDockerImage, printLine} from "./utils";
+import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, maybePullDockerImage, printLine} from "../utils/utils.js";
 import progress from "progress-stream";
-import {sshCredentials} from "../types/deploy";
+import {sshCredentials} from "../types/deploy.js";
 
 export default async function (config: FullStackedConfig) {
     if(config.host)

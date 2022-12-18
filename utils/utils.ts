@@ -8,11 +8,10 @@ import {Socket} from "net";
 import SFTP from "ssh2-sftp-client";
 import yaml from "js-yaml";
 import glob from "glob";
-import progress from "progress-stream";
-import {WrappedSFTP} from "./deploy";
+import {WrappedSFTP} from "../commands/deploy";
 import crypto from "crypto";
 import {sshCredentials} from "../types/deploy";
-import {Writable} from "stream";
+import {FullStackedConfig} from "../index";
 
 
 // ask a question, resolve string answer
@@ -101,7 +100,7 @@ export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
         entryPoints: [entrypoint],
         outfile: (entrypoint.endsWith("x") ? entrypoint.slice(0, -3) : entrypoint.slice(0, -2)) + "js",
         platform: "node",
-        format: "cjs",
+        format: "esm",
         sourcemap: true
     }
 }
@@ -129,7 +128,7 @@ export function execSSH(ssh2, cmd, logger?: (str) => void): Promise<string>{
 }
 
 // exec filename.ts(x) and *.filename.ts(x) file
-export async function execScript(filePath: string, config: Config, ...args): Promise<void> {
+export async function execScript(filePath: string, config: FullStackedConfig, ...args): Promise<void> {
     const filePathComponents = filePath.split(path.sep)
     const fileName = filePathComponents.pop().split(".").shift();
 
@@ -141,8 +140,6 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
     if(!filePath.endsWith("x") && fs.existsSync(filePath + "x")) filesToRun.push(filePath + "x");
 
     if(!filesToRun.length) return;
-
-    require("./register");
 
     // build file on the fly
     const ranFiles = filesToRun.map(async file => {
@@ -156,9 +153,13 @@ export async function execScript(filePath: string, config: Config, ...args): Pro
 ${fileContent}`);
         }
 
-        const importedScript = require(esbuildConfig.outfile);
-        if(typeof importedScript.default === 'function'){
-            const functionReturn = importedScript.default(config, ...args);
+        const outfile = esbuildConfig.outfile
+            // windows paths...
+            .replace(/C:/, "").replace(/\\/, "/");
+
+        const importedModule = await import(outfile);
+        if(typeof importedModule.default === 'function'){
+            const functionReturn = importedModule.default(config, ...args);
             if(functionReturn instanceof Promise)
                 await functionReturn;
         }
@@ -260,21 +261,6 @@ export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: stri
 }
 
 
-export async function uploadFileWithProgress(sftp: any, localFilePath: string, remoteFilePath: string, progressCallback: (progress: number) => void, silent = false){
-    let ulStream = fs.createReadStream(localFilePath);
-
-    if(!silent){
-        const progressStream = progress({
-            length: fs.statSync(localFilePath).size
-        });
-
-        progressStream.on('progress', progress => progressCallback(progress.percentage));
-
-        ulStream = ulStream.pipe(progressStream);
-    }
-
-    await sftp.put(ulStream, remoteFilePath);
-}
 
 // get data detail in fullchain cert
 export function getCertificateData(fullchain){
@@ -326,7 +312,7 @@ export function saveDataEncryptedWithPassword(filePath: string, password: string
 
 export async function maybePullDockerImage(docker, image){
     try{
-        await (await docker.getImage(image)).inspect()
+        await (await docker.getImage(image)).inspect();
     }catch (e){
         const pullStream = await docker.pull(image);
         await new Promise<void>(resolve => {

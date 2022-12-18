@@ -1,8 +1,8 @@
-import {FullStackedConfig} from "./index";
-import {printLine} from "./scripts/utils";
-import {CMD} from "./types/gui";
+import {FullStackedConfig} from "../index";
+import {printLine} from "../utils/utils.js";
+import {CMD} from "../types/gui.js";
 
-export abstract class CommandInterface {
+export default abstract class {
     config: FullStackedConfig;
     write: (str) => void = process.stdout.write;
     printLine: (str) => void = printLine;

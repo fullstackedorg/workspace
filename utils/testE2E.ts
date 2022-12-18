@@ -1,18 +1,19 @@
 import puppeteer, {Browser, Page} from "puppeteer";
-import v8toIstanbul from "v8-to-istanbul";
 import fs from "fs";
-import Runner from "../../scripts/runner";
-import Build from "../../scripts/build";
-import Config from "../../scripts/config";
-import {cleanOutDir} from "../../scripts/utils";
-import waitForServer from "../../scripts/waitForServer";
+import Runner from "./runner.js";
+import Build from "../commands/build.js";
+import Config from "./config.js";
+import {cleanOutDir} from "./utils.js";
+import waitForServer from "./waitForServer.js";
+import {resolve} from "path";
+import {FullStackedConfig} from "../index";
 
-export default class Helper {
+export default class TestE2E {
     dir: string;
     runner: Runner;
     browser: Browser;
     page: Page;
-    localConfig: Config;
+    localConfig: FullStackedConfig;
 
     constructor(dir: string) {
         this.dir = dir;
@@ -31,7 +32,7 @@ export default class Helper {
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
 
-        if(process.argv.includes("--coverage")){
+        if(process.argv.includes("--cover")){
             await this.page.coverage.startJSCoverage({
                 includeRawScriptCoverage: true,
                 resetOnNavigation: false
@@ -52,12 +53,12 @@ export default class Helper {
             process.exit(1);
         });
 
-        if(process.argv.includes("--coverage")) {
+        if(process.argv.includes("--cover")) {
             const originalGoto = this.page.goto;
             const weakThis = this;
             // @ts-ignore
             this.page.goto = async function(path: string) {
-                await Helper.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig, weakThis.runner.nodePort);
+                await TestE2E.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig, weakThis.runner.nodePort);
                 await weakThis.page.coverage.startJSCoverage({
                     includeRawScriptCoverage: true,
                     resetOnNavigation: false
@@ -74,6 +75,7 @@ export default class Helper {
     private static async outputCoverage(page, dir, localConfig, nodePort){
         const jsCoverage = (await page.coverage.stopJSCoverage()).map(({rawScriptCoverage: coverage}) => {
             let url: URL;
+
             try{ url = new URL(coverage.url); }
             catch (e){ return false; }
 
@@ -85,31 +87,44 @@ export default class Helper {
 
             return {
                 ...coverage,
-                url: dir + "/dist/" + localConfig.version + "/public" + file
+                scriptId: String(coverage.scriptId),
+                url: [
+                    "file://",
+                    dir.replace(/\\/g, "/").replace("C:", "/C:"),
+                    "/dist/",
+                    localConfig.version,
+                    "/public",
+                    file
+                ].join("")
             }
         }).filter(Boolean);
 
-        const outFolder = process.cwd() + "/.nyc_output";
-        if(!fs.existsSync(outFolder))
-            fs.mkdirSync(outFolder);
+        let srcDir = process.cwd();
+        process.argv.forEach(arg => {
+            if(!arg.startsWith("--src=")) return;
+            srcDir = resolve(process.cwd(), arg.slice("--src=".length));
+        });
 
-        for (let i = 0; i < jsCoverage.length; i++) {
-            const script = v8toIstanbul(jsCoverage[i].url);
-            await script.load();
-            script.applyCoverage(jsCoverage[i].functions);
-            fs.writeFileSync(outFolder + "/webapp-" +
-                Math.floor(Math.random() * 10000) + "-" + Date.now() + ".json", JSON.stringify(script.toIstanbul()))
-            script.destroy();
-        }
+        const outFolder = resolve(srcDir, ".c8");
+        if(!fs.existsSync(outFolder)) fs.mkdirSync(outFolder);
+
+        const fileName = [
+            outFolder,
+            "/coverage-",
+            Math.floor(Math.random() * 10000),
+            "-",
+            Date.now(),
+            ".json"
+        ];
+        fs.writeFileSync(fileName.join(""), JSON.stringify({result: jsCoverage}));
     }
 
     async stop(){
-        if(process.argv.includes("--coverage")){
-            await Helper.outputCoverage(this.page, this.dir, this.localConfig, this.runner.nodePort);
+        if(process.argv.includes("--cover")){
+            await TestE2E.outputCoverage(this.page, this.dir, this.localConfig, this.runner.nodePort);
         }
 
         await this.browser.close();
         await this.runner.stop();
-        cleanOutDir(this.dir + "/dist");
     }
 }

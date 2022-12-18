@@ -1,7 +1,11 @@
 import fs from "fs";
+import {dirname, resolve} from "path";
+import {fileURLToPath} from "url";
 
-fs.writeFileSync(__dirname + "/postdeploy.txt", "postdeploy");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+fs.writeFileSync(resolve(__dirname, "postdeploy.txt"), "postdeploy");
 
 export default async function(){
-    fs.writeFileSync(__dirname + "/postdeploy-2.txt", "postdeploy async");
+    fs.writeFileSync(resolve(__dirname, "postdeploy-2.txt"), "postdeploy async");
 }

@@ -1,4 +1,4 @@
-import Server from "fullstacked/server";
+import Server from "../../../../server/index";
 import {MongoClient} from 'mongodb';
 
 (async () => {

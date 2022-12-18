@@ -8,8 +8,7 @@ export enum DEPLOY_CMD {
     DEPLOY,
     CERT,
     NEW_CERT,
-    SAVE,
-    END
+    SAVE
 }
 
 export type sshCredentials = {

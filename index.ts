@@ -1,3 +1,6 @@
+import Docker from "dockerode";
+import version from "./version";
+
 declare type ConfigBuild = {
     name? : string, // app name
     version? : string,  // version number
@@ -15,7 +18,7 @@ declare type ConfigBuild = {
 
 declare type ConfigRun = {
     restored?: boolean
-    docker?: any
+    docker?: Docker
 }
 
 declare type ConfigWatch = {
@@ -30,7 +33,9 @@ declare type ConfigTest = {
 
     testMode? : boolean,
     testFile? : string,
-    testSuite? : string
+    testSuite? : string,
+
+    c8OutDir? : string
 }
 
 declare type ConfigCerts = {
@@ -59,7 +64,7 @@ declare type ConfigBackup = {
     backupDir? : string
 }
 
-declare type Config = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigCerts & ConfigBackup & {
+export type FullStackedConfig = ConfigBuild & ConfigRun & ConfigWatch & ConfigTest & ConfigDeploy & ConfigCerts & ConfigBackup & {
     silent? : boolean, // silence logging
     allYes? : boolean,
     gui?    : boolean,
