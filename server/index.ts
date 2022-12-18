@@ -87,17 +87,17 @@ class ServerInstance {
 
     addListener(requestListener: RequestListener<typeof IncomingMessage, typeof ServerResponse>, prepend: boolean = false) {
         if(prepend)
-            server.reqListeners.unshift(requestListener);
+            Server.reqListeners.unshift(requestListener);
         else
-            server.reqListeners.push(requestListener);
+            Server.reqListeners.push(requestListener);
     }
 
     stop(){
-        server.server.close()
+        Server.server.close()
     }
 }
 
-const server = new ServerInstance();
+const Server = new ServerInstance();
 
 (() => {
     // prevent from starting when imported
@@ -105,8 +105,8 @@ const server = new ServerInstance();
     if (import.meta.url !== pathToFileURL(process.argv[1]).href || process.argv.includes("--prevent-auto-start"))
         return;
 
-    server.start();
+    Server.start();
 })()
 
-export default server;
+export default Server;
 

@@ -1,5 +1,5 @@
 // exposed sleep function
-export default function(ms: number){
+export default function sleep(ms: number){
     return new Promise<void>(resolve => {
         setTimeout(resolve, ms);
     });

@@ -1,7 +1,7 @@
 import progress from "progress-stream";
 import fs from "fs";
 
-export default async function (sftp: any, localFilePath: string, remoteFilePath: string, progressCallback: (progress: number) => void, silent = false){
+export default async function uploadFileWithProgress(sftp: any, localFilePath: string, remoteFilePath: string, progressCallback: (progress: number) => void, silent = false){
     let ulStream = fs.createReadStream(localFilePath);
 
     if(!silent){
