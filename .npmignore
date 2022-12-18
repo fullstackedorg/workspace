@@ -1,5 +1,5 @@
+.DS_Store
 .idea
-.github
 node_modules
 
 /build.*
