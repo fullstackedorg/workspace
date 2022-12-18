@@ -70,7 +70,7 @@ see flags in the [docs](https://docs.fullstacked.org/commands)
 
 ### <a name="gui"></a>GUI
 
-> **Notes** <br />
+> **Note** <br />
 > The GUI is fairly new and is working only with the deploy command.
 
 * Run a command using the `--gui` arg to pop up the FullStacked GUI.
