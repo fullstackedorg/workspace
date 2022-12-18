@@ -3,11 +3,14 @@ import {execSync} from "child_process";
 import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
-import path from "path";
-import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../scripts/utils";
-import sleep from "fullstacked/scripts/sleep";
-import waitForServer from "fullstacked/scripts/waitForServer";
-import SSH from "../SSH";
+import path, {dirname} from "path";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils.js";
+import sleep from "../../../utils/sleep.js";
+import waitForServer from "../../../utils/waitForServer.js";
+import SSH from "../SSH.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Deploy Test",  function(){
     const sshServer = new SSH();
@@ -22,7 +25,7 @@ describe("Deploy Test",  function(){
         saveDataEncryptedWithPassword(path.resolve(src, ".fullstacked"), "test", {
             sshCredentials: {
                 host: "localhost",
-                port: sshServer.sshPort,
+                port: sshServer.containers.at(0).sshPort,
                 username: sshServer.username,
                 password: sshServer.password,
                 appDir: "/home"
@@ -35,7 +38,6 @@ describe("Deploy Test",  function(){
                 }
             ]
         })
-
 
         args = args.concat([
             `--src=${src}`,

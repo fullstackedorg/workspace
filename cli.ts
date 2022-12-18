@@ -1,18 +1,19 @@
 #!/usr/bin/env node
-import defaultConfig from "./scripts/config";
+import defaultConfig from "./utils/config.js";
+import {FullStackedConfig} from "./index";
 
 const scripts = {
-    "build"     : "./scripts/build",
-    "run"       : "./scripts/run",
-    "watch"     : "./scripts/watch",
-    "test"      : "./scripts/test",
-    "deploy"    : "./scripts/deploy",
-    "backup"    : "./scripts/backup",
-    "restore"   : "./scripts/restore"
+    "build"     : "./commands/build.js",
+    "run"       : "./commands/run.js",
+    "watch"     : "./commands/watch.js",
+    "test"      : "./commands/test.js",
+    "deploy"    : "./commands/deploy.js",
+    "backup"    : "./commands/backup.js",
+    "restore"   : "./commands/restore.js"
 };
 let script = "run"
 
-let config: Config = {}
+let config: FullStackedConfig = {}
 const args = {
     "--src=": value => config.src = value,
     "--out=": value => config.out = value,
@@ -43,7 +44,8 @@ const args = {
     "--watch-dir=": value => config.watchDir = upgradeToArray(value),
     "--restored": () => config.restored = true,
     "--production": () => config.production = true,
-    "--gui": () => config.gui = true
+    "--gui": () => config.gui = true,
+    "--c8-out-dir=": value => config.c8OutDir = value
 };
 
 function upgradeToArray(rawValue: string): string | string[]{
@@ -65,17 +67,20 @@ process.argv.forEach(arg => {
     });
 });
 
-defaultConfig(config).then(configReady => {
-    const CommandClass = require(scripts[script]).default;
+defaultConfig(config).then(async configReady => {
+    const scriptModule = await import(scripts[script]);
+
+    const CommandClass = scriptModule.default;
     let command;
     if(script === "deploy")
         command = new CommandClass(configReady);
     else
         CommandClass(configReady);
 
-    if(config.gui)
-        require("./scripts/gui").default(command);
-    else if(command?.runCLI)
+    if(config.gui) {
+        const guiModule = await import("./utils/gui.js");
+        await guiModule.default(command);
+    }else if(command?.runCLI)
         command.runCLI();
 });
 

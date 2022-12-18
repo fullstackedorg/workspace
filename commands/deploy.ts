@@ -1,19 +1,22 @@
-import path from "path";
+import path, {dirname} from "path";
 import fs from "fs";
 import glob from "glob";
 import {
-    execScript, execSSH, getSFTPClient,
-    uploadFileWithProgress, randStr, askQuestion,
+    execScript, execSSH, getSFTPClient, randStr, askQuestion,
     getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword
-} from "./utils";
-import Build from "./build";
+} from "../utils/utils.js";
+import Build from "./build.js";
 import yaml from "js-yaml";
-import DockerInstallScripts from "../DockerInstallScripts";
+import DockerInstallScripts from "../utils/dockerInstallScripts.js";
 import { Writable } from "stream";
-import {CommandInterface} from "../CommandInterface";
+import CommandInterface from "./Interface.js";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
-import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy";
+import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy.js";
+import {fileURLToPath} from "url";
+import uploadFileWithProgress from "../utils/uploadFileWithProgress.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export type WrappedSFTP = SFTP & {
     client: Client
@@ -234,8 +237,8 @@ export default class Deploy extends CommandInterface {
             console.log("Added certificate")
         }
 
-        const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx.conf"), {encoding: "utf-8"});
-        const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx-ssl.conf"), {encoding: "utf-8"});
+        const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx", "service.conf"), {encoding: "utf-8"});
+        const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx", "service-ssl.conf"), {encoding: "utf-8"});
         nginxConfigs.forEach((service, serviceIndex) => {
             const port = availablePorts[serviceIndex];
             const nginx = nginxTemplate
@@ -285,7 +288,7 @@ export default class Deploy extends CommandInterface {
 
         console.log(`Starting FullStacked Nginx on remote server`);
         await execSSH(sftp.client, `sudo chmod -R 755 ${this.sshCredentials.appDir}`);
-        await sftp.put(path.resolve(__dirname, "..", "nginx", "nginx.conf"), `${this.sshCredentials.appDir}/nginx.conf`);
+        await sftp.put(path.resolve(__dirname, "..", "nginx", "root.conf"), `${this.sshCredentials.appDir}/root.conf`);
         await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${this.sshCredentials.appDir}/docker-compose.yml`);
         await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml up -d`, this.write);
         await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart`, this.write);

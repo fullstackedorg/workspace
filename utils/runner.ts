@@ -1,17 +1,15 @@
-import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImage} from "./utils";
+import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImage} from "./utils.js";
 import path from "path";
-import fs from "fs";
-import yaml from "js-yaml";
 import DockerCompose from "dockerode-compose";
+import {FullStackedConfig} from "../index";
 
-// helper to start/restart/attach/stop your app
 export default class Runner {
-    config: Config;
+    config: FullStackedConfig;
     composeFilePath: string;
     nodePort: number;
     dockerCompose: any;
 
-    constructor(config: Config) {
+    constructor(config: FullStackedConfig) {
         this.config = config;
         this.composeFilePath = path.resolve(this.config.dist, "docker-compose.yml");
 
@@ -22,17 +20,21 @@ export default class Runner {
     async start(): Promise<number> {
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
-        // get compose content
-        const dockerCompose: any = yaml.load(fs.readFileSync(this.composeFilePath, {encoding: "utf-8"}));
+        this.dockerCompose = new DockerCompose(this.config.docker, this.composeFilePath, this.config.name);
+
+        try{
+            await this.dockerCompose.down();
+        }catch(e){}
 
         // setup exposed ports
-        const services = Object.keys(dockerCompose.services);
+        const services = Object.keys(this.dockerCompose.recipe.services);
         let availablePort = 8000;
 
         for(const service of services){
-            await maybePullDockerImage(this.config.docker, dockerCompose.services[service].image);
+            const serviceObject = this.dockerCompose.recipe.services[service];
 
-            const serviceObject = dockerCompose.services[service];
+            await maybePullDockerImage(this.config.docker, serviceObject.image);
+
             const exposedPorts = serviceObject.ports;
 
             if(!exposedPorts) continue;
@@ -42,17 +44,13 @@ export default class Runner {
 
                 availablePort = await getNextAvailablePort(availablePort);
 
-                dockerCompose.services[service].ports[i] = `${availablePort}:${exposedPorts[i]}`;
+                serviceObject.ports[i] = `${availablePort}:${exposedPorts[i]}`;
 
                 if(service === "node") this.nodePort = availablePort;
 
                 availablePort++;
             }
         }
-
-        fs.writeFileSync(this.composeFilePath, yaml.dump(dockerCompose));
-
-        this.dockerCompose = new DockerCompose(this.config.docker, this.composeFilePath, this.config.name);
 
         // force pull process
         if(this.config.pull) {
@@ -79,10 +77,19 @@ export default class Runner {
     }
 
     async stop(){
-        // stop docker-compose and remove all volumes (cleaner)
-        const nodeContainer = await this.config.docker.getContainer(this.dockerCompose.projectName + '_node_1');
-        if((await nodeContainer.inspect()).State.Status === 'running')
-            await nodeContainer.stop({t: 0});
-        await this.dockerCompose.down({ volumes: true });
+        const services = Object.keys(this.dockerCompose.recipe.services);
+        await Promise.all(services.map(serviceName => new Promise<void>(async resolve => {
+            try{
+                const container = await this.config.docker.getContainer(`${this.dockerCompose.projectName}_${serviceName}_1`);
+                if((await container.inspect()).State.Status === 'running')
+                    await container.stop({t: 0});
+                await container.remove({force: true, v: true});
+            }catch (e) {}
+
+            resolve();
+        })));
+        try{
+            await this.dockerCompose.down({ volumes: true });
+        }catch (e){}
     }
 }

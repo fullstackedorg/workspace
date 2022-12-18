@@ -1,10 +1,11 @@
 import path from "path";
 import crypto from "crypto";
 import {execSync} from "child_process";
-import Docker from "./docker";
-import getPackageJSON from "../getPackageJSON";
+import Docker from "./docker.js";
+import getPackageJSON from "./getPackageJSON.js";
+import {FullStackedConfig} from "../index";
 
-const defaultConfig: Config = {
+const defaultConfig: FullStackedConfig = {
     src: process.cwd(),
     out: process.cwd(),
     appDir: "/home"
@@ -12,7 +13,7 @@ const defaultConfig: Config = {
 
 function getGitShortCommitHash(){
     try{
-        const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
+        const commitHash = execSync("git rev-parse --short HEAD", {stdio: "ignore"}).toString().trim();
         return commitHash.startsWith("fatal") ? "" : commitHash;
     }
     catch (e){

@@ -2,11 +2,14 @@ import {describe, it, before, after} from 'mocha';
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
-import {cleanOutDir} from "scripts/utils";
+import {cleanOutDir} from "../../../utils/utils.js";
 import {equal, ok, notEqual} from "assert";
-import path from "path";
-import sleep from "fullstacked/scripts/sleep";
-import waitForServer from "fullstacked/scripts/waitForServer";
+import path, {dirname} from "path";
+import sleep from "../../../utils/sleep.js";
+import waitForServer from "../../../utils/waitForServer.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;

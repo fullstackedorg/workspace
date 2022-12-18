@@ -3,7 +3,7 @@ import {DEPLOY_CMD} from "./deploy";
 export type CMD = GLOBAL_CMD | DEPLOY_CMD;
 
 export enum GLOBAL_CMD {
-    END
+    END = "END"
 }
 
 export enum MESSAGE_TYPE {

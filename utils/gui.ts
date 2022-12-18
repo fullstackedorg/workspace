@@ -1,15 +1,18 @@
-import Server from "../server";
-import {getNextAvailablePort} from "./utils";
-import Run from "./run";
-import Config from "./config";
-import path from "path";
-import waitForServer from "./waitForServer";
+import Server from "../server/index.js";
+import {getNextAvailablePort} from "./utils.js";
+import Run from "../commands/run.js";
+import Config from "./config.js";
+import path, {dirname} from "path";
+import waitForServer from "./waitForServer.js";
 import open from "open";
 import fs from "fs";
 import yaml from "js-yaml";
 import {WebSocketServer} from "ws";
-import {CommandInterface} from "../CommandInterface";
-import {GLOBAL_CMD, MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
+import CommandInterface from "../commands/Interface.js";
+import {GLOBAL_CMD, MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default async function (command: CommandInterface){
     Server.port = await getNextAvailablePort();
@@ -82,7 +85,11 @@ export default async function (command: CommandInterface){
 
     const dockerComposeFile = path.resolve(__dirname, "..", "gui", "dist", "docker-compose.yml");
     const dockerCompose: any = yaml.load(fs.readFileSync(dockerComposeFile, {encoding: "utf-8"}));
-    dockerCompose.services.node.command = ["index", `--port=${Server.port}`];
+
+    const portArg = `--port=${Server.port}`;
+    if(!dockerCompose.services.node.command.includes(portArg))
+        dockerCompose.services.node.command.push(portArg);
+
     dockerCompose.services.node.ports = ["80"];
     fs.writeFileSync(dockerComposeFile, yaml.dump(dockerCompose));
     const runner = await Run(await Config({
@@ -90,5 +97,6 @@ export default async function (command: CommandInterface){
         out: path.resolve(__dirname, "..", "gui")
     }), false);
     await waitForServer(3000, `http://localhost:${runner.nodePort}`);
-    return open(`http://localhost:${runner.nodePort}`);
+    await open(`http://localhost:${runner.nodePort}`);
+    return Server;
 }

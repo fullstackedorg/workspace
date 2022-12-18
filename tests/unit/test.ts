@@ -1,15 +1,18 @@
 import {describe, it} from 'mocha';
 import {deepEqual, equal, notEqual, ok} from "assert";
-import sleep from "fullstacked/scripts/sleep";
-import waitForServer from "fullstacked/scripts/waitForServer";
+import sleep from "../../utils/sleep.js";
+import waitForServer from "../../utils/waitForServer.js";
 import fs from "fs";
-import path from "path";
+import path, {dirname} from "path";
 import {
     copyRecursiveSync,
     loadDataEncryptedWithPassword,
     randStr,
     saveDataEncryptedWithPassword
-} from "../../scripts/utils";
+} from "../../utils/utils.js";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Unit Tests", function(){
     const oneSec = 1000;

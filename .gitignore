@@ -2,7 +2,6 @@
 .idea
 node_modules
 dist
-.nyc_output
 coverage
 .tests
 .env
@@ -16,3 +15,5 @@ coverage
 /version.ts
 /backup
 .fullstacked
+.c8
+.nyc
