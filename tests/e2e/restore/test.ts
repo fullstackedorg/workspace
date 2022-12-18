@@ -94,6 +94,7 @@ describe("Backup-Restore Test", function(){
         deepEqual(response, testArr);
 
         await runner.stop();
+        runProcess.kill();
     });
 
     after(async function() {
