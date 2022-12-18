@@ -28,6 +28,7 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup with feature
 * Test
   * w/ Code Coverage
 * Deploy
+  * w/ a [GUI](#gui)
 * Backup & Restore
 
 ## Usage
@@ -66,6 +67,20 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 | npx fullstacked restore     | Restore your data volumes from your web app.                                                                                 |
 
 see flags in the [docs](https://docs.fullstacked.org/commands)
+
+### <a name="gui"></a>GUI
+
+> **Notes** <br />
+> The GUI is fairly new and is working only with the deploy command.
+
+* Run a command using the `--gui` arg to pop up the FullStacked GUI.
+* It helps a lot with setting up a couple of stuff and seeing the progress. 
+* Finally, save and load your configs to a password encrypted file. 
+This way, even if you commit the `.fullstacked` file in your repo (**<u>strongly not recommend in public repositories</u>**),
+it is not revealing anything.
+Only password holders, like you and your CI, can decrypt the info and run the command!
+
+<img src=https://files.cplepage.com/fullstacked/fullstacked-gui.jpg />
 
 ### Use FullStacked Remotely
 
