@@ -20,8 +20,6 @@ describe("Backup-Restore Test", function(){
     const backupFile = path.resolve(backupDir, "mongo-data.tar");
 
     before(async function (){
-        this.timeout(30000);
-
         localConfig = await Config({
             src: __dirname,
             silent: true
@@ -30,7 +28,7 @@ describe("Backup-Restore Test", function(){
     });
 
     it("Should backup / restore volume",  async function(){
-        this.timeout(100000);
+        this.timeout(200000);
 
         const runner = new Runner(localConfig);
         await runner.start();
@@ -65,7 +63,7 @@ describe("Backup-Restore Test", function(){
     });
 
     it("Should start with volume restored",  async function(){
-        this.timeout(100000);
+        this.timeout(200000);
 
         const runner = new Runner(localConfig);
         await runner.start();

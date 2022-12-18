@@ -14,7 +14,7 @@ describe("GUI Test", function(){
         await test.start();
     });
 
-    it('Should load a basic web page', async function(){
+    it('Should load the gui', async function(){
         await sleep(1000);
         const root = await test.page.$("h1");
         const innerHTML = await root.getProperty('innerHTML');

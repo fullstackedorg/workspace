@@ -77,6 +77,7 @@ export default class Runner {
     }
 
     async stop(){
+        await this.dockerCompose.down({ volumes: true });
         const services = Object.keys(this.dockerCompose.recipe.services);
         await Promise.all(services.map(serviceName => new Promise<void>(async resolve => {
             try{
@@ -90,6 +91,5 @@ export default class Runner {
 
             resolve();
         })));
-        await this.dockerCompose.down({ volumes: true });
     }
 }
