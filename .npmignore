@@ -28,12 +28,7 @@ node_modules
 /server/watcher.js.map
 /server/watcher.ts
 
-/tests/**/*
-!/tests/e2e/Helper.d.ts
-!/tests/e2e/Helper.js
-
-!/tests/integration/Helper.d.ts
-!/tests/integration/Helper.js
+/tests
 
 /tsconfig.json
 
@@ -44,6 +39,8 @@ node_modules
 
 !/utils/fetch.d.ts
 !/utils/sleep.d.ts
+!/utils/testE2E.d.ts
+!/utils/testIntegration.d.ts
 !/utils/uploadFileWithProgress.d.ts
 !/utils/waitForServer.d.ts
 

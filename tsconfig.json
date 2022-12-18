@@ -18,7 +18,7 @@
     },
     "include": [
         "index.ts",
-        "tests/e2e/Helper.ts",
+        "tests/e2e/HelperE2E.ts",
         "tests/integration/Helper.ts",
         "server/index.ts",
         "utils/fetch.ts",

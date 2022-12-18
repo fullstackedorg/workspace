@@ -1,14 +1,14 @@
 import puppeteer, {Browser, Page} from "puppeteer";
 import fs from "fs";
-import Runner from "../../utils/runner.js";
-import Build from "../../commands/build.js";
-import Config from "../../utils/config.js";
-import {cleanOutDir} from "../../utils/utils.js";
-import waitForServer from "../../utils/waitForServer.js";
+import Runner from "./runner.js";
+import Build from "../commands/build.js";
+import Config from "./config.js";
+import {cleanOutDir} from "./utils.js";
+import waitForServer from "./waitForServer.js";
 import {resolve} from "path";
-import {FullStackedConfig} from "../../index";
+import {FullStackedConfig} from "../index";
 
-export default class Helper {
+export default class TestE2E {
     dir: string;
     runner: Runner;
     browser: Browser;
@@ -58,7 +58,7 @@ export default class Helper {
             const weakThis = this;
             // @ts-ignore
             this.page.goto = async function(path: string) {
-                await Helper.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig, weakThis.runner.nodePort);
+                await TestE2E.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig, weakThis.runner.nodePort);
                 await weakThis.page.coverage.startJSCoverage({
                     includeRawScriptCoverage: true,
                     resetOnNavigation: false
@@ -121,7 +121,7 @@ export default class Helper {
 
     async stop(){
         if(process.argv.includes("--cover")){
-            await Helper.outputCoverage(this.page, this.dir, this.localConfig, this.runner.nodePort);
+            await TestE2E.outputCoverage(this.page, this.dir, this.localConfig, this.runner.nodePort);
         }
 
         await this.browser.close();
