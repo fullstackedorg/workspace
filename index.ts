@@ -1,4 +1,5 @@
 import Docker from "dockerode";
+import version from "./version";
 
 declare type ConfigBuild = {
     name? : string, // app name

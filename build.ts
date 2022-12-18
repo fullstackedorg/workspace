@@ -41,7 +41,7 @@ console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 
 const version = JSON.parse(fs.readFileSync(resolve(__dirname, "package.json"), {encoding: "utf8"})).version;
 
-fs.writeFileSync(resolve(__dirname, "version.ts"), `const version = "${version}";
-export default version;`);
+fs.writeFileSync(resolve(__dirname, "version.ts"), `const FullStackedVersion = "${version}";
+export default FullStackedVersion;`);
 
 await buildFile(resolve(__dirname, "./version.ts"));
