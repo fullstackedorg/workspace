@@ -1,14 +1,14 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
-import Helper from "../Helper.js";
 import {fetch} from "../../../utils/fetch.js";
 import Server from "../../../server/index.js";
 import {dirname} from "path";
 import {fileURLToPath} from "url";
+import testIntegration from "../../../utils/testIntegration.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-Helper(describe("Files", function(){
+testIntegration(describe("Files", function(){
     before(function (){
         Server.publicDir = __dirname
         Server.start();

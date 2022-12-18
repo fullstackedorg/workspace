@@ -1,13 +1,13 @@
 import { describe, it, before, after } from 'mocha';
-import Helper from "../Helper.js"
 import {equal} from "assert";
 import {dirname} from "path";
 import {fileURLToPath} from "url";
+import TestE2E from "../../../utils/testE2E.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Basic Test", function(){
-    let test = new Helper(__dirname);
+    let test = new TestE2E(__dirname);
 
     before(async function (){
         await test.start();

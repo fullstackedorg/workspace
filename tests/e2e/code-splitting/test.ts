@@ -1,19 +1,19 @@
 import {before, describe, it, after} from 'mocha';
-import Helper from "../Helper.js"
 import glob from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";
 import sleep from "../../../utils/sleep.js";
 import {dirname} from "path";
 import {fileURLToPath} from "url";
+import TestE2E from "../../../utils/testE2E.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Code Splitting", function(){
-    let test: Helper;
+    let test: TestE2E;
 
     before(async function (){
-        test = new Helper(__dirname);
+        test = new TestE2E(__dirname);
         await test.start();
     })
 

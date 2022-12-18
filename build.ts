@@ -21,19 +21,13 @@ const server = glob.sync(resolve(__dirname, "server", "**", "*.ts"));
 const webapp = glob.sync(resolve(__dirname, "webapp", "**", "*.ts"));
 const utils = glob.sync(resolve(__dirname, "utils", "**", "*.ts"));
 
-const otherScripts = [
-    resolve(__dirname, "cli.ts"),
-    resolve(__dirname, "tests", "e2e", "Helper.ts"),
-    resolve(__dirname, "tests", "integration", "Helper.ts")
-];
-
 const buildPromises: Promise<any>[] = [
     ...commands,
     ...types,
     ...server,
     ...webapp,
     ...utils,
-    ...otherScripts
+    resolve(__dirname, "cli.ts"),
 ].map(file => buildFile(file));
 
 await Promise.all(buildPromises);
