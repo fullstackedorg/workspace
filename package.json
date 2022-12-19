@@ -12,7 +12,9 @@
     "start": "node cli watch --src=gui",
     "pretest": "npm run build && node tests/testsDockerImages",
     "test": "node cli test --headless --ignore=**/create-fullstacked/**,**/fullstacked-code-coverage/**",
-    "pretest:create": "npm run build",
+    "preinstall:create": "npm run build",
+    "install:create": "node tests/installToCreateFullStacked",
+    "pretest:create": "npm run install:create",
     "test:create": "node tests/testCreateFullStacked",
     "coverage": "npm test -- --coverage --report-dir=fullstacked-code-coverage",
     "prepare": "npm run build && npx tsc"

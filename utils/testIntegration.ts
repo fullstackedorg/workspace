@@ -7,6 +7,7 @@ import Config from "./config.js";
 import Runner from "./runner.js";
 import getPackageJSON from "./getPackageJSON.js";
 import glob from "glob";
+import * as process from "process";
 
 export default function testIntegration(testSuite: Suite, testDir: string = null){
     if(process.argv.includes("--test-mode"))
@@ -74,6 +75,7 @@ async function runIntegrationTest(testSuite: Suite, testDir: string){
         "--test-file=" + testFilePath.join("/"),
         "--test-suite=" + testSuite.title,
         "--test-mode",
+        "--src=" + srcDir.replace(process.cwd(), "/app"),
         (process.argv.includes("--cover") ? "--coverage" : ""),
         (process.argv.includes("--cover") ? `--c8-out-dir=${c8OutDirInContainer}` : ""),
     ];
@@ -92,7 +94,7 @@ async function runIntegrationTest(testSuite: Suite, testDir: string){
     await new Promise(async resolve => {
         const logsStream = (await (await localConfig.docker.getContainer(localConfig.name + '_node_1')).logs({stdout: true, stderr: true, follow: true}));
         logsStream.on("data", chunk => {
-            if(!chunk.toString().match(/\d+ (passing|failing)/g))
+            if(!chunk.toString().match(/(\d+ (passing|failing)|npm notice)/g))
                 process.stdout.write(chunk);
             results += chunk.toString();
         });

@@ -8,7 +8,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const options = {
     ignore: [
         "**/node_modules/**",
-        "**/create-fullstacked/**",
         "**/fullstacked-code-coverage/**"
     ]
 };
