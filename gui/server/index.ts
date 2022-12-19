@@ -1,4 +1,4 @@
-import Server from "../../server";
+import Server from "../../server.js";
 
 Server.addListener((req, res) => {
     if(req.url !== "/port") return;

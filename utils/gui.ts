@@ -1,4 +1,4 @@
-import Server from "../server/index.js";
+import Server from "../server.js";
 import {getNextAvailablePort} from "./utils.js";
 import Run from "../commands/run.js";
 import Config from "./config.js";

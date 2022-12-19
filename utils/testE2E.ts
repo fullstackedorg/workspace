@@ -91,9 +91,7 @@ export default class TestE2E {
                 url: [
                     "file://",
                     dir.replace(/\\/g, "/").replace("C:", "/C:"),
-                    "/dist/",
-                    localConfig.version,
-                    "/public",
+                    "/dist/app/public",
                     file
                 ].join("")
             }

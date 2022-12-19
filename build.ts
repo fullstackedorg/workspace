@@ -27,6 +27,9 @@ const buildPromises: Promise<any>[] = [
     ...server,
     ...webapp,
     ...utils,
+    resolve(__dirname, "tests", "testCreateFullStacked.ts"),
+    resolve(__dirname, "tests", "testsDockerImages.ts"),
+    resolve(__dirname, "server.ts"),
     resolve(__dirname, "cli.ts"),
 ].map(file => buildFile(file));
 

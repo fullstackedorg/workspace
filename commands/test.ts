@@ -50,8 +50,7 @@ export default async function(config: FullStackedConfig){
         for (const file of coverageFiles){
             const jsCoverage = JSON.parse(fs.readFileSync(file, {encoding: "utf8"})).result;
             for (let i = 0; i < jsCoverage.length; i++) {
-                const modulePath = jsCoverage[i].url
-                    .replace("/C:", "");
+                const modulePath = jsCoverage[i].url.replace("/C:", "");
 
                 if(!fs.existsSync(modulePath.slice("file://".length))
                     || modulePath.includes("node_modules")) continue;
@@ -65,8 +64,16 @@ export default async function(config: FullStackedConfig){
             }
         }
 
-        const coverageOutDir = resolve(config.src, "coverage");
-        if(fs.existsSync(coverageOutDir)) fs.rmSync(coverageOutDir, {recursive: true});
+        const coverageOutDir = config.reportDir
+            ? resolve(process.cwd(), config.reportDir)
+            : resolve(config.src, "coverage");
+
+        if(fs.existsSync(coverageOutDir)) {
+            fs.readdirSync(coverageOutDir).forEach(item => {
+                if (item.startsWith(".")) return;
+                fs.rmSync(resolve(coverageOutDir, item), {recursive: true});
+            });
+        }
 
         const reportCMD = ["npx nyc report",
             "--reporter=html",
@@ -87,9 +94,11 @@ export default async function(config: FullStackedConfig){
         grep: config.testSuite
     });
 
+    const globOptions = {ignore: config.ignore};
+
     const testFiles = config.testFile
-        ? glob.sync(resolve(process.cwd(), config.testFile))
-        : glob.sync(resolve(config.src, "**", "*test.ts"));
+        ? glob.sync(resolve(process.cwd(), config.testFile), globOptions)
+        : glob.sync(resolve(config.src, "**", "*test.ts"), globOptions);
 
     if(!process.argv.includes("--test-mode")){
         const esbuildConfigs = testFiles.map(testFile => defaultEsbuildConfig(testFile));

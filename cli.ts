@@ -45,7 +45,9 @@ const args = {
     "--restored": () => config.restored = true,
     "--production": () => config.production = true,
     "--gui": () => config.gui = true,
-    "--c8-out-dir=": value => config.c8OutDir = value
+    "--c8-out-dir=": value => config.c8OutDir = value,
+    "--report-dir=": value => config.reportDir = value,
+    "--ignore=": value => config.ignore = upgradeToArray(value)
 };
 
 function upgradeToArray(rawValue: string): string | string[]{

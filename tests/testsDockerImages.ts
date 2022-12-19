@@ -1,5 +1,5 @@
-import Docker from "./docker.js";
-import {maybePullDockerImage} from "./utils.js";
+import Docker from "../utils/docker.js";
+import {maybePullDockerImage} from "../utils/utils.js";
 
 const images = [
     "node:18-alpine",

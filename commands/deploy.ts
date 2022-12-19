@@ -12,7 +12,7 @@ import { Writable } from "stream";
 import CommandInterface from "./Interface.js";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
-import {certificate, DEPLOY_CMD, nginxConfig, sshCredentials} from "../types/deploy.js";
+import {certificate, DEPLOY_CMD, nginxConfig, nginxFile, sshCredentials} from "../types/deploy.js";
 import {fileURLToPath} from "url";
 import uploadFileWithProgress from "../utils/uploadFileWithProgress.js";
 
@@ -218,22 +218,25 @@ export default class Deploy extends CommandInterface {
      * then setup docker-compose.yml and nginx-{service}-{port}.conf files.
      *
      */
-    private async setupDockerComposeAndNginx(){
+    private async setupDockerComposeAndNginx(): Promise<nginxFile[]>{
         const sftp = await this.getSFTP();
 
         const dockerCompose = await this.getBuiltDockerCompose();
         // set default to node if no nginx configs
         const nginxConfigs = this.nginxConfigs || [{name: "node", port: 80}];
         const availablePorts = await this.getAvailablePorts(sftp, nginxConfigs.length);
-        const nginxDir = path.resolve(this.config.dist, "nginx");
 
-        if(fs.existsSync(nginxDir)) fs.rmSync(nginxDir, {recursive: true, force: true});
-
-        fs.mkdirSync(nginxDir);
+        const nginxFiles: nginxFile[] = [];
 
         if(this.certificate){
-            fs.writeFileSync(path.resolve(nginxDir, "fullchain.pem"), this.certificate.fullchain);
-            fs.writeFileSync(path.resolve(nginxDir, "privkey.pem"), this.certificate.privkey);
+            nginxFiles.push({
+                fileName: "fullchain.pem",
+                content: Buffer.from(this.certificate.fullchain)
+            });
+            nginxFiles.push({
+                fileName: "privkey.pem",
+                content: Buffer.from(this.certificate.privkey)
+            });
             console.log("Added certificate")
         }
 
@@ -245,7 +248,10 @@ export default class Deploy extends CommandInterface {
                 .replace(/\{SERVER_NAME\}/g, service.serverNames?.join(" ") ?? "localhost")
                 .replace(/\{PORT\}/g, port)
                 .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "");
-            fs.writeFileSync(path.resolve(this.config.dist, "nginx", `${service.name}-${service.port}.conf`), nginx);
+            nginxFiles.push({
+                fileName: `${service.name}-${service.port}.conf`,
+                content: Buffer.from(nginx)
+            });
 
             if(this.certificate){
                 const nginxSSL = nginxSSLTemplate
@@ -253,7 +259,10 @@ export default class Deploy extends CommandInterface {
                     .replace(/\{PORT\}/g, port)
                     .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "")
                     .replace(/\{APP_NAME\}/g, this.config.name);
-                fs.writeFileSync(path.resolve(this.config.dist, "nginx", `${service.name}-${service.port}-ssl.conf`), nginxSSL);
+                nginxFiles.push({
+                    fileName: `${service.name}-${service.port}-ssl.conf`,
+                    content: Buffer.from(nginxSSL)
+                });
             }
 
             for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
@@ -263,6 +272,8 @@ export default class Deploy extends CommandInterface {
         });
         fs.writeFileSync(path.resolve(this.config.dist, "docker-compose.yml"), yaml.dump(dockerCompose));
         console.log("Generated docker-compose.yml");
+
+        return nginxFiles;
     }
 
     /**
@@ -294,11 +305,11 @@ export default class Deploy extends CommandInterface {
         await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart`, this.write);
     }
 
-    async uploadFilesToRemoteServer(){
+    async uploadFilesToRemoteServer(nginxFiles: nginxFile[]){
         const sftp = await this.getSFTP()
 
-        if(!await sftp.exists(`${this.sshCredentials.appDir}/${this.config.name}`))
-            await sftp.mkdir(`${this.sshCredentials.appDir}/${this.config.name}`, true);
+        if(!await sftp.exists(`${this.sshCredentials.appDir}/${this.config.name}/${this.config.version}`))
+            await sftp.mkdir(`${this.sshCredentials.appDir}/${this.config.name}/${this.config.version}`, true);
 
         const files = glob.sync("**/*", {cwd: this.config.dist})
         const localFiles = files.map(file => path.resolve(this.config.dist, file));
@@ -312,6 +323,14 @@ export default class Deploy extends CommandInterface {
                 await uploadFileWithProgress(sftp, localFiles[i], remotePath + "/" + files[i], (progress) => {
                     this.printLine(`[${i + 1}/${files.length}] Uploading File ${progress.toFixed(2)}%`);
                 });
+        }
+
+        const nginxRemoteDir = `${this.sshCredentials.appDir}/${this.config.name}/nginx`;
+        if(!await sftp.exists(nginxRemoteDir))
+            await sftp.mkdir(nginxRemoteDir, true);
+
+        for (const nginxFile of nginxFiles){
+            await sftp.put(nginxFile.content, `${nginxRemoteDir}/${nginxFile.fileName}`);
         }
 
         this.endLine();
@@ -415,11 +434,11 @@ export default class Deploy extends CommandInterface {
         console.log(`Web App ${this.config.name} v${this.config.version} built production mode`);
         if(tick) tick();
 
-        await this.setupDockerComposeAndNginx();
+        const nginxFiles = await this.setupDockerComposeAndNginx();
         console.log("Docker Compose and Nginx is setup");
         if(tick) tick();
 
-        await this.uploadFilesToRemoteServer();
+        await this.uploadFilesToRemoteServer(nginxFiles);
         console.log("Web App is uploaded to the remote server");
         if(tick) tick();
 

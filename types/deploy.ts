@@ -28,6 +28,11 @@ export type nginxConfig = {
     nginxExtraConfigs?: string[]
 }
 
+export type nginxFile = {
+    fileName: string,
+    content: Buffer
+}
+
 export type certificate = {
     fullchain: string,
     privkey: string
