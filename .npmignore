@@ -2,6 +2,10 @@
 .idea
 node_modules
 
+/.github
+/.gitignore
+/.gitmodules
+
 /build.*
 
 /cleanup.ts
@@ -13,7 +17,11 @@ node_modules
 /commands/**/*.ts
 /commands/**/*.d.ts
 
+/create-fullstacked
+
 /docs
+
+/fullstacked-code-coverage
 
 /gui/**/*
 !/gui/dist
@@ -21,8 +29,8 @@ node_modules
 
 /index.ts
 
-/server/index.js.map
-/server/index.ts
+/server.js.map
+/server.ts
 
 /server/watcher.d.ts
 /server/watcher.js.map

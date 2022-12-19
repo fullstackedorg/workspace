@@ -1,5 +1,4 @@
 import Docker from "dockerode";
-import version from "./version";
 
 declare type ConfigBuild = {
     name? : string, // app name
@@ -35,7 +34,10 @@ declare type ConfigTest = {
     testFile? : string,
     testSuite? : string,
 
-    c8OutDir? : string
+    ignore? : string | string[],
+
+    c8OutDir? : string,
+    reportDir?: string,
 }
 
 declare type ConfigCerts = {

@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.9.0-rc8",
+  "version": "0.9.0-rc9",
   "description": "A simple tool that takes care of all the redundant tasks in TypeScript web app development.",
   "types": "index.d.ts",
   "scripts": {
@@ -10,9 +10,11 @@
     "cleanup": "npx esbuild cleanup.ts --outfile=cleanup.js --format=esm && node cleanup",
     "prestart": "npm run build",
     "start": "node cli watch --src=gui",
-    "pretest": "npm run build && node utils/testsDockerImages",
-    "test": "node cli test --headless",
-    "coverage": "npm test -- --coverage",
+    "pretest": "npm run build && node tests/testsDockerImages",
+    "test": "node cli test --headless --ignore=**/create-fullstacked/**,**/fullstacked-code-coverage/**",
+    "pretest:create": "npm run build",
+    "test:create": "node tests/testCreateFullStacked",
+    "coverage": "npm test -- --coverage --report-dir=fullstacked-code-coverage",
     "prepare": "npm run build && npx tsc"
   },
   "type": "module",

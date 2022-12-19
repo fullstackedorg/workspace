@@ -37,7 +37,7 @@ function getProcessedEnv(config: FullStackedConfig){
 
 // bundles the server
 async function buildServer(config: FullStackedConfig, watcher){
-    const fullstackedServerFile = resolve(__dirname, "..", "server", "index.js");
+    const fullstackedServerFile = resolve(__dirname, "..", "server.js");
 
     const fullstackedServerFileRegex =  new RegExp(fullstackedServerFile
         // windows file path...
@@ -118,22 +118,14 @@ async function buildServer(config: FullStackedConfig, watcher){
                 restart: "unless-stopped",
                 expose: ["80"],
                 ports: ["80"],
-                volumes: [`./${config.version}:/app`]
+                volumes: [`./app:/app`]
             }
         }
     }
 
 
     if(watcher){
-        buildSync({
-            entryPoints: [ resolve(__dirname, "..", "server", "watcher.ts") ],
-            outfile: resolve(config.out, "watcher.js"),
-            platform: "node" as Platform,
-            format: "esm" as Format,
-            bundle: true,
-            minify: true,
-            sourcemap: false,
-        })
+        fs.cpSync(resolve(__dirname, "..", "server", "watcher.ts"), resolve(config.out, "watcher.js"));
     }
 
     // merge with user defined docker-compose if existent

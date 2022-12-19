@@ -1,7 +1,7 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
 import {fetch} from "../../../utils/fetch.js";
-import Server from "../../../server/index.js";
+import Server from "../../../server.js";
 import {dirname} from "path";
 import {fileURLToPath} from "url";
 import testIntegration from "../../../utils/testIntegration.js";

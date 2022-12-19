@@ -18,7 +18,7 @@
     },
     "include": [
         "index.ts",
-        "server/index.ts",
+        "server.ts",
         "utils/fetch.ts",
         "utils/sleep.ts",
         "utils/testE2E.ts",
