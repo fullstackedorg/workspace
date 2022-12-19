@@ -1,5 +1,5 @@
 import {dirname, resolve} from "path"
-import esbuild, {buildSync, Format, Loader, Platform} from "esbuild";
+import esbuild, {BuildOptions, buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {cleanOutDir, copyRecursiveSync, execScript, randStr} from "../utils/utils.js";
 import yaml from "js-yaml";
@@ -7,6 +7,7 @@ import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";
 import {fileURLToPath} from "url";
 import {FullStackedConfig} from "../index";
+import * as process from "process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +36,39 @@ function getProcessedEnv(config: FullStackedConfig){
     return processEnv;
 }
 
+const getExternalModules = (srcDir: string) => {
+    const ignoreFilePath = resolve(srcDir, "ignore.json");
+    const nativeFilePath = resolve(srcDir, "server", "native.json");
+
+    const hasIgnoredModules = fs.existsSync(ignoreFilePath);
+    const hasNativeModules = fs.existsSync(nativeFilePath);
+
+    if(!hasIgnoredModules && !hasNativeModules) return [];
+
+    let ignoredModules = [];
+
+    if(hasIgnoredModules){
+        try{
+            const {ignore} = JSON.parse(fs.readFileSync(ignoreFilePath, {encoding: "utf8"}));
+            ignoredModules = ignore;
+        }catch (e){
+            console.log(e);
+        }
+    }
+
+    if(hasNativeModules){
+        let nativeModules;
+        try{
+            nativeModules = JSON.parse(fs.readFileSync(nativeFilePath, {encoding: "utf8"}));
+        }catch (e){
+            console.log(e);
+        }
+        ignoredModules.push(...Object.keys(nativeModules));
+    }
+
+    return ignoredModules;
+}
+
 // bundles the server
 async function buildServer(config: FullStackedConfig, watcher){
     const fullstackedServerFile = resolve(__dirname, "..", "server.js");
@@ -43,7 +77,7 @@ async function buildServer(config: FullStackedConfig, watcher){
         // windows file path...
         .replace(/\\/g, "\\\\"));
 
-    const options = {
+    const options: BuildOptions = {
         entryPoints: [ fullstackedServerFile ],
         outfile: resolve(config.out, "index.mjs"),
         platform: "node" as Platform,
@@ -51,6 +85,8 @@ async function buildServer(config: FullStackedConfig, watcher){
         minify: config.production,
         sourcemap: !config.production,
         format: "esm" as Format,
+
+        external: getExternalModules(config.src),
 
         define: getProcessedEnv(config),
 
@@ -123,9 +159,20 @@ async function buildServer(config: FullStackedConfig, watcher){
         }
     }
 
+    const nativeFilePath = resolve(config.src, "server", "native.json")
+    if(fs.existsSync(nativeFilePath)){
+        fs.cpSync(nativeFilePath, resolve(config.out, "native.json"));
+        fs.cpSync(resolve(__dirname, "..", "server", "installNative.js"), resolve(config.out, "installNative.mjs"));
+        dockerCompose.services.node.command = [
+            "/bin/sh",
+            "-c",
+            `node installNative.mjs ${!config.production ? "--development" : ""} && node index.mjs ${!config.production ? "--development" : ""}`
+        ]
+    }
+
 
     if(watcher){
-        fs.cpSync(resolve(__dirname, "..", "server", "watcher.ts"), resolve(config.out, "watcher.js"));
+        fs.cpSync(resolve(__dirname, "..", "server", "watcher.js"), resolve(config.out, "watcher.js"));
     }
 
     // merge with user defined docker-compose if existent
@@ -236,6 +283,8 @@ async function buildWebApp(config, watcher){
         minify: config.production,
         sourcemap: !config.production,
 
+        external: getExternalModules(config.src),
+
         define: getProcessedEnv(config),
 
         loader: {
@@ -335,14 +384,8 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
 
     // attach watcher if defined
     if(watcher){
-        buildSync({
-            entryPoints: [resolve(__dirname, "../webapp/watcher.ts")],
-            outfile: resolve(config.public, "watcher.js"),
-            minify: true,
-            bundle: true
-        });
-
-        addInBODY(`<script src="/watcher.js"></script>`);
+        fs.cpSync(resolve(__dirname, "..", "webapp", "watcher.js"), resolve(config.public, "watcher.js"));
+        addInBODY(`<script type="module" src="/watcher.js"></script>`);
     }
 
     // add favicon if present

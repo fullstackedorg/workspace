@@ -2,7 +2,7 @@ import path, {dirname, resolve} from "path";
 import glob from "glob";
 import {fileURLToPath} from "url";
 import Mocha, {Runner} from "mocha";
-import {buildSync, build} from "esbuild";
+import {buildSync, build, Format} from "esbuild";
 import {defaultEsbuildConfig, randStr} from "../utils/utils.js";
 import fs from "fs";
 import {execSync} from "child_process";
@@ -102,41 +102,58 @@ export default async function(config: FullStackedConfig){
 
     if(!process.argv.includes("--test-mode")){
         const esbuildConfigs = testFiles.map(testFile => defaultEsbuildConfig(testFile));
-        await Promise.all(esbuildConfigs.map(esbuildConfig => {
-            return new Promise<void>(async res => {
-                await build(esbuildConfig);
+        await Promise.all(esbuildConfigs.map(esbuildConfig => new Promise<void>(async res => {
+            await build(esbuildConfig);
 
-                const bundlingFile = resolve(__dirname, `.bundling-${randStr(5)}`);
-                await build({
-                    entryPoints: esbuildConfig.entryPoints,
-                    outfile: bundlingFile,
-                    bundle: true,
-                    plugins: [{
-                        name: "build-needed-ts",
-                        setup(build){
-                            build.onResolve({filter: /.*/}, async (args) => {
-                                if(args.kind === "entry-point") return null;
+            const commonConfig = {
+                bundle: true,
+                format: "esm" as Format
+            }
 
-                                if(!args.path.endsWith(".js") || !args.path.startsWith(".")) return {external: true};
+            const buildRecursivePlugin = {
+                name: "build-needed-ts",
+                setup(currentBuild){
+                    currentBuild.onResolve({filter: /.*/}, async (args) => {
+                        if(args.kind === "entry-point") return null;
 
-                                const filePathToBuild = resolve(path.dirname(esbuildConfig.entryPoints[0]), args.path);
-                                buildSync(defaultEsbuildConfig(filePathToBuild.replace(/\.js$/, ".ts")));
+                        if(!args.path.endsWith(".js") || !args.path.startsWith(".")) return {external: true};
 
-                                return {external: true};
-                            })
-                        }
-                    }]
-                });
+                        const filePathToBuild = resolve(path.dirname(currentBuild.initialOptions.entryPoints[0]), args.path);
+                        const buildOptions = defaultEsbuildConfig(filePathToBuild.replace(/\.js$/, ".ts"));
+                        await build({
+                            entryPoints: buildOptions.entryPoints,
+                            outfile: buildOptions.outfile,
+                            plugins: [buildRecursivePlugin],
+                            ...commonConfig
+                        });
 
-                if(fs.existsSync(bundlingFile)) fs.rmSync(bundlingFile);
-                res();
+                        return {external: true};
+                    })
+                }
+            }
+
+            const bundlingFile = resolve(__dirname, `.bundling-${randStr(5)}`);
+            await build({
+                entryPoints: esbuildConfig.entryPoints,
+                outfile: bundlingFile,
+                plugins: [buildRecursivePlugin],
+                ...commonConfig
             });
-        }));
 
-        esbuildConfigs.forEach(esbuildConfig => {
-            mocha.addFile(esbuildConfig.outfile);
-        });
+            if(fs.existsSync(bundlingFile)) fs.rmSync(bundlingFile);
+            res();
+        })));
+
+        esbuildConfigs.forEach(esbuildConfig => mocha.addFile(esbuildConfig.outfile));
     }else{
+        const nativeFilePath = resolve(config.src, "server", "native.json");
+        if(fs.existsSync(nativeFilePath)){
+            const nativeModules = JSON.parse(fs.readFileSync(nativeFilePath, {encoding: "utf8"}));
+            const install = Object.keys(nativeModules).map(nativeModule => nativeModule + "@" + nativeModules[nativeModule]).join(" ");
+            execSync(`npm uninstall ${install} && npm i --no-save ${install}`, {
+                stdio: "ignore"
+            });
+        }
         testFiles.forEach(testFile => mocha.addFile(testFile));
     }
 

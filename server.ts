@@ -6,6 +6,7 @@ import {fileURLToPath, pathToFileURL} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+
 class ServerInstance {
     server: http.Server;
     watcher;
@@ -41,7 +42,6 @@ class ServerInstance {
             res.end("Not Found");
         });
     }
-
 
     start(){
         // default static file serving

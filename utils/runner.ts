@@ -1,17 +1,16 @@
 import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImage} from "./utils.js";
-import path from "path";
+import path, {resolve} from "path";
 import DockerCompose from "dockerode-compose";
 import {FullStackedConfig} from "../index";
 
 export default class Runner {
     config: FullStackedConfig;
-    composeFilePath: string;
     nodePort: number;
     dockerCompose: any;
 
     constructor(config: FullStackedConfig) {
         this.config = config;
-        this.composeFilePath = path.resolve(this.config.dist, "docker-compose.yml");
+        this.dockerCompose = new DockerCompose(this.config.docker, resolve(this.config.dist, "docker-compose.yml"), this.config.name);
 
         if(!isDockerInstalled())
             throw new Error("Cannot run app without Docker and Docker-Compose");
@@ -19,8 +18,6 @@ export default class Runner {
 
     async start(): Promise<number> {
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
-
-        this.dockerCompose = new DockerCompose(this.config.docker, this.composeFilePath, this.config.name);
 
         try{
             await this.dockerCompose.down();

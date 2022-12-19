@@ -4,7 +4,4 @@ import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-execSync(`npm test`, {
-    stdio: "inherit",
-    cwd: resolve(__dirname, "..", "create-fullstacked")
-});
+execSync(`npm pack --pack-destination ${resolve(__dirname, "..", "create-fullstacked")}`, {stdio: "inherit"});

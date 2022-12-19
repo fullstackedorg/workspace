@@ -6,12 +6,13 @@ import {fileURLToPath} from "url";
 
 global.__dirname = path.dirname(fileURLToPath(import.meta.url));
 
-async function buildFile(file){
+async function buildFile(file, bundle = false){
     return esbuild.build({
         entryPoints: [file],
         outfile: file.slice(0, -2) + "js",
         format: "esm",
-        sourcemap: true
+        sourcemap: true,
+        bundle: bundle
     });
 }
 
@@ -21,19 +22,23 @@ const server = glob.sync(resolve(__dirname, "server", "**", "*.ts"));
 const webapp = glob.sync(resolve(__dirname, "webapp", "**", "*.ts"));
 const utils = glob.sync(resolve(__dirname, "utils", "**", "*.ts"));
 
-const buildPromises: Promise<any>[] = [
+const unbundledBuildPromises: Promise<any>[] = [
     ...commands,
     ...types,
     ...server,
-    ...webapp,
     ...utils,
+    resolve(__dirname, "tests", "installToCreateFullStacked.ts"),
     resolve(__dirname, "tests", "testCreateFullStacked.ts"),
     resolve(__dirname, "tests", "testsDockerImages.ts"),
     resolve(__dirname, "server.ts"),
     resolve(__dirname, "cli.ts"),
 ].map(file => buildFile(file));
 
-await Promise.all(buildPromises);
+const bundledBuildPromises: Promise<any>[] = [
+    ...webapp
+].map(file => buildFile(file, true));
+
+await Promise.all([...unbundledBuildPromises, ...bundledBuildPromises]);
 console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 
 const version = JSON.parse(fs.readFileSync(resolve(__dirname, "package.json"), {encoding: "utf8"})).version;

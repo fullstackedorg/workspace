@@ -14,12 +14,13 @@ export default class TestE2E {
     browser: Browser;
     page: Page;
     localConfig: FullStackedConfig;
+    timeout = 20000;
 
     constructor(dir: string) {
         this.dir = dir;
     }
 
-    async start(pathURL: string = ""){
+    async init(): Promise<number>{
         this.localConfig = await Config({
             name: "test",
             src: this.dir,
@@ -28,6 +29,17 @@ export default class TestE2E {
         });
         await Build(this.localConfig);
         this.runner = new Runner(this.localConfig);
+
+        if(this.runner.dockerCompose.recipe?.services?.node?.command?.some(arg => arg.includes("installNative")))
+            this.timeout = 60000;
+
+        return this.timeout;
+    }
+
+    async start(pathURL: string = ""){
+        if(!this.localConfig)
+            await this.init();
+
         await this.runner.start();
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
@@ -39,7 +51,7 @@ export default class TestE2E {
             });
         }
 
-        await waitForServer(3000, `http://localhost:${this.runner.nodePort}`);
+        await waitForServer(this.timeout, `http://localhost:${this.runner.nodePort}`);
 
         await this.goto(pathURL);
 
