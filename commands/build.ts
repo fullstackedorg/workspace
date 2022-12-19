@@ -142,7 +142,7 @@ async function buildServer(config: FullStackedConfig, watcher){
     if(result.errors.length > 0)
         return;
 
-    let dockerCompose = {
+    let dockerCompose: any = {
         services: {
             node: {
                 image: 'node:18-alpine',
@@ -176,36 +176,30 @@ async function buildServer(config: FullStackedConfig, watcher){
     }
 
     // merge with user defined docker-compose if existent
+    const dockerComposeFiles = glob.sync(resolve(config.src, "**", "*.docker-compose.yml"));
     const userDockerComposeFilePath = resolve(config.src, "docker-compose.yml");
-    if(fs.existsSync(userDockerComposeFilePath)){
-        const userDockerCompose: any = yaml.load(fs.readFileSync(userDockerComposeFilePath, {encoding: "utf-8"}));
-
-        Object.keys(userDockerCompose.services).forEach(service => {
-            // no profile in service => always spawn
-            if(!userDockerCompose.services[service].profiles) return;
-
-            // if in prod and includes prod or not prod and include dev => remove profiles attribute and spawn
-            if(userDockerCompose.services[service].profiles.includes(config.production ? "production" : "development")){
-                delete userDockerCompose.services[service].profiles;
-                return;
-            }
-
-            // remove service here
-            delete userDockerCompose.services[service];
-        });
-
-
-        if(userDockerCompose) {
-            dockerCompose = {
-                ...dockerCompose,
-                ...userDockerCompose,
-                services: {
-                    ...dockerCompose.services,
-                    ...(userDockerCompose.services ?? {})
-                }
-            };
-        }
+    if(fs.existsSync(userDockerComposeFilePath)) {
+        dockerComposeFiles.push(userDockerComposeFilePath);
     }
+
+    const dockerComposeRootAttributes = [
+        "services",
+        "volumes",
+        "configs",
+        "sercrets",
+        "networks"
+    ]
+    dockerComposeFiles.forEach(dockerComposeFilePath => {
+        const serviceDockerCompose: any = yaml.load(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
+
+        dockerComposeRootAttributes.forEach(attribute => {
+            dockerCompose[attribute] = {
+                ...dockerCompose[attribute],
+                ...serviceDockerCompose[attribute]
+            }
+        });
+    });
+
 
     // output docker-compose result to dist directory
     fs.writeFileSync(resolve(config.dist, "docker-compose.yml"), yaml.dump(dockerCompose));
