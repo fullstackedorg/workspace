@@ -79,6 +79,7 @@ export default async function(config: FullStackedConfig){
 
         fs.rmSync(c8DataDir, {recursive: true});
         fs.rmSync(istanbulDataDir, {recursive: true});
+        glob.sync(resolve(config.src, "**", ".test-*")).forEach(tempDir => fs.rmSync(tempDir, {recursive: true}));
         return;
     }
 
@@ -115,10 +116,10 @@ export default async function(config: FullStackedConfig){
 function specExt(runner: Runner){
     runner.on(Mocha.Runner.constants.EVENT_RUN_END, function() {
         if(!global.integrationTests)
-            global.integrationTests = {count: 0, passes: 0, failures: 0};
+            return;
 
-        runner.stats.passes += global.integrationTests.passes;
-        runner.stats.failures += global.integrationTests.failures;
+        if(global.integrationTests.passes) runner.stats.passes += global.integrationTests.passes;
+        if(global.integrationTests.failures) runner.stats.failures += global.integrationTests.failures;
     });
 
     Mocha.reporters.Spec.call(this, runner);

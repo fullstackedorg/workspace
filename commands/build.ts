@@ -6,8 +6,7 @@ import {
     copyRecursiveSync,
     execScript,
     getBuiltDockerCompose,
-    getExternalModules,
-    randStr
+    getExternalModules
 } from "../utils/utils.js";
 import yaml from "js-yaml";
 import glob from "glob";
@@ -15,6 +14,7 @@ import {parse, parseFragment, Parser, serialize, html} from "parse5";
 import {fileURLToPath} from "url";
 import {FullStackedConfig} from "../index";
 import * as process from "process";
+import randStr from "../utils/randStr.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

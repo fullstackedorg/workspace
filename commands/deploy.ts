@@ -2,8 +2,8 @@ import path, {dirname} from "path";
 import fs from "fs";
 import glob from "glob";
 import {
-    execScript, execSSH, getSFTPClient, randStr, askQuestion,
-    getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword, getBuiltDockerCompose
+    execScript, execSSH, getSFTPClient, askQuestion, getCertificateData,
+    loadDataEncryptedWithPassword, saveDataEncryptedWithPassword, getBuiltDockerCompose
 } from "../utils/utils.js";
 import Build from "./build.js";
 import yaml from "js-yaml";
@@ -15,6 +15,7 @@ import {Client} from "ssh2";
 import {certificate, DEPLOY_CMD, nginxConfig, nginxFile, sshCredentials} from "../types/deploy.js";
 import {fileURLToPath} from "url";
 import uploadFileWithProgress from "../utils/uploadFileWithProgress.js";
+import randStr from "../utils/randStr.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

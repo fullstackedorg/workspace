@@ -7,10 +7,10 @@ import path, {dirname} from "path";
 import {
     copyRecursiveSync,
     loadDataEncryptedWithPassword,
-    randStr,
     saveDataEncryptedWithPassword
 } from "../../utils/utils.js";
 import {fileURLToPath} from "url";
+import randStr from "../../utils/randStr.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

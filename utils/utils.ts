@@ -216,18 +216,6 @@ export function getNextAvailablePort(port: number = 8000): Promise<number> {
     });
 }
 
-// source : https://stackoverflow.com/a/1349426
-export function randStr(length) {
-    let result           = '';
-    const characters       = 'abcdefghijklmnopqrstuvwxyz';
-    const charactersLength = characters.length;
-    for ( let i = 0; i < length; i++ ) {
-        result += characters.charAt(Math.floor(Math.random() *
-            charactersLength));
-    }
-    return result;
-}
-
 
 export async function getSFTPClient(sshCredentials: sshCredentials): Promise<WrappedSFTP>{
     const sftp = new SFTP();

@@ -1,17 +1,6 @@
 import {fetch} from "../../utils/fetch";
 import {CMD, MESSAGE_FROM_BACKEND, MESSAGE_TYPE} from "../../types/gui";
-
-// source : https://stackoverflow.com/a/1349426
-export function randStr(length) {
-    let result           = '';
-    const characters       = 'abcdefghijklmnopqrstuvwxyz';
-    const charactersLength = characters.length;
-    for ( let i = 0; i < length; i++ ) {
-        result += characters.charAt(Math.floor(Math.random() *
-            charactersLength));
-    }
-    return result;
-}
+import randStr from "../../utils/randStr";
 
 export class WS {
     static ws;
