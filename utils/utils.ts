@@ -1,4 +1,4 @@
-import path from "path";
+import path, {resolve} from "path";
 import fs from "fs";
 import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
@@ -330,4 +330,55 @@ export async function maybePullDockerImage(docker, image){
             });
         });
     }
+}
+
+
+export function getBuiltDockerCompose(srcDir: string, production: boolean = false){
+    let dockerCompose: any = {
+        services: {
+            node: {
+                image: 'node:18-alpine',
+                working_dir: '/app',
+                command: [
+                    'index.mjs',
+                    (!production ? "--development" : "")
+                ],
+                restart: "unless-stopped",
+                expose: ["80"],
+                ports: ["80"],
+                volumes: [`./app:/app`]
+            }
+        }
+    }
+
+    const dockerComposeFiles = glob.sync(resolve(srcDir, "**", "*.docker-compose.yml"), {
+        ignore: [
+            "**/node_modules/**",
+            "**/dist/**"
+        ]
+    });
+    const userDockerComposeFilePath = resolve(srcDir, "docker-compose.yml");
+    if(fs.existsSync(userDockerComposeFilePath)) {
+        dockerComposeFiles.push(userDockerComposeFilePath);
+    }
+
+    const dockerComposeRootAttributes = [
+        "services",
+        "volumes",
+        "configs",
+        "sercrets",
+        "networks"
+    ]
+    dockerComposeFiles.forEach(dockerComposeFilePath => {
+        const serviceDockerCompose: any = yaml.load(fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"}));
+
+        dockerComposeRootAttributes.forEach(attribute => {
+            dockerCompose[attribute] = {
+                ...dockerCompose[attribute],
+                ...serviceDockerCompose[attribute]
+            }
+        });
+    });
+
+    return dockerCompose;
 }
