@@ -24,7 +24,7 @@ node_modules
 /fullstacked-code-coverage
 
 /gui/**/*
-!/gui/dist
+!/gui/dist/**/*
 /gui/dist/**/*.map
 
 /index.ts
