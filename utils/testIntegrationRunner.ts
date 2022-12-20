@@ -29,8 +29,6 @@ export default async function(testSuite: Suite){
     if(fs.existsSync(tempTestDir)) fs.rmSync(tempTestDir, {force: true, recursive: true});
     fs.mkdirSync(tempTestDir);
 
-
-
     await build({
         entryPoints: [testSuite.file],
         outfile: resolve(tempTestDir, "test.mjs"),
@@ -39,11 +37,17 @@ export default async function(testSuite: Suite){
         format: "esm",
         sourcemap: true,
 
+        plugins: [{
+            name: "ignore-self",
+            setup(currentBuild){
+                currentBuild.onResolve({filter: /.*testIntegrationRunner\.js$/g}, args => ({external: true}));
+            }
+        }],
+
         // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
         banner: {js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);"},
 
         external: [
-            fileURLToPath(import.meta.url),
             'mocha',
             ...getExternalModules(srcDir)
         ]
@@ -53,14 +57,15 @@ export default async function(testSuite: Suite){
 
     dockerComposeData.services.node.volumes = [tempTestDir + ":/app"];
 
-
     const installCommand = process.argv.includes("--cover")
         ? ["npm", "i", "mocha", "c8", "--silent"]
         : ["npm", "i", "mocha", "--silent"]
 
+    const baseTestCommand = ["mocha", "test.mjs", "--testing", "--color"];
+
     const testCommand = process.argv.includes("--cover")
-        ? ["npx", "c8", "--reporter none", `--temp-directory /app/.c8`, "npx", "mocha", "test.mjs", "--testing"]
-        : ["npx", "mocha", "test.mjs", "--testing"]
+        ? ["npx", "c8", "--reporter none", `--temp-directory /app/.c8`, ...baseTestCommand]
+        : ["npx", ...baseTestCommand];
 
     const nativeFilePath = resolve(srcDir, "server", "native.json")
     if(fs.existsSync(nativeFilePath)){
@@ -93,14 +98,15 @@ export default async function(testSuite: Suite){
     await dockerCompose.up();
 
     let results = ""
-    await new Promise(async resolve => {
+    await new Promise<void>(async resolve => {
         const container = await docker.getContainer(testTitle + '_node_1');
         const logsStream = await container.logs({stdout: true, stderr: true, follow: true});
 
         const stream = new Writable({
             write: function(chunk, encoding, next) {
+                const str = chunk.toString();
 
-                if(!chunk.toString().match(/(\d+ (passing|failing)|npm notice)/g))
+                if(str.trim() && !chunk.toString().match(/(\d+ (passing|failing)|npm notice)/g))
                     process.stdout.write(chunk);
 
                 results += chunk.toString();
@@ -110,7 +116,13 @@ export default async function(testSuite: Suite){
 
         container.modem.demuxStream(logsStream, stream, stream);
 
-        logsStream.on("end", resolve);
+        logsStream.on("end", () => {
+            global.integrationTests.count--;
+            if(global.integrationTests.count === 0)
+                process.stdout.write("\n\r");
+
+            resolve()
+        });
     });
 
     await dockerCompose.down({v: true});
