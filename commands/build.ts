@@ -144,8 +144,6 @@ async function buildServer(config: FullStackedConfig, watcher){
 async function buildWebApp(config, watcher){
     const entrypoint = resolve(config.src, "webapp", "index.ts");
 
-    if(fs.existsSync(config.public)) fs.rmSync(config.public, {force: true, recursive: true});
-
     if(!fs.existsSync(entrypoint)){
         fs.mkdirSync(config.public, {recursive: true});
         return fs.writeFileSync(resolve(config.public, "index.html"), "Nothing to see here...");
@@ -156,6 +154,9 @@ async function buildWebApp(config, watcher){
         name: 'fullstacked-pre-post-scripts',
         setup(build){
             build.onStart(async () => {
+                // make sure to clear dist/public dir
+                if(fs.existsSync(config.public)) fs.rmSync(config.public, {force: true, recursive: true});
+
                 // prebuild script, true for isWebApp
                 await execScript(resolve(config.src, "prebuild.ts"), config, true);
             });
