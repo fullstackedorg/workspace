@@ -3,7 +3,7 @@ import path, {dirname, resolve} from "path";
 import fs from "fs";
 import {build} from "esbuild";
 import {fileURLToPath} from "url";
-import {getBuiltDockerCompose, getExternalModules} from "./utils.js";
+import {getBuiltDockerCompose, getExternalModules, randStr} from "./utils.js";
 import yaml from "js-yaml";
 import Docker from "./docker.js";
 import DockerCompose from "dockerode-compose";
@@ -24,7 +24,7 @@ export default async function(testSuite: Suite){
         srcDir = resolve(process.cwd(), arg.slice("--src=".length));
     });
 
-    const tempTestDir = resolve(dirname(testSuite.file), ".test");
+    const tempTestDir = resolve(dirname(testSuite.file), `.test-${randStr(5)}`);
 
     if(fs.existsSync(tempTestDir)) fs.rmSync(tempTestDir, {force: true, recursive: true});
     fs.mkdirSync(tempTestDir);
