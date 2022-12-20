@@ -1,9 +1,9 @@
-import path, {resolve} from "path";
+import path, {dirname, resolve} from "path";
 import fs from "fs";
 import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
 import {execSync} from "child_process";
-import {BuildOptions, buildSync} from "esbuild";
+import {build, BuildOptions, buildSync} from "esbuild";
 import {Socket} from "net";
 import SFTP from "ssh2-sftp-client";
 import yaml from "js-yaml";
@@ -12,6 +12,7 @@ import {WrappedSFTP} from "../commands/deploy";
 import crypto from "crypto";
 import {sshCredentials} from "../types/deploy";
 import {FullStackedConfig} from "../index";
+import * as process from "process";
 
 
 // ask a question, resolve string answer
@@ -351,12 +352,18 @@ export function getBuiltDockerCompose(srcDir: string, production: boolean = fals
         }
     }
 
-    const dockerComposeFiles = glob.sync(resolve(srcDir, "**", "*.docker-compose.yml"), {
-        ignore: [
-            "**/node_modules/**",
-            "**/dist/**"
-        ]
+    const ignore = [
+        "**/node_modules/**",
+        "**/dist/**"
+    ];
+
+    process.argv.forEach(arg => {
+        if(!arg.startsWith("--ignore=")) return;
+
+        ignore.push(...arg.slice("--ignore=".length).split(","));
     });
+
+    const dockerComposeFiles = glob.sync(resolve(srcDir, "**", "*.docker-compose.yml"), {ignore});
     const userDockerComposeFilePath = resolve(srcDir, "docker-compose.yml");
     if(fs.existsSync(userDockerComposeFilePath)) {
         dockerComposeFiles.push(userDockerComposeFilePath);
@@ -379,4 +386,34 @@ export function getBuiltDockerCompose(srcDir: string, production: boolean = fals
     });
 
     return dockerCompose;
+}
+
+
+export async function recursivelyBuildTS(entrypoint: string, outDir?: string){
+    const buildOptions = defaultEsbuildConfig(entrypoint);
+
+    if(outDir){
+        buildOptions.outfile = resolve(outDir, buildOptions.outfile.replace(process.cwd(), "").slice(1));
+    }
+
+    await build({
+        ...buildOptions,
+        bundle: true,
+        allowOverwrite: true,
+        plugins: [{
+            name: "recursive-buillder",
+            setup(currentBuild){
+                currentBuild.onResolve({filter: /.*/}, async (args) => {
+                    if(args.kind === "entry-point") return null;
+
+                    if(!args.path.endsWith(".js") || !args.path.startsWith(".")) return {external: true};
+
+                    const filePathToBuild = resolve(path.dirname(currentBuild.initialOptions.entryPoints[0]), args.path);
+                    await recursivelyBuildTS(filePathToBuild, outDir)
+
+                    return {external: true};
+                })
+            }
+        }]
+    })
 }
