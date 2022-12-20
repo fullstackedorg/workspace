@@ -28,7 +28,7 @@ async function loadEnvVars(srcDir: string){
 }
 
 // get all env variables in the form of an object
-function getProcessedEnv(config: FullStackedConfig){
+function getProcessEnv(config: FullStackedConfig){
     let processEnv = {};
     Object.keys(process.env).forEach(envKey => {
         // keys with parenthesis causes problems
@@ -62,7 +62,7 @@ async function buildServer(config: FullStackedConfig, watcher){
 
         external: getExternalModules(config.src),
 
-        define: getProcessedEnv(config),
+        define: getProcessEnv(config),
 
         // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
         banner: {js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);"},
@@ -130,7 +130,7 @@ async function buildServer(config: FullStackedConfig, watcher){
     }
 
     if(watcher){
-        fs.cpSync(resolve(__dirname, "..", "server", "watcher.js"), resolve(config.out, "watcher.js"));
+        fs.copyFileSync(resolve(__dirname, "..", "server", "watcher.js"), resolve(config.out, "watcher.js"))
     }
 
     // output docker-compose result to dist directory
@@ -212,7 +212,7 @@ async function buildWebApp(config, watcher){
 
         external: getExternalModules(config.src),
 
-        define: getProcessedEnv(config),
+        define: getProcessEnv(config),
 
         loader: {
             ".png": "file" as Loader,
@@ -311,7 +311,14 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
 
     // attach watcher if defined
     if(watcher){
-        fs.cpSync(resolve(__dirname, "..", "webapp", "watcher.js"), resolve(config.public, "watcher.js"));
+        buildSync({
+            entryPoints: [resolve(__dirname, "..", "webapp", "watcher.js")],
+            outfile: resolve(config.public, "watcher.js"),
+            format: "esm",
+            bundle: true,
+            minify: true,
+            sourcemap: false
+        });
         addInBODY(`<script type="module" src="/watcher.js"></script>`);
     }
 
@@ -363,11 +370,19 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
     // build service-worker and reference in index.html
     const serviceWorkerFilePath = resolve(config.src, "webapp", "service-worker.ts");
     if(fs.existsSync(serviceWorkerFilePath)){
-        // copy service worker registration entrypoint
-        fs.cpSync(resolve(__dirname, "..", "webapp", "serviceWorkerRegistration.js"), resolve(config.public, "service-worker.js"))
+        // bundle service worker registration entrypoint to public dir
+        buildSync({
+            entryPoints: [resolve(__dirname, "..", "webapp", "serviceWorkerRegistration.js")],
+            outfile: resolve(config.public, "service-worker.js"),
+            define: getProcessEnv(config),
+            format: "esm",
+            bundle: true,
+            minify: true,
+            sourcemap: false
+        });
 
         // add reference tag in head
-        addInHEAD(`<script src="/service-worker.js"></script>`);
+        addInHEAD(`<script type="module" src="/service-worker.js"></script>`);
 
         // build service worker scripts
         buildSync({
