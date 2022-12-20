@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.9.0-6",
+  "version": "0.9.0-7",
   "description": "A simple tool that takes care of all the redundant tasks in TypeScript web app development.",
   "types": "index.d.ts",
   "scripts": {
