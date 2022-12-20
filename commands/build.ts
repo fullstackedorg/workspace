@@ -1,7 +1,14 @@
 import {dirname, resolve} from "path"
 import esbuild, {BuildOptions, buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {cleanOutDir, copyRecursiveSync, execScript, getBuiltDockerCompose, randStr} from "../utils/utils.js";
+import {
+    cleanOutDir,
+    copyRecursiveSync,
+    execScript,
+    getBuiltDockerCompose,
+    getExternalModules,
+    randStr
+} from "../utils/utils.js";
 import yaml from "js-yaml";
 import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";
@@ -34,39 +41,6 @@ function getProcessedEnv(config: FullStackedConfig){
     processEnv['process.env.VERSION'] = JSON.stringify(config.version)
 
     return processEnv;
-}
-
-const getExternalModules = (srcDir: string) => {
-    const ignoreFilePath = resolve(srcDir, "ignore.json");
-    const nativeFilePath = resolve(srcDir, "server", "native.json");
-
-    const hasIgnoredModules = fs.existsSync(ignoreFilePath);
-    const hasNativeModules = fs.existsSync(nativeFilePath);
-
-    if(!hasIgnoredModules && !hasNativeModules) return [];
-
-    let ignoredModules = [];
-
-    if(hasIgnoredModules){
-        try{
-            const {ignore} = JSON.parse(fs.readFileSync(ignoreFilePath, {encoding: "utf8"}));
-            ignoredModules = ignore;
-        }catch (e){
-            console.log(e);
-        }
-    }
-
-    if(hasNativeModules){
-        let nativeModules;
-        try{
-            nativeModules = JSON.parse(fs.readFileSync(nativeFilePath, {encoding: "utf8"}));
-        }catch (e){
-            console.log(e);
-        }
-        ignoredModules.push(...Object.keys(nativeModules));
-    }
-
-    return ignoredModules;
 }
 
 // bundles the server
