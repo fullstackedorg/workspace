@@ -365,8 +365,6 @@ export function getBuiltDockerCompose(srcDir: string, production: boolean = fals
     const dockerComposeRootAttributes = [
         "services",
         "volumes",
-        "configs",
-        "sercrets",
         "networks"
     ]
     dockerComposeFiles.forEach(dockerComposeFilePath => {
