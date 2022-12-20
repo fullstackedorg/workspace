@@ -52,6 +52,7 @@ node_modules
 !/utils/**/*.js
 
 !/utils/fetch.d.ts
+!/utils/randStr.d.ts
 !/utils/sleep.d.ts
 !/utils/testE2E.d.ts
 !/utils/testIntegration.d.ts

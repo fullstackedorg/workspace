@@ -90,7 +90,8 @@ export default async function(config: FullStackedConfig){
     });
 
     const ignore = [
-        "**/.test*/**",
+        "**/node_modules/**",
+        "**/.test-*/**",
         "**/dist/**"
     ];
 
