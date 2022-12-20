@@ -1,15 +1,11 @@
-import path, {dirname, resolve} from "path";
+import {resolve} from "path";
 import glob from "glob";
-import {fileURLToPath} from "url";
 import Mocha, {Runner} from "mocha";
-import {buildSync, build, Format} from "esbuild";
-import {defaultEsbuildConfig, randStr} from "../utils/utils.js";
+import {defaultEsbuildConfig, recursivelyBuildTS} from "../utils/utils.js";
 import fs from "fs";
 import {execSync} from "child_process";
 import v8toIstanbul from "v8-to-istanbul";
 import {FullStackedConfig} from "../index";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default async function(config: FullStackedConfig){
     if(config.coverage){
@@ -94,56 +90,25 @@ export default async function(config: FullStackedConfig){
         grep: config.testSuite
     });
 
-    const globOptions = {ignore: config.ignore};
+    const ignore = [
+        "**/.test/**",
+        "**/dist/**"
+    ];
+
+    if(config.ignore){
+        if(Array.isArray(config.ignore)) ignore.push(...config.ignore);
+        else ignore.push(config.ignore);
+    }
 
     const testFiles = config.testFile
-        ? glob.sync(resolve(process.cwd(), config.testFile), globOptions)
-        : glob.sync(resolve(config.src, "**", "*test.ts"), globOptions);
+        ? [resolve(process.cwd(), config.testFile)]
+        : glob.sync(resolve(config.src, "**", "*test.ts"), {ignore});
 
     if(!process.argv.includes("--test-mode")){
         const esbuildConfigs = testFiles.map(testFile => defaultEsbuildConfig(testFile));
-        await Promise.all(esbuildConfigs.map(esbuildConfig => new Promise<void>(async res => {
-            await build(esbuildConfig);
-
-            const commonConfig = {
-                bundle: true,
-                format: "esm" as Format
-            }
-
-            const buildRecursivePlugin = {
-                name: "build-needed-ts",
-                setup(currentBuild){
-                    currentBuild.onResolve({filter: /.*/}, async (args) => {
-                        if(args.kind === "entry-point") return null;
-
-                        if(!args.path.endsWith(".js") || !args.path.startsWith(".")) return {external: true};
-
-                        const filePathToBuild = resolve(path.dirname(currentBuild.initialOptions.entryPoints[0]), args.path);
-                        const buildOptions = defaultEsbuildConfig(filePathToBuild.replace(/\.js$/, ".ts"));
-                        await build({
-                            entryPoints: buildOptions.entryPoints,
-                            outfile: buildOptions.outfile,
-                            plugins: [buildRecursivePlugin],
-                            ...commonConfig
-                        });
-
-                        return {external: true};
-                    })
-                }
-            }
-
-            const bundlingFile = resolve(__dirname, `.bundling-${randStr(5)}`);
-            await build({
-                entryPoints: esbuildConfig.entryPoints,
-                outfile: bundlingFile,
-                plugins: [buildRecursivePlugin],
-                ...commonConfig
-            });
-
-            if(fs.existsSync(bundlingFile)) fs.rmSync(bundlingFile);
-            res();
-        })));
-
+        for(const testFile of testFiles){
+            await recursivelyBuildTS(testFile);
+        }
         esbuildConfigs.forEach(esbuildConfig => mocha.addFile(esbuildConfig.outfile));
     }else{
         const nativeFilePath = resolve(config.src, "server", "native.json");

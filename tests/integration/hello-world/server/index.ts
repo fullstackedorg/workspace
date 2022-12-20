@@ -6,5 +6,5 @@ Server.addListener((req, res) => {
         res.write("Hello World");
         res.end();
     }
-});
+}, true);
 

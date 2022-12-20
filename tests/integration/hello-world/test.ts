@@ -2,12 +2,8 @@ import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
 import {fetch} from "../../../utils/fetch.js";
 import Server from "../../../server.js";
-import {dirname} from "path";
-import {fileURLToPath} from "url";
 import "./server/index.js";
 import testIntegration from "../../../utils/testIntegration.js";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 testIntegration(describe("Hello World", function(){
     before(async function (){
@@ -22,4 +18,4 @@ testIntegration(describe("Hello World", function(){
     after(function(){
         Server.stop();
     });
-}), __dirname)
+}))

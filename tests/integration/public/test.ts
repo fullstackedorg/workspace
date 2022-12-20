@@ -2,15 +2,17 @@ import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
 import {fetch} from "../../../utils/fetch.js";
 import Server from "../../../server.js";
-import {dirname} from "path";
+import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
 import testIntegration from "../../../utils/testIntegration.js";
+import fs from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 testIntegration(describe("Files", function(){
     before(function (){
-        Server.publicDir = __dirname
+        fs.writeFileSync(resolve(__dirname, "index.html"), "File Test");
+        Server.publicDir = __dirname;
         Server.start();
     });
 
@@ -22,4 +24,4 @@ testIntegration(describe("Files", function(){
     after(function(){
         Server.stop();
     });
-}), __dirname);
+}));
