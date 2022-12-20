@@ -3,7 +3,7 @@ import fs from "fs";
 import glob from "glob";
 import {
     execScript, execSSH, getSFTPClient, randStr, askQuestion,
-    getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword
+    getCertificateData, loadDataEncryptedWithPassword, saveDataEncryptedWithPassword, getBuiltDockerCompose
 } from "../utils/utils.js";
 import Build from "./build.js";
 import yaml from "js-yaml";
@@ -178,20 +178,6 @@ export default class Deploy extends CommandInterface {
 
     /**
      *
-     * Get Docker Compose content in JS object format
-     *
-     */
-    async getBuiltDockerCompose(){
-        const dockerComposeFilePath = path.resolve(this.config.dist, "docker-compose.yml");
-        if(!fs.existsSync(dockerComposeFilePath))
-            throw Error(`Cannot find docker-compose.yml at path ${dockerComposeFilePath}. Maybe run build command before.`);
-
-        const dockerComposeStr = fs.readFileSync(dockerComposeFilePath, {encoding: "utf-8"});
-        return yaml.load(dockerComposeStr) as any;
-    }
-
-    /**
-     *
      * @return an array of available ports on remote host
      *
      */
@@ -221,7 +207,7 @@ export default class Deploy extends CommandInterface {
     private async setupDockerComposeAndNginx(): Promise<nginxFile[]>{
         const sftp = await this.getSFTP();
 
-        const dockerCompose = await this.getBuiltDockerCompose();
+        const dockerCompose = await getBuiltDockerCompose(this.config.src, true);
         // set default to node if no nginx configs
         const nginxConfigs = this.nginxConfigs || [{name: "node", port: 80}];
         const availablePorts = await this.getAvailablePorts(sftp, nginxConfigs.length);
@@ -496,14 +482,7 @@ export default class Deploy extends CommandInterface {
                 callback: async () => await this.tryToInstallDockerOnRemoteHost()
             },{
                 cmd: DEPLOY_CMD.DOCKER_COMPOSE,
-                callback: async () => {
-                    await Build({
-                        ...this.config,
-                        production: true,
-                        silent: true
-                    })
-                    return await this.getBuiltDockerCompose();
-                }
+                callback: () => getBuiltDockerCompose(this.config.src, true)
             },{
                 cmd: DEPLOY_CMD.DEPLOY,
                 callback: async ({sshCredentials, nginxConfigs, certificate}, tick: () => void) => {

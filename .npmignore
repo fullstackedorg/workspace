@@ -32,6 +32,10 @@ node_modules
 /server.js.map
 /server.ts
 
+/server/installNative.d.ts
+/server/installNative.js.map
+/server/installNative.ts
+
 /server/watcher.d.ts
 /server/watcher.js.map
 /server/watcher.ts
