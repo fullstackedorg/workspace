@@ -27,15 +27,13 @@ export default async function(config: FullStackedConfig){
             "c8",
             "--reporter none",
             `--temp-directory ${c8DataDir}`,
-            (config.testMode ? "--clean false" : ""),
+            "--clean false",
             "node",
             ...testCommand,
             "--cover"
         ];
         cmd.splice(cmd.indexOf("--coverage"), 1);
         execSync(cmd.join(" "), {stdio: "inherit"});
-
-        if(config.testMode) return;
 
         const istanbulDataDir = resolve(config.src, ".nyc");
         if(fs.existsSync(istanbulDataDir)) fs.rmSync(istanbulDataDir, {recursive: true});
@@ -104,23 +102,11 @@ export default async function(config: FullStackedConfig){
         ? [resolve(process.cwd(), config.testFile)]
         : glob.sync(resolve(config.src, "**", "*test.ts"), {ignore});
 
-    if(!process.argv.includes("--test-mode")){
-        const esbuildConfigs = testFiles.map(testFile => defaultEsbuildConfig(testFile));
-        for(const testFile of testFiles){
-            await recursivelyBuildTS(testFile);
-        }
-        esbuildConfigs.forEach(esbuildConfig => mocha.addFile(esbuildConfig.outfile));
-    }else{
-        const nativeFilePath = resolve(config.src, "server", "native.json");
-        if(fs.existsSync(nativeFilePath)){
-            const nativeModules = JSON.parse(fs.readFileSync(nativeFilePath, {encoding: "utf8"}));
-            const install = Object.keys(nativeModules).map(nativeModule => nativeModule + "@" + nativeModules[nativeModule]).join(" ");
-            execSync(`npm uninstall ${install} && npm i --no-save ${install}`, {
-                stdio: "ignore"
-            });
-        }
-        testFiles.forEach(testFile => mocha.addFile(testFile));
+    const esbuildConfigs = testFiles.map(testFile => defaultEsbuildConfig(testFile));
+    for(const testFile of testFiles){
+        await recursivelyBuildTS(testFile);
     }
+    esbuildConfigs.forEach(esbuildConfig => mocha.addFile(esbuildConfig.outfile));
 
     await mocha.loadFilesAsync();
     mocha.run();
@@ -128,10 +114,8 @@ export default async function(config: FullStackedConfig){
 
 function specExt(runner: Runner){
     runner.on(Mocha.Runner.constants.EVENT_RUN_END, function() {
-        if(process.argv.includes("--test-mode")) return;
-
         if(!global.integrationTests)
-            global.integrationTests = {passes: 0, failures: 0};
+            global.integrationTests = {count: 0, passes: 0, failures: 0};
 
         runner.stats.passes += global.integrationTests.passes;
         runner.stats.failures += global.integrationTests.failures;
@@ -142,7 +126,7 @@ function specExt(runner: Runner){
     const passTestListeners = runner.listeners(Mocha.Runner.constants.EVENT_TEST_PASS);
     runner.removeAllListeners(Mocha.Runner.constants.EVENT_TEST_PASS);
     runner.on(Mocha.Runner.constants.EVENT_TEST_PASS, (test) => {
-        if(test.title.startsWith("Integration"))
+        if(test.title.startsWith("Internal Integration Test"))
             return;
 
         passTestListeners.forEach(listener => {
