@@ -44,7 +44,9 @@ node_modules
 
 /tsconfig.json
 
-/types
+/types/**/*.ts
+/types/**/*.d.ts
+/types/**/*.js.map
 
 /utils/**/*
 !/utils/**/*.js
