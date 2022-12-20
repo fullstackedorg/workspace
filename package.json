@@ -6,8 +6,8 @@
   "types": "index.d.ts",
   "scripts": {
     "build:gui": "node cli build --src=gui --out=gui",
-    "build": "npm run cleanup && npx esbuild build.ts --outfile=build.js --format=esm && node build && npm run build:gui",
-    "cleanup": "npx esbuild cleanup.ts --outfile=cleanup.js --format=esm && node cleanup",
+    "build": "npm run clean && npx esbuild build.ts --outfile=build.js --format=esm && node build && npm run build:gui",
+    "clean": "npx esbuild clean.ts --outfile=clean.js --format=esm && node clean",
     "prestart": "npm run build",
     "start": "node cli watch --src=gui",
     "pretest": "npm run build && node tests/testsDockerImages",
