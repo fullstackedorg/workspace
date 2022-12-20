@@ -3,12 +3,13 @@ import path, {dirname, resolve} from "path";
 import fs from "fs";
 import {build} from "esbuild";
 import {fileURLToPath} from "url";
-import {getBuiltDockerCompose, getExternalModules, randStr} from "./utils.js";
+import {getBuiltDockerCompose, getExternalModules} from "./utils.js";
 import yaml from "js-yaml";
 import Docker from "./docker.js";
 import DockerCompose from "dockerode-compose";
 import glob from "glob";
 import {Writable} from "stream";
+import randStr from "./randStr.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
