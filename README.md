@@ -78,7 +78,7 @@ see flags in the [docs](https://docs.fullstacked.org/commands)
 * Finally, save and load your configs to a password encrypted file. 
 This way, even if you commit the `.fullstacked` file in your repo (**<u>strongly not recommend in public repositories</u>**),
 it is not revealing anything.
-Only password holders, like you and your CI, can decrypt the info and run the command!
+Only password holders, like you and your CI, can decrypt the info and run the command.
 
 <img src=https://files.cplepage.com/fullstacked/fullstacked-gui.jpg />
 

@@ -20,7 +20,7 @@ const globs = [
     "dist",
     ".c8",
     ".nyc",
-    ".test",
+    ".test*",
     "coverage",
     "*.tar",
     "*.tgz",
