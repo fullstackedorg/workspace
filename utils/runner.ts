@@ -70,7 +70,7 @@ export default class Runner {
     async attach(stdout: typeof process.stdout, containerName = "node"){
         const container = this.config.docker.getContainer(`${this.dockerCompose.projectName}_${containerName}_1`);
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
-        stream.pipe(stdout);
+        container.modem.demuxStream(stream, process.stdout, process.stderr);
     }
 
     async stop(){

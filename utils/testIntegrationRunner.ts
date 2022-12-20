@@ -3,11 +3,14 @@ import path, {dirname, resolve} from "path";
 import fs from "fs";
 import {build} from "esbuild";
 import {fileURLToPath} from "url";
-import {getBuiltDockerCompose} from "./utils.js";
+import {getBuiltDockerCompose, getExternalModules} from "./utils.js";
 import yaml from "js-yaml";
 import Docker from "./docker.js";
 import DockerCompose from "dockerode-compose";
 import glob from "glob";
+import {Writable} from "stream";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default async function(testSuite: Suite){
     const testTitle = testSuite.title
@@ -26,6 +29,8 @@ export default async function(testSuite: Suite){
     if(fs.existsSync(tempTestDir)) fs.rmSync(tempTestDir, {force: true, recursive: true});
     fs.mkdirSync(tempTestDir);
 
+
+
     await build({
         entryPoints: [testSuite.file],
         outfile: resolve(tempTestDir, "test.mjs"),
@@ -39,24 +44,35 @@ export default async function(testSuite: Suite){
 
         external: [
             fileURLToPath(import.meta.url),
-            'mocha'
+            'mocha',
+            ...getExternalModules(srcDir)
         ]
-    })
+    });
 
     const dockerComposeData: any = getBuiltDockerCompose(srcDir);
 
     dockerComposeData.services.node.volumes = [tempTestDir + ":/app"];
 
-    const cmd = process.argv.includes("--cover")
-        ? ["npm", "i", "mocha", "c8", "--silent", "&&",
-            "npx", "c8", "--reporter none", `--temp-directory /app/.c8`, "npx", "mocha", "test.mjs", "--testing"]
-        : ["npm", "i", "mocha", "--silent", "&&",
-            "npx", "mocha", "test.mjs", "--testing"]
+
+    const installCommand = process.argv.includes("--cover")
+        ? ["npm", "i", "mocha", "c8", "--silent"]
+        : ["npm", "i", "mocha", "--silent"]
+
+    const testCommand = process.argv.includes("--cover")
+        ? ["npx", "c8", "--reporter none", `--temp-directory /app/.c8`, "npx", "mocha", "test.mjs", "--testing"]
+        : ["npx", "mocha", "test.mjs", "--testing"]
+
+    const nativeFilePath = resolve(srcDir, "server", "native.json")
+    if(fs.existsSync(nativeFilePath)){
+        fs.cpSync(nativeFilePath, resolve(tempTestDir, "native.json"));
+        fs.cpSync(resolve(__dirname, "..", "server", "installNative.js"), resolve(tempTestDir, "installNative.mjs"));
+        installCommand.push(...["&&", "node", "installNative.mjs"])
+    }
 
     dockerComposeData.services.node.command = [
         "/bin/sh",
         "-c",
-        cmd.join(" "),
+        installCommand.join(" ") + " && " + testCommand.join(" "),
     ];
 
     Object.keys(dockerComposeData.services).forEach(serviceName => {
@@ -78,12 +94,22 @@ export default async function(testSuite: Suite){
 
     let results = ""
     await new Promise(async resolve => {
-        const logsStream = (await (await docker.getContainer(testTitle + '_node_1')).logs({stdout: true, stderr: true, follow: true}));
-        logsStream.on("data", chunk => {
-            if(!chunk.toString().match(/(\d+ (passing|failing)|npm notice)/g))
-                process.stdout.write(chunk);
-            results += chunk.toString();
+        const container = await docker.getContainer(testTitle + '_node_1');
+        const logsStream = await container.logs({stdout: true, stderr: true, follow: true});
+
+        const stream = new Writable({
+            write: function(chunk, encoding, next) {
+
+                if(!chunk.toString().match(/(\d+ (passing|failing)|npm notice)/g))
+                    process.stdout.write(chunk);
+
+                results += chunk.toString();
+                next();
+            }
         });
+
+        container.modem.demuxStream(logsStream, stream, stream);
+
         logsStream.on("end", resolve);
     });
 

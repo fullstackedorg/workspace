@@ -417,3 +417,36 @@ export async function recursivelyBuildTS(entrypoint: string, outDir?: string){
         }]
     })
 }
+
+export function getExternalModules(srcDir: string){
+    const ignoreFilePath = resolve(srcDir, "ignore.json");
+    const nativeFilePath = resolve(srcDir, "server", "native.json");
+
+    const hasIgnoredModules = fs.existsSync(ignoreFilePath);
+    const hasNativeModules = fs.existsSync(nativeFilePath);
+
+    if(!hasIgnoredModules && !hasNativeModules) return [];
+
+    let ignoredModules = [];
+
+    if(hasIgnoredModules){
+        try{
+            const {ignore} = JSON.parse(fs.readFileSync(ignoreFilePath, {encoding: "utf8"}));
+            ignoredModules = ignore;
+        }catch (e){
+            console.log(e);
+        }
+    }
+
+    if(hasNativeModules){
+        let nativeModules;
+        try{
+            nativeModules = JSON.parse(fs.readFileSync(nativeFilePath, {encoding: "utf8"}));
+        }catch (e){
+            console.log(e);
+        }
+        ignoredModules.push(...Object.keys(nativeModules));
+    }
+
+    return ignoredModules;
+}
