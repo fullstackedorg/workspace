@@ -22,12 +22,14 @@ export default async function(testSuite: Suite, options?: {
         .replace(/ /g, "_")
         .replace(/[^a-zA-Z0-9_.-]/g, "");
 
-    let srcDir = options?.src ?? process.cwd();
+    let srcDir = process.cwd();
     process.argv.forEach(arg => {
         if(!arg.startsWith("--src=")) return;
         srcDir = resolve(process.cwd(), arg.slice("--src=".length));
     });
-    const outDir = options?.out ?? process.cwd();
+    if(options?.src) srcDir = options.src;
+
+    const outDir = options?.out ?? srcDir;
 
     const tempTestDir = resolve(dirname(testSuite.file), `.test-${randStr(5)}`);
 
@@ -153,6 +155,9 @@ export default async function(testSuite: Suite, options?: {
                 .replace(/\\/g, "/").replace(/C:/g, "/C:");
         });
         const fileName = filePath.slice(c8OutDir.length + 1);
-        fs.writeFileSync(resolve(outDir, ".c8", fileName), updatedContent);
+
+        const finalC8OutDir = resolve(outDir, ".c8")
+        if(!fs.existsSync(finalC8OutDir)) fs.mkdirSync(finalC8OutDir, {recursive: true});
+        fs.writeFileSync(resolve(finalC8OutDir, fileName), updatedContent);
     });
 }

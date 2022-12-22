@@ -22,4 +22,4 @@ testIntegration(describe("Hello World", function(){
     after(function(){
         Server.stop();
     });
-}), {src: __dirname})
+}), {src: __dirname, out: process.cwd()})
