@@ -4,6 +4,10 @@ import {fetch} from "../../../utils/fetch.js";
 import Server from "../../../server.js";
 import "./server/index.js";
 import testIntegration from "../../../utils/testIntegration.js";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 testIntegration(describe("Hello World", function(){
     before(async function (){
@@ -18,4 +22,4 @@ testIntegration(describe("Hello World", function(){
     after(function(){
         Server.stop();
     });
-}))
+}), {src: __dirname})

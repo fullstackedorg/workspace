@@ -40,7 +40,8 @@ describe("Backup-Restore Test", function(){
 
         ok(testArr.length > 0);
         printLine("Backing up");
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`);
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent --src=${localConfig.src}`,
+            {stdio: "ignore"});
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 0);
         await runner.stop();
@@ -52,7 +53,8 @@ describe("Backup-Restore Test", function(){
         notDeepEqual(response, testArr);
 
         printLine("Restoring");
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --silent`);
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} restore --silent --src=${localConfig.src}`,
+            {stdio: "ignore"});
         await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
 
         const response2 = await fetch.get(`http://localhost:${runner.nodePort}/get`);
@@ -73,7 +75,8 @@ describe("Backup-Restore Test", function(){
         await fetch.post(`http://localhost:${runner.nodePort}/post`);
         const testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
 
-        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent`, {stdio: "ignore"});
+        execSync(`node ${path.resolve(__dirname, "../../../", "cli")} backup --silent --src=${localConfig.src}`,
+            {stdio: "ignore"});
 
         await runner.stop();
 

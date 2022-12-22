@@ -37,7 +37,7 @@ export default class Runner {
             if(!exposedPorts) continue;
 
             for (let i = 0; i < exposedPorts.length; i++) {
-                if(exposedPorts[i].includes(":")) continue;
+                if(exposedPorts[i].toString().includes(":")) continue;
 
                 availablePort = await getNextAvailablePort(availablePort);
 

@@ -13,17 +13,21 @@ import randStr from "./randStr.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export default async function(testSuite: Suite){
+export default async function(testSuite: Suite, options?: {
+    src?: string,
+    out?: string
+}){
     const testTitle = testSuite.title
         .toLowerCase()
         .replace(/ /g, "_")
         .replace(/[^a-zA-Z0-9_.-]/g, "");
 
-    let srcDir = process.cwd();
+    let srcDir = options?.src ?? process.cwd();
     process.argv.forEach(arg => {
         if(!arg.startsWith("--src=")) return;
         srcDir = resolve(process.cwd(), arg.slice("--src=".length));
     });
+    const outDir = options?.out ?? process.cwd();
 
     const tempTestDir = resolve(dirname(testSuite.file), `.test-${randStr(5)}`);
 
@@ -149,6 +153,6 @@ export default async function(testSuite: Suite){
                 .replace(/\\/g, "/").replace(/C:/g, "/C:");
         });
         const fileName = filePath.slice(c8OutDir.length + 1);
-        fs.writeFileSync(resolve(srcDir, ".c8", fileName), updatedContent);
+        fs.writeFileSync(resolve(outDir, ".c8", fileName), updatedContent);
     });
 }

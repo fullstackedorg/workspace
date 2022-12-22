@@ -111,7 +111,10 @@ export default async function(config: FullStackedConfig){
     esbuildConfigs.forEach(esbuildConfig => mocha.addFile(esbuildConfig.outfile));
 
     await mocha.loadFilesAsync();
-    mocha.run();
+    mocha.run(() => {
+        if(config.coverage) return;
+        glob.sync(resolve(config.src, "**", ".test-*")).forEach(tempDir => fs.rmSync(tempDir, {recursive: true}));
+    });
 }
 
 function specExt(runner: Runner){

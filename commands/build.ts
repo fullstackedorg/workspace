@@ -15,16 +15,17 @@ import {fileURLToPath} from "url";
 import {FullStackedConfig} from "../index";
 import * as process from "process";
 import randStr from "../utils/randStr.js";
+import {config as dotenvConfig} from "dotenv"
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // load .env located at root of src
-async function loadEnvVars(srcDir: string){
+function loadEnvVars(srcDir: string){
     const path = resolve(srcDir, ".env");
 
     if(!fs.existsSync(path)) return;
 
-    (await import('dotenv')).config({path});
+    dotenvConfig({path});
 }
 
 // get all env variables in the form of an object
@@ -161,6 +162,7 @@ async function buildWebApp(config, watcher){
                 await execScript(resolve(config.src, "prebuild.ts"), config, true);
             });
             build.onEnd(async () => {
+                webAppPostBuild(config, watcher);
                 // postbuild script, true for isWebApp
                 await execScript(resolve(config.src, "postbuild.ts"), config, true);
             });
@@ -239,8 +241,6 @@ async function buildWebApp(config, watcher){
 
     if(result.errors.length > 0)
         return;
-
-    webAppPostBuild(config, watcher);
 
     if(!config.silent)
         console.log('\x1b[32m%s\x1b[0m', "WebApp Built");

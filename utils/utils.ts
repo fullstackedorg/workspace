@@ -230,6 +230,7 @@ export async function getSFTPClient(sshCredentials: sshCredentials): Promise<Wra
 
 export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: string | string[]): string[]{
     const dockerCompose = yaml.load(dockerComposeStr) as any;
+    console.log(dockerCompose)
     const volumes = Object.keys(dockerCompose.volumes);
 
     if(!volumes.length)
@@ -351,11 +352,10 @@ export function getBuiltDockerCompose(srcDir: string, production: boolean = fals
         ignore.push(...arg.slice("--ignore=".length).split(","));
     });
 
-    const dockerComposeFiles = glob.sync(resolve(srcDir, "**", "*.docker-compose.yml"), {ignore});
-    const userDockerComposeFilePath = resolve(srcDir, "docker-compose.yml");
-    if(fs.existsSync(userDockerComposeFilePath)) {
-        dockerComposeFiles.push(userDockerComposeFilePath);
-    }
+    const dockerComposeFiles = [
+        ...glob.sync(resolve(srcDir, "**", "docker-compose.yml"), {ignore}),
+        ...glob.sync(resolve(srcDir, "**", "*.docker-compose.yml"), {ignore})
+    ];
 
     const dockerComposeRootAttributes = [
         "services",

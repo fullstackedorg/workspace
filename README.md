@@ -71,7 +71,7 @@ see flags in the [docs](https://docs.fullstacked.org/commands)
 ### <a name="gui"></a>GUI
 
 > **Note** <br />
-> The GUI is fairly new and is working only with the deploy command.
+> The GUI is fairly new and is only working with the `deploy` command.
 
 * Run a command using the `--gui` arg to pop up the FullStacked GUI.
 * It helps a lot with setting up a couple of stuff and seeing the progress. 
@@ -103,7 +103,7 @@ sharing development environments for the purpose of testing and reviewing.
 * ~~Switch to~~ Support [Deno](https://github.com/denoland/deno) and/or [bun](https://github.com/Jarred-Sumner/bun)  
 <br /> 
  
-> These are being implemented in [FullStacked IDE](https://ide.fullstacked.org)
+> These are being implemented in [FullStacked IDE](https://ide.fullstacked.org) or the GUI
 
 * Add integration with [PWABuilder](https://github.com/pwa-builder/PWABuilder) to generate iOS and Android App
 * <s>Switch nginx image for [nginx proxy manager](https://github.com/NginxProxyManager/nginx-proxy-manager) </s> 
