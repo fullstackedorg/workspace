@@ -24,4 +24,4 @@ testIntegration(describe("Files", function(){
     after(function(){
         Server.stop();
     });
-}), {src: __dirname});
+}), {src: __dirname, out: process.cwd()});
