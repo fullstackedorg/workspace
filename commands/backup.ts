@@ -1,19 +1,24 @@
 import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
-import {clearLine, execSSH, getSFTPClient, getVolumesToBackup, maybePullDockerImage, printLine} from "../utils/utils.js";
+import {
+    clearLine,
+    execSSH,
+    getBuiltDockerCompose,
+    getSFTPClient,
+    getVolumesToBackup,
+    maybePullDockerImage,
+    printLine
+} from "../utils/utils.js";
 import progress from "progress-stream";
 import {sshCredentials} from "../types/deploy.js";
+import yaml from "js-yaml";
 
 export default async function (config: FullStackedConfig) {
     if(config.host)
         return await backupRemote(config);
 
-    if(!fs.existsSync(path.resolve(config.dist, "docker-compose.yml")))
-        return console.log("Could not find built docker-compose file");
-
-    const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
-    const volumesToBackup = getVolumesToBackup(fs.readFileSync(dockerComposeFile, {encoding: "utf8"}), config.volume);
+    const volumesToBackup = getVolumesToBackup(yaml.dump(getBuiltDockerCompose(config.src)), config.volume);
 
     await maybePullDockerImage(config.docker, "busybox");
 

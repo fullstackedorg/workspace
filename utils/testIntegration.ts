@@ -1,6 +1,9 @@
 import {it, Suite} from "mocha";
 
-export default function testIntegration(testSuite: Suite){
+export default function testIntegration(testSuite: Suite, options?: {
+    src?: string,
+    out?: string
+}){
     if(process.argv.includes("--testing")) return;
 
     if(!global.integrationTests)
@@ -12,7 +15,7 @@ export default function testIntegration(testSuite: Suite){
 
     it(`Internal Integration Test [${testSuite.title}]`, async function(){
         this.timeout(10000000)
-        await (await import("./testIntegrationRunner.js")).default(testSuite);
+        await (await import("./testIntegrationRunner.js")).default(testSuite, options);
     });
 }
 

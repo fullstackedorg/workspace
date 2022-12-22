@@ -284,10 +284,25 @@ export default class Deploy extends CommandInterface {
     async startFullStackedNginxOnRemoteHost(){
         const sftp = await this.getSFTP();
 
+        const nginxDockerCompose = {
+            services: {
+                nginx: {
+                    image: "nginx",
+                    network_mode: "host",
+                    container_name: "fullstacked-nginx",
+                    volumes: [
+                        "./:/apps",
+                        "./root.conf:/etc/nginx/nginx.conf"
+                    ],
+                    restart: "always"
+                }
+            }
+        };
+
         console.log(`Starting FullStacked Nginx on remote server`);
         await execSSH(sftp.client, `sudo chmod -R 755 ${this.sshCredentials.appDir}`);
         await sftp.put(path.resolve(__dirname, "..", "nginx", "root.conf"), `${this.sshCredentials.appDir}/root.conf`);
-        await sftp.put(path.resolve(__dirname, "..", "nginx", "docker-compose.yml"), `${this.sshCredentials.appDir}/docker-compose.yml`);
+        await sftp.put(Buffer.from(yaml.dump(nginxDockerCompose)), `${this.sshCredentials.appDir}/docker-compose.yml`);
         await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml up -d`, this.write);
         await execSSH(sftp.client, `docker compose -p fullstacked-nginx -f ${this.sshCredentials.appDir}/docker-compose.yml restart`, this.write);
     }

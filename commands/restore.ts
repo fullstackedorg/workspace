@@ -6,22 +6,20 @@ import {
     getVolumesToBackup,
     maybePullDockerImage,
     printLine,
-    execSSH,
+    execSSH, getBuiltDockerCompose,
 } from "../utils/utils.js";
 import {sshCredentials} from "../types/deploy.js";
-import DockerCompose from "dockerode-compose";
 import uploadFileWithProgress from "../utils/uploadFileWithProgress.js";
+import yaml from "js-yaml";
 
 export default async function (config: FullStackedConfig) {
     if(config.host)
         return await restoreRemote(config);
 
-    const dockerComposeFile = path.resolve(config.dist, "docker-compose.yml");
-    const volumesToRestore = getVolumesToBackup(fs.readFileSync(dockerComposeFile, {encoding: "utf-8"}), config.volume);
+    const dockerCompose = getBuiltDockerCompose(config.src);
+    const volumesToRestore = getVolumesToBackup(yaml.dump(dockerCompose), config.volume);
 
-    const dockerCompose = new DockerCompose(config.docker, dockerComposeFile, config.name);
-
-    const services = Object.keys(dockerCompose.recipe.services);
+    const services = Object.keys(dockerCompose.services);
 
     await maybePullDockerImage(config.docker, "busybox");
 
