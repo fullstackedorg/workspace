@@ -230,7 +230,6 @@ export async function getSFTPClient(sshCredentials: sshCredentials): Promise<Wra
 
 export function getVolumesToBackup(dockerComposeStr: string, volumesAsked?: string | string[]): string[]{
     const dockerCompose = yaml.load(dockerComposeStr) as any;
-    console.log(dockerCompose)
     const volumes = Object.keys(dockerCompose.volumes);
 
     if(!volumes.length)
