@@ -38,6 +38,8 @@ export default async function (config: FullStackedConfig) {
 
         await container.remove({v: true});
     }
+
+    if(!config.silent) console.log("Done");
 }
 
 async function backupRemote(config: FullStackedConfig){
