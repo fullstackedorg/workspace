@@ -378,7 +378,7 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
             format: "esm",
             bundle: true,
             minify: true,
-            sourcemap: false
+            sourcemap: !config.production
         });
 
         // add reference tag in head
