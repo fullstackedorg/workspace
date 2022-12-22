@@ -403,6 +403,20 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
     loadEnvVars(config.src);
     cleanOutDir(config.dist);
 
+    const ignore = [
+        "**/node_modules/**"
+    ];
+
+    if(config?.ignore){
+        if(Array.isArray(config.ignore)) ignore.push(...config.ignore);
+        else ignore.push(config.ignore);
+    }
+
+    [
+        ...glob.sync(resolve(config.src, "**", "*.js"), {ignore}),
+        ...glob.sync(resolve(config.src, "**", "*.js.map"), {ignore})
+    ].forEach(jsFile => fs.rmSync(jsFile));
+
     // build server and webapp
     await Promise.all([
         buildServer(config, watcher),
