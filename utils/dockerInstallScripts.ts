@@ -28,5 +28,12 @@ export default {
         "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
         "sudo apt-get update",
         "sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y"
+    ],
+    "Rocky Linux": [
+        "sudo dnf update -y",
+        "sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
+        "sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",
+        "sudo systemctl start docker",
+        "sudo systemctl enable docker"
     ]
 }
