@@ -1,11 +1,11 @@
 import {resolve} from "path";
 import glob from "glob";
 import Mocha, {Runner} from "mocha";
-import {defaultEsbuildConfig, recursivelyBuildTS} from "../utils/utils.js";
 import fs from "fs";
 import {execSync} from "child_process";
 import v8toIstanbul from "v8-to-istanbul";
 import {FullStackedConfig} from "../index";
+import buildRecursively, {convertPathToJSExt} from "../utils/buildRecursively";
 
 export default async function(config: FullStackedConfig){
     if(config.coverage){
@@ -104,11 +104,8 @@ export default async function(config: FullStackedConfig){
         ? [resolve(process.cwd(), config.testFile)]
         : glob.sync(resolve(config.src, "**", "*test.ts"), {ignore});
 
-    const esbuildConfigs = testFiles.map(testFile => defaultEsbuildConfig(testFile));
-    for(const testFile of testFiles){
-        await recursivelyBuildTS(testFile);
-    }
-    esbuildConfigs.forEach(esbuildConfig => mocha.addFile(esbuildConfig.outfile));
+    await buildRecursively(testFiles);
+    testFiles.forEach(testFile => mocha.addFile(convertPathToJSExt(testFile)));
 
     await mocha.loadFilesAsync();
     mocha.run(() => {

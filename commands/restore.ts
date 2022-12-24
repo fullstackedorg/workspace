@@ -7,9 +7,9 @@ import {
     maybePullDockerImage,
     printLine,
     execSSH, getBuiltDockerCompose,
-} from "../utils/utils.js";
-import {sshCredentials} from "../types/deploy.js";
-import uploadFileWithProgress from "../utils/uploadFileWithProgress.js";
+} from "../utils/utils";
+import {sshCredentials} from "../types/deploy";
+import uploadFileWithProgress from "../utils/uploadFileWithProgress";
 import yaml from "js-yaml";
 
 export default async function (config: FullStackedConfig) {

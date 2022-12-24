@@ -2,8 +2,8 @@ import { describe, it, before, after } from 'mocha';
 import {ok} from "assert";
 import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
-import sleep from "../../utils/sleep.js";
-import TestE2E from "../../utils/testE2E.js";
+import sleep from "../../utils/sleep";
+import TestE2E from "../../utils/testE2E";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

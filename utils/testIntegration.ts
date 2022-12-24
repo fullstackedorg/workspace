@@ -15,7 +15,7 @@ export default function testIntegration(testSuite: Suite, options?: {
 
     it(`Internal Integration Test [${testSuite.title}]`, async function(){
         this.timeout(10000000)
-        await (await import("./testIntegrationRunner.js")).default(testSuite, options);
+        await (await import("./testIntegrationRunner")).default(testSuite, options);
     });
 }
 

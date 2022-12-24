@@ -1,8 +1,8 @@
 import {execSync} from "child_process";
-import { maybePullDockerImage, printLine, silenceCommandLine} from "../../utils/utils.js";
+import { maybePullDockerImage, printLine, silenceCommandLine} from "../../utils/utils";
 import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
-import Docker from "../../utils/docker.js";
+import Docker from "../../utils/docker";
 import fs from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

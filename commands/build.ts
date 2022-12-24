@@ -2,19 +2,15 @@ import {dirname, resolve} from "path"
 import esbuild, {BuildOptions, buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import {
-    cleanOutDir,
-    copyRecursiveSync,
-    execScript,
-    getBuiltDockerCompose,
-    getExternalModules
-} from "../utils/utils.js";
+    cleanOutDir, copyRecursiveSync, execScript,
+    getBuiltDockerCompose, getExternalModules
+} from "../utils/utils";
 import yaml from "js-yaml";
 import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";
 import {fileURLToPath} from "url";
 import {FullStackedConfig} from "../index";
-import * as process from "process";
-import randStr from "../utils/randStr.js";
+import randStr from "../utils/randStr";
 import {config as dotenvConfig} from "dotenv"
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -411,11 +407,6 @@ export default async function(config, watcher: (isWebApp: boolean) => void = nul
         if(Array.isArray(config.ignore)) ignore.push(...config.ignore);
         else ignore.push(config.ignore);
     }
-
-    [
-        ...glob.sync(resolve(config.src, "**", "*.js"), {ignore}),
-        ...glob.sync(resolve(config.src, "**", "*.js.map"), {ignore})
-    ].forEach(jsFile => fs.rmSync(jsFile));
 
     // build server and webapp
     await Promise.all([

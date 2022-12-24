@@ -2,7 +2,7 @@ import {describe, it, afterEach} from 'mocha';
 import {ok} from "assert";
 import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
-import TestE2E from "../../../utils/testE2E.js";
+import TestE2E from "../../../utils/testE2E";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

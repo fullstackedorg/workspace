@@ -1,19 +1,20 @@
-import esbuild from "esbuild";
+import {buildSync} from "esbuild";
 import glob from "glob";
-import path, { resolve } from "path"
+import {dirname, resolve} from "path"
 import fs from "fs";
 import {fileURLToPath} from "url";
 
-global.__dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-async function buildFile(file){
-    return esbuild.build({
-        entryPoints: [file],
-        outfile: file.slice(0, -2) + "js",
-        format: "esm",
-        sourcemap: true
-    });
-}
+buildSync({
+    entryPoints: [resolve(__dirname, "utils", "buildRecursively.ts")],
+    outfile: resolve(__dirname, "utils", "buildRecursively.js"),
+    platform: "node",
+    format: "esm",
+    sourcemap: true,
+});
+
+const buildRecursively = (await import(resolve(__dirname, "utils", "buildRecursively.js"))).default;
 
 const commands = glob.sync(resolve(__dirname, "commands", "**", "*.ts")).filter(file => !file.endsWith(".d.ts"));
 const types = glob.sync(resolve(__dirname, "types", "**", "*.ts"));
@@ -21,7 +22,7 @@ const server = glob.sync(resolve(__dirname, "server", "**", "*.ts"));
 const webapp = glob.sync(resolve(__dirname, "webapp", "**", "*.ts"));
 const utils = glob.sync(resolve(__dirname, "utils", "**", "*.ts"));
 
-const buildPromises: Promise<any>[] = [
+const toBuild = [
     ...commands,
     ...types,
     ...server,
@@ -32,14 +33,15 @@ const buildPromises: Promise<any>[] = [
     resolve(__dirname, "tests", "testsDockerImages.ts"),
     resolve(__dirname, "server.ts"),
     resolve(__dirname, "cli.ts"),
-].map(file => buildFile(file));
+];
 
-await Promise.all(buildPromises);
+await buildRecursively(toBuild);
+
 console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 
 const version = JSON.parse(fs.readFileSync(resolve(__dirname, "package.json"), {encoding: "utf8"})).version;
-
 fs.writeFileSync(resolve(__dirname, "version.ts"), `const FullStackedVersion = "${version}";
 export default FullStackedVersion;`);
+await buildRecursively([resolve(__dirname, "./version.ts")], true);
 
-await buildFile(resolve(__dirname, "./version.ts"));
+console.log(`v${version}`);

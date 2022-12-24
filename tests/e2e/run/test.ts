@@ -3,9 +3,9 @@ import {equal} from "assert";
 import {exec} from "child_process";
 import path, {dirname} from "path";
 import puppeteer from "puppeteer";
-import sleep from "../../../utils/sleep.js";
-import {cleanOutDir} from "../../../utils/utils.js";
-import waitForServer from "../../../utils/waitForServer.js";
+import sleep from "../../../utils/sleep";
+import {cleanOutDir} from "../../../utils/utils";
+import waitForServer from "../../../utils/waitForServer";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

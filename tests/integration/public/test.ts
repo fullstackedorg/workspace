@@ -1,10 +1,10 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
-import {fetch} from "../../../utils/fetch.js";
-import Server from "../../../server.js";
+import {fetch} from "../../../utils/fetch";
+import Server from "../../../server";
 import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
-import testIntegration from "../../../utils/testIntegration.js";
+import testIntegration from "../../../utils/testIntegration";
 import fs from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
