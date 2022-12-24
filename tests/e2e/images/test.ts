@@ -1,12 +1,16 @@
 import {describe, it, afterEach} from 'mocha';
 import {ok} from "assert";
-import Helper from "fullstacked/tests/e2e/Helper";
+import {dirname, resolve} from "path";
+import {fileURLToPath} from "url";
+import TestE2E from "../../../utils/testE2E";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Images Format Test", function(){
     let test;
 
     it('Should display a JPG', async function(){
-        test = new Helper(__dirname + "/jpg");
+        test = new TestE2E(resolve(__dirname, "jpg"));
         await test.start();
         const root = await test.page.$("img");
         const imageSrc = await root.getProperty('src');
@@ -14,7 +18,7 @@ describe("Images Format Test", function(){
     });
 
     it('Should display a PNG', async function(){
-        test = new Helper(__dirname + "/png");
+        test = new TestE2E(resolve(__dirname, "png"));
         await test.start();
         const root = await test.page.$("img");
         const imageSrc = await root.getProperty('src');
@@ -22,7 +26,7 @@ describe("Images Format Test", function(){
     });
 
     it('Should display a SVG', async function(){
-        test = new Helper(__dirname + "/svg");
+        test = new TestE2E(resolve(__dirname, "svg"));
         await test.start();
         const root = await test.page.$("img");
         const imageSrc = await root.getProperty('src');

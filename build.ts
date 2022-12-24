@@ -1,31 +1,51 @@
-import esbuild from "esbuild";
+import {buildSync} from "esbuild";
 import glob from "glob";
-import path from "path"
+import {dirname, resolve} from "path"
 import fs from "fs";
+import {fileURLToPath} from "url";
 
-(async function() {
-    const scripts = glob.sync(path.resolve(__dirname, "./scripts") + "/**/*.ts")
-        .filter(file => !file.endsWith(".d.ts"));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-    const otherScripts = [
-        path.resolve(__dirname, "./cli.ts"),
-        path.resolve(__dirname, "./.mocharc.ts"),
-        path.resolve(__dirname, "./mocha-reporter.ts"),
-        path.resolve(__dirname, "./getPackageJSON.ts"),
-    ];
+buildSync({
+    entryPoints: [resolve(__dirname, "utils", "buildRecursively.ts")],
+    outfile: resolve(__dirname, "utils", "buildRecursively.js"),
+    platform: "node",
+    format: "esm",
+    sourcemap: true,
+});
 
-    const buildPromises: Promise<any>[] = scripts.concat(otherScripts).map(file => {
-        return esbuild.build({
-            entryPoints: [file],
-            outfile: file.slice(0, -2) + "js",
-            format: "cjs",
-            sourcemap: true
-        });
-    });
+const builtModule = resolve(__dirname, "utils", "buildRecursively.js")
+    // windows path...
+    .replace(/C:/, "").replace(/\\/, "/");
 
-    await Promise.all(buildPromises);
-    console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
+const buildRecursively = (await import(builtModule)).default;
 
-    fs.writeFileSync(path.resolve(__dirname, "version.ts"), `const version = "${require("./getPackageJSON").default().version}";
-export default version;`);
-})()
+const commands = glob.sync(resolve(__dirname, "commands", "**", "*.ts")).filter(file => !file.endsWith(".d.ts"));
+const types = glob.sync(resolve(__dirname, "types", "**", "*.ts"));
+const server = glob.sync(resolve(__dirname, "server", "**", "*.ts"));
+const webapp = glob.sync(resolve(__dirname, "webapp", "**", "*.ts"));
+const utils = glob.sync(resolve(__dirname, "utils", "**", "*.ts"));
+
+const toBuild = [
+    ...commands,
+    ...types,
+    ...server,
+    ...utils,
+    ...webapp,
+    resolve(__dirname, "tests", "installToCreateFullStacked.ts"),
+    resolve(__dirname, "tests", "testCreateFullStacked.ts"),
+    resolve(__dirname, "tests", "testsDockerImages.ts"),
+    resolve(__dirname, "server.ts"),
+    resolve(__dirname, "cli.ts"),
+];
+
+await buildRecursively(toBuild);
+
+console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
+
+const version = JSON.parse(fs.readFileSync(resolve(__dirname, "package.json"), {encoding: "utf8"})).version;
+fs.writeFileSync(resolve(__dirname, "version.ts"), `const FullStackedVersion = "${version}";
+export default FullStackedVersion;`);
+await buildRecursively([resolve(__dirname, "./version.ts")], true);
+
+console.log(`v${version}`);

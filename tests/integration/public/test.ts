@@ -1,12 +1,18 @@
 import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
-import Helper from "fullstacked/tests/integration/Helper";
-import {fetch} from "fullstacked/webapp/fetch";
-import Server from "fullstacked/server";
+import {fetch} from "../../../utils/fetch";
+import Server from "../../../server";
+import {dirname, resolve} from "path";
+import {fileURLToPath} from "url";
+import testIntegration from "../../../utils/testIntegration";
+import fs from "fs";
 
-Helper(describe("Files", function(){
-    before(async function (){
-        Server.publicDir = __dirname
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+testIntegration(describe("Files", function(){
+    before(function (){
+        fs.writeFileSync(resolve(__dirname, "index.html"), "File Test");
+        Server.publicDir = __dirname;
         Server.start();
     });
 
@@ -15,7 +21,7 @@ Helper(describe("Files", function(){
         equal(response.trim(), "File Test");
     });
 
-    after(async function(){
+    after(function(){
         Server.stop();
     });
-}), __dirname);
+}), {src: __dirname, out: process.cwd()});

@@ -7,10 +7,10 @@
 <h3 align="center">A TypeScript Web Apps Tool</h3>
 <p align="center" ><small>The only tool you need from creation to deployment</small></p>
 <p align="center">
-<a href="https://www.npmjs.com/package/fullstacked"><img src="https://img.shields.io/badge/version-0.8.4-01b0de" alt="version"/>
-<a href="https://www.npmjs.com/package/fullstacked?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-13-yellowgreen" alt="dependencies"/></a>
-<a href="https://npmgraph.js.org/?q=fullstacked"><img src="https://img.shields.io/badge/module%20deps-302-yellow" alt="module dependencies"/></a>
-<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-80.02%25-yellowgreen" alt="code coverage"/></a>
+<a href="https://www.npmjs.com/package/fullstacked"><img src="https://img.shields.io/badge/version-0.9.0-01b0de" alt="version"/>
+<a href="https://www.npmjs.com/package/fullstacked?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-18-782175" alt="dependencies"/></a>
+<a href="https://npmgraph.js.org/?q=fullstacked"><img src="https://img.shields.io/badge/module%20deps-328-ff761a" alt="module dependencies"/></a>
+<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-73.39%25-yellow" alt="code coverage"/></a>
 </p>
 
 > **Warning** <br />
@@ -18,7 +18,8 @@
 
 FullStacked provides a complete setup for a TypeScript full stack web application.
 It has all the Server(Backend) setup and the WebApp(Frontend) setup with features like :
-* ~~Create~~ Now in [`create-fullstacked`](https://github.com/cplepage/create-fullstacked) project
+* Create 
+  * w/ `npm init fullstacked@latest` ([`create-fullstacked`](https://github.com/cplepage/create-fullstacked))
 * Run
 * Build
   * w/ Code Splitting
@@ -27,16 +28,10 @@ It has all the Server(Backend) setup and the WebApp(Frontend) setup with feature
 * Test
   * w/ Code Coverage
 * Deploy
-* Backup/Restore
+  * w/ a [GUI](#gui)
+* Backup & Restore
 
 ## Usage
-### Remotely
-
-If you are looking to simply and quickly develop a web app, I strongly suggest to try [FullStacked IDE](https://ide.fullstacked.org).
-It is a web based IDE that wraps FullStacked usage with clean and efficient interfaces.
-
-### Locally (on your machine)
-
 #### Requirements
 * NodeJS `>= 16.x` [https://nodejs.org/](https://nodejs.org/)
 * Docker and Docker-Compose [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
@@ -50,7 +45,7 @@ cd my-awesome-project
 ```
 2. Init fullstacked with npm
 ```shell
-npm init fullstacked
+npm init fullstacked@latest
 ```
 3. Startup you project locally!
 ```shell
@@ -60,18 +55,39 @@ Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
 #### Commands
 
-| command                 | uses                                                                             |
-|-------------------------|----------------------------------------------------------------------------------|
-| npm init fullstacked    | Generate the default starter files                                         |
-| npx fullstacked run     | Run your web app.                                                                |
-| npx fullstacked build   | Build your app.                                                                  |
-| npx fullstacked watch   | Rebuilds your app and hot reloads on changes.                                    |
-| npx fullstacked test    | Run tests throughout your app.                                                   |
-| npx fullstacked deploy  | Ship a production build to a remote host to deploy your web app to the internet. |
-| npx fullstacked backup  | Backup your data volumes from your app.                                          |
-| npx fullstacked restore | Restore your data volumes from your app.                                         |
+| command                     | uses                                                                                                                         |
+|-----------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| npm init fullstacked@latest | Generate the default starter files. *View more in [create-fullstacked](https://github.com/cplepage/create-fullstacked) repo. |
+| npx fullstacked run         | Run your web app.                                                                                                            |
+| npx fullstacked build       | Build your web app.                                                                                                          |
+| npx fullstacked watch       | Rebuilds your web app and hot reloads on changes.                                                                            |
+| npx fullstacked test        | Run tests throughout your web app.                                                                                           |
+| npx fullstacked deploy      | Ship a production build to a remote host to deploy your web app to the internet.                                             |
+| npx fullstacked backup      | Backup your data volumes from your web app.                                                                                  |
+| npx fullstacked restore     | Restore your data volumes from your web app.                                                                                 |
 
-see flags in the [docs](https://fullstacked.org/docs/commands)
+see flags in the [docs](https://docs.fullstacked.org/commands)
+
+### <a name="gui"></a>GUI
+
+> **Note** <br />
+> The GUI is fairly new and is only working with the `deploy` command.
+
+* Run a command using the `--gui` arg to pop up the FullStacked GUI.
+* It helps a lot with setting up a couple of stuff and seeing the progress. 
+* Finally, save and load your configs to a password encrypted file. 
+This way, even if you commit the `.fullstacked` file in your repo (**<u>strongly not recommend in public repositories</u>**),
+it is not revealing anything.
+Only password holders, like you and your CI, can decrypt the info and run the command.
+
+<img src=https://files.cplepage.com/fullstacked/fullstacked-gui.jpg />
+
+### Use FullStacked Remotely
+
+> 🚧 WIP
+
+If you are looking to simply and quickly develop a web app, I strongly suggest to try [FullStacked IDE](https://ide.fullstacked.org).
+It is a web based IDE that wraps FullStacked usage with clean and efficient interfaces.
 
 ## Motivation
 As many web developer, I have changed my toolset very often. We waste
@@ -87,9 +103,8 @@ sharing development environments for the purpose of testing and reviewing.
 * ~~Switch to~~ Support [Deno](https://github.com/denoland/deno) and/or [bun](https://github.com/Jarred-Sumner/bun)  
 <br /> 
  
-> These are being implemented in [FullStacked IDE](https://ide.fullstacked.org)
- 
- 
+> These are being implemented in [FullStacked IDE](https://ide.fullstacked.org) or the GUI
+
 * Add integration with [PWABuilder](https://github.com/pwa-builder/PWABuilder) to generate iOS and Android App
 * <s>Switch nginx image for [nginx proxy manager](https://github.com/NginxProxyManager/nginx-proxy-manager) </s> 
 Will create our own interface with [Tabler](https://github.com/tabler/tabler)

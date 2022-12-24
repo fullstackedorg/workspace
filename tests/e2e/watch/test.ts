@@ -2,11 +2,14 @@ import {describe, it, before, after} from 'mocha';
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
-import {cleanOutDir} from "scripts/utils";
+import {cleanOutDir} from "../../../utils/utils";
 import {equal, ok, notEqual} from "assert";
-import path from "path";
-import sleep from "fullstacked/scripts/sleep";
-import waitForServer from "fullstacked/scripts/waitForServer";
+import path, {dirname} from "path";
+import sleep from "../../../utils/sleep";
+import waitForServer from "../../../utils/waitForServer";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Watch Test", function(){
     let watchProcess, browser, page;
@@ -15,6 +18,7 @@ describe("Watch Test", function(){
     const indexCSS = path.resolve(__dirname, "webapp", "index.css");
     const serverFile = path.resolve(__dirname, "server", "index.ts");
 
+    const preTest = path.resolve(__dirname, "pre-test.txt");
     const postTest = path.resolve(__dirname, "post-test.txt");
 
     const extraFile = path.resolve(__dirname, "extra.txt");
@@ -25,6 +29,7 @@ describe("Watch Test", function(){
         if(fs.existsSync(indexHTML)) fs.rmSync(indexHTML);
         if(fs.existsSync(indexCSS)) fs.rmSync(indexCSS);
         if(fs.existsSync(serverFile)) fs.rmSync(serverFile);
+        if(fs.existsSync(preTest)) fs.rmSync(preTest);
         if(fs.existsSync(postTest)) fs.rmSync(postTest);
         if(fs.existsSync(extraFile)) fs.rmSync(extraFile);
         if(fs.existsSync(extraDir)) fs.rmSync(extraDir, {force: true, recursive: true});
@@ -53,11 +58,25 @@ describe("Watch Test", function(){
         await page.goto("http://localhost:8000");
     });
 
-    async function getReloadCount(){
+    async function getCount(){
         const root = await page.$("#reloadCount");
         const innerHTML = await root.getProperty('innerHTML');
         const value = Number(await innerHTML.jsonValue());
         return Number(value);
+    }
+
+    async function getReloadCount(){
+        let tries = 5;
+        while (tries){
+            try{
+                return await getCount();
+            }catch (e) {
+                await sleep(1000);
+                tries--;
+            }
+        }
+
+        throw Error("Unable to get reload count");
     }
 
     it('Should reload webapp when changing webapp/index.ts', async function(){
@@ -114,13 +133,16 @@ describe("Watch Test", function(){
     });
 
     it('Should re-execute pre and post build', async function(){
+        const getPreCount = () => parseInt(fs.readFileSync(postTest, {encoding: "utf-8"}));
         const getPostCount = () => parseInt(fs.readFileSync(postTest, {encoding: "utf-8"}));
 
+        const preCount = getPreCount();
         const postCount = getPostCount();
 
         fs.appendFileSync(webappFile, "\n// this is a test line");
         await sleep(1000);
 
+        ok(preCount < getPreCount());
         ok(postCount < getPostCount());
     });
 
@@ -139,18 +161,11 @@ describe("Watch Test", function(){
         const countBefore = await getReloadCount();
         await sleep(1000);
 
-
         fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
         await sleep(1000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
-
-        fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
-        await sleep(1000);
-
-        const countAfter2 = await getReloadCount();
-        equal(countAfter2 - countAfter, 1);
     });
 
     after(async function(){

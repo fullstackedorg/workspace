@@ -1,10 +1,18 @@
 import {describe, it} from 'mocha';
-import {equal, notEqual, ok} from "assert";
-import sleep from "fullstacked/scripts/sleep";
-import waitForServer from "fullstacked/scripts/waitForServer";
+import {deepEqual, equal, notEqual, ok} from "assert";
+import sleep from "../../utils/sleep";
+import waitForServer from "../../utils/waitForServer";
 import fs from "fs";
-import path from "path";
-import {copyRecursiveSync, randStr} from "../../scripts/utils";
+import path, {dirname} from "path";
+import {
+    copyRecursiveSync,
+    loadDataEncryptedWithPassword,
+    saveDataEncryptedWithPassword
+} from "../../utils/utils";
+import {fileURLToPath} from "url";
+import randStr from "../../utils/randStr";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Unit Tests", function(){
     const oneSec = 1000;
@@ -44,5 +52,17 @@ describe("Unit Tests", function(){
         const str = randStr(20);
         ok(str.length === 20);
         notEqual(str, randStr(20));
+    });
+
+    it("Should encrypt/decrypt JS object with password", function (){
+        const testData = {
+            test: "ok"
+        }
+        const password = "test"
+        const filePath = path.resolve(__dirname, ".fullstacked");
+        saveDataEncryptedWithPassword(filePath, password, testData);
+        deepEqual(loadDataEncryptedWithPassword(filePath, password), testData);
+
+        fs.rmSync(filePath)
     });
 });
