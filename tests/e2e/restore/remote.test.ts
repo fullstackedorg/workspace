@@ -1,80 +1,77 @@
 import {describe, it, before, after} from 'mocha';
 import SSH from "../SSH";
 import {exec, execSync} from "child_process";
-import path from "path";
+import path, {dirname} from "path";
 import fs from "fs";
-import waitForServer from "fullstacked/scripts/waitForServer";
-import {cleanOutDir, clearLine, printLine} from "../../../scripts/utils";
+import waitForServer from "../../../utils/waitForServer";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils";
 import {deepEqual, notDeepEqual, ok} from "assert";
-import sleep from "fullstacked/scripts/sleep";
-import {fetch} from "fullstacked/webapp/fetch";
+import {fetch} from "../../../utils/fetch";
+import {fileURLToPath} from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Backup-Restore Remotely Test", function(){
-    const sshServer1 = new SSH();
-    const sshServer2 = new SSH();
-    const serverNameFile = path.resolve(__dirname, ".fullstacked.json");
+    const sshServers = new SSH();
     const backupDir = path.resolve(process.cwd(), "backup");
     const outDir = path.resolve(__dirname, "out");
     let testArr = [];
 
-    function setupRemoteDeployment(sshServer: SSH){
-        return new Promise<void>(async (resolve, reject) => {
-            if(sshServer === sshServer2)
-                await sleep(2000);
+    async function setupRemoteDeployment(index){
+        saveDataEncryptedWithPassword(path.resolve(__dirname, ".fullstacked"), "test", {
+            sshCredentials: {
+                host: "localhost",
+                port: sshServers.containers.at(index).sshPort,
+                username: sshServers.username,
+                password: sshServers.password,
+                appDir: "/home"
+            },
+            nginxConfigs: [
+                {
+                    name: "node",
+                    port: 80,
+                    serverNames: ["localhost"]
+                }
+            ]
+        })
 
-            await sshServer.init();
-            const deployment = exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
-                `--src=${__dirname}`,
-                `--out=${sshServer === sshServer1 ? outDir : __dirname}`,
-                "--y",
-                "--skip-test",
-                "--no-https",
-                "--host=localhost",
-                `--user=${sshServer.username}`,
-                `--pass=${sshServer.password}`,
-                `--ssh-port=${sshServer.sshPort}`].join(" "));
-            // deployment.stdout.pipe(process.stdout);
-            try{
-                await waitForServer(150000, `http://localhost:${sshServer.httpPort}/get`);
-            }catch (e){
-                reject();
-            }
-            resolve();
-        });
+        const deployment = exec([`node ${path.resolve(__dirname, "../../../", "cli")} deploy`,
+            `--src=${__dirname}`,
+            `--out=${index ? __dirname : outDir}`,
+            "--password=test"].join(" "));
+        // deployment.stdout.pipe(process.stdout);
+
+        await waitForServer(50000, `http://localhost:${sshServers.containers.at(index).httpPort}/get`);
+        printLine("Deployment Completed");
     }
 
     before(async function () {
-        this.timeout(200000);
+        this.timeout(2000000);
 
-        sshServer2.containerName = "dind2";
-        sshServer2.sshPort = 2223;
-        sshServer2.httpPort = 8001;
-
-        fs.writeFileSync(serverNameFile, JSON.stringify({"node": {"${PORT}:80": { server_name: "localhost" } } }));
+        if(fs.existsSync(outDir)) fs.rmSync(outDir, {recursive: true});
         fs.mkdirSync(outDir);
 
-        await Promise.all([
-            setupRemoteDeployment(sshServer1),
-            setupRemoteDeployment(sshServer2),
-        ]);
+        await sshServers.init(2, ["node:18-alpine", "mongo:latest", "nginx:latest"]);
+        await setupRemoteDeployment(0);
+        await setupRemoteDeployment(1);
 
-        await fetch.post(`http://localhost:${sshServer1.httpPort}/post`);
-        testArr = await fetch.get(`http://localhost:${sshServer1.httpPort}/get`);
+        await fetch.post(`http://localhost:${sshServers.containers.at(0).httpPort}/post`);
+        testArr = await fetch.get(`http://localhost:${sshServers.containers.at(0).httpPort}/get`);
     });
 
     it("Should backup / restore volume remotely", async function(){
         this.timeout(100000);
 
         ok(testArr.length > 0);
-        const response = await fetch.get(`http://localhost:${sshServer2.httpPort}/get`);
+        const response = await fetch.get(`http://localhost:${sshServers.containers.at(1).httpPort}/get`);
         notDeepEqual(response, testArr);
 
         printLine("Backing Up");
         execSync([`node ${path.resolve(__dirname, "../../../", "cli")} backup`,
             "--host=localhost",
-            `--user=${sshServer1.username}`,
-            `--pass=${sshServer1.password}`,
-            `--ssh-port=${sshServer1.sshPort}`].join(" "));
+            `--username=${sshServers.username}`,
+            `--password=${sshServers.password}`,
+            `--ssh-port=${sshServers.containers.at(0).sshPort}`].join(" "));
 
         const backupFile = path.resolve(backupDir, "mongo-data.tar");
         ok(fs.existsSync(backupFile));
@@ -83,22 +80,20 @@ describe("Backup-Restore Remotely Test", function(){
         printLine("Restoring");
         execSync([`node ${path.resolve(__dirname, "../../../", "cli")} restore`,
             "--host=localhost",
-            `--user=${sshServer2.username}`,
-            `--pass=${sshServer2.password}`,
-            `--ssh-port=${sshServer2.sshPort}`].join(" "));
-        await waitForServer(10000, `http://localhost:${sshServer2.httpPort}/get`);
+            `--username=${sshServers.username}`,
+            `--password=${sshServers.password}`,
+            `--ssh-port=${sshServers.containers.at(1).sshPort}`].join(" "));
+        await waitForServer(10000, `http://localhost:${sshServers.containers.at(1).httpPort}/get`);
         clearLine();
 
-        const response2 = await fetch.get(`http://localhost:${sshServer2.httpPort}/get`)
+        const response2 = await fetch.get(`http://localhost:${sshServers.containers.at(1).httpPort}/get`)
         deepEqual(response2, testArr);
     });
 
     after(function(){
-        fs.rmSync(serverNameFile);
         cleanOutDir(outDir);
         cleanOutDir(backupDir);
         cleanOutDir(path.resolve(__dirname, "dist"));
-        sshServer1.stop();
-        sshServer2.stop();
+        sshServers.stop();
     });
 });

@@ -1,56 +1,68 @@
+.DS_Store
 .idea
-.github
 node_modules
-dist
-.nyc_output
-coverage
-**/*.js.map
-test.ts
-/backup
 
-d.ts
+/.github
+/.gitignore
+/.gitmodules
 
-**/*.js.map
-**/*.tjs.map
+/build.*
 
-/build.js
-/build.ts
+/cleanup.ts
 
-docs
+/cli.js.map
+/cli.ts
 
-mocha-reporter.ts
+/commands/**/*.js.map
+/commands/**/*.ts
+/commands/**/*.d.ts
 
-tests/e2e/*/*
-tests/e2e/Dockerfile
-tests/e2e/Helper.js
-tests/e2e/SSH.ts
-tests/e2e/SSH.js
-tests/integration/*/*
-tests/integration/Helper.js
-tests/integration/webapp.tsx
-tests/integration/server.ts
-tests/integration/server.js
-tests/unit
+/create-fullstacked
 
-scripts/build.ts
-scripts/certs.ts
-scripts/config.ts
-scripts/create.ts
-scripts/deploy.ts
-scripts/docker.ts
-scripts/register.ts
-scripts/run.ts
-scripts/runner.ts
-scripts/test.ts
-scripts/utils.ts
-scripts/watch.ts
-scripts/watch.ts
+/docs
 
-.mocharc.ts
+/fullstacked-code-coverage
 
-cli.ts
+/gui/**/*
+!/gui/dist/**/*
+/gui/dist/**/*.map
 
-webapp/fetch.js
+/index.ts
 
-server/index.js
-server/watcher.js
+/server.js.map
+/server.ts
+
+/server/installNative.d.ts
+/server/installNative.js.map
+/server/installNative.ts
+
+/server/watcher.d.ts
+/server/watcher.js.map
+/server/watcher.ts
+
+/tests
+
+/tsconfig.json
+
+/types/**/*.ts
+/types/**/*.d.ts
+/types/**/*.js.map
+
+/utils/**/*
+!/utils/**/*.js
+
+!/utils/fetch.d.ts
+!/utils/randStr.d.ts
+!/utils/sleep.d.ts
+!/utils/testE2E.d.ts
+!/utils/testIntegration.d.ts
+!/utils/uploadFileWithProgress.d.ts
+!/utils/waitForServer.d.ts
+
+/version.js.map
+/version.ts
+
+/webapp/**/*.js.map
+/webapp/**/*.ts
+
+

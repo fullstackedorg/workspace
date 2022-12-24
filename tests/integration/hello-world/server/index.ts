@@ -1,4 +1,4 @@
-import Server from "fullstacked/server";
+import Server from "../../../../server";
 
 Server.addListener((req, res) => {
     if(req.url === "/hello-world"){
@@ -6,5 +6,5 @@ Server.addListener((req, res) => {
         res.write("Hello World");
         res.end();
     }
-});
+}, true);
 

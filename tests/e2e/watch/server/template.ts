@@ -1,4 +1,4 @@
-import Server from "fullstacked/server";
+import Server from "../../../../server.js";
 
 const bootTime = Date.now();
 Server.addListener((req, res) => {

@@ -1,7 +1,11 @@
 import fs from "fs";
+import {dirname, resolve} from "path";
+import {fileURLToPath} from "url";
 
-fs.writeFileSync(__dirname + "/predeploy.txt", "predeploy");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+fs.writeFileSync(resolve(__dirname, "predeploy.txt"), "predeploy");
 
 export default async function(){
-    fs.writeFileSync(__dirname + "/predeploy-2.txt", "predeploy async");
+    fs.writeFileSync(resolve(__dirname, "predeploy-2.txt"), "predeploy async");
 }

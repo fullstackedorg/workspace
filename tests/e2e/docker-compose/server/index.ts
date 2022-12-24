@@ -1,4 +1,4 @@
-import Server from "fullstacked/server";
+import Server from "../../../../server.js";
 import {MongoClient} from 'mongodb';
 
 Server.addListener(async (req, res) => {
