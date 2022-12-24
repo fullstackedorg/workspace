@@ -1,12 +1,12 @@
 import {describe, it, before, after} from 'mocha';
-import SSH from "../SSH.js";
+import SSH from "../SSH";
 import {exec, execSync} from "child_process";
 import path, {dirname} from "path";
 import fs from "fs";
-import waitForServer from "../../../utils/waitForServer.js";
-import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils.js";
+import waitForServer from "../../../utils/waitForServer";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils";
 import {deepEqual, notDeepEqual, ok} from "assert";
-import {fetch} from "../../../utils/fetch.js";
+import {fetch} from "../../../utils/fetch";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

@@ -4,10 +4,10 @@ import puppeteer from "puppeteer";
 import {equal, notEqual, ok} from "assert";
 import fs from "fs";
 import path, {dirname} from "path";
-import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils.js";
-import sleep from "../../../utils/sleep.js";
-import waitForServer from "../../../utils/waitForServer.js";
-import SSH from "../SSH.js";
+import {cleanOutDir, clearLine, printLine, saveDataEncryptedWithPassword} from "../../../utils/utils";
+import sleep from "../../../utils/sleep";
+import waitForServer from "../../../utils/waitForServer";
+import SSH from "../SSH";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

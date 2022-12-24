@@ -2,10 +2,10 @@ import {before, describe, it, after} from 'mocha';
 import glob from "glob";
 import * as path from "path";
 import {equal, ok} from "assert";
-import sleep from "../../../utils/sleep.js";
+import sleep from "../../../utils/sleep";
 import {dirname} from "path";
 import {fileURLToPath} from "url";
-import TestE2E from "../../../utils/testE2E.js";
+import TestE2E from "../../../utils/testE2E";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

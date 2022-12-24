@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import defaultConfig from "./utils/config.js";
+import defaultConfig from "./utils/config";
 import {FullStackedConfig} from "./index";
 
 const scripts = {
@@ -82,7 +82,7 @@ defaultConfig(config).then(async configReady => {
         CommandClass(configReady);
 
     if(config.gui) {
-        const guiModule = await import("./utils/gui.js");
+        const guiModule = await import("./utils/gui");
         await guiModule.default(command);
     }else if(command?.runCLI)
         command.runCLI();

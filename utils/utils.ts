@@ -1,9 +1,8 @@
-import path, {dirname, resolve} from "path";
+import {resolve, join, sep} from "path";
 import fs from "fs";
 import {createInterface, clearLine as rlClearLine, cursorTo} from "readline";
 import os from "os";
 import {execSync} from "child_process";
-import {build, BuildOptions, buildSync} from "esbuild";
 import {Socket} from "net";
 import SFTP from "ssh2-sftp-client";
 import yaml from "js-yaml";
@@ -13,6 +12,7 @@ import crypto from "crypto";
 import {sshCredentials} from "../types/deploy";
 import {FullStackedConfig} from "../index";
 import * as process from "process";
+import buildRecursively, {convertPathToJSExt} from "./buildRecursively";
 
 
 // ask a question, resolve string answer
@@ -88,23 +88,15 @@ export function copyRecursiveSync(src, dest) {
             fs.mkdirSync(dest);
 
         fs.readdirSync(src).forEach(function(childItemName) {
-            copyRecursiveSync(path.join(src, childItemName),
-                path.join(dest, childItemName));
+            copyRecursiveSync(join(src, childItemName),
+                join(dest, childItemName));
         });
     } else {
         fs.copyFileSync(src, dest);
     }
 }
 
-export function defaultEsbuildConfig(entrypoint: string): BuildOptions {
-    return {
-        entryPoints: [entrypoint],
-        outfile: (entrypoint.endsWith("x") ? entrypoint.slice(0, -3) : entrypoint.slice(0, -2)) + "js",
-        platform: "node",
-        format: "esm",
-        sourcemap: true
-    }
-}
+
 
 // exec command on remote host over ssh
 export function execSSH(ssh2, cmd, logger?: (str) => void): Promise<string>{
@@ -130,31 +122,32 @@ export function execSSH(ssh2, cmd, logger?: (str) => void): Promise<string>{
 
 // exec filename.ts(x) and *.filename.ts(x) file
 export async function execScript(filePath: string, config: FullStackedConfig, ...args): Promise<void> {
-    const filePathComponents = filePath.split(path.sep)
+    const filePathComponents = filePath.split(sep)
     const fileName = filePathComponents.pop().split(".").shift();
 
-    let filesToRun = glob.sync("*." + fileName + ".ts", {cwd: filePathComponents.join(path.sep)})
-        .map(file => filePathComponents.join(path.sep) + path.sep + file);
-    filesToRun = filesToRun.concat(glob.sync("*." + fileName + ".tsx", {cwd: filePathComponents.join(path.sep)})
-        .map(file => filePathComponents.join(path.sep) + path.sep + file))
+    let filesToRun = glob.sync("*." + fileName + ".ts", {cwd: filePathComponents.join(sep)})
+        .map(file => filePathComponents.join(sep) + sep + file);
+    filesToRun = filesToRun.concat(glob.sync("*." + fileName + ".tsx", {cwd: filePathComponents.join(sep)})
+        .map(file => filePathComponents.join(sep) + sep + file))
     if(fs.existsSync(filePath)) filesToRun.push(filePath);
     if(!filePath.endsWith("x") && fs.existsSync(filePath + "x")) filesToRun.push(filePath + "x");
 
     if(!filesToRun.length) return;
 
+    await buildRecursively(filesToRun, config.silent);
+
     // build file on the fly
     const ranFiles = filesToRun.map(async file => {
-        const esbuildConfig = defaultEsbuildConfig(file);
-        buildSync(esbuildConfig);
+        const builtFile = convertPathToJSExt(file);
 
         // with test-mode, add istanbul ignore so the code coverage wont fail to parse deleted files
         if(process.argv.includes("--test-mode")) {
-            const fileContent = fs.readFileSync(esbuildConfig.outfile, {encoding: "utf8"});
-            fs.writeFileSync(esbuildConfig.outfile, `/* istanbul ignore file */
+            const fileContent = fs.readFileSync(builtFile, {encoding: "utf8"});
+            fs.writeFileSync(builtFile, `/* istanbul ignore file */
 ${fileContent}`);
         }
 
-        const outfile = esbuildConfig.outfile
+        const outfile = builtFile
             // windows paths...
             .replace(/C:/, "").replace(/\\/, "/");
 
@@ -164,7 +157,6 @@ ${fileContent}`);
             if(functionReturn instanceof Promise)
                 await functionReturn;
         }
-        deleteBuiltTSFile(file);
     });
     await Promise.all(ranFiles);
 }
@@ -221,7 +213,7 @@ export async function getSFTPClient(sshCredentials: sshCredentials): Promise<Wra
     const sftp = new SFTP();
 
     if(sshCredentials.privateKeyFile)
-        sshCredentials.privateKey = fs.readFileSync(path.resolve(process.cwd(), sshCredentials.privateKeyFile));
+        sshCredentials.privateKey = fs.readFileSync(resolve(process.cwd(), sshCredentials.privateKeyFile));
 
     await sftp.connect(sshCredentials);
 
@@ -373,36 +365,6 @@ export function getBuiltDockerCompose(srcDir: string, production: boolean = fals
     });
 
     return dockerCompose;
-}
-
-
-export async function recursivelyBuildTS(entrypoint: string, outDir?: string){
-    const buildOptions = defaultEsbuildConfig(entrypoint);
-
-    if(outDir){
-        buildOptions.outfile = resolve(outDir, buildOptions.outfile.replace(process.cwd(), "").slice(1));
-    }
-
-    await build({
-        ...buildOptions,
-        bundle: true,
-        allowOverwrite: true,
-        plugins: [{
-            name: "recursive-buillder",
-            setup(currentBuild){
-                currentBuild.onResolve({filter: /.*/}, async (args) => {
-                    if(args.kind === "entry-point") return null;
-
-                    if(!args.path.endsWith(".js") || !args.path.startsWith(".")) return {external: true};
-
-                    const filePathToBuild = resolve(path.dirname(currentBuild.initialOptions.entryPoints[0]), args.path);
-                    await recursivelyBuildTS(filePathToBuild, outDir)
-
-                    return {external: true};
-                })
-            }
-        }]
-    })
 }
 
 export function getExternalModules(srcDir: string){

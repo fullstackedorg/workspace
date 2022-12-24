@@ -2,11 +2,11 @@ import {describe, it, before, after} from 'mocha';
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
-import {cleanOutDir} from "../../../utils/utils.js";
+import {cleanOutDir} from "../../../utils/utils";
 import {equal, ok, notEqual} from "assert";
 import path, {dirname} from "path";
-import sleep from "../../../utils/sleep.js";
-import waitForServer from "../../../utils/waitForServer.js";
+import sleep from "../../../utils/sleep";
+import waitForServer from "../../../utils/waitForServer";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

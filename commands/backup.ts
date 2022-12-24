@@ -9,9 +9,9 @@ import {
     getVolumesToBackup,
     maybePullDockerImage,
     printLine
-} from "../utils/utils.js";
+} from "../utils/utils";
 import progress from "progress-stream";
-import {sshCredentials} from "../types/deploy.js";
+import {sshCredentials} from "../types/deploy";
 import yaml from "js-yaml";
 
 export default async function (config: FullStackedConfig) {

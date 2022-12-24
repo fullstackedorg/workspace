@@ -1,8 +1,8 @@
-import Build from "./build.js";
-import Runner from "../utils/runner.js";
+import Build from "./build";
+import Runner from "../utils/runner";
 import os from "os";
 import readline from "readline";
-import Restore from "./restore.js";
+import Restore from "./restore";
 import {FullStackedConfig} from "../index";
 
 let runner: Runner = null, didSetExitHook = false, printStopOnce = false;

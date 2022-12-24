@@ -60,7 +60,7 @@ class ServerInstance {
         this.server.listen(this.port);
 
         if(process.argv.includes("--development")){
-            import("./server/watcher.js").then(watcherModule => {
+            import("./server/watcher").then(watcherModule => {
                 this.watcher = new watcherModule.default();
                 this.watcher.init(this.server);
             });

@@ -1,7 +1,7 @@
-import Build from "./build.js";
-import Run from "./run.js";
+import Build from "./build";
+import Run from "./run";
 import {WebSocket} from "ws";
-import sleep from "../utils/sleep.js";
+import sleep from "../utils/sleep";
 import {FullStackedConfig} from "../index";
 
 let globalConfig: FullStackedConfig,

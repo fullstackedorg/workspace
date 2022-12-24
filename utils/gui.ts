@@ -1,15 +1,15 @@
-import Server from "../server.js";
-import {getNextAvailablePort} from "./utils.js";
-import Run from "../commands/run.js";
-import Config from "./config.js";
+import Server from "../server";
+import {getNextAvailablePort} from "./utils";
+import Run from "../commands/run";
+import Config from "./config";
 import path, {dirname} from "path";
-import waitForServer from "./waitForServer.js";
+import waitForServer from "./waitForServer";
 import open from "open";
 import fs from "fs";
 import yaml from "js-yaml";
 import {WebSocketServer} from "ws";
-import CommandInterface from "../commands/Interface.js";
-import {GLOBAL_CMD, MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui.js";
+import CommandInterface from "../commands/Interface";
+import {GLOBAL_CMD, MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

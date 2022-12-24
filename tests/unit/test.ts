@@ -1,16 +1,16 @@
 import {describe, it} from 'mocha';
 import {deepEqual, equal, notEqual, ok} from "assert";
-import sleep from "../../utils/sleep.js";
-import waitForServer from "../../utils/waitForServer.js";
+import sleep from "../../utils/sleep";
+import waitForServer from "../../utils/waitForServer";
 import fs from "fs";
 import path, {dirname} from "path";
 import {
     copyRecursiveSync,
     loadDataEncryptedWithPassword,
     saveDataEncryptedWithPassword
-} from "../../utils/utils.js";
+} from "../../utils/utils";
 import {fileURLToPath} from "url";
-import randStr from "../../utils/randStr.js";
+import randStr from "../../utils/randStr";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

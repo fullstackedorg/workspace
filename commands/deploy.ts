@@ -4,18 +4,18 @@ import glob from "glob";
 import {
     execScript, execSSH, getSFTPClient, askQuestion, getCertificateData,
     loadDataEncryptedWithPassword, saveDataEncryptedWithPassword, getBuiltDockerCompose
-} from "../utils/utils.js";
-import Build from "./build.js";
+} from "../utils/utils";
+import Build from "./build";
 import yaml from "js-yaml";
-import DockerInstallScripts from "../utils/dockerInstallScripts.js";
+import DockerInstallScripts from "../utils/dockerInstallScripts";
 import { Writable } from "stream";
-import CommandInterface from "./Interface.js";
+import CommandInterface from "./Interface";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
-import {certificate, DEPLOY_CMD, nginxConfig, nginxFile, sshCredentials} from "../types/deploy.js";
+import {certificate, DEPLOY_CMD, nginxConfig, nginxFile, sshCredentials} from "../types/deploy";
 import {fileURLToPath} from "url";
-import uploadFileWithProgress from "../utils/uploadFileWithProgress.js";
-import randStr from "../utils/randStr.js";
+import uploadFileWithProgress from "../utils/uploadFileWithProgress";
+import randStr from "../utils/randStr";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
