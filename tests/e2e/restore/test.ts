@@ -34,7 +34,7 @@ describe("Backup-Restore Test", function(){
         await runner.start();
 
         printLine("Generating data");
-        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        await waitForServer(30000, `http://localhost:${runner.nodePort}/get`);
         await fetch.post(`http://localhost:${runner.nodePort}/post`);
         const testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
 
@@ -71,7 +71,7 @@ describe("Backup-Restore Test", function(){
         await runner.start();
 
         printLine("Generating data");
-        await waitForServer(10000, `http://localhost:${runner.nodePort}/get`);
+        await waitForServer(20000, `http://localhost:${runner.nodePort}/get`);
         await fetch.post(`http://localhost:${runner.nodePort}/post`);
         const testArr = await fetch.get(`http://localhost:${runner.nodePort}/get`);
 

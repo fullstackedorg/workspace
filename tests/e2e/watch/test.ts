@@ -58,11 +58,25 @@ describe("Watch Test", function(){
         await page.goto("http://localhost:8000");
     });
 
-    async function getReloadCount(){
+    async function getCount(){
         const root = await page.$("#reloadCount");
         const innerHTML = await root.getProperty('innerHTML');
         const value = Number(await innerHTML.jsonValue());
         return Number(value);
+    }
+
+    async function getReloadCount(){
+        let tries = 5;
+        while (tries){
+            try{
+                return await getCount();
+            }catch (e) {
+                await sleep(1000);
+                tries--;
+            }
+        }
+
+        throw Error("Unable to get reload count");
     }
 
     it('Should reload webapp when changing webapp/index.ts', async function(){
@@ -147,18 +161,11 @@ describe("Watch Test", function(){
         const countBefore = await getReloadCount();
         await sleep(1000);
 
-
         fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
         await sleep(1000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
-
-        fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
-        await sleep(1000);
-
-        const countAfter2 = await getReloadCount();
-        equal(countAfter2 - countAfter, 1);
     });
 
     after(async function(){

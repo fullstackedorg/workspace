@@ -14,7 +14,11 @@ buildSync({
     sourcemap: true,
 });
 
-const buildRecursively = (await import(resolve(__dirname, "utils", "buildRecursively.js").replace(/C:/, "").replace(/\\/, "/"))).default;
+const builtModule = resolve(__dirname, "utils", "buildRecursively.js")
+    // windows path...
+    .replace(/C:/, "").replace(/\\/, "/");
+
+const buildRecursively = (await import(builtModule)).default;
 
 const commands = glob.sync(resolve(__dirname, "commands", "**", "*.ts")).filter(file => !file.endsWith(".d.ts"));
 const types = glob.sync(resolve(__dirname, "types", "**", "*.ts"));
