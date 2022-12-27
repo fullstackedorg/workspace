@@ -1,6 +1,6 @@
 # WebApp
 
-The WebApp is built with three main file:
+The WebApp is built with three main files :
 
 - index.ts
 

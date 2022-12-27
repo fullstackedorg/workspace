@@ -4,13 +4,13 @@ Bundle your all of your web app. Both the backend and the frontend will be bundl
 
 ## Flags
 
-### `--src`
+### `--src=`
 
 (optional)
 
 Define your web app source root *(default: .)*
 
-### `--out`
+### `--out=`
 
 (optional)
 

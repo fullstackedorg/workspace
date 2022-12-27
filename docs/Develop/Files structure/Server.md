@@ -32,17 +32,15 @@ Server.addListener((req, res) => {
     console.log("Custom listener does nothing");
     return;
 });
-
-
 ```
 
 ![FullStacked Server](https://files.cplepage.com/fullstacked/server.png)
 
-Here's what happens in details is :
+Here's what happens in details :
 
 0. The server receives a request with the path `/path/foo`
 
-1. No files from the public directory is called `/path/foo`
+1. No files from the public directory is named `/path/foo`
 
 2. Express does not register anything at `/path/foo`
 
