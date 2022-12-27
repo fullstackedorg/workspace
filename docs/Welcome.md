@@ -1,6 +1,6 @@
 # Welcome to FullStacked
 
-> *Note*
+> **Note**
 > 
 > The project is still in very early phase so please be kind. If you have an unresolved or undocumented issue, I will try to responds as fast as possible to every Github issue. This is an open source and very open to collaboration project! Feel free to fork and submit pull requests! Have Fun!
 
