@@ -1,5 +1,7 @@
 # Watch
 
+
+
 ## Flags
 
-### `--restored`
+Same as the [run](./Run.md) command.
