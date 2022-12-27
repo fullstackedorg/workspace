@@ -6,6 +6,8 @@ Read more about docker networks [here](https://docs.docker.com/compose/networkin
 
 ## Examples
 
+![Network](https://files.cplepage.com/fullstacked/network.png)
+
 ### Connecting to a DB
 
 Let's say we run a web app with MongoDB.
