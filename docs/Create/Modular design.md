@@ -8,11 +8,11 @@ A web app project consist of 3 things :
 
 - External Tools (database and third parties)
 
-While all of theses 
+While all of theses can change, scale and grow at a different rate. Keeping all of them in sync is always a challenge. Here's how FullStacked approach could help you in building and growing your web app projects.
 
 ## WebApp
 
-UI and CSS libraries releases at such a high rate. Trends evovle and we all want our interfaces to have the latest look. While setting it up is not always as simple as it should be, FullStacked 
+Nowadays, UI and CSS libraries releases at such a high rate. Trends evovle and we all want our interfaces to have the latest look. While setting it up is not always as simple as it should be, FullStacked provides templates to add it as fast as possible.
 
 ### Example
 
@@ -26,13 +26,13 @@ Backend frameworks all have their pros and cons. Some are lightweight and rapid 
 
 ### Example
 
-Let's say you start with a project with the React-Express-MongoDB (MERN) stack. Some day you feel like you have too many endpoints to manage and would like more features from your backend framework so you'd like to move to NestJS. Now simply add it to your stack with FullStacked, both frameworks will live during the transition and when everything is moved you'll be able to drop express.
+Let's say you start a project with the React-Express-MongoDB (MERN) stack. Some day you feel like you have too many endpoints to manage and would like more features from your backend framework so you'd like to move to NestJS. Now, with FullStacked, simply add it to your stack, both frameworks will live while you migrate endpoint by endpoint. Finally, when your migration is done, you'll be able to drop express. Learn more about server listeners [here](../Develop/Files%20structure/Server.md).
 
 ![Modular Design Example](https://files.cplepage.com/fullstacked/modular-design-server.png)
 
 ## External Tools
 
-Anything that has a Docker Image can be run within your stack. Nowadays, most open source project has the docker option. From CMSs like WordPress and Strapi to databases like MongoDB, Redis or PostgreSQL, you can run you stack with anything. Once you set it up, everything runs within the same network. Learn more about it [here](../Develop/Network.md).
+Anything that has a Docker image can be run within your stack. Nowadays, most open source project has the docker option. From CMSs like WordPress and Strapi to databases like MongoDB, Redis or PostgreSQL, you can run your stack with anything. Once you set it up, everything runs within the same network. Learn more about it [here](../Develop/Network.md).
 
 ### Example
 

@@ -38,3 +38,7 @@ testIntegration(describe("Integration Test", function() {
     });
 }));
 ```
+
+## Coverage
+
+This will cover your Server code.
