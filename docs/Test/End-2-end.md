@@ -46,4 +46,4 @@ describe("Default Template Tests", function(){
 
 ## Coverage
 
-This is cover your WebApp code. To this day, your Server code won't be cover by end-2-end tests.
+This covers your WebApp code. To this day, your Server code won't be covered by end-2-end tests.

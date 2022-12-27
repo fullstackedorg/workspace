@@ -1,6 +1,6 @@
 # Network
 
-Running everything through a Docker Compose like FullStacked does gives the massive perk that everything runs within an isolated network. That means connecting and fetching data from one service to another has little to no latency, and the hostnames are defined and predictable. 
+FullStacked runs everything through a Docker Compose and this gives a massive perk. Everything runs within an isolated network. That means connecting and fetching data from one service to another has little to no latency, and the hostnames are defined and predictable. 
 
 Read more about docker networks [here](https://docs.docker.com/compose/networking/)
 
@@ -23,7 +23,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
 ```
 
-Now I can connect to the mongo instance at the service name : **mongo**
+Now you can connect to the mongo instance at the service name : **mongo**
 
 ```ts
 import {MongoClient} from 'mongodb';
