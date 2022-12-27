@@ -12,4 +12,4 @@ Fully using docker for the runtime in FullStacked was one the first big decision
 
 ## Modular Design
 
-In today's world, new libraries and new frameworks comes out very often. Choosing a single stack can feel limity and having to change your whole codebase with a single pull/merge request can be very risky. FullStacked allows to add a new dependency to your stack and migrate piece by piece until you can drop the old dependency. Learn more [here](../Create/Modular%20design.md).
+In today's world, new libraries and new frameworks comes out very often. Choosing a single stack can feel limity and having to change your whole codebase with a single pull/merge request can be very risky. FullStacked allows to add a new dependency to your stack and migrate piece by piece until you can drop the old dependency. Learn more [here](../Create/Modular Design.md).
