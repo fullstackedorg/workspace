@@ -8,7 +8,7 @@ The WebApp is built with three main files :
 
 - index.css
 
-Those three files will be watch by default with `watch` command. The act just like a static would to. 
+Those three files will be watch by default with `watch` command. The act just like a static site would. 
 
 **Don't try to add your `.js` and `.css` file inside the `.html`**. This is all taken care of in the build process.
 
