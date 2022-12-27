@@ -16,7 +16,7 @@ npx fullstacked restore
 
 (optional)
 
-List the volume(s) you want to backup or restore. Split with a comma (,) for multiple.
+List the volume(s) you want to backup or restore. Split with a comma (,) for multiple. *(default: all)*
 
 ```shell
 npx fullstacked backup --volume=mongo-data,postgres-data
@@ -46,13 +46,13 @@ Username for login.
 
 #### `--pass=`
 
-(use pass or private-key)
+(use `--pass=` or `--private-key-file=`)
 
 Password for login.
 
 #### `--private-key-file=`
 
-(use pass or private-key)
+(use `--pass=` or `--private-key-file=`)
 
 Private key file path for login.
 
