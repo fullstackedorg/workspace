@@ -16,7 +16,7 @@ Nowadays, UI and CSS libraries releases at such a high rate. Trends evovle and w
 
 ### Example
 
-Let's say you start a cool looking web app with React. At some point you realise TailwindCSS could be a good addition to your stack, but the time needed to learn it and set it up blocks you. With FullStacked, it's just a command away!
+Let's say you start a cool looking web app with React. At some point, you realise TailwindCSS could be a good addition to your stack, but the time needed to learn it and set it up blocks you. With FullStacked, it's just a command away!
 
 ![Modular Design Example](https://files.cplepage.com/fullstacked/modular-design-webapp.png)
 
@@ -26,7 +26,7 @@ Backend frameworks all have their pros and cons. Some are lightweight and rapid 
 
 ### Example
 
-Let's say you start a project with the React-Express-MongoDB (MERN) stack. Some day you feel like you have too many endpoints to manage and would like more features from your backend framework so you'd like to move to NestJS. Now, with FullStacked, simply add it to your stack, both frameworks will live while you migrate endpoint by endpoint. Finally, when your migration is done, you'll be able to drop express. Learn more about server listeners [here](../Develop/Files%20structure/Server.md).
+Let's say you start a project with the React-Express-MongoDB (MERN) stack. Some day, you feel like you have too many endpoints to manage and would like more features from your backend framework so you'd like to move to NestJS. Now, with FullStacked, simply add it to your stack, both frameworks will live while you migrate endpoint by endpoint. Finally, when your migration is done, you'll be able to drop express. Learn more about server listeners [here](../Develop/Files%20structure/Server.md).
 
 ![Modular Design Example](https://files.cplepage.com/fullstacked/modular-design-server.png)
 

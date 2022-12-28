@@ -12,7 +12,7 @@ The output file structure looks like this :
 |   |   ├── index.html      <-- html file with ref to js and css
 |   |   └── index.js        <-- bundled webapp
 |   ├── index.mjs           <-- bundled server
-|   └── docker-compose.yml  <-- merged *.docker-compose.yml
+|   └── docker-compose.yml  <-- bundled docker-compose
 ├── package.json
 ├── server
 |   └── ...
@@ -20,5 +20,3 @@ The output file structure looks like this :
 |   └── ...
 └── ...
 ```
-
-

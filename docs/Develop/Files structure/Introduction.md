@@ -4,7 +4,7 @@ FullStacked mostly uses the `*[service].[type].[ext]` syntax. This way it is eas
 
 ## Example
 
-This is what a file structure would look like for a project currently using TailwindCSS in the frontend with expressjs in the backend and wordpress as the CMS.
+This is what a file structure would look like for a project using TailwindCSS in the frontend with expressjs in the backend and wordpress as the CMS.
 
 ```
 .

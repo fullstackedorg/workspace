@@ -1,6 +1,6 @@
 # Deploy
 
-Move your web app onto a remote server. Run this command once with the GUI, save your configs with a password and then deploy with a single command. More about this [here](../Deploy/GUI.md).
+Ship your web app in production mode onto a remote server. Run this command once with the GUI, save your configs with a password and then deploy with a single command. More about this [here](../Deploy/GUI.md).
 
 ```shell
 npx fullstacked deploy

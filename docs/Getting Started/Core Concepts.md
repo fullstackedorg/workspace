@@ -4,7 +4,7 @@ The whys of everything about FullStacked.
 
 ## TypeScript
 
-JavaScript is one incredible language, it's [the universal language](https://tinyclouds.org/javascript_containers#the-universal-scripting-language). Since the introduction of TypeScript, there are very few drawbacks and immensivly a lot of plus to use it. The main difficulty with TS (typescript) is transforming it to JS (javascript), but this is all taken care of by FullStacked.
+JavaScript is one incredible language, it's [the universal scripting language](https://tinyclouds.org/javascript_containers#the-universal-scripting-language). Since the introduction of TypeScript, there are very few drawbacks and immensivly a lot of plus to use it. The main difficulty with TS (typescript) is transforming it to JS (javascript), but this is all taken care of by FullStacked.
 
 ## Docker
 

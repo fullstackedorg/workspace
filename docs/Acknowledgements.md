@@ -24,6 +24,8 @@ That make FullStacked possible
 
 - [ssh2-sftp-client](https://github.com/theophilusx/ssh2-sftp-client)
 
+- [certbot](https://certbot.eff.org/)
+
 - [mochajs](https://mochajs.org/)
 
 - [Istanbul](https://istanbul.js.org/)

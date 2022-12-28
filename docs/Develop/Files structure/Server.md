@@ -1,15 +1,18 @@
 # Server
 
-Your FullStacked server will always come with the default file serving listener. After that, you can add more listeners to handle requests. 
+Your FullStacked server will always run the default static file serving listener. After that, you can add more listeners to handle requests. 
 
 ## Example
+
+Here's an example of a FullStacked Server using express and a custom listener.
 
 ```ts
 // server/index.ts
 import Server from "fullstacked/server"
 import express from "express"
 
-// express
+////// express ////// 
+
 const app = express();
 
 app.get("/api/bar", (req, res) => {
@@ -27,7 +30,9 @@ app.use(resolver);
 Server.addListener(promisifiedListener);
 
 
-// custom listener
+
+//////  custom listener ////// 
+
 Server.addListener((req, res) => {
     console.log("Custom listener does nothing");
     return;
@@ -90,7 +95,7 @@ Server.addListener((req, res) => {
 
 Most backend frameworks are designed to work by themselves, so when they bottom out, they have a built-in way to respond, but we might have another listener to come in play. The `Server.promisify` method helps with changing their behaviour. 
 
-To get more familiar with it, checkout the method [source code](https://github.com/cplepage/fullstacked/blob/main/server.ts#L70) and templates using it
+To get more familiar with it, checkout the method [source code](https://github.com/cplepage/fullstacked/blob/main/server.ts#L70) and templates using it :
 
 - [express](https://github.com/cplepage/create-fullstacked/blob/main/templates/express/server/express.server.ts)
 
