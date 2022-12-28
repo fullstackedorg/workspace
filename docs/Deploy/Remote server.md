@@ -1,6 +1,6 @@
 # Choosing a remote server
 
-To deploy to a remote server, you will need the ssh credentials to connect to it. Here is an example with Amazon Lightsail service.
+To deploy to a remote server, you will need the ssh credentials to connect to it. Here is an example on how to get this information using Amazon Lightsail service.
 
 Get your IP address, username and SSH key file from the dashboard. The port is the default one (`22`) and the app directory must be `/home/ec2-user` because of AWS default file permissions.
 
