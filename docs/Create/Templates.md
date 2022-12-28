@@ -2,7 +2,7 @@
 
 Templates are pre-configured and ready to use libraries/frameworks/external tools for  your FullStacked project. 
 
-Currently, you can only install templates when you init your project, but soon enough you'll be able to add template to an existant project.
+Currently, you can only install templates when you init your project, but soon enough you'll be able to add templates to an existant project.
 
 ## Available templates
 

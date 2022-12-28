@@ -32,10 +32,10 @@ Let's say you start a project with the React-Express-MongoDB (MERN) stack. Some 
 
 ## External Tools
 
-Anything that has a Docker image can be run within your stack. Nowadays, most open source project has the docker option. From CMSs like WordPress and Strapi to databases like MongoDB, Redis or PostgreSQL, you can run your stack with anything. Once you set it up, everything runs within the same network. Learn more networks [here](../Develop/Network.md).
+Anything that has a Docker image can be run within your stack. Nowadays, most open source projects has the docker option. From CMSs like WordPress and Strapi to databases like MongoDB, Redis and PostgreSQL, you can run your stack with anything. Once you set it up, everything runs within the same network. Learn more about networks [here](../Develop/Network.md).
 
 ### Example
 
-You have a cool and functional web app built with the MERN stack. You designed a simple string lookup search within it. At some point, you gathered way too much data and that search algorithm is now useless. Now since your core business is not developing a search algorithm, you simply add TypeSense to your stack, read their docs, set it up, make it work locally and voilà, on the next deployment your web app uses TypeSense.
+You have a cool and functional web app built with the MERN stack. You designed a simple string lookup search in it. At some point, you gathered way too much data and that search algorithm is now useless. Now since your core business is not developing a search algorithm, you simply add TypeSense to your stack. Then, you set it up locally and voilà, on the next deployment your web app uses TypeSense.
 
 ![Modular Design Example](https://files.cplepage.com/fullstacked/modular-design-externals.png)
