@@ -1,6 +1,6 @@
 # Backup & Restore
 
-This command allow to create and load `.tar` files from your volume defined in your compose files. This way, you can keep backups of your data and/or move it from one environnement to another. If you enter ssh credentials, it will backup/restore your remote server, else it will execute it locally.
+This command allow to create and load `.tar` files from your volumes defined in your compose files. This way, you can keep backups of your data and/or move it from one environnement to another. If you enter your remote server ssh credentials, it will backup/restore your remote server, else it will execute it locally.
 
 ```shell
 npx fullstacked backup
@@ -61,6 +61,8 @@ Private key file path for login.
 (optional)
 
 FullStacked apps directory. *(default: /home)*
+
+#### Example
 
 ```shell
 npx fullstacked backup --host=123.123.123.123 --user=User --private-key-file=./key.pem --app-dir=/home/User

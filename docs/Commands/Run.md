@@ -2,6 +2,12 @@
 
 Start up your web app locally.
 
+```shell
+npx fullstacked run
+```
+
+
+
 ## Flags
 
 ### `--restored`

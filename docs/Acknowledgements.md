@@ -1,10 +1,12 @@
 # Acknowledgements
 
-## Patreon Sponsors
-
-[![](https://raster.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/fullstacked)
+## Patreon Supporters
 
 ![](https://images.weserv.nl/?url=www.gravatar.com/avatar/dc0c6ee4722506b394c9d405cd7aefcf?v=4&h=40&w=40&fit=cover&mask=circle&maxage=7d)
+
+Support FullStacked on Patreon
+
+[![](https://raster.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/fullstacked)
 
 ## Open Source Projects
 
@@ -30,8 +32,6 @@ That make FullStacked possible
 
 - [Tabler.io](https://tabler.io/)
 
-
-
 For FullStacked Websites
 
 - [Plausible](https://plausible.io/)
@@ -49,7 +49,5 @@ For FullStacked Websites
 - [Mardown-it](https://github.com/markdown-it/markdown-it)
 
 - [Excalidraw](https://excalidraw.com/)
-
-
 
 Support Open Source!

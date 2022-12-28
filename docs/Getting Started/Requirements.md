@@ -2,7 +2,7 @@
 
 - [Node.js](https://nodejs.org/) `>= 16` 
 
-- [Docker Desktop | Docker](https://www.docker.com/products/docker-desktop/) with Compose `v2`
+- [Docker](https://www.docker.com/products/docker-desktop/) with Docker Compose `v2`
 
 ## Code Editor
 
