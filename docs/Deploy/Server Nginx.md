@@ -6,7 +6,7 @@ The root nginx service will route incoming requests host name to the right web a
 
 ![FullStacked Server Nginx](https://files.cplepage.com/fullstacked/nginx-server-2.png)
 
-This works with the fact that the root nginx config loads every `./*/nginx/*.conf` and on the deployment, FullStacked gets the available ports and writes them down in the `.conf` files of the current web app.
+This works with the fact that the root nginx config loads every `./*/nginx/*.conf` and on the deployment, FullStacked gets the available ports and writes them down in the `[service]-[port].conf` files of the current web app.
 
 ![Server Nginx Setup](https://files.cplepage.com/fullstacked/server-nginx.png)
 

@@ -1,8 +1,8 @@
 # Integration Tests
 
-Integration test are a bit tricky because we need to run it inside the docker compose network to access our other services and we need to do that while gathering the coverage data.
+Integration tests are a bit tricky because we need to run them inside the docker compose network to access our other services and we need to do that while gathering the coverage data.
 
-Here's a bit of how it is setup.
+Here's a bit of how it is setup :
 
 ![FullStacked Integration Test Setup](https://files.cplepage.com/fullstacked/integration-test.png)
 
@@ -21,8 +21,8 @@ import {fetch} from "fullstacked/utils/fetch";
 import "../server/index.ts";
 
 // wrap your test suite with FullStacked integration test utility
-testIntegration(describe("Integration Test", function() {
-    before(async function (){
+testIntegration(describe("Integration Test", () => {
+    before(() => {
         // start the server
         Server.start()
     });
@@ -32,7 +32,7 @@ testIntegration(describe("Integration Test", function() {
         equal(await fetch.get("http://localhost/hello-world"), "Hello World");
     });
 
-    after(async function(){
+    after(() => {
         // make sure to stop the server or it will hang
         Server.stop();
     });

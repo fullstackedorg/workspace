@@ -14,7 +14,7 @@ npm exec create-fullstacked@latest
 
 Meaning all the codebase for this command is in `create-fullstacked` [repositery](https://github.com/cplepage/create-fullstacked). 
 
-> More about npm init commands : [npm docs](https://docs.npmjs.com/cli/v9/commands/npm-init#description)
+> More about the npm init command : [npm docs](https://docs.npmjs.com/cli/v9/commands/npm-init#description)
 
 ## Templates
 

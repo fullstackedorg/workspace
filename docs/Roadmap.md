@@ -10,7 +10,7 @@
 
 - FullStacked Dashboard.
   
-  - A dashboard web app to monitor your all your FullStacked web app deployed on the remote server.
+  - A dashboard web app to monitor all your FullStacked web app deployed on the remote server.
 
 - Island pattern for frontend.
   
@@ -29,5 +29,7 @@
 - Support [bun](https://bun.sh/) and [deno](https://deno.land/).
   
   - Strip all the TypeScript transpilation logic.
+
 - Explore serveless/lambda approach
+
 - Explore load balancing options

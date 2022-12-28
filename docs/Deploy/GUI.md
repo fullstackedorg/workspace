@@ -18,9 +18,9 @@ Enter your credentials to your remote server. Test the connection until you only
 
 ## Configuration
 
-Each service defined by your `docker-compose` files that has an expose a port, will be displayed here. This means they should be publicly accessible. They will each have the option to give server names and extra nginx configurations. 
+Each service defined by your `docker-compose` files that has exposed ports, will be displayed here. This means they should be publicly accessible. For each of them, you can add server names and extra nginx configurations. 
 
-Checkout [FullStacked nginx template](https://github.com/cplepage/fullstacked/blob/main/nginx/service.conf) file to understand a bit more.
+Checkout [FullStacked nginx service template](https://github.com/cplepage/fullstacked/blob/main/nginx/service.conf) file to understand a bit more.
 
 ## SSL Certificate
 

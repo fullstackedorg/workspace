@@ -1,6 +1,6 @@
 # Pre/Post Scripts
 
-Pre/Post scripts are mimicked from [npm-script](https://docs.npmjs.com/cli/v9/using-npm/scripts#pre--post-scripts), but it's file based insteand of bash commands. It works with the `*.[event].ts` naming syntax and you can either script at the top level or export a default function. With the default exported function, your `FullStackedConfig` will always be passed as the first argument. See the full list of attributes [here](https://github.com/cplepage/fullstacked/blob/main/index.ts). The export default function will `await` if it is `async` or it returns a `Promise`.
+Pre/Post scripts are mimicked from [npm-script](https://docs.npmjs.com/cli/v9/using-npm/scripts#pre--post-scripts), but it's file based instead of bash commands. It works with the `*.[event].ts` naming syntax and you can either script at the top level or export a default function. With the default exported function, your `FullStackedConfig` will always be passed as the first argument. See the full list of attributes [here](https://github.com/cplepage/fullstacked/blob/main/index.ts). The export default function will `await` if it is `async` or if it returns a `Promise`.
 
 ## Example
 
@@ -27,7 +27,7 @@ fs.cpSync(resolve(".", "image.jpg"), resolve(".", "dist", "image.jpg"));
 
 ## Events
 
-There are threes events where you can add `pre` and `post` scripts to adjust some stuff.
+There are threes events where you can add `pre` and `post` scripts.
 
 ### Build
 

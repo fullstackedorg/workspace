@@ -1,14 +1,16 @@
 # Network
 
-FullStacked runs everything through a Docker Compose and this gives a massive perk. Everything runs within the same isolated network. That means connecting and fetching data from one service to another has little to no latency, and the hostnames of each service are defined and predictable. 
+FullStacked runs everything through a Docker Compose and this gives a massive perk : Everything runs within the same isolated network. That means connecting and fetching data from one service to another has little to no latency, and the hostnames of each service are defined and predictable. 
 
 Read more about docker networks [here](https://docs.docker.com/compose/networking/)
 
-## ## Connecting Services Internaly
+## Connecting Services Internaly
 
 Internal ports are always accessible from within the network.
 
 ### Examples
+
+In this example, only the node port `80` in publicly accessible at the local machine port `8000`. The next section covers how to expose ports.
 
 ![Network](https://files.cplepage.com/fullstacked/network.png)
 
@@ -77,7 +79,7 @@ Server.addListener((req, res) => {
 });
 ```
 
-Exposing Ports
+## Exposing Ports
 
 To expose a port publicly, you'll have to define the port in the `expose` attribute and the `ports` attribute of the compose file. Only write down the internal port you want to access and FullStacked will find an available port to map it to (locally and remotely).
 
