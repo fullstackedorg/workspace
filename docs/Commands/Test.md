@@ -2,6 +2,10 @@
 
 Run your web app's tests. This will pickup all the `**/test.ts` and `**/*.test.ts` in your project.
 
+```shell
+npx fullstacked test
+```
+
 ## Flags
 
 ### `--headless`

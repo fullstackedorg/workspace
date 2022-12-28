@@ -6,7 +6,7 @@
 
 - Backup/Restore GUI
 
-- `create-fullstacked` `add`, `update` and `remove` commands
+- `create-fullstacked` `add`, `update`, `remove` commands and a registery
 
 - FullStacked Dashboard
   A dashboard web app to monitor your all your FullStacked web app deployed on the remote server

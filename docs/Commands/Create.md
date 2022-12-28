@@ -8,13 +8,13 @@ npm init fullstacked@latest
 
 This command translates to :
 
-> More about it: [npm docs](https://docs.npmjs.com/cli/v9/commands/npm-init#description)
-
 ```shell
 npm exec create-fullstacked@latest
 ```
 
 Meaning all the codebase for this command is in `create-fullstacked` [repositery](https://github.com/cplepage/create-fullstacked). 
+
+> More about it: [npm docs](https://docs.npmjs.com/cli/v9/commands/npm-init#description)
 
 ## Templates
 
