@@ -11,4 +11,4 @@ Some npm packages have depencies declared, but unused. Esbuild will throw build 
 }
 ```
 
-FullStacked will use this list and add them to esbuild `external` build option. More about it [here]([esbuild - API](https://esbuild.github.io/api/#external).
+FullStacked will use this list and add them to esbuild `external` build option. More about it [here](https://esbuild.github.io/api/#external).
