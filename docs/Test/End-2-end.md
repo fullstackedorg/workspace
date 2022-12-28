@@ -13,9 +13,9 @@ import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-describe("Default Template Tests", function(){
+describe("Default Template Tests", () => {
     let test;
-    before(async function(){
+    before(async () => {
         // instantiate the E2E test
         // define your project root
         test = new TestE2E(resolve(__dirname, ".."));
@@ -27,7 +27,7 @@ describe("Default Template Tests", function(){
         await test.start();
     });
 
-    it('Should display main title', async function(){
+    it('Should display main title', async () => {
         // your puppeteer page will always be at the page attribute
         // use puppeteer API to automate actions
         // https://pptr.dev/api/puppeteer.page
@@ -37,7 +37,7 @@ describe("Default Template Tests", function(){
         equal(value, "Welcome to FullStacked!");
     });
 
-    after(async function(){
+    after(async () => {
         // don't forget to stop the test or it will hang
         await test.stop();
     });

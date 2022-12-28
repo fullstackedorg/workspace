@@ -9,8 +9,8 @@ import {describe, it} from "mocha";
 import {equal} from "assert";
 import {foo} from "./foo.ts";
 
-describe("Integration Test", function() {
-    it("Should return bar", async () => {
+describe("Integration Test", () => {
+    it("Should return bar", () => {
         // hit an endpoint
         equal(foo(), "bar");
     });
