@@ -1,6 +1,6 @@
 # Pre/Post Scripts
 
-Pre/Post scripts are mimicked from [npm-script](https://docs.npmjs.com/cli/v9/using-npm/scripts#pre--post-scripts), but file based insteand of bash commands. It works with the `*.[event].ts` naming syntax and you can either script at the top level or export a default function. With the default exported function, your `FullStackedConfig` will always be passed as the first argument. See the full list of attributes [here](https://github.com/cplepage/fullstacked/blob/main/index.ts). The export default function will `await` if it is `async` or it returns a `Promise`.
+Pre/Post scripts are mimicked from [npm-script](https://docs.npmjs.com/cli/v9/using-npm/scripts#pre--post-scripts), but it's file based insteand of bash commands. It works with the `*.[event].ts` naming syntax and you can either script at the top level or export a default function. With the default exported function, your `FullStackedConfig` will always be passed as the first argument. See the full list of attributes [here](https://github.com/cplepage/fullstacked/blob/main/index.ts). The export default function will `await` if it is `async` or it returns a `Promise`.
 
 ## Example
 
@@ -31,7 +31,7 @@ There are threes events where you can add `pre` and `post` scripts to adjust som
 
 ### Build
 
-The build event is perfect to add extra stuff in your `dist` directory. Pre is especially good to transpile some stuff like `css` and post is perfect to move some static files that aren't imported by your web app *(i.e., a meta sharing image).* 
+The build event is perfect to add extra assets in your `dist` directory. `prebuild` is especially good to transpile some stuff like `css` and `postbuild` is perfect to move some static files that aren't imported by your web app *(i.e., a meta sharing image).* 
 
 #### Filenames
 
@@ -59,7 +59,7 @@ The build event is perfect to add extra stuff in your `dist` directory. Pre is e
 
 ### Deploy
 
-The `pre`/`post` deploy hook comes with an `SFTP` instance as second argument.
+The `pre`/`post` deploy hook comes with a connected `SFTP` instance as second argument.
 
 ```ts
 import FullStackedConfig from "fullstacked";
@@ -70,7 +70,7 @@ export default function (config: FullStackedConfig, sftp: SFTP){
 }
 ```
 
-Meaning you can use this with `utils/uploadFileWithProgress` to send extra files. The deploy event is usefull to send extra files or shipping that custom docker image to your remote server. 
+Meaning you can use this with `utils/uploadFileWithProgress` to send extra files to your remote server.
 
 #### Filenames
 

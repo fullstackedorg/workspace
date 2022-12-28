@@ -1,6 +1,6 @@
 # Ignored Modules
 
-Some npm packages have depencies declared, but unused. Esbuild will throw build errors to any module imported that isn't installed. Even if you don't even use the module. Instead of installing useless packages, create a `./ignore.json` file and define the ignored modules.
+Some npm packages have modules imported, but unused. Esbuild will throw build errors to any module imported that isn't installed. Even if the module is unused. Instead of installing useless packages, create a `./ignore.json` file and define the ignored modules.
 
 ```json
 {

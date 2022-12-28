@@ -35,6 +35,6 @@ To restore
 npx fullstacked restore --volume=mongodb-data
 ```
 
-You will see that a `./backup/mongodb-data.tar` has been created inside your project. This is the actual backed up data. You can reuse that to spin up your web app with some data instead of having to mock everything.
+A `./backup/mongodb-data.tar` will be created inside the project. This is the actual backed up data. You can reuse that to spin up your web app with some data instead of having to mock everything.
 
-This even works remotely if you add your ssh credentials.
+This even works remotely if you add your [ssh credentials](../Commands/Backup-Restore.md).
