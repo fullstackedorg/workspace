@@ -1,6 +1,6 @@
 # Build
 
-Bundle your all of your web app. Both the backend and the frontend will be bundled into each a single file. Code-splitting will be applied if you use any `await import("./xyz")`. The build process also produces the `docker-compose.yml` that will run your entire web app stack.
+Bundle all of your web app. Both the backend and the frontend will be bundled into each a single file. Code-splitting will be applied if you use any `await import("./xyz")`. The build process also produces the `docker-compose.yml` that will run your entire web app stack.
 
 ```shell
 npx fullstacked build

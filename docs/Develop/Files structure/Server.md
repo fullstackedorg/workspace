@@ -36,7 +36,7 @@ Server.addListener((req, res) => {
 
 ![FullStacked Server](https://files.cplepage.com/fullstacked/server.png)
 
-Here's what happens in details :
+Here's how this server acts on runtime when receiving an incoming request :
 
 0. The server receives a request with the path `/path/foo`
 
@@ -50,7 +50,7 @@ Here's what happens in details :
 
 ## Splitting into files
 
-This same example would be much cleaner with each listener split into files:
+This same example would be much cleaner with each listener split into individual files:
 
 ```ts
 // server/express.server.ts

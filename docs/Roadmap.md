@@ -29,3 +29,5 @@
 - Support [bun](https://bun.sh/) and [deno](https://deno.land/).
   
   - Strip all the TypeScript transpilation logic.
+- Explore serveless/lambda approach
+- Explore load balancing options

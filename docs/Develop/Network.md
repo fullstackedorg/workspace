@@ -1,51 +1,12 @@
 # Network
 
-FullStacked runs everything through a Docker Compose and this gives a massive perk. Everything runs within the same isolated network. That means connecting and fetching data from one service to another has little to no latency, and the hostnames are defined and predictable. 
+FullStacked runs everything through a Docker Compose and this gives a massive perk. Everything runs within the same isolated network. That means connecting and fetching data from one service to another has little to no latency, and the hostnames of each service are defined and predictable. 
 
 Read more about docker networks [here](https://docs.docker.com/compose/networking/)
 
-To expose ports publicly
+## ## Connecting Services Internaly
 
-## Exposing Ports
-
-To expose a port publicly, you'll have to define the port in the `expose` attribute and the `ports` attribute. Only use the internal port you want to access and FullStacked will find an available port to map it to (locally and on the remote server).
-
-If you use the `"8000:80"` syntax, FullStacked won't set up the port mapping for you and you might try to bind to an already used port.
-
-### Example
-
-The WordPress instance will be at the first available port starting from `8000`. Use Docker Desktop to figure out on which port it got mapped out.
-
-```yaml
-services:
-  wordpress_db:
-    image: mysql:5.7
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: somewordpress
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wordpress
-      MYSQL_PASSWORD: wordpress
-
-  wordpress:
-    depends_on:
-      - wordpress_db
-    image: wordpress:latest
-    restart: unless-stopped
-    expose:
-      - 80
-    ports:
-      - 80
-    environment:
-      WORDPRESS_DB_HOST: wordpress_db
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_NAME: wordpress
-```
-
-## Connecting Services Internaly
-
-In this second approach, <u>you don't have to expose any port publicly</u>. Internal ports are always accessible from within the network.
+Internal ports are always accessible from within the network.
 
 ### Examples
 
@@ -114,4 +75,41 @@ Server.addListener((req, res) => {
         proxy.web(req, res, {target: "http://wordpress"}, resolve);
     });
 });
+```
+
+Exposing Ports
+
+To expose a port publicly, you'll have to define the port in the `expose` attribute and the `ports` attribute of the compose file. Only write down the internal port you want to access and FullStacked will find an available port to map it to (locally and remotely).
+
+If you use the `"8000:80"` syntax, FullStacked won't set up the port mapping for you and you might try to bind to an already used port.
+
+### Example
+
+The WordPress instance will be at the first available port starting from `8000`. Use Docker Desktop to figure out on which port it got mapped out.
+
+```yaml
+services:
+  wordpress_db:
+    image: mysql:5.7
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  wordpress:
+    depends_on:
+      - wordpress_db
+    image: wordpress:latest
+    restart: unless-stopped
+    expose:
+      - 80
+    ports:
+      - 80
+    environment:
+      WORDPRESS_DB_HOST: wordpress_db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
 ```

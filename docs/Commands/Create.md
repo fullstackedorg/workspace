@@ -14,14 +14,14 @@ npm exec create-fullstacked@latest
 
 Meaning all the codebase for this command is in `create-fullstacked` [repositery](https://github.com/cplepage/create-fullstacked). 
 
-> More about it: [npm docs](https://docs.npmjs.com/cli/v9/commands/npm-init#description)
+> More about npm init commands : [npm docs](https://docs.npmjs.com/cli/v9/commands/npm-init#description)
 
 ## Templates
 
-Directly install libraries, frameworks and external tools. Simply pass them as arguments in your init command like that :
+You can directly install libraries, frameworks and external tools with tempates. Simply pass them as arguments in your init command like that :
 
 ```shell
 npm init fullstacked@latest -- react express mongodb
 ```
 
-The list of available templates is available [here](https://github.com/cplepage/create-fullstacked/tree/main/templates).
+The list of available templates is [here](https://github.com/cplepage/create-fullstacked/tree/main/templates).

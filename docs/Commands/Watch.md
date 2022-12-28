@@ -1,6 +1,6 @@
 # Watch
 
-This command acts just like the Run command, but will restart your server on Server file changes and will reload your web browser page on WebApp file changes. 
+This command acts just like the `run` command, but will restart your server on Server file changes and will reload your web browser page on WebApp file changes. 
 
 ```shell
 npx fullstacked watch

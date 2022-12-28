@@ -1,6 +1,6 @@
 # Quick Start
 
-Make sure you have installed NodeJS and Docker. More info [here](./Requirements.md)
+Make sure you have installed NodeJS and Docker. More info on requirements [here](./Requirements.md).
 
 ### Starting your project
 

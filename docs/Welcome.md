@@ -8,7 +8,7 @@ FullStacked is a simple tool that takes care of all the redundant tasks in TypeS
 
 ## Motivation
 
-While every web app projects are for different use cases and for different needs, there is still many tasks that stays nearly the same from one project to another. FullStacked exists to save you that redundant lost time.
+While every web app projects are for different use cases and for different needs, there is still many tasks that stay nearly the same from one project to another. FullStacked exists to save you that redundant lost time.
 
 > As many web developer, I have changed my toolset very often. While the fun of it is in developing features, we waste so much time on configs and figuring out how to build and deploy web apps. FullStacked aims to skip all the configuration phases to instead allow you to start developing as quickly as possible!
 > 
