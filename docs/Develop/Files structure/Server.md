@@ -2,7 +2,7 @@
 
 Your FullStacked server will always come with the default file serving listener. After that, you can add more listeners to handle requests. 
 
-Here's a code snippet with a request example
+## Example
 
 ```ts
 // server/index.ts

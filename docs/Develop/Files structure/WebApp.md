@@ -8,13 +8,15 @@ The WebApp is built with three main files :
 
 - index.css
 
-Those three files will be watch by default with `watch` command. The act just like a static site would. 
+Those three files will be watch by default with the `watch` command. They act just like a static site would. 
 
 **Don't try to add your `.js` and `.css` file inside the `.html`**. This is all taken care of in the build process.
 
 ## Using `tsx`
 
-Since the build command only checks for `webapp/index.ts` to use `.tsx` you just need to import your `.tsx` entrypoint and from there you should be good to go.
+Since the build command only checks for `webapp/index.ts`, to use `.tsx` you must  import your `.tsx` entrypoint from `webapp/index.ts` and from there you should be good to go.
+
+### Example
 
 ```ts
 // webapp/index.ts

@@ -8,11 +8,11 @@ FullStacked provide an all setup test runner with all the tools for full web app
 
 - **nyc/c8** for the code coverage
 
-Three types of tests will allow you to test different aprts of your web app :
+Three types of tests will allow you to test different parts of your web app :
 
 - **End-2-end** tests allows to make sure the UI is functional and it tests the web app as a whole.
 
-- **Integration** tests will test your servers and data logic throughout all your `docker-compose` services.
+- **Integration** tests will test your servers and data logic with all your `docker-compose` services.
 
 - **Unit** tests is simply to test methods.
 

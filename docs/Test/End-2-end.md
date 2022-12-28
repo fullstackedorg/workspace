@@ -1,6 +1,6 @@
 # End-2-End Tests
 
-To write an end-2-end test, use FullStacked `utils/testE2E` class. This class provide the setup to start puppeteer and and automate some action to make sure your web app responds as expected.
+To write an end-2-end test, use FullStacked `utils/testE2E` class. This class provide the setup to start puppeteer and and automate some actions to make sure your web app responds as expected.
 
 ## Example
 

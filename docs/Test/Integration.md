@@ -20,7 +20,7 @@ import {fetch} from "fullstacked/utils/fetch";
 // import your server file to test
 import "../server/index.ts";
 
-// wrap your test suite with FullStacked test integration utility
+// wrap your test suite with FullStacked integration test utility
 testIntegration(describe("Integration Test", function() {
     before(async function (){
         // start the server
@@ -33,7 +33,7 @@ testIntegration(describe("Integration Test", function() {
     });
 
     after(async function(){
-        // make sure to strop the server or it will hang
+        // make sure to stop the server or it will hang
         Server.stop();
     });
 }));
