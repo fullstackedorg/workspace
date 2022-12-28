@@ -8,34 +8,48 @@
 
 ## Open Source Projects
 
-- NodeJS
+That make FullStacked possible
 
-- Docker
+- [NodeJS](https://nodejs.org/)
 
-- TypeScript
+- [Docker](https://www.docker.com/)
 
-- esbuild
+- [TypeScript](https://www.typescriptlang.org/)
 
-- Dockerode
+- [esbuild](https://esbuild.github.io/)
 
-- ssh2-sftp-client
+- [Dockerode](https://github.com/apocas/dockerode)
 
-- mochajs
+- [ssh2-sftp-client](https://github.com/theophilusx/ssh2-sftp-client)
 
-- Istanbul
+- [mochajs](https://mochajs.org/)
 
-- c8
+- [Istanbul](https://istanbul.js.org/)
 
-- Tabler.io
+- [c8](https://github.com/bcoe/c8)
 
-- Plausible
+- [Tabler.io](https://tabler.io/)
 
-- Listmonk
 
-- TypeSense
 
-- TailwindCSS
+For FullStacked Websites
 
-- Excalidraw
+- [Plausible](https://plausible.io/)
+
+- [Listmonk](https://listmonk.app/)
+
+- [TypeSense](https://typesense.org/)
+
+- [Uptime Kuma](https://uptime.kuma.pet/)
+
+- [TailwindCSS](https://tailwindcss.com/)
+
+- [ReactJS](https://reactjs.org/)
+
+- [Mardown-it](https://github.com/markdown-it/markdown-it)
+
+- [Excalidraw](https://excalidraw.com/)
+
+
 
 Support Open Source!
