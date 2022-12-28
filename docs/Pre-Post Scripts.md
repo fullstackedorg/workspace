@@ -29,7 +29,7 @@ fs.cpSync(resolve(".", "image.jpg"), resolve(".", "dist", "image.jpg"));
 
 There are threes events where you can add `pre` and `post` scripts to adjust some stuff.
 
-### build
+### Build
 
 The build event is perfect to add extra stuff in your `dist` directory. Pre is especially good to transpile some stuff like `css` and post is perfect to move some static files that aren't imported by your web app *(i.e., a meta sharing image).* 
 
@@ -43,7 +43,7 @@ The build event is perfect to add extra stuff in your `dist` directory. Pre is e
 
 - `*.postbuild.ts`/`*.postbuild.tsx`
 
-### run
+### Run
 
 **Run is only triggered when running locally**. It won't be triggered on your remote server during a deployment. This is usefull for loading a custom docker image.
 
@@ -57,7 +57,7 @@ The build event is perfect to add extra stuff in your `dist` directory. Pre is e
 
 - `*.postrun.ts`/`*.postrun.tsx`
 
-### deploy
+### Deploy
 
 The `pre`/`post` deploy hook comes with an `SFTP` instance as second argument.
 
