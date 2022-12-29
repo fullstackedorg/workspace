@@ -167,7 +167,10 @@ async function buildWebApp(config, watcher){
         setup(build) {
             build.onLoad({ filter: fullstackedWebAppFileRegex }, async () => {
                 // load all entry points from server dir
-                const webappFiles = glob.sync(resolve(config.src, "webapp", "**", "*.webapp.ts"));
+                const webappFiles = [
+                    ...glob.sync(resolve(config.src, "webapp", "**", "*.webapp.ts")),
+                    ...glob.sync(resolve(config.src, "webapp", "**", "*.webapp.tsx"))
+                ]
 
                 // well keep server/index.ts as an entrypoint also
                 const indexWebAppFile = resolve(config.src, "webapp", "index.ts");

@@ -132,7 +132,7 @@ export default async function(testSuite: Suite, options?: {
         });
     });
 
-    await dockerCompose.down({v: true});
+    await dockerCompose.down({ volumes: true });
 
     const passingMatches = Array.from(results.matchAll(/\d+ passing/g));
     const failingMatches = Array.from(results.matchAll(/\d+ failing/g));
