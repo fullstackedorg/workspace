@@ -21,9 +21,9 @@ export default function ({defaultData, updateData, getSteps}){
         <div>
             <label className="form-label">SSH Port</label>
             <input type="text" className="form-control" placeholder="22"
-                   defaultValue={defaultData?.sshPort}
+                   defaultValue={defaultData?.port}
                    onChange={e => updateData({
-                       sshPort: e.target.value
+                       port: e.target.value
                    })}
             />
         </div>

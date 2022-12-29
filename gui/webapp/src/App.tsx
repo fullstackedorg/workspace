@@ -111,10 +111,10 @@ export default function ({hasSavedConfigs}){
                                     <a href="https://tabler.io" target={"_blank"}>tabler.io</a>&nbsp;
                                 </li>
                                 <li className="list-inline-item">
-                                    Support Open Source Software
+                                    Support Open Source
                                 </li>
                                 <li className="list-inline-item">
-                                    <a href="https://github.com/cplepage/fullstacked" target={"_blank"}>Give FullStacked a&nbsp;
+                                    <a href="https://github.com/cplepage/fullstacked/stargazers" target={"_blank"}>Give FullStacked a&nbsp;
                                         <svg style={{verticalAlign: "text-bottom", color: "#eac54f", height: 18, width: 18}}
                                              xmlns="http://www.w3.org/2000/svg"  className="icon icon-tabler icon-filled icon-tabler-star"
                                              viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"
