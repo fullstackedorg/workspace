@@ -139,12 +139,11 @@ async function buildServer(config: FullStackedConfig, watcher){
 
 // bundles the web app
 async function buildWebApp(config, watcher){
-    const entrypoint = resolve(config.src, "webapp", "index.ts");
+    const fullstackedWebAppFile = resolve(__dirname, "..", "webapp", "index.js");
 
-    if(!fs.existsSync(entrypoint)){
-        fs.mkdirSync(config.public, {recursive: true});
-        return fs.writeFileSync(resolve(config.public, "index.html"), "Nothing to see here...");
-    }
+    const fullstackedWebAppFileRegex =  new RegExp(fullstackedWebAppFile
+        // windows file path...
+        .replace(/\\/g, "\\\\"));
 
     // pre/post build scripts
     const plugins = [{
@@ -163,6 +162,27 @@ async function buildWebApp(config, watcher){
                 await execScript(resolve(config.src, "postbuild.ts"), config, true);
             });
         }
+    }, {
+        name: 'fullstacked-bundled-webapp',
+        setup(build) {
+            build.onLoad({ filter: fullstackedWebAppFileRegex }, async () => {
+                // load all entry points from server dir
+                const webappFiles = glob.sync(resolve(config.src, "webapp", "**", "*.webapp.ts"));
+
+                // well keep server/index.ts as an entrypoint also
+                const indexWebAppFile = resolve(config.src, "webapp", "index.ts");
+                if(fs.existsSync(indexWebAppFile)) webappFiles.unshift(indexWebAppFile);
+
+                const contents =
+                    fs.readFileSync(fullstackedWebAppFile) + "\n" +
+                    webappFiles.map(file => `import "${file.replace(/\\/g, "\\\\")}";`).join("\n")
+
+                return {
+                    contents,
+                    loader: 'ts',
+                }
+            })
+        },
     }];
 
     // extra files and dir to watch
@@ -199,7 +219,7 @@ async function buildWebApp(config, watcher){
     }
 
     const options = {
-        entryPoints: [ entrypoint ],
+        entryPoints: [ fullstackedWebAppFile ],
         outdir: config.public,
         entryNames: "index",
         format: "esm" as Format,
