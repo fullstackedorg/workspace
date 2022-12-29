@@ -66,17 +66,19 @@ describe("Watch Test", function(){
     }
 
     async function getReloadCount(){
-        let tries = 5;
+        let tries = 5, lastError;
         while (tries){
             try{
                 return await getCount();
             }catch (e) {
+                lastError = e;
                 await sleep(1000);
                 tries--;
             }
         }
 
-        throw Error("Unable to get reload count");
+        console.log("Unable to get reload count");
+        throw lastError;
     }
 
     it('Should reload webapp when changing webapp/index.ts', async function(){
