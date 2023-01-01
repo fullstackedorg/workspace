@@ -8,26 +8,30 @@ import {MongoClient} from 'mongodb';
     const database = client.db("test");
     const collection = database.collection<{ test: number }>("tests");
 
-    Server.addListener(async (req, res) => {
-        if(req.url !== "/post" || req.method !== "POST") return;
+    Server.listeners.push({
+        async handler(req, res){
+            if(req.url !== "/post" || req.method !== "POST") return;
 
-        const result = await collection.insertOne({
-            test: Math.floor(Math.random() * 1000000)
-        });
+            const result = await collection.insertOne({
+                test: Math.floor(Math.random() * 1000000)
+            });
 
-        res.writeHead(200, {"content-type": "application/json"});
-        res.write(JSON.stringify(result));
-        res.end();
+            res.writeHead(200, {"content-type": "application/json"});
+            res.write(JSON.stringify(result));
+            res.end();
+        }
     });
 
-    Server.addListener(async (req, res) => {
-        if(req.url !== "/get") return;
+    Server.listeners.push({
+        async handler(req, res){
+            if(req.url !== "/get") return;
 
-        const result = await collection.find();
-        const data = await result.toArray();
+            const result = await collection.find();
+            const data = await result.toArray();
 
-        res.writeHead(200, {"content-type": "application/json"});
-        res.write(JSON.stringify(data));
-        res.end();
+            res.writeHead(200, {"content-type": "application/json"});
+            res.write(JSON.stringify(data));
+            res.end();
+        }
     });
 })()

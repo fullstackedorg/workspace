@@ -1,11 +1,15 @@
 import Server from "../../server.js";
 
-Server.addListener((req, res) => {
-    if(req.url !== "/port") return;
+Server.listeners.push({
+    handler(req, res): void | Promise<void> {
+        if(req.url !== "/port") return;
 
-    res.writeHead(200);
-    const backendPort = process.argv?.find(arg => arg.startsWith("--port="))?.slice("--port=".length);
-    if(backendPort)
-        res.write(backendPort);
-    res.end();
+        res.writeHead(200);
+
+        const backendPort = process.argv?.find(arg => arg.startsWith("--port="))?.slice("--port=".length);
+        if(backendPort)
+            res.write(backendPort);
+
+        res.end();
+    }
 });

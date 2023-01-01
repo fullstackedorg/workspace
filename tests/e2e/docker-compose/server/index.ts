@@ -1,8 +1,10 @@
 import Server from "../../../../server.js";
 import {MongoClient} from 'mongodb';
 
-Server.addListener(async (req, res) => {
-    if(req.url === "/mongo-test-connection"){
+Server.listeners.push({
+    async handler(req, res) {
+        if(req.url !== "/mongo-test-connection") return ;
+
         const uri = "mongodb://root:test@mongo:27017";
         const client = new MongoClient(uri);
 
@@ -10,7 +12,8 @@ Server.addListener(async (req, res) => {
             await client.connect();
         }catch (e){
             res.writeHead(500);
-            return res.end("failed");
+            res.end("failed");
+            return;
         }
 
         res.writeHead(200, {"content-type": "text/html"});
