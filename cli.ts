@@ -76,7 +76,7 @@ defaultConfig(config).then(async configReady => {
 
     const CommandClass = scriptModule.default;
     let command;
-    if(script === "deploy")
+    if(script === "deploy" || script === "watch" || script === "run")
         command = new CommandClass(configReady);
     else
         CommandClass(configReady);

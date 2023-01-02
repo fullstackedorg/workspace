@@ -1,4 +1,4 @@
-document.body.innerHTML += `<div id="root"><basic-test></basic-test></div>`;
+document.body.innerHTML = `<div id="root"><basic-test></basic-test></div>`;
 
 class Basic extends HTMLElement {
     connectedCallback(){

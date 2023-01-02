@@ -1,5 +1,5 @@
 import React from "react";
-import {steps} from "./App";
+import {steps} from "./Deploy";
 
 export default function ({stepIndex, goToStep}){
     return <div className={"card"}>
