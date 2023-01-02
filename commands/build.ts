@@ -12,6 +12,7 @@ import {fileURLToPath} from "url";
 import {FullStackedConfig} from "../index";
 import randStr from "../utils/randStr";
 import {config as dotenvConfig} from "dotenv"
+import CommandInterface from "./Interface";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -282,13 +283,7 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
     const userDefinedIndexHTMLFilePath = resolve(config.src, "webapp", "index.html");
     const root: any = fs.existsSync(userDefinedIndexHTMLFilePath)
         ? parse(fs.readFileSync(userDefinedIndexHTMLFilePath, {encoding: "utf-8"}))
-        : parser.treeAdapter.createDocument();
-
-    root.attrs = root.attrs ?? [];
-
-    if(!getDescendantByTag(root, "html")){
-        parser.treeAdapter.appendChild(root, parser.treeAdapter.createElement("html", html.NS.HTML, []));
-    }
+        : parse(fs.readFileSync(resolve(__dirname, "..", "webapp", "index.html"), {encoding: "utf-8"}));
 
     const addInHEAD = (contentHTML: string) => {
         let head = getDescendantByTag(root, "head");

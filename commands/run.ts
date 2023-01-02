@@ -1,54 +1,46 @@
-import Build from "./build";
 import Runner from "../utils/runner";
 import os from "os";
 import readline from "readline";
-import Restore from "./restore";
 import {FullStackedConfig} from "../index";
+import CommandInterface from "./Interface";
+import {CMD} from "../types/gui";
+import {Writable} from "stream";
+import Build from "./build";
 
-let runner: Runner = null, didSetExitHook = false, printStopOnce = false;
+export default class Run extends CommandInterface {
+    runner: Runner;
 
-export default async function(config: FullStackedConfig, build: boolean = true){
-    if(build)
-        await Build(config);
-
-    if(!runner) {
-        runner = new Runner(config);
-        await runner.start();
-        console.log("Web App Running at http://localhost:" + runner.nodePort);
-
-        if(config.restored)
-            await Restore(config);
-    }else{
-        await runner.restart();
+    guiCommands(): { cmd: CMD; callback(data, tick?: () => void): any }[] {
+        return [];
     }
 
-    await runner.attach(process.stdout);
-
-    // set exit hook only once
-    if(!didSetExitHook){
-        if(os.platform() === "win32"){
-            //source : https://stackoverflow.com/a/48837698
-            readline.createInterface({
-                input: process.stdin,
-                output: process.stdout,
-            }).on('close', function() {
-                process.emit('SIGINT')
-            })
+    async restart(){
+        if(!this.runner){
+            this.runner = new Runner(this.config);
+            await this.runner.start();
+        }else{
+            await this.runner.restart();
         }
+    }
 
-        process.on("SIGINT", async () => {
-            if(!config.silent && !printStopOnce) {
-                console.log('\x1b[33m%s\x1b[0m', "Stopping!");
-                printStopOnce = true;
+    async run(): Promise<void> {
+        await Build(this.config);
+
+        await this.restart();
+        console.log("Web App Running at http://localhost:" + this.runner.nodePort);
+
+        const stream = new Writable({
+            write: (chunk, encoding, next) => {
+                this.printLine(chunk.toString());
+                next();
             }
-
-            if(runner)
-                await runner.stop()
-            process.exit(0);
         });
 
-        didSetExitHook = true;
+        await this.runner.attach(stream);
     }
 
-    return runner;
+    runCLI(): Promise<void> {
+        return this.run();
+    }
+
 }

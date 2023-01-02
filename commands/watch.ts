@@ -3,52 +3,70 @@ import Run from "./run";
 import {WebSocket} from "ws";
 import sleep from "../utils/sleep";
 import {FullStackedConfig} from "../index";
+import CommandInterface from "./Interface";
+import {CMD} from "../types/gui";
 
-let globalConfig: FullStackedConfig,
-    ws: WebSocket,
-    msgQueue = [];
 
-async function watcher(isWebApp: boolean, first = false){
-    if(isWebApp) {
-       console.log('\x1b[32m%s\x1b[0m', "WebApp Rebuilt");
-       const msg = Date.now();
+export default class Watch extends CommandInterface {
+    timeout: number = 2000;
+    ws: WebSocket;
+    msgQueue: string[] = [];
+    runCommand: Run;
 
-       if(ws) ws.send(msg);
-       else msgQueue.push(msg);
-
-       return;
+    constructor(config: FullStackedConfig) {
+        super(config);
+        this.timeout = config.timeout ?? this.timeout;
+        this.runCommand = new Run(this.config);
     }
 
-    if(!first)
-        console.log('\x1b[32m%s\x1b[0m', "Server Rebuilt");
-    else
-        console.log('\x1b[33m%s\x1b[0m', "Watching...")
+    connectToWatcher(port: number){
+        this.ws = new WebSocket(`ws://localhost:${port}/watcher`);
+        this.ws.addListener("open", () => {
+            if(!this.msgQueue.length) return;
+            this.msgQueue.forEach(msg => this.ws.send(msg));
+            this.msgQueue = [];
+        });
+        this.ws.addListener('error', async () => {
+            this.ws = null;
+            await sleep(this.timeout);
+            this.connectToWatcher(port);
+        });
+    }
 
-    const runner = await Run(globalConfig, false);
+    async watcher(isWebApp: boolean, first = false){
+        if(isWebApp) {
+            console.log('\x1b[32m%s\x1b[0m', "WebApp Rebuilt");
+            const msg = Date.now().toString();
 
-    connectToWatcher(runner.nodePort);
-}
+            if(this.ws) this.ws.send(msg);
+            else this.msgQueue.push(msg);
 
-function connectToWatcher(port: number){
-    ws = new WebSocket(`ws://localhost:${port}/watcher`);
-    ws.addListener("open", () => {
-        if(!msgQueue.length) return;
-        msgQueue.forEach(msg => ws.send(msg));
-        msgQueue = [];
-    });
-    ws.addListener('error', async () => {
-        ws = null;
-        await sleep(globalConfig.timeout);
-        connectToWatcher(port);
-    });
-}
+            return;
+        }
 
-export default async function(config: FullStackedConfig) {
-    globalConfig = config;
-    globalConfig.timeout = globalConfig.timeout || 1000;
+        if(!first)
+            console.log('\x1b[32m%s\x1b[0m', "Server Rebuilt");
+        else
+            console.log('\x1b[33m%s\x1b[0m', "Watching...")
 
-    // build with the watcher defined
-    await Build(config, watcher);
+        await this.runCommand.restart();
 
-    await watcher(false, true);
+        this.connectToWatcher(this.runCommand.runner.nodePort);
+    }
+
+
+    guiCommands(): { cmd: CMD; callback(data, tick?: () => void): any }[] {
+        return [];
+    }
+
+    async run(): Promise<void> {
+        // build with the watcher defined
+        await Build(this.config, this.watcher.bind(this));
+        await this.watcher(false, true);
+        console.log("Web App Running at http://localhost:" + this.runCommand.runner.nodePort);
+    }
+
+    runCLI(): Promise<void> {
+        return this.run();
+    }
 }

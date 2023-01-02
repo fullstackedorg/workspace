@@ -1,15 +1,29 @@
 import React from "react"
 import {createRoot} from "react-dom/client";
-import App from "./src/App";
 import {WS} from "./WebSocket";
-import {DEPLOY_CMD} from "../../types/deploy";
+import {GLOBAL_CMD} from "../../types/gui";
+import Deploy from "./deploy/Deploy";
+import Header from "./Header";
 
 export default async function (){
     const root = createRoot(document.querySelector("fullstacked-root"));
 
     await WS.init();
 
-    const hasSavedConfigs = await WS.cmd(DEPLOY_CMD.CHECK_SAVED_CONFIG);
-    
-    root.render(<App hasSavedConfigs={hasSavedConfigs} />);
+    const currentCommand = await WS.cmd(GLOBAL_CMD.GET_CURRENT);
+
+    let CurrentApp = <>Command {currentCommand} not implemented</>;
+    switch (currentCommand){
+        case "Deploy":
+            CurrentApp = <Deploy />;
+            break;
+        case "Watch":
+            CurrentApp = <div></div>;
+            break;
+    }
+
+    root.render(<>
+        <Header />
+        {CurrentApp}
+    </>)
 }

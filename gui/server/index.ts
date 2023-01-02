@@ -1,6 +1,7 @@
 import Server from "../../server.js";
 
 Server.listeners.push({
+    title: "Port",
     handler(req, res): void | Promise<void> {
         if(req.url !== "/port") return;
 

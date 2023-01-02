@@ -2,6 +2,9 @@ import {execScript, getNextAvailablePort, isDockerInstalled, maybePullDockerImag
 import path, {resolve} from "path";
 import DockerCompose from "dockerode-compose";
 import {FullStackedConfig} from "../index";
+import {Writable} from "stream";
+import os from "os";
+import readline from "readline";
 
 export default class Runner {
     config: FullStackedConfig;
@@ -14,6 +17,27 @@ export default class Runner {
 
         if(!isDockerInstalled())
             throw new Error("Cannot run app without Docker and Docker-Compose");
+
+        if(os.platform() === "win32"){
+            //source : https://stackoverflow.com/a/48837698
+            readline.createInterface({
+                input: process.stdin,
+                output: process.stdout,
+            }).on('close', function() {
+                process.emit('SIGINT')
+            })
+        }
+
+        let printStopOnce = false;
+        process.on("SIGINT", async () => {
+            if(!config.silent && !printStopOnce) {
+                console.log('\x1b[33m%s\x1b[0m', "Stopping!");
+                printStopOnce = true;
+            }
+
+            await this.stop();
+            process.exit(0);
+        });
     }
 
     async start(): Promise<number> {
@@ -67,10 +91,10 @@ export default class Runner {
     }
 
     // attach to docker-compose
-    async attach(stdout: typeof process.stdout, containerName = "node"){
+    async attach(stdout: Writable, containerName = "node"){
         const container = this.config.docker.getContainer(`${this.dockerCompose.projectName}_${containerName}_1`);
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
-        container.modem.demuxStream(stream, process.stdout, process.stderr);
+        container.modem.demuxStream(stream, stdout, stdout);
     }
 
     async stop(){

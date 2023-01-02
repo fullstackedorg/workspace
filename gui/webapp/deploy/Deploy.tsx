@@ -9,6 +9,7 @@ import Save from "./Steps/Save";
 import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
 import {GLOBAL_CMD} from "../../../types/gui";
+import {DEPLOY_CMD} from "../../../types/deploy";
 
 export const steps: {
     title: string,
@@ -33,7 +34,18 @@ export const steps: {
     }
 ]
 
-export default function ({hasSavedConfigs}){
+export default function(){
+    const [hasSavedConfigs, setSavedConfigs] = useState(null);
+    WS.cmd(DEPLOY_CMD.CHECK_SAVED_CONFIG).then(setSavedConfigs);
+
+    if(hasSavedConfigs === null){
+        return <>Loading...</>;
+    }
+
+    return <DeployApp hasSavedConfigs={hasSavedConfigs} />;
+}
+
+function DeployApp({hasSavedConfigs}){
     const [stepIndex, setStepIndex] = useState(hasSavedConfigs ? null : 0);
     const logsRef = useRef<HTMLPreElement>();
 
@@ -46,7 +58,6 @@ export default function ({hasSavedConfigs}){
     }, [])
 
     return <>
-        <Header />
         <Steps goToStep={index => setStepIndex(index)} stepIndex={stepIndex} />
 
         <div className={"container-xl py-3"}>
