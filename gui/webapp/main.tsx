@@ -4,6 +4,7 @@ import {WS} from "./WebSocket";
 import {GLOBAL_CMD} from "../../types/gui";
 import Deploy from "./deploy/Deploy";
 import Header from "./Header";
+import Run from "./run/Run";
 
 export default async function (){
     const root = createRoot(document.querySelector("fullstacked-root"));
@@ -18,7 +19,8 @@ export default async function (){
             CurrentApp = <Deploy />;
             break;
         case "Watch":
-            CurrentApp = <div></div>;
+        case "Run":
+            CurrentApp = <Run />
             break;
     }
 

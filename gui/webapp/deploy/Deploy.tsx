@@ -1,5 +1,4 @@
 import React, {ReactElement, useEffect, useRef, useState} from "react";
-import Header from "./Header";
 import Steps from "./Steps";
 import SSH from "./Steps/SSH";
 import Configs from "./Steps/Configs";

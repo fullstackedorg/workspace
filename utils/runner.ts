@@ -31,7 +31,7 @@ export default class Runner {
         let printStopOnce = false;
         process.on("SIGINT", async () => {
             if(!config.silent && !printStopOnce) {
-                console.log('\x1b[33m%s\x1b[0m', "Stopping!");
+                process.stdout.write(`\x1b[33mStopping ${this.dockerCompose.projectName}\x1b[0m\r\n`);
                 printStopOnce = true;
             }
 

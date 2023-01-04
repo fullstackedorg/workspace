@@ -32,10 +32,10 @@ export default async function (command: CommandInterface){
         command.endLine = () => ws.send(JSON.stringify({
             type: MESSAGE_TYPE.END_LINE
         }));
-        console.log = (args) => {
+        console.log = (...args) => {
             ws.send(JSON.stringify({
                 type: MESSAGE_TYPE.LOG,
-                data: args
+                data: args.join(" ")
             }));
         }
         process.on('uncaughtException',  (err) => {
@@ -101,7 +101,8 @@ export default async function (command: CommandInterface){
     fs.writeFileSync(dockerComposeFile, yaml.dump(dockerCompose));
     const runner = new Runner(await Config({
         src: path.resolve(__dirname, "..", "gui"),
-        out: path.resolve(__dirname, "..", "gui")
+        out: path.resolve(__dirname, "..", "gui"),
+        name: "fullstacked-gui"
     }));
     await runner.start();
     await waitForServer(3000, `http://localhost:${runner.nodePort}`);

@@ -13,6 +13,7 @@ import {FullStackedConfig} from "../index";
 import randStr from "../utils/randStr";
 import {config as dotenvConfig} from "dotenv"
 import CommandInterface from "./Interface";
+import FullStackedVersion from "../version";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -281,7 +282,8 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
     const parser = new Parser();
 
     const userDefinedIndexHTMLFilePath = resolve(config.src, "webapp", "index.html");
-    const root: any = fs.existsSync(userDefinedIndexHTMLFilePath)
+    const hasIndexHTMLDefined = fs.existsSync(userDefinedIndexHTMLFilePath);
+    const root: any = hasIndexHTMLDefined
         ? parse(fs.readFileSync(userDefinedIndexHTMLFilePath, {encoding: "utf-8"}))
         : parse(fs.readFileSync(resolve(__dirname, "..", "webapp", "index.html"), {encoding: "utf-8"}));
 
@@ -305,6 +307,10 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
         parseFragment(contentHTML).childNodes.forEach(node => {
             parser.treeAdapter.appendChild(body, node)
         });
+    }
+
+    if(!hasIndexHTMLDefined){
+        addInBODY(`<div>v${FullStackedVersion}</div>`);
     }
 
     // add title

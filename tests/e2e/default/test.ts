@@ -17,7 +17,7 @@ describe("Default Test", function(){
         const root = await test.page.$("h1");
         const innerHTML = await root.getProperty('innerHTML');
         const value = await innerHTML.jsonValue();
-        equal(value, "Welcome to FullStacked!");
+        equal(value, "Welcome to FullStacked");
     });
 
     after(async function(){

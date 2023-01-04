@@ -1,4 +1,4 @@
-document.body.innerHTML += `<fullstacked-element></fullstacked-element>`;
+document.body.innerHTML = `<fullstacked-element></fullstacked-element>`;
 
 class FullStacked2 extends HTMLElement{
     connectedCallback(){

@@ -3,20 +3,16 @@ import Run from "./run";
 import {WebSocket} from "ws";
 import sleep from "../utils/sleep";
 import {FullStackedConfig} from "../index";
-import CommandInterface from "./Interface";
-import {CMD} from "../types/gui";
 
 
-export default class Watch extends CommandInterface {
+export default class Watch extends Run {
     timeout: number = 2000;
     ws: WebSocket;
     msgQueue: string[] = [];
-    runCommand: Run;
 
     constructor(config: FullStackedConfig) {
         super(config);
         this.timeout = config.timeout ?? this.timeout;
-        this.runCommand = new Run(this.config);
     }
 
     connectToWatcher(port: number){
@@ -49,21 +45,16 @@ export default class Watch extends CommandInterface {
         else
             console.log('\x1b[33m%s\x1b[0m', "Watching...")
 
-        await this.runCommand.restart();
+        await this.restart();
 
-        this.connectToWatcher(this.runCommand.runner.nodePort);
-    }
-
-
-    guiCommands(): { cmd: CMD; callback(data, tick?: () => void): any }[] {
-        return [];
+        this.connectToWatcher(this.runner.nodePort);
     }
 
     async run(): Promise<void> {
         // build with the watcher defined
         await Build(this.config, this.watcher.bind(this));
         await this.watcher(false, true);
-        console.log("Web App Running at http://localhost:" + this.runCommand.runner.nodePort);
+        console.log("Web App Running at http://localhost:" + this.runner.nodePort);
     }
 
     runCLI(): Promise<void> {
