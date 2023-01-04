@@ -1,6 +1,6 @@
 export default {
-    // https://www.rockyourcode.com/how-to-install-docker-compose-v2-on-linux-2021/
-    "Amazon Linux 2": [
+    // source : https://www.rockyourcode.com/how-to-install-docker-compose-v2-on-linux-2021/
+    "amzn": [
         "sudo yum install docker -y",
         "sudo systemctl enable docker.service",
         "sudo systemctl start docker.service",
@@ -9,27 +9,13 @@ export default {
         "sudo curl -sSL https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m) -o ~/.docker/cli-plugins/docker-compose",
         "sudo chmod +x ~/.docker/cli-plugins/docker-compose"
     ],
-    // https://docs.docker.com/engine/install/ubuntu/
-    "Ubuntu" : [
-        "sudo apt-get update",
-        "sudo apt-get install ca-certificates curl gnupg lsb-release -y",
-        "sudo mkdir -p /etc/apt/keyrings",
-        "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
-        "sudo apt-get update",
-        "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-        "sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y"
+    // source : https://techglimpse.com/failed-metadata-repo-appstream-centos-8/
+    "centos": [
+        "if [ \"$(cat /etc/centos-release | grep 8)\" ]; then sudo sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* ; fi",
+        "if [ \"$(cat /etc/centos-release | grep 8)\" ]; then sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* ; fi"
     ],
-    // https://docs.docker.com/engine/install/debian/
-    "Debian" : [
-        "sudo apt-get update",
-        "sudo apt-get install  ca-certificates  curl  gnupg  lsb-release -y",
-        "sudo mkdir -p /etc/apt/keyrings",
-        "curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
-        "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-        "sudo apt-get update",
-        "sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y"
-    ],
-    "Rocky Linux": [
+    // https://github.com/docker/docker-install/pull/228
+    "rocky": [
         "sudo dnf update -y",
         "sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
         "sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",

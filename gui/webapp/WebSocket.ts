@@ -16,7 +16,7 @@ export class WS {
 
             this.ws = new WebSocket(`ws://localhost:${backendPort}`);
             this.ws.onmessage = (event) => {
-                const {data, type, id}: MESSAGE_FROM_BACKEND = JSON.parse(event.data);
+                let {data, type, id}: MESSAGE_FROM_BACKEND = JSON.parse(event.data);
 
                 switch (type) {
                     case MESSAGE_TYPE.RESPONSE:
@@ -35,6 +35,7 @@ export class WS {
                         lastDiv.innerText = data;
                         break;
                     case MESSAGE_TYPE.LOG:
+                        data = data.replace(/http\S*\b/g, url => `<a href="${url}" target="_blank">${url}</a>`);
                         this.logs.innerHTML += `<div>${data}</div>`;
                         break;
                     case MESSAGE_TYPE.ERROR:
