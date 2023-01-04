@@ -109,8 +109,11 @@ export default async function(config: FullStackedConfig){
 
     await mocha.loadFilesAsync();
     mocha.run(() => {
-        if(process.argv.includes("--cover")) return;
-        glob.sync(resolve(config.src, "**", ".test-*")).forEach(tempDir => fs.rmSync(tempDir, {recursive: true}));
+        if(!process.argv.includes("--cover")){
+            glob.sync(resolve(config.src, "**", ".test-*")).forEach(tempDir => fs.rmSync(tempDir, {recursive: true}));
+        }
+
+        process.exit(0);
     });
 }
 

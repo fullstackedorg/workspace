@@ -25,7 +25,7 @@ export default class Runner {
                 output: process.stdout,
             }).on('close', function() {
                 process.emit('SIGINT')
-            })
+            });
         }
 
         let printStopOnce = false;
@@ -105,12 +105,12 @@ export default class Runner {
                 if((await container.inspect()).State.Status === 'running')
                     await container.stop({t: 0});
                 await container.remove({force: true, v: true});
-            }catch (e) {}
+            }catch (e) { }
 
             resolve();
         })));
         try{
             await this.dockerCompose.down({ volumes: true });
-        }catch (e){}
+        }catch (e){ }
     }
 }
