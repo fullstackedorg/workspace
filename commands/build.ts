@@ -59,7 +59,7 @@ async function buildServer(config: FullStackedConfig, watcher){
         sourcemap: !config.production,
         format: "esm" as Format,
 
-        external: getExternalModules(config.src),
+        external: getExternalModules(config.src, true),
 
         define: getProcessEnv(config),
 

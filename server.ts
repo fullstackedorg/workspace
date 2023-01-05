@@ -3,12 +3,13 @@ import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
 import {fileURLToPath, pathToFileURL} from "url";
+import type Watcher from "./server/watcher";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 class ServerInstance {
     server: http.Server;
-    watcher;
+    watcher: Promise<Watcher>;
     port: number = 80;
     publicDir = path.resolve(__dirname, 'public');
     logger: {
@@ -93,9 +94,12 @@ class ServerInstance {
 
         if(!process.argv.includes("--development")) return;
 
-        import("./server/watcher").then(watcherModule => {
-            this.watcher = new watcherModule.default();
-            this.watcher.init(this.server);
+        this.watcher = new Promise(resolve => {
+            import("./server/watcher").then(watcherModule => {
+                const watcher = new watcherModule.default();
+                watcher.init(this.server);
+                resolve(watcher);
+            });
         });
     }
 
