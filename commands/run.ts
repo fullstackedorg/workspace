@@ -9,6 +9,7 @@ import {RUN_CMD} from "../types/run";
 export default class Run extends CommandInterface {
     runner: Runner;
     out: Writable;
+    started: boolean = false;
 
     constructor(config: FullStackedConfig) {
         super(config);
@@ -19,6 +20,8 @@ export default class Run extends CommandInterface {
                 next();
             }
         });
+
+        this.runner = new Runner(this.config);
     }
 
     guiCommands(): { cmd: RUN_CMD; callback(data, tick?: () => void): any }[] {
@@ -36,9 +39,9 @@ export default class Run extends CommandInterface {
     }
 
     async restart(){
-        if(!this.runner){
-            this.runner = new Runner(this.config);
+        if(!this.started){
             await this.runner.start();
+            this.started = true;
         }else{
             await this.runner.restart();
         }
@@ -55,7 +58,7 @@ export default class Run extends CommandInterface {
             await this.runner.attach(this.out);
         }
 
-        console.log("Web App Running at http://localhost:" + this.runner.nodePort);
+        console.log(`Web App Running at http://${this.runner.host}:${this.runner.nodePort}`);
     }
 
     runCLI(): Promise<void> {

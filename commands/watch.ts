@@ -54,7 +54,7 @@ export default class Watch extends Run {
         // build with the watcher defined
         await Build(this.config, this.watcher.bind(this));
         await this.watcher(false, true);
-        console.log("Web App Running at http://localhost:" + this.runner.nodePort);
+        console.log(`Web App Running at http://${this.runner.host}:${this.runner.nodePort}`);
     }
 
     runCLI(): Promise<void> {

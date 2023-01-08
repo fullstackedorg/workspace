@@ -90,9 +90,7 @@ async function buildServer(config: FullStackedConfig, watcher){
                     if(fs.existsSync(indexServerFile))
                         serverFiles.unshift(indexServerFile);
 
-                    const contents =
-                        fs.readFileSync(fullstackedServerFile) + "\n" +
-                        serverFiles.map(file => `import("${file.replace(/\\/g, "\\\\")}");`).join("\n")
+                    const contents = serverFiles.map(file => `import("${file.replace(/\\/g, "\\\\")}");`).join("\n")
 
                     return {
                         contents,
