@@ -1,4 +1,4 @@
-import Server from "../../server.js";
+import Server from "../../server";
 
 Server.listeners.push({
     title: "Port",

@@ -9,11 +9,11 @@ import readline from "readline";
 export default class Runner {
     config: FullStackedConfig;
     nodePort: number;
+    host: string = "localhost";
     dockerCompose: any;
 
     constructor(config: FullStackedConfig) {
         this.config = config;
-        this.dockerCompose = new DockerCompose(this.config.docker, resolve(this.config.dist, "docker-compose.yml"), this.config.name);
 
         if(!isDockerInstalled())
             throw new Error("Cannot run app without Docker and Docker-Compose");
@@ -41,6 +41,8 @@ export default class Runner {
     }
 
     async start(): Promise<number> {
+        this.dockerCompose = new DockerCompose(this.config.docker, resolve(this.config.dist, "docker-compose.yml"), this.config.name);
+
         await execScript(path.resolve(this.config.src, "prerun.ts"), this.config);
 
         try{

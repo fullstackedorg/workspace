@@ -5,11 +5,11 @@ import Docker from "./docker";
 import getPackageJSON from "./getPackageJSON";
 import {FullStackedConfig} from "../index";
 
-const defaultConfig: FullStackedConfig = {
-    src: process.cwd(),
-    out: process.cwd(),
+const defaultConfig = root => ({
+    src: root ?? process.cwd(),
+    out: root ?? process.cwd(),
     appDir: "/home"
-}
+})
 
 function getGitShortCommitHash(){
     try{
@@ -24,7 +24,7 @@ function getGitShortCommitHash(){
 export default async function(config) {
     // spread defaults with values caught in flags
     config = {
-        ...defaultConfig,
+        ...defaultConfig(config.root),
         ...config,
         docker: config.testMode ? null : await Docker()
     }
@@ -33,7 +33,7 @@ export default async function(config) {
     config.dist = path.resolve(config.out, "dist");
 
     // force to have a package.json
-    const packageConfigs = getPackageJSON();
+    const packageConfigs = getPackageJSON(config.root);
     if(Object.keys(packageConfigs).length === 0)
         throw Error("Could not find package.json file or your package.json is empty");
 

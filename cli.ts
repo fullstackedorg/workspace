@@ -49,7 +49,8 @@ const args = {
     "--gui": () => config.gui = true,
     "--c8-out-dir=": value => config.c8OutDir = value,
     "--report-dir=": value => config.reportDir = value,
-    "--ignore=": value => config.ignore = upgradeToArray(value)
+    "--ignore=": value => config.ignore = upgradeToArray(value),
+    "--root=": value => config.root = value,
 };
 
 function upgradeToArray(rawValue: string): string | string[]{

@@ -70,4 +70,5 @@ export type FullStackedConfig = ConfigBuild & ConfigRun & ConfigWatch & ConfigTe
     silent? : boolean, // silence logging
     allYes? : boolean,
     gui?    : boolean,
+    root?   : string,
 }
