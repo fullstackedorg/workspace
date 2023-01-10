@@ -1,16 +1,15 @@
 import puppeteer, {Browser, Page} from "puppeteer";
 import fs from "fs";
-import Runner from "./runner";
-import Build from "../commands/build";
 import Config from "./config";
 import {cleanOutDir} from "./utils";
 import waitForServer from "./waitForServer";
 import {resolve} from "path";
 import {FullStackedConfig} from "../index";
+import Run from "../commands/run";
 
 export default class TestE2E {
     dir: string;
-    runner: Runner;
+    runCommand: Run;
     browser: Browser;
     page: Page;
     localConfig: FullStackedConfig;
@@ -20,27 +19,21 @@ export default class TestE2E {
         this.dir = dir;
     }
 
-    async init(): Promise<number>{
+    async init(){
         this.localConfig = await Config({
             name: "test",
             src: this.dir,
             out: this.dir,
             silent: true
         });
-        await Build(this.localConfig);
-        this.runner = new Runner(this.localConfig);
-
-        if(this.runner.dockerCompose.recipe?.services?.node?.command?.some(arg => arg.includes("installNative")))
-            this.timeout = 60000;
-
-        return this.timeout;
+        this.runCommand = new Run(this.localConfig);
     }
 
     async start(pathURL: string = ""){
-        if(!this.localConfig)
+        if(!this.runCommand)
             await this.init();
 
-        await this.runner.start();
+        await this.runCommand.run();
         this.browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         this.page = await this.browser.newPage();
 
@@ -51,7 +44,7 @@ export default class TestE2E {
             });
         }
 
-        await waitForServer(this.timeout, `http://localhost:${this.runner.nodePort}`);
+        await waitForServer(this.timeout, `http://localhost:${this.runCommand.runner.nodePort}`);
 
         await this.goto(pathURL);
 
@@ -70,7 +63,7 @@ export default class TestE2E {
             const weakThis = this;
             // @ts-ignore
             this.page.goto = async function(path: string) {
-                await TestE2E.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig, weakThis.runner.nodePort);
+                await TestE2E.outputCoverage(weakThis.page, weakThis.dir, weakThis.localConfig, weakThis.runCommand.runner.nodePort);
                 await weakThis.page.coverage.startJSCoverage({
                     includeRawScriptCoverage: true,
                     resetOnNavigation: false
@@ -81,7 +74,7 @@ export default class TestE2E {
     }
 
     async goto(path: string){
-        await this.page.goto(`http://localhost:${this.runner.nodePort}${path}`);
+        await this.page.goto(`http://localhost:${this.runCommand.runner.nodePort}${path}`);
     }
 
     private static async outputCoverage(page, dir, localConfig, nodePort){
@@ -131,10 +124,10 @@ export default class TestE2E {
 
     async stop(){
         if(process.argv.includes("--cover")){
-            await TestE2E.outputCoverage(this.page, this.dir, this.localConfig, this.runner.nodePort);
+            await TestE2E.outputCoverage(this.page, this.dir, this.localConfig, this.runCommand.runner.nodePort);
         }
 
         await this.browser.close();
-        await this.runner.stop();
+        await this.runCommand.runner.stop();
     }
 }

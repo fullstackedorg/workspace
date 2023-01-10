@@ -12,7 +12,6 @@ import {fileURLToPath} from "url";
 import {FullStackedConfig} from "../index";
 import randStr from "../utils/randStr";
 import {config as dotenvConfig} from "dotenv"
-import CommandInterface from "./Interface";
 import FullStackedVersion from "../version";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -44,11 +43,7 @@ function getProcessEnv(config: FullStackedConfig){
 
 // bundles the server
 async function buildServer(config: FullStackedConfig, watcher){
-    const fullstackedServerFile = resolve(__dirname, "..", "server.js");
-
-    const fullstackedServerFileRegex =  new RegExp(fullstackedServerFile
-        // windows file path...
-        .replace(/\\/g, "\\\\"));
+    const fullstackedServerFile = resolve(__dirname, "..", "server", "index.ts");
 
     const options: BuildOptions = {
         entryPoints: [ fullstackedServerFile ],
@@ -79,9 +74,26 @@ async function buildServer(config: FullStackedConfig, watcher){
                 });
             }
         }, {
+            name: 'ignore-watcher',
+            setup(build){
+                build.onResolve({filter: /watcher/}, (args) => {
+                    return {
+                        path: args.path + ".mjs",
+                        external: true
+                    }
+                })
+            }
+        }, {
             name: 'fullstacked-bundled-server',
             setup(build) {
-                build.onLoad({ filter: fullstackedServerFileRegex }, async () => {
+                build.onResolve({filter: /fullstacked\/server/}, (args) => {
+                    return {
+                        path: fullstackedServerFile
+                    }
+                })
+                build.onLoad({ filter: /server/ }, async (args) => {
+                    if(args.path !== fullstackedServerFile) return null;
+
                     // load all entry points from server dir
                     const serverFiles = glob.sync(resolve(config.src, "server", "**", "*.server.ts"));
 
@@ -90,7 +102,9 @@ async function buildServer(config: FullStackedConfig, watcher){
                     if(fs.existsSync(indexServerFile))
                         serverFiles.unshift(indexServerFile);
 
-                    const contents = serverFiles.map(file => `import("${file.replace(/\\/g, "\\\\")}");`).join("\n")
+                    const contents =
+                        fs.readFileSync(fullstackedServerFile) + "\n" +
+                        serverFiles.map(file => `import("${file.replace(/\\/g, "\\\\")}");`).join("\n")
 
                     return {
                         contents,
@@ -115,6 +129,20 @@ async function buildServer(config: FullStackedConfig, watcher){
 
     const dockerCompose = getBuiltDockerCompose(config.src, config.production);
 
+    if(watcher){
+        dockerCompose.services.node.command.push("--watch")
+        buildSync({
+            entryPoints: [resolve(__dirname, "..", "server", "watcher.ts")],
+            outfile: resolve(config.out, "watcher.mjs"),
+            platform: "node",
+            bundle: true,
+            format: "esm",
+
+            // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
+            banner: {js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);"},
+        });
+    }
+
     const nativeFilePath = resolve(config.src, "server", "native.json")
     if(fs.existsSync(nativeFilePath)){
         fs.cpSync(nativeFilePath, resolve(config.out, "native.json"));
@@ -122,12 +150,8 @@ async function buildServer(config: FullStackedConfig, watcher){
         dockerCompose.services.node.command = [
             "/bin/sh",
             "-c",
-            `node installNative.mjs ${!config.production ? "--development" : ""} && node index.mjs ${!config.production ? "--development" : ""}`
+            `node installNative.mjs ${!config.production ? "--development" : ""} && node ${dockerCompose.services.node.command.join(" ")}`
         ]
-    }
-
-    if(watcher){
-        fs.copyFileSync(resolve(__dirname, "..", "server", "watcher.js"), resolve(config.out, "watcher.js"))
     }
 
     // output docker-compose result to dist directory

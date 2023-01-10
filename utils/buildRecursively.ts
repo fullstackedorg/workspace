@@ -28,18 +28,26 @@ async function recurse(filePath: string, filesToBuild: Set<string>){
                     if(args.kind === "entry-point") return null;
                     if(!args.path.startsWith(".")) return {external: true};
 
-                    const filePathToBuild = [
+                    let fixedPath = args.path;
+                    const filePathsToTest = [
                         args.path,
                         args.path + ".ts",
-                        args.path + ".tsx"
-                    ].map(filePath => resolve(dirname(currentBuild.initialOptions.entryPoints[0]), filePath))
-                        .find(maybeFile => fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile());
+                        args.path + ".tsx",
+                        args.path + "/index.ts",
+                        args.path + "/index.tsx"
+                    ];
+                    const filePathToBuild = filePathsToTest.map(filePath => resolve(dirname(currentBuild.initialOptions.entryPoints[0]), filePath))
+                        .find((maybeFile, index) => {
+                            const found = fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile();
+                            if(found) fixedPath = filePathsToTest[index];
+                            return found;
+                        });
 
                     if(!filePathToBuild){
                         throw Error(`Cannot find file at [${resolve(dirname(currentBuild.initialOptions.entryPoints[0]), args.path)}]`);
                     }
 
-                    const path = convertPathToJSExt(args.path);
+                    const path = convertPathToJSExt(fixedPath);
 
                     if(filesToBuild.has(filePathToBuild)) {
                         return { external: true, path };

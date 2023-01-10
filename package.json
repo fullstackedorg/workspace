@@ -78,7 +78,7 @@
     "typescript": "^4.9.4"
   },
   "exports": {
-    "./server":  "./server.js",
+    "./server":  "./server/index.js",
     "./utils/fetch":  "./utils/fetch.js",
     "./utils/randStr":  "./utils/randStr.js",
     "./utils/sleep":  "./utils/sleep.js",

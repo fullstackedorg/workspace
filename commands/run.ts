@@ -25,17 +25,19 @@ export default class Run extends CommandInterface {
     }
 
     guiCommands(): { cmd: RUN_CMD; callback(data, tick?: () => void): any }[] {
-        return [{
-            cmd: RUN_CMD.START,
-            callback: () => this.run()
-        },{
-            cmd: RUN_CMD.BENCH,
-            async callback({url}) {
-                const start = Date.now();
-                await fetch(url);
-                return Date.now() - start;
+        return [
+            {
+                cmd: RUN_CMD.START,
+                callback: () => this.run()
+            },{
+                cmd: RUN_CMD.BENCH,
+                async callback({url}) {
+                    const start = Date.now();
+                    await fetch(url);
+                    return Date.now() - start;
+                }
             }
-        }];
+        ];
     }
 
     async restart(){
@@ -46,7 +48,8 @@ export default class Run extends CommandInterface {
             await this.runner.restart();
         }
 
-        await this.runner.attach(this.out);
+        if(!this.config.silent)
+            await this.runner.attach(this.out);
     }
 
     async run(): Promise<void> {
@@ -58,7 +61,8 @@ export default class Run extends CommandInterface {
             await this.runner.attach(this.out);
         }
 
-        console.log(`Web App Running at http://${this.runner.host}:${this.runner.nodePort}`);
+        if(!this.config.silent)
+            console.log(`Web App Running at http://${this.runner.host}:${this.runner.nodePort}`);
     }
 
     runCLI(): Promise<void> {

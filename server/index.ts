@@ -3,7 +3,7 @@ import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
 import {fileURLToPath, pathToFileURL} from "url";
-import type Watcher from "./server/watcher";
+import type Watcher from "./watcher";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -92,10 +92,10 @@ class ServerInstance {
 
         this.server.listen(this.port);
 
-        if(!process.argv.includes("--development")) return;
+        if(!process.argv.includes("--watch")) return;
 
         this.watcher = new Promise(resolve => {
-            import("./server/watcher").then(watcherModule => {
+            import("./watcher").then(watcherModule => {
                 const watcher = new watcherModule.default();
                 watcher.init(this.server);
                 resolve(watcher);
@@ -122,11 +122,11 @@ class ServerInstance {
     }
 
     stop(){
-        Server.server.close()
+        Index.server.close()
     }
 }
 
-const Server = new ServerInstance();
+const Index = new ServerInstance();
 
 (() => {
     // prevent from starting when imported
@@ -134,8 +134,8 @@ const Server = new ServerInstance();
     if (import.meta.url !== pathToFileURL(process.argv[1]).href || process.argv.includes("--prevent-auto-start"))
         return;
 
-    Server.start();
+    Index.start();
 })()
 
-export default Server;
+export default Index;
 
