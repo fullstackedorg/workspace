@@ -1,6 +1,7 @@
 import {build} from "esbuild";
 import {dirname, resolve} from "path";
 import fs from "fs";
+import {fileURLToPath} from "url";
 
 export function convertPathToJSExt(filePath){
     if(filePath.endsWith(".js"))
@@ -28,7 +29,6 @@ async function recurse(filePath: string, filesToBuild: Set<string>){
                     if(args.kind === "entry-point") return null;
                     if(!args.path.startsWith(".")) return {external: true};
 
-                    let fixedPath = args.path;
                     const filePathsToTest = [
                         args.path,
                         args.path + ".ts",
@@ -36,33 +36,28 @@ async function recurse(filePath: string, filesToBuild: Set<string>){
                         args.path + "/index.ts",
                         args.path + "/index.tsx"
                     ];
-                    const filePathToBuild = filePathsToTest.map(filePath => resolve(dirname(currentBuild.initialOptions.entryPoints[0]), filePath))
-                        .find((maybeFile, index) => {
-                            const found = fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile();
-                            if(found) fixedPath = filePathsToTest[index];
-                            return found;
-                        });
+                    const relativeFilePathToBuild = filePathsToTest.map(filePath => resolve(dirname(currentBuild.initialOptions.entryPoints[0]), filePath))
+                        .find((maybeFile, index) => fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile());
 
-                    if(!filePathToBuild){
-                        throw Error(`Cannot find file at [${resolve(dirname(currentBuild.initialOptions.entryPoints[0]), args.path)}]`);
+                    const absoluteFilePathToBuild = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), relativeFilePathToBuild);
+
+                    if(!relativeFilePathToBuild){
+                        throw Error(`Cannot find file at [${absoluteFilePathToBuild}]`);
                     }
 
-                    const path = convertPathToJSExt(fixedPath);
+                    if(!filesToBuild.has(absoluteFilePathToBuild)) {
+                        filesToBuild.add(absoluteFilePathToBuild);
 
-                    if(filesToBuild.has(filePathToBuild)) {
-                        return { external: true, path };
+                        const jsPath = convertPathToJSExt(absoluteFilePathToBuild);
+                        if(fs.existsSync(jsPath)) fs.rmSync(jsPath)
+                        if(fs.existsSync(jsPath + ".map")) fs.rmSync(jsPath + ".map");
+
+                        await recurse(absoluteFilePathToBuild, filesToBuild);
                     }
-
-                    filesToBuild.add(filePathToBuild);
-
-                    if(fs.existsSync(path)) fs.rmSync(path);
-                    if(fs.existsSync(path + ".map")) fs.rmSync(path + ".map");
-
-                    await recurse(filePathToBuild, filesToBuild);
 
                     return {
                         external: true,
-                        path
+                        path: convertPathToJSExt(relativeFilePathToBuild)
                     };
                 })
             }
@@ -75,7 +70,7 @@ export default async function buildRecursively(entrypoints: string[], silent = f
     const start = Date.now();
 
     await Promise.all(entrypoints.map(entry => new Promise<void>(async resolve => {
-        filesToBuild.add(entry)
+        filesToBuild.add(entry);
         await recurse(entry, filesToBuild);
         resolve();
     })));
