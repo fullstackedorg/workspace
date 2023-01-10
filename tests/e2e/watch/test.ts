@@ -79,13 +79,14 @@ describe("Watch Test", function(){
         return Number(value);
     }
 
-    async function getReloadCount(){
+    async function getReloadCount(allowReload = false){
         let tries = 5, lastError;
         while (tries){
             try{
                 return await getCount();
             }catch (e) {
                 lastError = e;
+                if(allowReload) await page.reload();
                 await sleep(2000);
                 tries--;
             }
@@ -98,7 +99,7 @@ describe("Watch Test", function(){
     }
 
     it('Should reload webapp when changing webapp/index.ts', async function(){
-        const countBefore = await getReloadCount();
+        const countBefore = await getReloadCount(true);
         await sleep(2000);
 
         fs.appendFileSync(webappFile, "\n// this is a test line");
@@ -109,7 +110,7 @@ describe("Watch Test", function(){
     });
 
     it('Should reload webapp when changing webapp/index.html', async function(){
-        const countBefore = await getReloadCount();
+        const countBefore = await getReloadCount(true);
         await sleep(2000);
 
         fs.appendFileSync(indexHTML, "\n<div></div>");
@@ -120,7 +121,7 @@ describe("Watch Test", function(){
     });
 
     it('Should reload webapp when changing webapp/index.css', async function(){
-        const countBefore = await getReloadCount();
+        const countBefore = await getReloadCount(true);
         await sleep(2000);
 
         fs.appendFileSync(indexCSS, "\ndiv{}");
@@ -165,7 +166,7 @@ describe("Watch Test", function(){
     });
 
     it('Should watch extra file', async function(){
-        const countBefore = await getReloadCount();
+        const countBefore = await getReloadCount(true);
         await sleep(2000);
 
         fs.appendFileSync(extraFile, "\n// this is a test line");
@@ -176,7 +177,7 @@ describe("Watch Test", function(){
     });
 
     it('Should watch extra dir', async function(){
-        const countBefore = await getReloadCount();
+        const countBefore = await getReloadCount(true);
         await sleep(2000);
 
         fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");

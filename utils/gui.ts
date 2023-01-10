@@ -1,4 +1,4 @@
-import Server from "../server";
+import Server from "../server/index";
 import {getNextAvailablePort} from "./utils";
 import Config from "./config";
 import path, {dirname} from "path";

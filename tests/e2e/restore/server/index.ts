@@ -1,4 +1,4 @@
-import Server from "../../../../server.js";
+import Server from "../../../../server";
 import {MongoClient} from 'mongodb';
 
 (async () => {

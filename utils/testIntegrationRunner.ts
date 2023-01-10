@@ -56,7 +56,7 @@ export default async function(testSuite: Suite, options?: {
 
         external: [
             'mocha',
-            ...getExternalModules(srcDir)
+            ...getExternalModules(srcDir, true)
         ]
     });
 
