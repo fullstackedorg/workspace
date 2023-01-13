@@ -48,7 +48,7 @@ describe("Watch Test", function(){
         fs.mkdirSync(extraDir);
         fs.writeFileSync(path.resolve(extraDir, "file.txt"), "");
 
-        watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent --watch-file=extra.txt --watch-dir=extra`);
+        watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent --timeout=1000 --watch-file=extra.txt --watch-dir=extra`);
         // watchProcess.stdout.pipe(process.stdout);
         // watchProcess.stderr.pipe(process.stderr);
 
