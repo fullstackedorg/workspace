@@ -1,7 +1,6 @@
 import {build} from "esbuild";
 import {dirname, resolve} from "path";
 import fs from "fs";
-import {fileURLToPath} from "url";
 
 export function convertPathToJSExt(filePath){
     if(filePath.endsWith(".js"))
@@ -36,8 +35,10 @@ async function recurse(filePath: string, filesToBuild: Set<string>){
                         args.path + "/index.ts",
                         args.path + "/index.tsx"
                     ];
-                    const relativeFilePathToBuild = filePathsToTest.map(filePath => resolve(dirname(currentBuild.initialOptions.entryPoints[0]), filePath))
-                        .find((maybeFile, index) => fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile());
+                    const relativeFilePathToBuild = filePathsToTest.find((fileEnd, index) => {
+                        const maybeFile = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), fileEnd);
+                        return fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile();
+                    });
 
                     const absoluteFilePathToBuild = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), relativeFilePathToBuild);
 

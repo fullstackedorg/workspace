@@ -443,7 +443,12 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
 
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
     loadEnvVars(config.src);
-    cleanOutDir(config.dist);
+
+    if(config.production){
+        cleanOutDir(config.out);
+    }else{
+        cleanOutDir(config.public);
+    }
 
     const ignore = [
         "**/node_modules/**"
