@@ -16,7 +16,7 @@ buildSync({
 
 const builtModule = resolve(__dirname, "utils", "buildRecursively.js")
     // windows path...
-    .replace(/C:/, "").replace(/\\/, "/");
+    .replace(/C:/, "").replace(/\\/g, "/");
 
 const buildRecursively = (await import(builtModule)).default;
 
