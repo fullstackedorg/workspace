@@ -149,7 +149,7 @@ ${fileContent}`);
 
         const outfile = builtFile
             // windows paths...
-            .replace(/C:/, "").replace(/\\/, "/");
+            .replace(/C:/, "").replace(/\\/g, "/");
 
         const importedModule = await import(outfile);
         if(typeof importedModule.default === 'function'){
