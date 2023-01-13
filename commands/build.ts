@@ -1,10 +1,7 @@
 import {dirname, resolve} from "path"
 import esbuild, {BuildOptions, buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {
-    cleanOutDir, copyRecursiveSync, execScript,
-    getBuiltDockerCompose, getExternalModules
-} from "../utils/utils";
+import { copyRecursiveSync, execScript, getBuiltDockerCompose, getExternalModules } from "../utils/utils";
 import yaml from "js-yaml";
 import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";
@@ -444,15 +441,10 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
     loadEnvVars(config.src);
 
-    if(config.production){
-        cleanOutDir(config.out);
-    }else{
-        cleanOutDir(config.public);
-    }
+    const ignore = ["**/node_modules/**"];
 
-    const ignore = [
-        "**/node_modules/**"
-    ];
+    glob.sync(resolve(config.out, "**", "*"), {ignore: config.production ? ignore : []})
+        .forEach(item => fs.rmSync(item, {recursive: true, force: true}));
 
     if(config?.ignore){
         if(Array.isArray(config.ignore)) ignore.push(...config.ignore);
