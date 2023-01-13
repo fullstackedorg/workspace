@@ -35,9 +35,10 @@ async function recurse(filePath: string, filesToBuild: Set<string>){
                         args.path + "/index.ts",
                         args.path + "/index.tsx"
                     ];
-                    const relativeFilePathToBuild = filePathsToTest.find((maybeFileRel, index) => {
-                        const maybeFileAbs = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), maybeFileRel)
-                        return fs.existsSync(maybeFileAbs) && fs.statSync(maybeFileAbs).isFile()
+
+                    const relativeFilePathToBuild = filePathsToTest.find((fileEnd, index) => {
+                        const maybeFile = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), fileEnd);
+                        return fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile();
                     });
 
                     const absoluteFilePathToBuild = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), relativeFilePathToBuild);

@@ -6,7 +6,7 @@ import {FullStackedConfig} from "../index";
 
 
 export default class Watch extends Run {
-    timeout: number = 2000;
+    timeout: number = 0;
     ws: WebSocket;
     msgQueue: string[] = [];
 
@@ -24,13 +24,15 @@ export default class Watch extends Run {
         });
         this.ws.addListener('error', async () => {
             this.ws = null;
-            await sleep(this.timeout);
+            await sleep(2000);
             this.connectToWatcher(port);
         });
     }
 
     async watcher(isWebApp: boolean, first = false){
         if(isWebApp) {
+            if(this.timeout) await sleep(this.timeout);
+
             console.log('\x1b[32m%s\x1b[0m', "WebApp Rebuilt");
             const msg = Date.now().toString();
 

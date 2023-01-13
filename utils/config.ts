@@ -3,7 +3,6 @@ import crypto from "crypto";
 import {execSync} from "child_process";
 import Docker from "./docker";
 import getPackageJSON from "./getPackageJSON";
-import {FullStackedConfig} from "../index";
 
 const defaultConfig = root => ({
     src: root ?? process.cwd(),
