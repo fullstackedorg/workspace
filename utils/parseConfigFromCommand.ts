@@ -78,7 +78,9 @@ export default function parseConfigFromCommand(): {script: string, config: FullS
         });
     });
 
-    script = resolve(scriptsDir, script + ".js");
+    script = resolve(scriptsDir, script + ".js")
+        // win paths
+        .replace(/C:/, "").replace(/\\/g, "/");
 
     return {script, config};
 }
