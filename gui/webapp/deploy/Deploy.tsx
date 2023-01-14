@@ -9,6 +9,7 @@ import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
 import {GLOBAL_CMD} from "../../../types/gui";
 import {DEPLOY_CMD} from "../../../types/deploy";
+import PatreonModal from "./PatreonModal";
 
 export const steps: {
     title: string,
@@ -46,6 +47,7 @@ export default function(){
 
 function DeployApp({hasSavedConfigs}){
     const [stepIndex, setStepIndex] = useState(hasSavedConfigs ? null : 0);
+    const [showModal, setShowModal] = useState(true);
     const logsRef = useRef<HTMLPreElement>();
 
     let View;
@@ -54,7 +56,20 @@ function DeployApp({hasSavedConfigs}){
 
     useEffect(() => {
         WS.logs = logsRef.current
-    }, [])
+    });
+
+    if(showModal){
+        return <PatreonModal didReceiveServerInstance={({instance, password, userId}) => {
+            steps.at(0).data = {
+                patreonUserId: userId,
+                host: instance.publicIpAddress,
+                username: instance.username,
+                password: password,
+                appDir: "/home/" + instance.username
+            }
+            setShowModal(false);
+        }} />
+    }
 
     return <>
         <Steps goToStep={index => setStepIndex(index)} stepIndex={stepIndex} />
