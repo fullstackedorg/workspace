@@ -7,12 +7,12 @@ export default function ({defaultData, updateData, getSteps}){
     const [sshKeyOption, setSshKeyOption] = useState(defaultData?.privateKey);
     const [testing, setTesting] = useState(false);
     const [showInstallDocker, setShowInstallDocker] = useState(false);
-    const [hidePatreonOverlay, setHidePatreonOverlay] = useState(false);
+    const [hideOverlay, setHideOverlay] = useState(false);
 
     return <div>
         <div style={{position: "relative"}}>
 
-            {defaultData.patreonUserId && !hidePatreonOverlay &&
+            {defaultData.email && !hideOverlay &&
                 <div style={{
                     position: "absolute",
                     height: "100%",
@@ -33,16 +33,22 @@ export default function ({defaultData, updateData, getSteps}){
                         top: 0,
                         right: 0,
                         padding: 24
-                    }} onClick={() => setHidePatreonOverlay(true)} type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <h2 className={"mb-2"}>Thanks for supporting FullStacked!&nbsp;
-                        <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-heart mb-1" width="24"
-                             height="24" viewBox="0 0 24 24" strokeWidth="1" fill={"rgb(214, 51, 108)"}
-                             strokeLinecap="round" strokeLinejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                            <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428m0 0a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path>
-                        </svg>
+                    }} onClick={() => setHideOverlay(true)} type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h2 className={"mb-2 text-center px-4"}>
+                        <span style={{display: "inline-block"}}>
+                            Thanks for supporting FullStacked
+                        </span>
+                        <span style={{display: "inline-block"}}>
+                            &nbsp;by deploying with FullStacked Cloud!&nbsp;
+                            <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-heart mb-1" width="24"
+                                 height="24" viewBox="0 0 24 24" strokeWidth="1" fill={"rgb(214, 51, 108)"}
+                                 strokeLinecap="round" strokeLinejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428m0 0a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path>
+                            </svg>
+                        </span>
                     </h2>
-                    <a href="http://localhost:8000" target={"_blank"} className="btn btn-light">
+                    <a href="https://fullstacked.cloud" target={"_blank"} className="btn btn-light">
                         View Account
                     </a>
                 </div>}
