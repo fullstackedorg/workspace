@@ -9,7 +9,7 @@ import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
 import {GLOBAL_CMD} from "../../../types/gui";
 import {DEPLOY_CMD} from "../../../types/deploy";
-import PatreonModal from "./PatreonModal";
+import FullStackedCloudModal from "./FullStackedCloudModal";
 
 export const steps: {
     title: string,
@@ -59,16 +59,15 @@ function DeployApp({hasSavedConfigs}){
     });
 
     if(showModal){
-        return <PatreonModal didReceiveServerInstance={({instance, password, userId}) => {
+        return <FullStackedCloudModal didReceiveServerInstance={data => {
+            steps.at(0).data = data
+            setShowModal(false);
+        }} close={(neverShow: boolean = false) => {
             steps.at(0).data = {
-                patreonUserId: userId,
-                host: instance.publicIpAddress,
-                username: instance.username,
-                password: password,
-                appDir: "/home/" + instance.username
+                neverShowAgain: neverShow
             }
             setShowModal(false);
-        }} />
+        }}/>
     }
 
     return <>
