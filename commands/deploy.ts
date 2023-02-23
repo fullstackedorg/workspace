@@ -310,8 +310,8 @@ export default class Deploy extends CommandInterface {
     async uploadFilesToRemoteServer(nginxFiles: nginxFile[]){
         const sftp = await this.getSFTP()
 
-        if(!await sftp.exists(`${this.sshCredentials.appDir}/${this.config.name}/${this.config.version}`))
-            await sftp.mkdir(`${this.sshCredentials.appDir}/${this.config.name}/${this.config.version}`, true);
+        if(!await sftp.exists(`${this.sshCredentials.appDir}/${this.config.name}`))
+            await sftp.mkdir(`${this.sshCredentials.appDir}/${this.config.name}`, true);
 
         const files = glob.sync("**/*", {cwd: this.config.dist})
         const localFiles = files.map(file => path.resolve(this.config.dist, file));
