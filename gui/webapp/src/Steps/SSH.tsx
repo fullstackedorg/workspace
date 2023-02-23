@@ -2,9 +2,15 @@ import React, {useState} from "react";
 import {DEPLOY_CMD, sshCredentials} from "../../../../types/deploy";
 import {WS} from "../../WebSocket";
 
-export default function ({defaultData, updateData, getSteps}){
-    const [authOption, setAuthOption] = useState(defaultData?.file || defaultData?.privateKey);
-    const [sshKeyOption, setSshKeyOption] = useState(defaultData?.privateKey);
+type SSHProps = {
+    defaultData: Partial<sshCredentials & {file: File}> ,
+    updateData: (data: Partial<sshCredentials & {file: File}>) => void,
+    getSteps: () => any
+}
+
+export default function ({defaultData, updateData, getSteps} : SSHProps){
+    const [authOption, setAuthOption] = useState(!!(defaultData?.file) || !!(defaultData?.privateKey));
+    const [sshKeyOption, setSshKeyOption] = useState(!!(defaultData?.privateKey));
     const [testing, setTesting] = useState(false);
     const [showInstallDocker, setShowInstallDocker] = useState(false);
 
@@ -21,9 +27,9 @@ export default function ({defaultData, updateData, getSteps}){
         <div>
             <label className="form-label">SSH Port</label>
             <input type="text" className="form-control" placeholder="22"
-                   defaultValue={defaultData?.sshPort}
+                   defaultValue={defaultData?.port}
                    onChange={e => updateData({
-                       sshPort: e.target.value
+                       port: parseInt(e.target.value)
                    })}
             />
         </div>
@@ -38,10 +44,10 @@ export default function ({defaultData, updateData, getSteps}){
         <label className="form-label">Authentication</label>
         <div className="btn-group w-100" role="group">
             <input onClick={() => setAuthOption(false)} type="radio" className="btn-check" name="auth-option" id="btn-radio-basic-1" autoComplete="off"
-                   defaultChecked={defaultData?.pass ||
-                       (!defaultData?.pass && !defaultData?.privateKey && !defaultData?.file)} />
+                   defaultChecked={!!(defaultData?.password) ||
+                       (!defaultData?.password && !defaultData?.privateKey && !defaultData?.file)} />
             <label htmlFor="btn-radio-basic-1" className="btn">Password</label>
-            <input onClick={() => setAuthOption(true)} type="radio" className="btn-check" name="auth-option" id="btn-radio-basic-2" autoComplete="off" defaultChecked={defaultData?.privateKey || defaultData?.file} />
+            <input onClick={() => setAuthOption(true)} type="radio" className="btn-check" name="auth-option" id="btn-radio-basic-2" autoComplete="off" defaultChecked={!!(defaultData?.privateKey) || !!(defaultData?.file)} />
             <label htmlFor="btn-radio-basic-2" className="btn">SSH Key</label>
         </div>
         {authOption
@@ -49,7 +55,7 @@ export default function ({defaultData, updateData, getSteps}){
                 <div className="btn-group w-100 mt-3" role="group">
                     <input onClick={() => setSshKeyOption(false)} type="radio" className="btn-check" name="private-key-option" id="btn-radio-basic-3" autoComplete="off" defaultChecked={!defaultData?.privateKey} />
                     <label htmlFor="btn-radio-basic-3" className="btn">File</label>
-                    <input onClick={() => setSshKeyOption(true)} type="radio" className="btn-check" name="private-key-option" id="btn-radio-basic-4" autoComplete="off" defaultChecked={defaultData?.privateKey}  />
+                    <input onClick={() => setSshKeyOption(true)} type="radio" className="btn-check" name="private-key-option" id="btn-radio-basic-4" autoComplete="off" defaultChecked={!!(defaultData?.privateKey)}  />
                     <label htmlFor="btn-radio-basic-4" className="btn">Text</label>
                 </div>
                 {
@@ -57,7 +63,7 @@ export default function ({defaultData, updateData, getSteps}){
                         ? <div className="mb-3">
                             <label className="form-label">SSH Key</label>
                             <textarea className="form-control" name="example-textarea-input" rows={6} placeholder="-----BEGIN RSA PRIVATE KEY-----..."
-                                      defaultValue={defaultData?.privateKey}
+                                      defaultValue={defaultData?.privateKey?.toString()}
                                       onChange={e => updateData({
                                           file: null,
                                           password: null,
