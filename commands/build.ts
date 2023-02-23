@@ -53,8 +53,6 @@ async function buildServer(config: FullStackedConfig, watcher){
         outfile: resolve(config.out, "index.mjs"),
         platform: "node" as Platform,
         bundle: true,
-        minify: config.production,
-        sourcemap: !config.production,
         format: "esm" as Format,
 
         external: getExternalModules(config.src),
