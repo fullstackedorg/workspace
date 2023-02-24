@@ -81,7 +81,7 @@ export default class Deploy extends CommandInterface {
      * Get sftp client in less than 3s
      *
      */
-    private async getSFTP(): Promise<WrappedSFTP>{
+    protected async getSFTP(): Promise<WrappedSFTP>{
         if(this.sftp) return this.sftp;
 
         if(!this.sshCredentials)
@@ -132,7 +132,7 @@ export default class Deploy extends CommandInterface {
      * Reusable function to test Docker and Docker Compose v2 installation on remote host
      *
      */
-    private async testDockerOnRemoteHost(){
+    protected async testDockerOnRemoteHost(){
         const sftp = await this.getSFTP();
 
         const dockerTest = await execSSH(sftp.client, `docker version`);
@@ -187,14 +187,16 @@ export default class Deploy extends CommandInterface {
      */
     private async getAvailablePorts(sftp: WrappedSFTP, count: number, startingPort: number = 8001): Promise<string[]> {
         const dockerContainerPorts = await execSSH(sftp.client, "docker container ls --format \"{{.Ports}}\" -a");
-        const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
+        const portsInUse = new Set();
+        dockerContainerPorts.split("\n").map(line => line.split(",")).flat().map(portUsed =>
             portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
             .map(port => parseInt(port)) // cast to number
-            .filter(port => port || !isNaN(port)); // filter empty strings
+            .filter(port => port || !isNaN(port)) // filter empty strings
+            .forEach(port => portsInUse.add(port));
 
         const availablePorts = [];
         while (availablePorts.length < count){
-            if(!portsInUse.includes(startingPort))
+            if(!portsInUse.has(startingPort))
                 availablePorts.push(startingPort);
             startingPort++;
         }
@@ -231,38 +233,54 @@ export default class Deploy extends CommandInterface {
         }
 
         const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx", "service.conf"), {encoding: "utf-8"});
+        const generateNginxFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxTemplate
+            .replace(/\{PUBLIC_PORT\}/g, publicPort)
+            .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
+            .replace(/\{PORT\}/g, internalPort)
+            .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "");
+
         const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx", "service-ssl.conf"), {encoding: "utf-8"});
-        nginxConfigs.forEach((service, serviceIndex) => {
-            const port = availablePorts[serviceIndex];
+        const generateNginxSSLFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxSSLTemplate
+            .replace(/\{PUBLIC_PORT\}/g, publicPort)
+            .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
+            .replace(/\{PORT\}/g, internalPort)
+            .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "")
+            .replace(/\{APP_NAME\}/g, this.config.name);
 
-            const serverName = service.serverNames?.join(" ").trim()
-                ? service.serverNames?.join(" ")
-                : "0.0.0.0";
+        nginxConfigs.forEach((nginxConfig, configIndex) => {
+            const availablePort = availablePorts[configIndex];
 
-            const nginx = nginxTemplate
-                .replace(/\{SERVER_NAME\}/g, serverName)
-                .replace(/\{PORT\}/g, port)
-                .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "");
-            nginxFiles.push({
-                fileName: `${service.name}-${service.port}.conf`,
-                content: Buffer.from(nginx)
-            });
+            if(nginxConfig.customPublicPort?.port){
 
-            if(this.certificate){
-                const nginxSSL = nginxSSLTemplate
-                    .replace(/\{SERVER_NAME\}/g, service.serverNames?.join(" ") ?? "localhost")
-                    .replace(/\{PORT\}/g, port)
-                    .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "")
-                    .replace(/\{APP_NAME\}/g, this.config.name);
+                const customNginxFile = nginxConfig.customPublicPort.ssl
+                    ? generateNginxSSLFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs)
+                    : generateNginxFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs);
+
                 nginxFiles.push({
-                    fileName: `${service.name}-${service.port}-ssl.conf`,
-                    content: Buffer.from(nginxSSL)
+                    fileName: `${nginxConfig.name}-${nginxConfig.port}.conf`,
+                    content: Buffer.from(customNginxFile)
                 });
+
+            } else {
+                nginxFiles.push({
+                    fileName: `${nginxConfig.name}-${nginxConfig.port}.conf`,
+                    content: Buffer.from(generateNginxFile("80", nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs))
+                });
+
+                if(this.certificate){
+                    nginxFiles.push({
+                        fileName: `${nginxConfig.name}-${nginxConfig.port}-ssl.conf`,
+                        content: Buffer.from(generateNginxSSLFile("443", nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs))
+                    });
+                }
             }
 
-            for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
-                if(dockerCompose.services[service.name].ports[i] !== service.port.toString()) continue;
-                dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
+
+            for (let i = 0; i < dockerCompose.services[nginxConfig.name].ports.length; i++) {
+                const servicePort = dockerCompose.services[nginxConfig.name].ports[i].split(":").pop();
+                if(servicePort !== nginxConfig.port.toString()) continue;
+
+                dockerCompose.services[nginxConfig.name].ports[i] = `${availablePort}:${nginxConfig.port}`;
             }
         });
         fs.writeFileSync(path.resolve(this.config.dist, "docker-compose.yml"), yaml.dump(dockerCompose));
@@ -465,7 +483,7 @@ export default class Deploy extends CommandInterface {
         console.log("Ran postdeploy scripts");
         if(tick) tick();
 
-        console.log("Deployment Successfull");
+        console.log("Deployment Successful");
     }
 
     async runCLI(){

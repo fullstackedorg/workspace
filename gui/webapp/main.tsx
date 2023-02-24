@@ -16,7 +16,8 @@ export default async function (){
     let CurrentApp = <>Command {currentCommand} not implemented</>;
     switch (currentCommand){
         case "Deploy":
-            CurrentApp = <Deploy />;
+        case "Remove":
+            CurrentApp = <Deploy currentCommand={currentCommand} />;
             break;
         case "Watch":
         case "Run":

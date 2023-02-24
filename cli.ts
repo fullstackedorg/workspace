@@ -9,7 +9,7 @@ defaultConfig(config).then(async configReady => {
 
     const CommandClass = scriptModule.default;
     let command;
-    if(script.endsWith("deploy.js") || script.endsWith("watch.js") || script.endsWith("run.js"))
+    if(script.endsWith("deploy.js") || script.endsWith("watch.js") || script.endsWith("run.js") || script.endsWith("remove.js"))
         command = new CommandClass(configReady);
     else
         CommandClass(configReady);
