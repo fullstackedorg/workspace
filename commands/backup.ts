@@ -2,7 +2,6 @@ import {FullStackedConfig} from "../index";
 import fs from "fs";
 import path from "path";
 import {
-    clearLine,
     execSSH,
     getBuiltDockerCompose,
     getSFTPClient,

@@ -39,8 +39,8 @@ describe("Backup-Restore Remotely Test", function(){
             `--src=${__dirname}`,
             `--out=${index ? __dirname : outDir}`,
             "--password=test"].join(" "));
-        deployment.stdout.pipe(process.stdout);
-        deployment.stderr.pipe(process.stderr);
+        // deployment.stdout.pipe(process.stdout);
+        // deployment.stderr.pipe(process.stderr);
 
         await waitForServer(50000, `http://localhost:${sshServers.containers.at(index).httpPort}/get`);
         printLine("Deployment Completed");
@@ -72,7 +72,7 @@ describe("Backup-Restore Remotely Test", function(){
             "--host=localhost",
             `--username=${sshServers.username}`,
             `--password=${sshServers.password}`,
-            `--ssh-port=${sshServers.containers.at(0).sshPort}`].join(" "), {stdio: "inherit"});
+            `--ssh-port=${sshServers.containers.at(0).sshPort}`].join(" "), {stdio: "ignore"});
 
         const backupFile = path.resolve(backupDir, "redis-data.tar");
         ok(fs.existsSync(backupFile));
@@ -83,7 +83,7 @@ describe("Backup-Restore Remotely Test", function(){
             "--host=localhost",
             `--username=${sshServers.username}`,
             `--password=${sshServers.password}`,
-            `--ssh-port=${sshServers.containers.at(1).sshPort}`].join(" "), {stdio: "inherit"});
+            `--ssh-port=${sshServers.containers.at(1).sshPort}`].join(" "), {stdio: "ignore"});
         await waitForServer(10000, `http://localhost:${sshServers.containers.at(1).httpPort}/get`);
         clearLine();
 

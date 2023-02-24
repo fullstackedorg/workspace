@@ -12,7 +12,8 @@ const scripts = [
     "test",
     "deploy",
     "backup",
-    "restore"
+    "restore",
+    "remove"
 ];
 
 const args = {
