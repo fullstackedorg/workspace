@@ -275,7 +275,9 @@ export default class Deploy extends CommandInterface {
 
 
             for (let i = 0; i < dockerCompose.services[nginxConfig.name].ports.length; i++) {
-                if(dockerCompose.services[nginxConfig.name].ports[i] !== nginxConfig.port.toString()) continue;
+                const servicePort = dockerCompose.services[nginxConfig.name].ports[i].split(":").pop();
+                if(servicePort !== nginxConfig.port.toString()) continue;
+
                 dockerCompose.services[nginxConfig.name].ports[i] = `${availablePort}:${nginxConfig.port}`;
             }
         });
