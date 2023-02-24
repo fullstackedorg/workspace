@@ -3,6 +3,7 @@ import Run from "./run";
 import {WebSocket} from "ws";
 import sleep from "../utils/sleep";
 import {FullStackedConfig} from "../index";
+import Restore from "./restore";
 
 
 export default class Watch extends Run {
@@ -56,7 +57,14 @@ export default class Watch extends Run {
         // build with the watcher defined
         await Build(this.config, this.watcher.bind(this));
         await this.watcher(false, true);
-        console.log(`Web App Running at http://${this.runner.host}:${this.runner.nodePort}`);
+
+        if(this.config.restored) {
+            await Restore(this.config);
+            await this.runner.attach(this.out);
+        }
+
+        if(!this.config.silent)
+            console.log(`Web App Running at http://${this.runner.host}:${this.runner.nodePort}`);
     }
 
     runCLI(): Promise<void> {

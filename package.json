@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.9.1-10",
+  "version": "0.9.3",
   "description": "A simple tool that takes care of all the redundant tasks in TypeScript web app development.",
   "types": "index.d.ts",
   "scripts": {
@@ -75,17 +75,18 @@
     "mongodb": "^4.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "redis": "^4.6.4",
     "typescript": "^4.9.4"
   },
   "exports": {
-    "./server":  "./server/index.js",
-    "./utils/fetch":  "./utils/fetch.js",
-    "./utils/randStr":  "./utils/randStr.js",
-    "./utils/sleep":  "./utils/sleep.js",
-    "./utils/testE2E":  "./utils/testE2E.js",
-    "./utils/testIntegration":  "./utils/testIntegration.js",
-    "./utils/uploadFileWithProgress":  "./utils/uploadFileWithProgress.js",
-    "./utils/waitForServer":  "./utils/waitForServer.js",
+    "./server": "./server/index.js",
+    "./utils/fetch": "./utils/fetch.js",
+    "./utils/randStr": "./utils/randStr.js",
+    "./utils/sleep": "./utils/sleep.js",
+    "./utils/testE2E": "./utils/testE2E.js",
+    "./utils/testIntegration": "./utils/testIntegration.js",
+    "./utils/uploadFileWithProgress": "./utils/uploadFileWithProgress.js",
+    "./utils/waitForServer": "./utils/waitForServer.js",
     "./version": "./version.js"
   }
 }

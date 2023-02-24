@@ -1,14 +1,12 @@
 version: '3.7'
 
 services:
-  mongo:
-    image: mongo
+  redis:
+    image: redis:latest
     restart: unless-stopped
+    command: redis-server
     volumes:
-      - mongo-data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: username
-      MONGO_INITDB_ROOT_PASSWORD: password
+      - redis-data:/data
 
 volumes:
-  mongo-data:
+  redis-data:
