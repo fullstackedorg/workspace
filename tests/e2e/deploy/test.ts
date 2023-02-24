@@ -9,6 +9,7 @@ import sleep from "../../../utils/sleep";
 import waitForServer from "../../../utils/waitForServer";
 import SSH from "../SSH";
 import {fileURLToPath} from "url";
+import {fetch} from "../../../utils/fetch";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -161,6 +162,23 @@ describe("Deploy Test",  function(){
         equal(secondTitle, "Test");
 
         await browser.close();
+    });
+
+    it("Should remove running app", async function(){
+        const args = [
+            `--src=${__dirname}`,
+            `--out=${__dirname}`,
+            "--password=test"
+        ];
+        execSync(`node ${path.resolve(__dirname, "../../../cli")} remove ${args.join(" ")}`, {stdio: "ignore"});
+
+        let success = false;
+        try{
+            await fetch.get(`http://localhost:${sshServer.containers.at(0).sshPort}`);
+        }catch (e) {
+            success = true;
+        }
+        ok(success);
     });
 
     after(function(){

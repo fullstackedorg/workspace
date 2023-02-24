@@ -81,7 +81,7 @@ export default class Deploy extends CommandInterface {
      * Get sftp client in less than 3s
      *
      */
-    private async getSFTP(): Promise<WrappedSFTP>{
+    protected async getSFTP(): Promise<WrappedSFTP>{
         if(this.sftp) return this.sftp;
 
         if(!this.sshCredentials)
@@ -132,7 +132,7 @@ export default class Deploy extends CommandInterface {
      * Reusable function to test Docker and Docker Compose v2 installation on remote host
      *
      */
-    private async testDockerOnRemoteHost(){
+    protected async testDockerOnRemoteHost(){
         const sftp = await this.getSFTP();
 
         const dockerTest = await execSSH(sftp.client, `docker version`);
@@ -479,7 +479,7 @@ export default class Deploy extends CommandInterface {
         console.log("Ran postdeploy scripts");
         if(tick) tick();
 
-        console.log("Deployment Successfull");
+        console.log("Deployment Successful");
     }
 
     async runCLI(){

@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useState} from "react";
 import {DEPLOY_CMD} from "../../../../types/deploy";
 import { WS } from "../../WebSocket";
 
@@ -33,7 +33,6 @@ const steps = [
 export default function ({getSteps}) {
     const [deploying, setDeploying] = useState(false);
     const [deploymentStepIndex, setDeploymentStepIndex] = useState(null);
-    const logsRef = useRef<HTMLPreElement>();
 
     return <div>
         <div className={`btn btn-success w-100 ${deploying && "disabled"}`}

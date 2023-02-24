@@ -9,8 +9,9 @@ import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
 import {GLOBAL_CMD} from "../../../types/gui";
 import {DEPLOY_CMD} from "../../../types/deploy";
+import Remove from "./Steps/Remove";
 
-export const steps: {
+export let steps: {
     title: string,
     component({updateData, defaultData, getSteps}): ReactElement,
     data?: any
@@ -33,7 +34,22 @@ export const steps: {
     }
 ]
 
-export default function(){
+export default function({currentCommand}){
+    if(currentCommand === "Remove"){
+        steps = [
+            {
+                title: "SSH Connection",
+                component: SSH
+            },{
+                title: "Remove",
+                component: Remove
+            },{
+                title: "Save",
+                component: Save
+            }
+        ]
+    }
+
     const [hasSavedConfigs, setSavedConfigs] = useState(null);
     WS.cmd(DEPLOY_CMD.CHECK_SAVED_CONFIG).then(setSavedConfigs);
 
