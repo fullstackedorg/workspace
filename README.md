@@ -7,10 +7,10 @@
 <h3 align="center">A TypeScript Web Apps Tool</h3>
 <p align="center" ><small>The only tool you need from creation to deployment</small></p>
 <p align="center">
-<a href="https://www.npmjs.com/package/fullstacked"><img src="https://img.shields.io/badge/version-0.9.0-01b0de" alt="version"/>
+<a href="https://www.npmjs.com/package/fullstacked"><img src="https://badgen.net/npm/v/fullstacked" alt="version"/>
 <a href="https://www.npmjs.com/package/fullstacked?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-18-782175" alt="dependencies"/></a>
 <a href="https://npmgraph.js.org/?q=fullstacked"><img src="https://img.shields.io/badge/module%20deps-328-ff761a" alt="module dependencies"/></a>
-<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-73.39%25-yellow" alt="code coverage"/></a>
+<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-66.76%25-yellow" alt="code coverage"/></a>
 </p>
 
 > **Warning** <br />
