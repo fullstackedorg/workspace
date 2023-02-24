@@ -29,5 +29,5 @@ async function installNativeModules(){
         {stdio: process.argv.includes("--development") ? "inherit" : "ignore"});
 }
 
-(async () => await installNativeModules())();
+await installNativeModules();
 
