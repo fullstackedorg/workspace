@@ -1,8 +1,11 @@
 import {DEPLOY_CMD} from "./deploy";
+import {WATCH_CMD} from "./watch";
+import {RUN_CMD} from "./run";
 
-export type CMD = GLOBAL_CMD | DEPLOY_CMD;
+export type CMD = GLOBAL_CMD | RUN_CMD | WATCH_CMD | DEPLOY_CMD;
 
 export enum GLOBAL_CMD {
+    GET_CURRENT = "GET_CURRENT",
     END = "END"
 }
 

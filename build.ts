@@ -16,7 +16,7 @@ buildSync({
 
 const builtModule = resolve(__dirname, "utils", "buildRecursively.js")
     // windows path...
-    .replace(/C:/, "").replace(/\\/, "/");
+    .replace(/C:/, "").replace(/\\/g, "/");
 
 const buildRecursively = (await import(builtModule)).default;
 
@@ -35,7 +35,6 @@ const toBuild = [
     resolve(__dirname, "tests", "installToCreateFullStacked.ts"),
     resolve(__dirname, "tests", "testCreateFullStacked.ts"),
     resolve(__dirname, "tests", "testsDockerImages.ts"),
-    resolve(__dirname, "server.ts"),
     resolve(__dirname, "cli.ts"),
 ];
 

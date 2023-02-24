@@ -1,6 +1,5 @@
-import Server from "../server";
+import Server from "../server/index";
 import {getNextAvailablePort} from "./utils";
-import Run from "../commands/run";
 import Config from "./config";
 import path, {dirname} from "path";
 import waitForServer from "./waitForServer";
@@ -11,6 +10,7 @@ import {WebSocketServer} from "ws";
 import CommandInterface from "../commands/Interface";
 import {GLOBAL_CMD, MESSAGE_FROM_GUI, MESSAGE_TYPE} from "../types/gui";
 import {fileURLToPath} from "url";
+import Runner from "./runner";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -32,10 +32,10 @@ export default async function (command: CommandInterface){
         command.endLine = () => ws.send(JSON.stringify({
             type: MESSAGE_TYPE.END_LINE
         }));
-        console.log = (args) => {
+        console.log = (...args) => {
             ws.send(JSON.stringify({
                 type: MESSAGE_TYPE.LOG,
-                data: args
+                data: args.join(" ")
             }));
         }
         process.on('uncaughtException',  (err) => {
@@ -51,6 +51,13 @@ export default async function (command: CommandInterface){
             if(cmd === GLOBAL_CMD.END){
                 await runner.stop();
                 process.exit(0);
+            }
+            else if(cmd === GLOBAL_CMD.GET_CURRENT){
+                return ws.send(JSON.stringify({
+                    type: MESSAGE_TYPE.RESPONSE,
+                    id,
+                    data: command.constructor.name
+                }));
             }
 
             for (const guiCommand of command.guiCommands()) {
@@ -92,10 +99,12 @@ export default async function (command: CommandInterface){
 
     dockerCompose.services.node.ports = ["80"];
     fs.writeFileSync(dockerComposeFile, yaml.dump(dockerCompose));
-    const runner = await Run(await Config({
+    const runner = new Runner(await Config({
         src: path.resolve(__dirname, "..", "gui"),
-        out: path.resolve(__dirname, "..", "gui")
-    }), false);
+        out: path.resolve(__dirname, "..", "gui"),
+        name: "fullstacked-gui"
+    }));
+    await runner.start();
     await waitForServer(3000, `http://localhost:${runner.nodePort}`);
     await open(`http://localhost:${runner.nodePort}`);
     return Server;

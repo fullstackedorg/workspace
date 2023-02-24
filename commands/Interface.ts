@@ -1,10 +1,11 @@
 import {FullStackedConfig} from "../index";
 import {printLine} from "../utils/utils";
 import {CMD} from "../types/gui";
+import * as process from "process";
 
 export default abstract class {
     config: FullStackedConfig;
-    write: (str) => void = process.stdout.write;
+    write: (str) => void = process.stdout.write.bind(process.stdout);
     printLine: (str) => void = printLine;
     endLine: () => void = () => process.stdout.write("\n\r")
 

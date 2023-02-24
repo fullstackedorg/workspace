@@ -2,8 +2,8 @@
 import path from "path";
 import fs from "fs";
 
-export default function getPackageJSON():{[key:string]: any} {
-    const packageJSONPath = path.resolve(process.cwd(), "package.json");
+export default function getPackageJSON(root = process.cwd()):{[key:string]: any} {
+    const packageJSONPath = path.resolve(root, "package.json");
     if(!fs.existsSync(packageJSONPath))
         throw Error("Cannot find package.json file. Please run fullstacked commands at your project root");
 

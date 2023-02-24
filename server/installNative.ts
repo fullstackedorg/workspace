@@ -5,8 +5,8 @@ import {readFileSync} from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function installNativeModules(){
-    let nativeModules;
+async function installNativeModules(){
+    let nativeModules: {[moduleName: string]: string};
     try{
         nativeModules = JSON.parse(readFileSync(resolve(__dirname, "native.json"), {encoding: "utf-8"}))
     }catch (e) {
@@ -14,8 +14,20 @@ function installNativeModules(){
         return;
     }
 
-    execSync(`npm i ${Object.keys(nativeModules).map(nativeModule => nativeModule + "@" + nativeModules[nativeModule]).join(" ")}`,
+    const uninstalledModules: string[] = (await Promise.all(Object.keys(nativeModules).map(nativeModule => new Promise<string>(async (resolve) => {
+        try{
+            await import(nativeModule)
+        }catch (e) {
+            resolve(nativeModule);
+        }
+        resolve("");
+    })))).filter(Boolean);
+
+    if(uninstalledModules.length === 0) return;
+
+    execSync(`npm i ${uninstalledModules.map(nativeModule => nativeModule + "@" + nativeModules[nativeModule]).join(" ")}`,
         {stdio: process.argv.includes("--development") ? "inherit" : "ignore"});
 }
 
-installNativeModules();
+await installNativeModules();
+

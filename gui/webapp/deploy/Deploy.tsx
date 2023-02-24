@@ -1,5 +1,4 @@
 import React, {ReactElement, useEffect, useRef, useState} from "react";
-import Header from "./Header";
 import Steps from "./Steps";
 import SSH from "./Steps/SSH";
 import Configs from "./Steps/Configs";
@@ -9,8 +8,10 @@ import Save from "./Steps/Save";
 import LoadConfigs from "./LoadConfigs";
 import {WS} from "../WebSocket";
 import {GLOBAL_CMD} from "../../../types/gui";
+import {DEPLOY_CMD} from "../../../types/deploy";
+import Remove from "./Steps/Remove";
 
-export const steps: {
+export let steps: {
     title: string,
     component({updateData, defaultData, getSteps}): ReactElement,
     data?: any
@@ -33,7 +34,33 @@ export const steps: {
     }
 ]
 
-export default function ({hasSavedConfigs}){
+export default function({currentCommand}){
+    if(currentCommand === "Remove"){
+        steps = [
+            {
+                title: "SSH Connection",
+                component: SSH
+            },{
+                title: "Remove",
+                component: Remove
+            },{
+                title: "Save",
+                component: Save
+            }
+        ]
+    }
+
+    const [hasSavedConfigs, setSavedConfigs] = useState(null);
+    WS.cmd(DEPLOY_CMD.CHECK_SAVED_CONFIG).then(setSavedConfigs);
+
+    if(hasSavedConfigs === null){
+        return <>Loading...</>;
+    }
+
+    return <DeployApp hasSavedConfigs={hasSavedConfigs} />;
+}
+
+function DeployApp({hasSavedConfigs}){
     const [stepIndex, setStepIndex] = useState(hasSavedConfigs ? null : 0);
     const logsRef = useRef<HTMLPreElement>();
 
@@ -46,7 +73,6 @@ export default function ({hasSavedConfigs}){
     }, [])
 
     return <>
-        <Header />
         <Steps goToStep={index => setStepIndex(index)} stepIndex={stepIndex} />
 
         <div className={"container-xl py-3"}>
@@ -111,10 +137,10 @@ export default function ({hasSavedConfigs}){
                                     <a href="https://tabler.io" target={"_blank"}>tabler.io</a>&nbsp;
                                 </li>
                                 <li className="list-inline-item">
-                                    Support Open Source Software
+                                    Support Open Source
                                 </li>
                                 <li className="list-inline-item">
-                                    <a href="https://github.com/cplepage/fullstacked" target={"_blank"}>Give FullStacked a&nbsp;
+                                    <a href="https://github.com/cplepage/fullstacked/stargazers" target={"_blank"}>Give FullStacked a&nbsp;
                                         <svg style={{verticalAlign: "text-bottom", color: "#eac54f", height: 18, width: 18}}
                                              xmlns="http://www.w3.org/2000/svg"  className="icon icon-tabler icon-filled icon-tabler-star"
                                              viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"

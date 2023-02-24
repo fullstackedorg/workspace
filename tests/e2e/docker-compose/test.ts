@@ -3,10 +3,10 @@ import {equal} from "assert";
 import {exec} from "child_process";
 import path, {dirname} from "path";
 import puppeteer from "puppeteer";
-import fs from "fs";
-import sleep from "../../../utils/sleep";
 import waitForServer from "../../../utils/waitForServer";
 import {fileURLToPath} from "url";
+import sleep from "../../../utils/sleep";
+import fs from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -18,7 +18,7 @@ describe("Docker-Compose Test", function(){
         // runProcess.stdout.pipe(process.stdout);
         // runProcess.stderr.pipe(process.stderr);
 
-        await waitForServer(15000);
+        await waitForServer(15000, "http://localhost:8000/mongo-test-connection");
         browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
         page = await browser.newPage();
     })
