@@ -1,7 +1,7 @@
 //@ts-ignore
 import logo from "./logo.jpg"
 
-document.body.innerHTML += `<fullstacked-element></fullstacked-element>`;
+document.body.innerHTML = `<fullstacked-element></fullstacked-element>`;
 
 class FullStackedJPG extends HTMLElement{
     connectedCallback(){

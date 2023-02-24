@@ -1,10 +1,7 @@
 import {dirname, resolve} from "path"
 import esbuild, {BuildOptions, buildSync, Format, Loader, Platform} from "esbuild";
 import fs from "fs";
-import {
-    cleanOutDir, copyRecursiveSync, execScript,
-    getBuiltDockerCompose, getExternalModules
-} from "../utils/utils";
+import { copyRecursiveSync, execScript, getBuiltDockerCompose, getExternalModules } from "../utils/utils";
 import yaml from "js-yaml";
 import glob from "glob";
 import {parse, parseFragment, Parser, serialize, html} from "parse5";
@@ -12,6 +9,7 @@ import {fileURLToPath} from "url";
 import {FullStackedConfig} from "../index";
 import randStr from "../utils/randStr";
 import {config as dotenvConfig} from "dotenv"
+import FullStackedVersion from "../version";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -42,22 +40,16 @@ function getProcessEnv(config: FullStackedConfig){
 
 // bundles the server
 async function buildServer(config: FullStackedConfig, watcher){
-    const fullstackedServerFile = resolve(__dirname, "..", "server.js");
-
-    const fullstackedServerFileRegex =  new RegExp(fullstackedServerFile
-        // windows file path...
-        .replace(/\\/g, "\\\\"));
+    const fullstackedServerFile = resolve(__dirname, "..", "server", "index.ts");
 
     const options: BuildOptions = {
         entryPoints: [ fullstackedServerFile ],
         outfile: resolve(config.out, "index.mjs"),
         platform: "node" as Platform,
         bundle: true,
-        minify: config.production,
-        sourcemap: !config.production,
         format: "esm" as Format,
 
-        external: getExternalModules(config.src),
+        external: getExternalModules(config.src, true),
 
         define: getProcessEnv(config),
 
@@ -77,9 +69,26 @@ async function buildServer(config: FullStackedConfig, watcher){
                 });
             }
         }, {
+            name: 'ignore-watcher',
+            setup(build){
+                build.onResolve({filter: /watcher/}, (args) => {
+                    return {
+                        path: args.path + ".mjs",
+                        external: true
+                    }
+                })
+            }
+        }, {
             name: 'fullstacked-bundled-server',
             setup(build) {
-                build.onLoad({ filter: fullstackedServerFileRegex }, async () => {
+                build.onResolve({filter: /fullstacked\/server/}, (args) => {
+                    return {
+                        path: fullstackedServerFile
+                    }
+                })
+                build.onLoad({ filter: /server/ }, async (args) => {
+                    if(args.path !== fullstackedServerFile) return null;
+
                     // load all entry points from server dir
                     const serverFiles = glob.sync(resolve(config.src, "server", "**", "*.server.ts"));
 
@@ -115,6 +124,20 @@ async function buildServer(config: FullStackedConfig, watcher){
 
     const dockerCompose = getBuiltDockerCompose(config.src, config.production);
 
+    if(watcher){
+        dockerCompose.services.node.command.push("--watch")
+        buildSync({
+            entryPoints: [resolve(__dirname, "..", "server", "watcher.ts")],
+            outfile: resolve(config.out, "watcher.mjs"),
+            platform: "node",
+            bundle: true,
+            format: "esm",
+
+            // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
+            banner: {js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);"},
+        });
+    }
+
     const nativeFilePath = resolve(config.src, "server", "native.json")
     if(fs.existsSync(nativeFilePath)){
         fs.cpSync(nativeFilePath, resolve(config.out, "native.json"));
@@ -122,12 +145,8 @@ async function buildServer(config: FullStackedConfig, watcher){
         dockerCompose.services.node.command = [
             "/bin/sh",
             "-c",
-            `node installNative.mjs ${!config.production ? "--development" : ""} && node index.mjs ${!config.production ? "--development" : ""}`
+            `node installNative.mjs ${!config.production ? "--development" : ""} && node ${dockerCompose.services.node.command.join(" ")}`
         ]
-    }
-
-    if(watcher){
-        fs.copyFileSync(resolve(__dirname, "..", "server", "watcher.js"), resolve(config.out, "watcher.js"))
     }
 
     // output docker-compose result to dist directory
@@ -139,12 +158,11 @@ async function buildServer(config: FullStackedConfig, watcher){
 
 // bundles the web app
 async function buildWebApp(config, watcher){
-    const entrypoint = resolve(config.src, "webapp", "index.ts");
+    const fullstackedWebAppFile = resolve(__dirname, "..", "webapp", "index.js");
 
-    if(!fs.existsSync(entrypoint)){
-        fs.mkdirSync(config.public, {recursive: true});
-        return fs.writeFileSync(resolve(config.public, "index.html"), "Nothing to see here...");
-    }
+    const fullstackedWebAppFileRegex =  new RegExp(fullstackedWebAppFile
+        // windows file path...
+        .replace(/\\/g, "\\\\"));
 
     // pre/post build scripts
     const plugins = [{
@@ -163,6 +181,30 @@ async function buildWebApp(config, watcher){
                 await execScript(resolve(config.src, "postbuild.ts"), config, true);
             });
         }
+    }, {
+        name: 'fullstacked-bundled-webapp',
+        setup(build) {
+            build.onLoad({ filter: fullstackedWebAppFileRegex }, async () => {
+                // load all entry points from server dir
+                const webappFiles = [
+                    ...glob.sync(resolve(config.src, "webapp", "**", "*.webapp.ts")),
+                    ...glob.sync(resolve(config.src, "webapp", "**", "*.webapp.tsx"))
+                ]
+
+                // well keep server/index.ts as an entrypoint also
+                const indexWebAppFile = resolve(config.src, "webapp", "index.ts");
+                if(fs.existsSync(indexWebAppFile)) webappFiles.unshift(indexWebAppFile);
+
+                const contents =
+                    fs.readFileSync(fullstackedWebAppFile) + "\n" +
+                    webappFiles.map(file => `import "${file.replace(/\\/g, "\\\\")}";`).join("\n")
+
+                return {
+                    contents,
+                    loader: 'ts',
+                }
+            })
+        },
     }];
 
     // extra files and dir to watch
@@ -199,7 +241,7 @@ async function buildWebApp(config, watcher){
     }
 
     const options = {
-        entryPoints: [ entrypoint ],
+        entryPoints: [ fullstackedWebAppFile ],
         outdir: config.public,
         entryNames: "index",
         format: "esm" as Format,
@@ -257,15 +299,10 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
     const parser = new Parser();
 
     const userDefinedIndexHTMLFilePath = resolve(config.src, "webapp", "index.html");
-    const root: any = fs.existsSync(userDefinedIndexHTMLFilePath)
+    const hasIndexHTMLDefined = fs.existsSync(userDefinedIndexHTMLFilePath);
+    const root: any = hasIndexHTMLDefined
         ? parse(fs.readFileSync(userDefinedIndexHTMLFilePath, {encoding: "utf-8"}))
-        : parser.treeAdapter.createDocument();
-
-    root.attrs = root.attrs ?? [];
-
-    if(!getDescendantByTag(root, "html")){
-        parser.treeAdapter.appendChild(root, parser.treeAdapter.createElement("html", html.NS.HTML, []));
-    }
+        : parse(fs.readFileSync(resolve(__dirname, "..", "webapp", "index.html"), {encoding: "utf-8"}));
 
     const addInHEAD = (contentHTML: string) => {
         let head = getDescendantByTag(root, "head");
@@ -287,6 +324,10 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
         parseFragment(contentHTML).childNodes.forEach(node => {
             parser.treeAdapter.appendChild(body, node)
         });
+    }
+
+    if(!hasIndexHTMLDefined){
+        addInBODY(`<div>v${FullStackedVersion}</div>`);
     }
 
     // add title
@@ -397,11 +438,11 @@ export function webAppPostBuild(config: FullStackedConfig, watcher){
 
 export default async function(config, watcher: (isWebApp: boolean) => void = null) {
     loadEnvVars(config.src);
-    cleanOutDir(config.dist);
 
-    const ignore = [
-        "**/node_modules/**"
-    ];
+    const ignore = ["**/node_modules/**"];
+
+    glob.sync(resolve(config.out, "**", "*"), {ignore: config.production ? ignore : []})
+        .forEach(item => fs.rmSync(item, {recursive: true, force: true}));
 
     if(config?.ignore){
         if(Array.isArray(config.ignore)) ignore.push(...config.ignore);

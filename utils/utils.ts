@@ -57,7 +57,7 @@ export function isDockerInstalled(): boolean{
     if(dockerVersion === "")
         return false;
 
-    const dockerComposeVersion = execSync("docker-compose -v").toString();
+    const dockerComposeVersion = execSync("docker compose version").toString();
     return dockerComposeVersion !== "";
 }
 
@@ -149,7 +149,7 @@ ${fileContent}`);
 
         const outfile = builtFile
             // windows paths...
-            .replace(/C:/, "").replace(/\\/, "/");
+            .replace(/C:/, "").replace(/\\/g, "/");
 
         const importedModule = await import(outfile);
         if(typeof importedModule.default === 'function'){
@@ -367,7 +367,7 @@ export function getBuiltDockerCompose(srcDir: string, production: boolean = fals
     return dockerCompose;
 }
 
-export function getExternalModules(srcDir: string){
+export function getExternalModules(srcDir: string, includeNative = false){
     const ignoreFilePath = resolve(srcDir, "ignore.json");
     const nativeFilePath = resolve(srcDir, "server", "native.json");
 
@@ -387,7 +387,7 @@ export function getExternalModules(srcDir: string){
         }
     }
 
-    if(hasNativeModules){
+    if(includeNative && hasNativeModules){
         let nativeModules;
         try{
             nativeModules = JSON.parse(fs.readFileSync(nativeFilePath, {encoding: "utf8"}));

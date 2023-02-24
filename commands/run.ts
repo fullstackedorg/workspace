@@ -1,54 +1,72 @@
-import Build from "./build";
 import Runner from "../utils/runner";
-import os from "os";
-import readline from "readline";
-import Restore from "./restore";
 import {FullStackedConfig} from "../index";
+import CommandInterface from "./Interface";
+import {Writable} from "stream";
+import Build from "./build";
+import Restore from "./restore";
+import {RUN_CMD} from "../types/run";
 
-let runner: Runner = null, didSetExitHook = false, printStopOnce = false;
+export default class Run extends CommandInterface {
+    runner: Runner;
+    out: Writable;
+    started: boolean = false;
 
-export default async function(config: FullStackedConfig, build: boolean = true){
-    if(build)
-        await Build(config);
+    constructor(config: FullStackedConfig) {
+        super(config);
 
-    if(!runner) {
-        runner = new Runner(config);
-        await runner.start();
-        console.log("Web App Running at http://localhost:" + runner.nodePort);
-
-        if(config.restored)
-            await Restore(config);
-    }else{
-        await runner.restart();
-    }
-
-    await runner.attach(process.stdout);
-
-    // set exit hook only once
-    if(!didSetExitHook){
-        if(os.platform() === "win32"){
-            //source : https://stackoverflow.com/a/48837698
-            readline.createInterface({
-                input: process.stdin,
-                output: process.stdout,
-            }).on('close', function() {
-                process.emit('SIGINT')
-            })
-        }
-
-        process.on("SIGINT", async () => {
-            if(!config.silent && !printStopOnce) {
-                console.log('\x1b[33m%s\x1b[0m', "Stopping!");
-                printStopOnce = true;
+        this.out = new Writable({
+            write: (chunk, encoding, next) => {
+                this.write(chunk.toString());
+                next();
             }
-
-            if(runner)
-                await runner.stop()
-            process.exit(0);
         });
 
-        didSetExitHook = true;
+        this.runner = new Runner(this.config);
     }
 
-    return runner;
+    guiCommands(): { cmd: RUN_CMD; callback(data, tick?: () => void): any }[] {
+        return [
+            {
+                cmd: RUN_CMD.START,
+                callback: () => this.run()
+            },{
+                cmd: RUN_CMD.BENCH,
+                async callback({url}) {
+                    const start = Date.now();
+                    await fetch(url);
+                    return Date.now() - start;
+                }
+            }
+        ];
+    }
+
+    async restart(){
+        if(!this.started){
+            await this.runner.start();
+            this.started = true;
+        }else{
+            await this.runner.restart();
+        }
+
+        if(!this.config.silent)
+            await this.runner.attach(this.out);
+    }
+
+    async run(): Promise<void> {
+        await Build(this.config);
+        await this.restart();
+
+        if(this.config.restored) {
+            await Restore(this.config);
+            await this.runner.attach(this.out);
+        }
+
+        if(!this.config.silent)
+            console.log(`Web App Running at http://${this.runner.host}:${this.runner.nodePort}`);
+    }
+
+    runCLI(): Promise<void> {
+        return this.run();
+    }
+
 }

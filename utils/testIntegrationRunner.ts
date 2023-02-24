@@ -3,13 +3,15 @@ import path, {dirname, resolve} from "path";
 import fs from "fs";
 import {build} from "esbuild";
 import {fileURLToPath} from "url";
-import {getBuiltDockerCompose, getExternalModules} from "./utils";
+import {execScript, getBuiltDockerCompose, getExternalModules} from "./utils";
 import yaml from "js-yaml";
 import Docker from "./docker";
 import DockerCompose from "dockerode-compose";
 import glob from "glob";
 import {Writable} from "stream";
 import randStr from "./randStr";
+import parseConfigFromCommand from "./parseConfigFromCommand";
+import defaultConfig from "./config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -36,6 +38,8 @@ export default async function(testSuite: Suite, options?: {
     if(fs.existsSync(tempTestDir)) fs.rmSync(tempTestDir, {force: true, recursive: true});
     fs.mkdirSync(tempTestDir);
 
+    const config = await defaultConfig(parseConfigFromCommand().config);
+
     await build({
         entryPoints: [testSuite.file],
         outfile: resolve(tempTestDir, "test.mjs"),
@@ -49,6 +53,24 @@ export default async function(testSuite: Suite, options?: {
             setup(currentBuild){
                 currentBuild.onResolve({filter: /.*testIntegrationRunner\.js$/g}, args => ({external: true}));
             }
+        },{
+            name: 'fullstacked-pre-post-scripts',
+            setup(build){
+                build.onStart(async () => {
+                    // prebuild script, false for isWebApp
+                    await execScript(resolve(config.src, "prebuild.ts"), {
+                        ...config,
+                        out: tempTestDir
+                    }, false);
+                });
+                build.onEnd(async () => {
+                    // postbuild script, false for isWebApp
+                    await execScript(resolve(config.src, "postbuild.ts"), {
+                        ...config,
+                        out: tempTestDir
+                    }, false);
+                });
+            }
         }],
 
         // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
@@ -56,7 +78,7 @@ export default async function(testSuite: Suite, options?: {
 
         external: [
             'mocha',
-            ...getExternalModules(srcDir)
+            ...getExternalModules(srcDir, true)
         ]
     });
 
@@ -132,7 +154,7 @@ export default async function(testSuite: Suite, options?: {
         });
     });
 
-    await dockerCompose.down({v: true});
+    await dockerCompose.down({ volumes: true });
 
     const passingMatches = Array.from(results.matchAll(/\d+ passing/g));
     const failingMatches = Array.from(results.matchAll(/\d+ failing/g));

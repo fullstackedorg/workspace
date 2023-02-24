@@ -2,7 +2,7 @@ import {before, after, it, describe} from "mocha";
 import {equal} from "assert";
 import {fetch} from "../../../utils/fetch";
 import Server from "../../../server";
-import "./server/index";
+import "./server";
 import testIntegration from "../../../utils/testIntegration";
 import {dirname} from "path";
 import {fileURLToPath} from "url";

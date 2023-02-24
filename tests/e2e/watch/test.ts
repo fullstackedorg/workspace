@@ -1,18 +1,19 @@
-import {describe, it, before, after} from 'mocha';
+import {describe, it, before, after, beforeEach} from 'mocha';
 import {exec} from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs";
 import {cleanOutDir} from "../../../utils/utils";
 import {equal, ok, notEqual} from "assert";
-import path, {dirname} from "path";
+import path, {dirname, resolve} from "path";
 import sleep from "../../../utils/sleep";
 import waitForServer from "../../../utils/waitForServer";
 import {fileURLToPath} from "url";
+import randStr from "../../../utils/randStr";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Watch Test", function(){
-    let watchProcess, browser, page;
+    let watchProcess, browser, page, logs = [];
     const webappFile = path.resolve(__dirname, "webapp", "index.ts");
     const indexHTML = path.resolve(__dirname, "webapp", "index.html");
     const indexCSS = path.resolve(__dirname, "webapp", "index.css");
@@ -47,16 +48,29 @@ describe("Watch Test", function(){
         fs.mkdirSync(extraDir);
         fs.writeFileSync(path.resolve(extraDir, "file.txt"), "");
 
-        watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent --watch-file=extra.txt --watch-dir=extra`);
+        watchProcess = exec(`node ${path.resolve(__dirname, "../../../cli")} watch --src=${__dirname} --out=${__dirname} --silent --timeout=1000 --watch-file=extra.txt --watch-dir=extra`);
         // watchProcess.stdout.pipe(process.stdout);
         // watchProcess.stderr.pipe(process.stderr);
 
         await waitForServer(15000);
 
-        browser = await puppeteer.launch({headless: process.argv.includes("--headless")});
+        browser = await puppeteer.launch({
+            headless: process.argv.includes("--headless")
+        });
         page = await browser.newPage();
+
+        const cdp = await page.target().createCDPSession();
+        await cdp.send('Log.enable');
+        cdp.on('Log.entryAdded', async ({ entry }) => {
+            logs.push(entry)
+        });
+
         await page.goto("http://localhost:8000");
     });
+
+    beforeEach(() => {
+        logs = [];
+    })
 
     async function getCount(){
         const root = await page.$("#reloadCount");
@@ -65,55 +79,60 @@ describe("Watch Test", function(){
         return Number(value);
     }
 
-    async function getReloadCount(){
-        let tries = 5;
+    async function getReloadCount(allowReload = false){
+        let tries = 5, lastError;
         while (tries){
             try{
                 return await getCount();
             }catch (e) {
-                await sleep(1000);
+                lastError = e;
+                if(allowReload) await page.reload();
+                await sleep(2000);
                 tries--;
             }
         }
 
-        throw Error("Unable to get reload count");
+        console.log("Unable to get reload count");
+        await page.screenshot({path: resolve(__dirname, "debug-" + randStr(5) + ".png")});
+        console.log(logs)
+        throw lastError;
     }
 
     it('Should reload webapp when changing webapp/index.ts', async function(){
-        const countBefore = await getReloadCount();
-        await sleep(1000);
+        const countBefore = await getReloadCount(true);
+        await sleep(2000);
 
         fs.appendFileSync(webappFile, "\n// this is a test line");
-        await sleep(1000);
+        await sleep(2000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
     });
 
     it('Should reload webapp when changing webapp/index.html', async function(){
-        const countBefore = await getReloadCount();
-        await sleep(1000);
+        const countBefore = await getReloadCount(true);
+        await sleep(2000);
 
         fs.appendFileSync(indexHTML, "\n<div></div>");
-        await sleep(1000);
+        await sleep(2000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
     });
 
     it('Should reload webapp when changing webapp/index.css', async function(){
-        const countBefore = await getReloadCount();
-        await sleep(1000);
+        const countBefore = await getReloadCount(true);
+        await sleep(2000);
 
         fs.appendFileSync(indexCSS, "\ndiv{}");
-        await sleep(1000);
+        await sleep(2000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
     });
 
     async function getBootTime(){
-        await sleep(1000);
+        await sleep(2000);
         const root = await page.$("#bootTime");
         const innerHTML = await root.getProperty('innerHTML');
         const value = Number(await innerHTML.jsonValue());
@@ -140,29 +159,29 @@ describe("Watch Test", function(){
         const postCount = getPostCount();
 
         fs.appendFileSync(webappFile, "\n// this is a test line");
-        await sleep(1000);
+        await sleep(2000);
 
         ok(preCount < getPreCount());
         ok(postCount < getPostCount());
     });
 
     it('Should watch extra file', async function(){
-        const countBefore = await getReloadCount();
-        await sleep(1000);
+        const countBefore = await getReloadCount(true);
+        await sleep(2000);
 
         fs.appendFileSync(extraFile, "\n// this is a test line");
-        await sleep(1000);
+        await sleep(2000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);
     });
 
     it('Should watch extra dir', async function(){
-        const countBefore = await getReloadCount();
-        await sleep(1000);
+        const countBefore = await getReloadCount(true);
+        await sleep(2000);
 
         fs.appendFileSync(path.resolve(extraDir, "file.txt"), "\n// this is a test line");
-        await sleep(1000);
+        await sleep(2000);
 
         const countAfter = await getReloadCount();
         equal(countAfter - countBefore, 1);

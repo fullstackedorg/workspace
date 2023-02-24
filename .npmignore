@@ -29,16 +29,15 @@ node_modules
 
 /index.ts
 
-/server.js.map
-/server.ts
+/server/index.js.map
 
 /server/installNative.d.ts
 /server/installNative.js.map
 /server/installNative.ts
 
 /server/watcher.d.ts
+/server/watcher.js
 /server/watcher.js.map
-/server/watcher.ts
 
 /tests
 

@@ -16,6 +16,7 @@ import {certificate, DEPLOY_CMD, nginxConfig, nginxFile, sshCredentials} from ".
 import {fileURLToPath} from "url";
 import uploadFileWithProgress from "../utils/uploadFileWithProgress";
 import randStr from "../utils/randStr";
+import {fetch} from "../utils/fetch";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -80,7 +81,7 @@ export default class Deploy extends CommandInterface {
      * Get sftp client in less than 3s
      *
      */
-    private async getSFTP(): Promise<WrappedSFTP>{
+    protected async getSFTP(): Promise<WrappedSFTP>{
         if(this.sftp) return this.sftp;
 
         if(!this.sshCredentials)
@@ -131,7 +132,7 @@ export default class Deploy extends CommandInterface {
      * Reusable function to test Docker and Docker Compose v2 installation on remote host
      *
      */
-    private async testDockerOnRemoteHost(){
+    protected async testDockerOnRemoteHost(){
         const sftp = await this.getSFTP();
 
         const dockerTest = await execSSH(sftp.client, `docker version`);
@@ -154,27 +155,29 @@ export default class Deploy extends CommandInterface {
      */
     async tryToInstallDockerOnRemoteHost(){
         const sftp = await this.getSFTP();
-        const distroNameRaw = await execSSH(sftp.client, "cat /etc/*-release");
 
-        let distroName;
-        if(distroNameRaw.includes("Amazon Linux release 2"))
-            distroName = "Amazon Linux 2";
-        else if(distroNameRaw.includes("Rocky Linux"))
-            distroName = "Rocky Linux";
-        else if(distroNameRaw.includes("Ubuntu"))
-            distroName = "Ubuntu";
-        else if(distroNameRaw.includes("Debian"))
-            distroName = "Debian";
+        // https://github.com/docker/docker-install/blob/master/install.sh#L167
+        const distroName = (await execSSH(sftp.client, `. /etc/os-release && echo "$ID"`)).trim();
 
-        if(!DockerInstallScripts[distroName])
-            throw Error(`Don't know the command to install Docker and Docker Compose v2 on ${distroName || distroNameRaw}`);
-
-        for(const cmd of DockerInstallScripts[distroName]) {
-            console.log(cmd)
-            await execSSH(sftp.client, cmd, this.write);
+        console.log(distroName);
+        if(DockerInstallScripts[distroName]){
+            for(const cmd of DockerInstallScripts[distroName]) {
+                console.log(cmd)
+                await execSSH(sftp.client, cmd, this.write);
+            }
         }
 
-        return await this.testDockerOnRemoteHost();
+        try {
+            return await this.testDockerOnRemoteHost()
+        }catch (e) {
+            console.log("Launching official Docker Install Script");
+        }
+
+        const dockerInstallScript = await fetch.get("https://get.docker.com");
+        await sftp.put(Buffer.from(dockerInstallScript), "/tmp/get-docker.sh");
+        await execSSH(sftp.client, "sh /tmp/get-docker.sh", this.write);
+        await sftp.delete("/tmp/get-docker.sh");
+        return this.testDockerOnRemoteHost();
     }
 
     /**
@@ -228,33 +231,52 @@ export default class Deploy extends CommandInterface {
         }
 
         const nginxTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx", "service.conf"), {encoding: "utf-8"});
-        const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx", "service-ssl.conf"), {encoding: "utf-8"});
-        nginxConfigs.forEach((service, serviceIndex) => {
-            const port = availablePorts[serviceIndex];
-            const nginx = nginxTemplate
-                .replace(/\{SERVER_NAME\}/g, service.serverNames?.join(" ") ?? "localhost")
-                .replace(/\{PORT\}/g, port)
-                .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "");
-            nginxFiles.push({
-                fileName: `${service.name}-${service.port}.conf`,
-                content: Buffer.from(nginx)
-            });
+        const generateNginxFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxTemplate
+            .replace(/\{PUBLIC_PORT\}/g, publicPort)
+            .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
+            .replace(/\{PORT\}/g, internalPort)
+            .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "");
 
-            if(this.certificate){
-                const nginxSSL = nginxSSLTemplate
-                    .replace(/\{SERVER_NAME\}/g, service.serverNames?.join(" ") ?? "localhost")
-                    .replace(/\{PORT\}/g, port)
-                    .replace(/\{EXTRA_CONFIGS\}/g, service.nginxExtraConfigs?.join("\n") ?? "")
-                    .replace(/\{APP_NAME\}/g, this.config.name);
+        const nginxSSLTemplate = fs.readFileSync(path.resolve(__dirname, "..", "nginx", "service-ssl.conf"), {encoding: "utf-8"});
+        const generateNginxSSLFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxSSLTemplate
+            .replace(/\{PUBLIC_PORT\}/g, publicPort)
+            .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
+            .replace(/\{PORT\}/g, internalPort)
+            .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "")
+            .replace(/\{APP_NAME\}/g, this.config.name);
+
+        nginxConfigs.forEach((nginxConfig, configIndex) => {
+            const availablePort = availablePorts[configIndex];
+
+            if(nginxConfig.customPublicPort?.port){
+
+                const customNginxFile = nginxConfig.customPublicPort.ssl
+                    ? generateNginxSSLFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs)
+                    : generateNginxFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs);
+
                 nginxFiles.push({
-                    fileName: `${service.name}-${service.port}-ssl.conf`,
-                    content: Buffer.from(nginxSSL)
+                    fileName: `${nginxConfig.name}-${nginxConfig.port}.conf`,
+                    content: Buffer.from(customNginxFile)
                 });
+
+            } else {
+                nginxFiles.push({
+                    fileName: `${nginxConfig.name}-${nginxConfig.port}.conf`,
+                    content: Buffer.from(generateNginxFile("80", nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs))
+                });
+
+                if(this.certificate){
+                    nginxFiles.push({
+                        fileName: `${nginxConfig.name}-${nginxConfig.port}-ssl.conf`,
+                        content: Buffer.from(generateNginxSSLFile("443", nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs))
+                    });
+                }
             }
 
-            for (let i = 0; i < dockerCompose.services[service.name].ports.length; i++) {
-                if(dockerCompose.services[service.name].ports[i] !== service.port.toString()) continue;
-                dockerCompose.services[service.name].ports[i] = `${port}:${service.port}`;
+
+            for (let i = 0; i < dockerCompose.services[nginxConfig.name].ports.length; i++) {
+                if(dockerCompose.services[nginxConfig.name].ports[i] !== nginxConfig.port.toString()) continue;
+                dockerCompose.services[nginxConfig.name].ports[i] = `${availablePort}:${nginxConfig.port}`;
             }
         });
         fs.writeFileSync(path.resolve(this.config.dist, "docker-compose.yml"), yaml.dump(dockerCompose));
@@ -310,8 +332,8 @@ export default class Deploy extends CommandInterface {
     async uploadFilesToRemoteServer(nginxFiles: nginxFile[]){
         const sftp = await this.getSFTP()
 
-        if(!await sftp.exists(`${this.sshCredentials.appDir}/${this.config.name}/${this.config.version}`))
-            await sftp.mkdir(`${this.sshCredentials.appDir}/${this.config.name}/${this.config.version}`, true);
+        if(!await sftp.exists(`${this.sshCredentials.appDir}/${this.config.name}`))
+            await sftp.mkdir(`${this.sshCredentials.appDir}/${this.config.name}`, true);
 
         const files = glob.sync("**/*", {cwd: this.config.dist})
         const localFiles = files.map(file => path.resolve(this.config.dist, file));
@@ -457,7 +479,7 @@ export default class Deploy extends CommandInterface {
         console.log("Ran postdeploy scripts");
         if(tick) tick();
 
-        console.log("Deployment Successfull");
+        console.log("Deployment Successful");
     }
 
     async runCLI(){
