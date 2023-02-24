@@ -39,7 +39,8 @@ describe("Backup-Restore Remotely Test", function(){
             `--src=${__dirname}`,
             `--out=${index ? __dirname : outDir}`,
             "--password=test"].join(" "));
-        // deployment.stdout.pipe(process.stdout);
+        deployment.stdout.pipe(process.stdout);
+        deployment.stderr.pipe(process.stderr);
 
         await waitForServer(50000, `http://localhost:${sshServers.containers.at(index).httpPort}/get`);
         printLine("Deployment Completed");
@@ -51,7 +52,7 @@ describe("Backup-Restore Remotely Test", function(){
         if(fs.existsSync(outDir)) fs.rmSync(outDir, {recursive: true});
         fs.mkdirSync(outDir);
 
-        await sshServers.init(2, ["node:18-alpine", "mongo:latest", "nginx:latest"]);
+        await sshServers.init(2, ["node:18-alpine", "redis:latest", "nginx:latest"]);
         await setupRemoteDeployment(0);
         await setupRemoteDeployment(1);
 
@@ -60,7 +61,7 @@ describe("Backup-Restore Remotely Test", function(){
     });
 
     it("Should backup / restore volume remotely", async function(){
-        this.timeout(100000);
+        this.timeout(2000000);
 
         ok(testArr.length > 0);
         const response = await fetch.get(`http://localhost:${sshServers.containers.at(1).httpPort}/get`);
@@ -71,9 +72,9 @@ describe("Backup-Restore Remotely Test", function(){
             "--host=localhost",
             `--username=${sshServers.username}`,
             `--password=${sshServers.password}`,
-            `--ssh-port=${sshServers.containers.at(0).sshPort}`].join(" "));
+            `--ssh-port=${sshServers.containers.at(0).sshPort}`].join(" "), {stdio: "inherit"});
 
-        const backupFile = path.resolve(backupDir, "mongo-data.tar");
+        const backupFile = path.resolve(backupDir, "redis-data.tar");
         ok(fs.existsSync(backupFile));
         ok(fs.statSync(backupFile).size > 100);
 
@@ -82,7 +83,7 @@ describe("Backup-Restore Remotely Test", function(){
             "--host=localhost",
             `--username=${sshServers.username}`,
             `--password=${sshServers.password}`,
-            `--ssh-port=${sshServers.containers.at(1).sshPort}`].join(" "));
+            `--ssh-port=${sshServers.containers.at(1).sshPort}`].join(" "), {stdio: "inherit"});
         await waitForServer(10000, `http://localhost:${sshServers.containers.at(1).httpPort}/get`);
         clearLine();
 

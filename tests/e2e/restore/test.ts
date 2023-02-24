@@ -17,7 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 describe("Backup-Restore Test", function(){
     let localConfig;
     const backupDir = path.resolve(process.cwd(), "backup");
-    const backupFile = path.resolve(backupDir, "mongo-data.tar");
+    const backupFile = path.resolve(backupDir, "redis-data.tar");
 
     before(async function (){
         localConfig = await Config({
