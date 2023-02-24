@@ -25,7 +25,11 @@ export type nginxConfig = {
     name: string,
     port: number,
     serverNames?: string[],
-    nginxExtraConfigs?: string[]
+    nginxExtraConfigs?: string[],
+    customPublicPort?: {
+        port: number,
+        ssl: boolean
+    }
 }
 
 export type nginxFile = {

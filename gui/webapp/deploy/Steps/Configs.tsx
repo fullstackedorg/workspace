@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {WS} from "../../WebSocket";
-import {DEPLOY_CMD} from "../../../../types/deploy";
+import {DEPLOY_CMD, nginxConfig} from "../../../../types/deploy";
 
 let dockerCompose;
 const getDockerCompose = () => {
@@ -9,16 +9,18 @@ const getDockerCompose = () => {
     return dockerCompose;
 }
 
-export default function ({defaultData, updateData, getSteps}){
-    const [services, setServices] = useState([]);
-    const [activeServiceIndex, setActiveServiceIndex] = useState(0);
+type nginxConfigProps = {
+    defaultData: {nginxConfigs: nginxConfig[]},
+    updateData: (data: {nginxConfigs: nginxConfig[]}) => void
+}
+
+export default function ({defaultData, updateData}: nginxConfigProps){
+    const [nginxConfigs, setNginxConfigs] = useState<nginxConfig[]>([]);
+    const [activeConfigIndex, setActiveConfigIndex] = useState(0);
 
     useEffect(() => {
         getDockerCompose().then(dockerCompose => {
-            const services: {
-                name: string,
-                port: string
-            }[] = Object.keys(dockerCompose.services).map(serviceName => {
+            const configs: nginxConfig[] = Object.keys(dockerCompose.services).map(serviceName => {
                 const ports = dockerCompose.services[serviceName].ports;
                 return ports
                     ? ports.map(port => {
@@ -36,20 +38,20 @@ export default function ({defaultData, updateData, getSteps}){
                     : []
             }).flat();
 
-            updateData({nginxConfigs: services})
-            setServices(services);
+            updateData({nginxConfigs: configs})
+            setNginxConfigs(configs);
         });
     }, []);
 
-    const onInputChange = (service, serviceIndex) => {
+    const onInputChange = (configIndex) => {
         let serverNames = [];
-        document.querySelectorAll(`#server-name-inputs-${serviceIndex} input`).forEach((input: HTMLInputElement) => {
+        document.querySelectorAll(`#server-name-inputs-${configIndex} input`).forEach((input: HTMLInputElement) => {
             serverNames.push(input.value);
         });
 
-        services[serviceIndex].serverNames = serverNames;
+        nginxConfigs[configIndex].serverNames = serverNames;
 
-        updateData({nginxConfigs: services});
+        updateData({nginxConfigs: nginxConfigs});
     }
 
     return <div>
@@ -57,11 +59,11 @@ export default function ({defaultData, updateData, getSteps}){
             <div className="card-header">
                 <ul className="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
                     {
-                        services.map((service, serviceIndex) => <li className="nav-item" role="presentation">
-                            <div className={`nav-link d-block cursor-pointer ${serviceIndex === activeServiceIndex && "active"}`}
-                                 onClick={() => setActiveServiceIndex(serviceIndex)}>
-                                <div>{service.name}</div>
-                                <div><small className={"text-muted"}>Port: {service.port}</small></div>
+                        nginxConfigs.map((nginxConfig, configIndex) => <li className="nav-item" role="presentation">
+                            <div className={`nav-link d-block cursor-pointer ${configIndex === activeConfigIndex && "active"}`}
+                                 onClick={() => setActiveConfigIndex(configIndex)}>
+                                <div>{nginxConfig.name}</div>
+                                <div><small className={"text-muted"}>Port: {nginxConfig.port}</small></div>
                             </div>
                         </li>)
                     }
@@ -69,12 +71,12 @@ export default function ({defaultData, updateData, getSteps}){
             </div>
             <div className="card-body">
                 <div className="tab-content">
-                    {services.map((service, serviceIndex) => <div className={`tab-pane ${serviceIndex === activeServiceIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
-                        <div id={`server-name-inputs-${serviceIndex}`}>
+                    {nginxConfigs.map((nginxConfig, configIndex) => <div className={`tab-pane ${configIndex === activeConfigIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
+                        <div id={`server-name-inputs-${configIndex}`}>
                             <label className="form-label">Server Name</label>
-                            {defaultData?.nginxConfigs?.at(serviceIndex)?.serverNames?.filter(serverName => serverName).map(serverName =>
-                                <input type="text" className="form-control mb-2" defaultValue={serverName} placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>)
-                                ?? <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(service, serviceIndex)}/>}
+                            {defaultData?.nginxConfigs?.at(configIndex)?.serverNames?.filter(serverName => serverName).map(serverName =>
+                                <input type="text" className="form-control mb-2" defaultValue={serverName} placeholder="foo.example.com" onChange={() => onInputChange(configIndex)}/>)
+                                ?? <input type="text" className="form-control mb-2" placeholder="foo.example.com" onChange={() => onInputChange(configIndex)}/>}
 
                         </div>
                         <div className={"text-center mt-1"} onClick={() => {
@@ -82,8 +84,8 @@ export default function ({defaultData, updateData, getSteps}){
                             input.type = "text";
                             input.classList.add("form-control", "mb-2");
                             input.placeholder = "foo.example.com";
-                            input.addEventListener('change', () => onInputChange(service, serviceIndex))
-                            document.querySelector(`#server-name-inputs-${serviceIndex}`).append(input);
+                            input.addEventListener('change', () => onInputChange(configIndex))
+                            document.querySelector(`#server-name-inputs-${configIndex}`).append(input);
                         }}>
                             <div className="btn btn-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="m-0 icon icon-tabler icon-tabler-plus" width="24"
@@ -98,16 +100,69 @@ export default function ({defaultData, updateData, getSteps}){
                         <div className="mb-3">
                             <label className="form-label">Nginx Extra Configs</label>
                             <textarea className="form-control" rows={6}
-                                      defaultValue={defaultData?.nginxConfigs?.at(serviceIndex)?.nginxExtraConfigs?.join("\n")}
+                                      defaultValue={defaultData?.nginxConfigs?.at(configIndex)?.nginxExtraConfigs?.join("\n")}
                                       placeholder="proxy_set_header Host $host;
 proxy_set_header X-Real-IP $remote_addr;" onChange={(e) => {
-                                services[serviceIndex].nginxExtraConfigs = e.target.value.split("\n");
+                                nginxConfigs[configIndex].nginxExtraConfigs = e.target.value.split("\n");
                                 updateData({
-                                    nginxConfigs: services
+                                    nginxConfigs: nginxConfigs
                                 });
                             }}></textarea>
+                        </div>
+                        <div className={"card"}>
+                            <div className={"card-body"}>
+                                <label className="form-check form-switch">
+                                    <input className="form-check-input" type="checkbox" onChange={(e) => {
+                                        document.getElementById(`custom-port-form-${configIndex}`).classList.toggle("d-none");
+                                    }} defaultChecked={!!(nginxConfig?.customPublicPort?.port)}/>
+                                    <span className="form-check-label">Custom Public Port</span>
+                                </label>
+
+                                <div id={`custom-port-form-${configIndex}`}
+                                     className={nginxConfig?.customPublicPort?.port ? "" : "d-none"}>
+                                    <label className="form-label">Port</label>
+                                    <input type="text" className="form-control mb-2" placeholder="8000"
+                                        onChange={(e) => {
+                                            if(!nginxConfigs[configIndex].customPublicPort){
+                                                nginxConfigs[configIndex].customPublicPort = {
+                                                    port: 0,
+                                                    ssl: false
+                                                }
+                                            }
+
+                                            nginxConfigs[configIndex].customPublicPort.port = parseInt(e.currentTarget.value);
+                                            updateData({
+                                                nginxConfigs: nginxConfigs
+                                            });
+                                        }}
+                                           defaultValue={nginxConfig?.customPublicPort?.port}
+                                    />
+
+                                    <label className="form-check">
+                                        <input className="form-check-input" type="checkbox"
+                                               defaultChecked={nginxConfig?.customPublicPort?.ssl}
+                                               onChange={(e) => {
+                                                   if(!nginxConfigs[configIndex].customPublicPort){
+                                                       nginxConfigs[configIndex].customPublicPort = {
+                                                           port: 0,
+                                                           ssl: false
+                                                       }
+                                                   }
+
+                                                   nginxConfigs[configIndex].customPublicPort.ssl = e.currentTarget.checked;
+                                                   updateData({
+                                                       nginxConfigs: nginxConfigs
+                                                   });
+                                               }}
+
+                                        />
+                                        <span className="form-check-label">SSL</span>
+                                    </label>
                                 </div>
-                        </div>)}
+
+                            </div>
+                        </div>
+                    </div>)}
                 </div>
             </div>
         </div>
