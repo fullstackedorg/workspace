@@ -187,14 +187,16 @@ export default class Deploy extends CommandInterface {
      */
     private async getAvailablePorts(sftp: WrappedSFTP, count: number, startingPort: number = 8001): Promise<string[]> {
         const dockerContainerPorts = await execSSH(sftp.client, "docker container ls --format \"{{.Ports}}\" -a");
-        const portsInUse = dockerContainerPorts.split("\n").map(portUsed =>
+        const portsInUse = new Set();
+        dockerContainerPorts.split("\n").map(line => line.split(",")).flat().map(portUsed =>
             portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
             .map(port => parseInt(port)) // cast to number
-            .filter(port => port || !isNaN(port)); // filter empty strings
+            .filter(port => port || !isNaN(port)) // filter empty strings
+            .forEach(port => portsInUse.add(port));
 
         const availablePorts = [];
         while (availablePorts.length < count){
-            if(!portsInUse.includes(startingPort))
+            if(!portsInUse.has(startingPort))
                 availablePorts.push(startingPort);
             startingPort++;
         }
