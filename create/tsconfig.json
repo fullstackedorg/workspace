@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "esModuleInterop": true,
+        "module": "ES2022",
+        "target": "ES2022",
+        "moduleResolution": "node",
+        "paths": {
+            "fullstacked/*": ["../*"]
+        }
+    }
+}

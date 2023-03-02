@@ -17,3 +17,5 @@ coverage
 .fullstacked
 .c8
 .nyc
+*.tgz
+/test
