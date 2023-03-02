@@ -1,0 +1,15 @@
+{
+  "name": "@fullstacked/watch",
+  "version": "0.0.0-0",
+  "description": "Run and reBuild your FullStacked Web App on file changes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "CP Lepage",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"
+  }
+}
