@@ -11,7 +11,7 @@ buildSync({
     outfile: resolve(__dirname, "utils", "buildRecursively.js"),
     platform: "node",
     format: "esm",
-    sourcemap: true,
+    sourcemap: true
 });
 
 const builtModule = resolve(__dirname, "utils", "buildRecursively.js")
@@ -32,9 +32,9 @@ const toBuild = [
     ...server,
     ...utils,
     ...webapp,
-    resolve(__dirname, "tests", "installToCreateFullStacked.ts"),
-    resolve(__dirname, "tests", "testCreateFullStacked.ts"),
-    resolve(__dirname, "tests", "testsDockerImages.ts"),
+    resolve(__dirname, "create", "cli.ts"),
+    resolve(__dirname, "create", "create.ts"),
+    resolve(__dirname, "test.ts"),
     resolve(__dirname, "cli.ts"),
 ];
 
