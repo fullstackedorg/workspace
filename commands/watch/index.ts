@@ -1,6 +1,6 @@
-import CommandInterface from "../CommandInterface";
-import {CMD} from "../../types/gui";
-import CLIParser from "../../utils/CLIParser";
+import CommandInterface from "fullstacked/commands/CommandInterface";
+import {CMD} from "fullstacked/types/gui";
+import CLIParser from "fullstacked/utils/CLIParser";
 import {exec, execSync} from "child_process";
 import fs from "fs";
 

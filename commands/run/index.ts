@@ -10,7 +10,6 @@ import readline from "readline";
 import {Socket} from "net";
 import {clearLine, cursorTo} from "readline";
 
-
 export default class Run extends CommandInterface {
     static commandLineArguments = {
         dockerCompose: {
@@ -117,7 +116,10 @@ export default class Run extends CommandInterface {
 
             let printStopOnce = false;
             process.on("SIGINT", async () => {
-                process.stdout.write(`\x1b[33mStopping ${dockerCompose.projectName}\x1b[0m\r\n`);
+
+                if(!printStopOnce)
+                    process.stdout.write(`\x1b[33mStopping ${dockerCompose.projectName}\x1b[0m\r\n`);
+
                 printStopOnce = true;
                 await this.stop(dockerCompose);
                 process.exit(0);

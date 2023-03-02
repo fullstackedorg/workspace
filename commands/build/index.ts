@@ -3,7 +3,7 @@ import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import yaml from "js-yaml";
 import CommandInterface from "fullstacked/commands/CommandInterface";
-import * as glob from "glob";
+import glob from "glob";
 import HTML from "./HTML.js";
 import CLIParser from "fullstacked/utils/CLIParser";
 import { fileURLToPath } from "url";
@@ -11,8 +11,8 @@ import { fileURLToPath } from "url";
 var __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default class Build extends CommandInterface {
-    static fullstackedServer = resolve(__dirname, "..", "..", "server", "index.ts");
-    static fullstackedClient = resolve(__dirname, "..", "..", "client", "index.ts");
+    static fullstackedServer = resolve(__dirname, "..", "..", "fullstacked", "server", "index.ts");
+    static fullstackedClient = resolve(__dirname, "..", "..", "fullstacked", "client", "index.ts");
     static fullstackedNodeDockerComposeSpec = {
         services: {
             node: {

@@ -25,9 +25,9 @@ function installPackageThenPack(location: string, packageToInstall: string){
 }
 
 // pack commands
-installPackageThenPack("commands/build", fullstackedPackage);
-installPackageThenPack("commands/run", fullstackedPackage);
-installPackageThenPack("commands/watch", fullstackedPackage);
+const buildPackage = installPackageThenPack("commands/build", fullstackedPackage);
+const runPackage = installPackageThenPack("commands/run", fullstackedPackage);
+const watchPackage = installPackageThenPack("commands/watch", fullstackedPackage);
 
 // pack create
 const createPackage = installPackageThenPack("create", fullstackedPackage);
@@ -37,4 +37,7 @@ if(fs.existsSync(testDirectory))
     fs.rmSync(testDirectory, {recursive: true});
 fs.mkdirSync(testDirectory);
 
+// test [npm init @fullstacked]
 execSync(`npm exec ${createPackage.replace(__dirname, "..")} --no-save --prefix ${testDirectory} -y -- -v ${fullstackedPackage}`, {cwd: testDirectory, stdio: "inherit"});
+
+execSync(`npm i ${buildPackage} ${runPackage} ${watchPackage}`, {cwd: testDirectory, stdio: "inherit"});
