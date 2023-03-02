@@ -6,18 +6,20 @@ node_modules
 /.gitignore
 /.gitmodules
 
-/build.*
-
 /cleanup.ts
 
 /cli.js.map
 /cli.ts
 
+/commands/**/*.js
 /commands/**/*.js.map
 /commands/**/*.ts
 /commands/**/*.d.ts
 
-/create-fullstacked
+!/commands/info/index.js
+!/commands/CommandInterface.js
+
+/create
 
 /docs
 

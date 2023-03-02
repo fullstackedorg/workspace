@@ -1,0 +1,1 @@
+// FullStacked bundled client entrypoint
