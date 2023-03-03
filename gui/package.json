@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/gui",
-  "version": "0.0.0",
+  "version": "0.10.0-1",
   "description": "Spawn a graphical user interface to access FullStacked functionalities",
   "author": "CP Lepage",
   "license": "MIT",

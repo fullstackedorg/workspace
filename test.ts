@@ -32,6 +32,7 @@ const watchPackage = installPackageThenPack("commands/watch", fullstackedPackage
 // pack create
 const createPackage = installPackageThenPack("create", fullstackedPackage);
 
+// cleanup test folder
 const testDirectory = resolve(__dirname, "test");
 if(fs.existsSync(testDirectory))
     fs.rmSync(testDirectory, {recursive: true});
@@ -40,4 +41,5 @@ fs.mkdirSync(testDirectory);
 // test [npm init @fullstacked]
 execSync(`npm exec ${createPackage.replace(__dirname, "..")} --no-save --prefix ${testDirectory} -y -- -v ${fullstackedPackage}`, {cwd: testDirectory, stdio: "inherit"});
 
+// testing [npm i @fullstacked/build @fullstacked/run @fullstacked/watch]
 execSync(`npm i ${buildPackage} ${runPackage} ${watchPackage}`, {cwd: testDirectory, stdio: "inherit"});

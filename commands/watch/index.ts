@@ -1,24 +1,36 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
 import {CMD} from "fullstacked/types/gui";
 import CLIParser from "fullstacked/utils/CLIParser";
-import {exec, execSync} from "child_process";
+import {ChildProcess, exec, execSync} from "child_process";
 import fs from "fs";
+import WebSocket, {WebSocketServer} from "ws";
+import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
+import {fullstackedClientWatcher} from "fullstacked/utils/paths";
+import os from "os";
+import readline from "readline";
+import * as process from "process";
 
 export default class Watch extends CommandInterface {
     static commandLineArguments = {
         builder: {
             short: "b",
             type: "string",
-            default: "npx fullstacked build -v",
-            defaultDescription: "npx fullstacked build -v",
-            description: "Supply a command that builds your Web App and output the list of files to watch"
+            default: `npx fullstacked build -w ${fullstackedClientWatcher} -v`,
+            defaultDescription: "npx fullstacked build -w fullstacked/client/watcher.ts -v",
+            description: "Provide a command that builds your Web App and outputs the list of files to watch"
         },
-        runner: {
+        start: {
+            short: "s",
+            type: "string",
+            default: "npx fullstacked run -a node",
+            defaultDescription: "npx fullstacked run -a node",
+            description: "Provide a command that starts your Web App"
+        },
+        restart: {
             short: "r",
             type: "string",
-            default: "npx fullstacked run --restart node -a node",
-            defaultDescription: "npx fullstacked run -a --restart node",
-            description: "Supply a command that runs your Web App"
+            defaultDescription: "Uses start",
+            description: "Provide a command that restarts your Web App"
         },
         interval: {
             short: "i",
@@ -32,13 +44,18 @@ export default class Watch extends CommandInterface {
 
     watchingFiles: Set<string> = new Set();
 
+    wss: WebSocketServer;
+    ws: Set<WebSocket> = new Set();
+
+    runProcess: ChildProcess;
+
     guiCommands(): { cmd: CMD; callback(data, tick?: () => void): any }[] {
         return [];
     }
 
     watchFileListener(this: {file: string, instance: Watch}){
-        console.log(`File Change Detected [${this.file}]`);
-        this.instance.run();
+        console.log(`File Change Detected [${this.file.slice(process.cwd().length)}]`);
+        this.instance.restart();
     }
 
     buildAndWatch(){
@@ -72,16 +89,46 @@ export default class Watch extends CommandInterface {
         });
     }
 
-    run(): void {
-        this.buildAndWatch();
-
-        const runProcess = exec(this.config.runner);
-        runProcess.stdout.pipe(process.stdout);
-        runProcess.stderr.pipe(process.stderr);
+    async startWatchServer(){
+        const port = await getNextAvailablePort();
+        this.wss = new WebSocketServer({port: port});
+        this.wss.on('connection', (ws) => {
+            this.ws.add(ws);
+            ws.on('close', () => this.ws.delete(ws));
+        });
+        console.log(`Watcher WebSocket Server is listening at http://localhost:${this.wss.options.port}`);
     }
 
-    runCLI(): void {
-        this.run();
+    restart(){
+        this.runProcess.kill();
+
+        this.buildAndWatch();
+
+        this.ws.forEach(ws => ws.send(Date.now()));
+
+        this.runProcess = exec(this.config.restart || this.config.start);
+        this.runProcess.stdout.pipe(process.stdout);
+        this.runProcess.stderr.pipe(process.stderr);
+    }
+
+    async run() {
+        if(this.config.start === Watch.commandLineArguments.start.default) {
+            this.config = {
+                ...this.config,
+                restart: this.config.start + " -r"
+            }
+        }
+
+        await this.startWatchServer();
+
+        this.buildAndWatch();
+        this.runProcess = exec(this.config.start);
+        this.runProcess.stdout.pipe(process.stdout);
+        this.runProcess.stderr.pipe(process.stderr);
+    }
+
+    runCLI() {
+        return this.run();
     }
 
 }

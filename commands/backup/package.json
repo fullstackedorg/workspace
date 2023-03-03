@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/backup",
-  "version": "0.0.0",
+  "version": "0.10.0-1",
   "description": "Backup and restore your FullStacked Web App",
   "main": "index.js",
   "scripts": {
