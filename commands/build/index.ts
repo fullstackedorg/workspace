@@ -1,18 +1,14 @@
-import { dirname, resolve } from "path";
+import { resolve } from "path";
 import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import yaml from "js-yaml";
 import CommandInterface from "fullstacked/commands/CommandInterface";
-import glob from "glob";
+import {globSync} from "glob";
 import HTML from "./HTML.js";
 import CLIParser from "fullstacked/utils/CLIParser";
-import { fileURLToPath } from "url";
-
-var __dirname = dirname(fileURLToPath(import.meta.url));
+import {fullstackedClient, fullstackedClientWatcher, fullstackedServer} from "fullstacked/utils/paths";
 
 export default class Build extends CommandInterface {
-    static fullstackedServer = resolve(__dirname, "..", "..", "fullstacked", "server", "index.ts");
-    static fullstackedClient = resolve(__dirname, "..", "..", "fullstacked", "client", "index.ts");
     static fullstackedNodeDockerComposeSpec = {
         services: {
             node: {
@@ -31,21 +27,28 @@ export default class Build extends CommandInterface {
         client: {
             type: "string[]",
             short: "c",
-            default: [resolve(process.cwd(), "client", "index.ts"), resolve(process.cwd(), "client", "index.tsx")].concat(glob.sync(resolve(process.cwd(), "client", "**", "*.client.ts"))).concat(glob.sync(resolve(process.cwd(), "client", "**", "*.client.tsx"))).filter((defaultFiles) => fs.existsSync(defaultFiles)),
+            default: [resolve(process.cwd(), "client", "index.ts"), resolve(process.cwd(), "client", "index.tsx")]
+                .concat(globSync(resolve(process.cwd(), "client", "**", "*.client.ts")))
+                .concat(globSync(resolve(process.cwd(), "client", "**", "*.client.tsx")))
+                .filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Client entry points to be bundled",
             defaultDescription: "./client/index.ts(x), ./client/*.client.ts(x)"
         },
         server: {
             type: "string[]",
             short: "s",
-            default: [resolve(process.cwd(), "server", "index.ts")].concat(glob.sync(resolve(process.cwd(), "server", "**", "*.server.ts"))).filter((defaultFiles) => fs.existsSync(defaultFiles)),
+            default: [resolve(process.cwd(), "server", "index.ts")]
+                .concat(globSync(resolve(process.cwd(), "server", "**", "*.server.ts")))
+                .filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Server entry points to be bundled",
             defaultDescription: "./server/index.ts, ./server/*.server.ts"
         },
         dockerCompose: {
             type: "string[]",
             short: "d",
-            default: [resolve(process.cwd(), "docker-compose.yml")].concat(glob.sync(resolve(process.cwd(), "**", "*.docker-compose.yml"))).filter((defaultFiles) => fs.existsSync(defaultFiles)),
+            default: [resolve(process.cwd(), "docker-compose.yml")]
+                .concat(globSync(resolve(process.cwd(), "**", "*.docker-compose.yml")))
+                .filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Docker Compose files to be bundled",
             defaultDescription: "./docker-compose.yml, ./*.docker-compose.yml"
         },
@@ -71,6 +74,11 @@ export default class Build extends CommandInterface {
             short: "v",
             defaultDescription: "false",
             description: "Output the list of files bundled"
+        },
+        clientWatcher: {
+            type: "string",
+            short: "w",
+            description: "Define a script file that the client will bundle as './watcher'.\nUsed by @fullstacked/watch to add the script for the connection\nflow to the Watcher WebSocket Server."
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Build.commandLineArguments);
@@ -94,7 +102,7 @@ export default class Build extends CommandInterface {
         const filesBuilt = new Set();
 
         const options = {
-            entryPoints: [Build.fullstackedServer],
+            entryPoints: [fullstackedServer],
             outfile: resolve(serverOutDir, "index.mjs"),
             platform: "node" as Platform,
             bundle: true,
@@ -110,17 +118,17 @@ export default class Build extends CommandInterface {
                 setup(build) {
                     build.onResolve({ filter: /fullstacked\/server/ }, (args) => {
                         return {
-                            path: Build.fullstackedServer
+                            path: fullstackedServer
                         };
                     });
                     build.onLoad({ filter: /.*/ }, (args) => {
                         if (!args.path.includes("node_modules"))
                             filesBuilt.add(args.path);
 
-                        if (args.path !== Build.fullstackedServer)
+                        if (args.path !== fullstackedServer)
                             return null;
 
-                        const contents = fs.readFileSync(Build.fullstackedServer) + "\n" +
+                        const contents = fs.readFileSync(fullstackedServer) + "\n" +
                             serverFiles.map((file) => `import("${file.replace(/\\/g, "\\\\")}");`).join("\n");
 
                         return {
@@ -149,9 +157,10 @@ export default class Build extends CommandInterface {
         const filesBuilt = new Set();
 
         const clientFiles = this.config.client;
+        const clientWatcher = this.config.clientWatcher;
 
         const options = {
-            entryPoints: [ Build.fullstackedClient ],
+            entryPoints: [ fullstackedClient ],
             outdir: clientOutDir,
             entryNames: "index",
             format: "esm" as Format,
@@ -179,10 +188,19 @@ export default class Build extends CommandInterface {
                         if (!args.path.includes("node_modules"))
                             filesBuilt.add(args.path);
 
-                        if (!args.path.match(new RegExp(Build.fullstackedClient.replace(/\\/g, "\\\\"))))
+                        if (args.path === fullstackedClientWatcher) {
+                            return {
+                                contents: clientWatcher && fs.existsSync(clientWatcher)
+                                    ? fs.readFileSync(clientWatcher).toString()
+                                    : "",
+                                loader: "ts"
+                            }
+                        }
+
+                        if (!args.path.match(new RegExp(fullstackedClient.replace(/\\/g, "\\\\"))))
                             return;
 
-                        const contents = fs.readFileSync(Build.fullstackedClient) + "\n" +
+                        const contents = fs.readFileSync(fullstackedClient) + "\n" +
                             clientFiles.map((file) => `import "${file.replace(/\\/g, "\\\\")}";`).join("\n");
 
                         return {
@@ -198,7 +216,7 @@ export default class Build extends CommandInterface {
 
         const html = new HTML();
         html.addInBODY(`<script type="module" src="/index.js"></script>`);
-        glob.sync("*.css", { cwd: clientOutDir }).forEach((cssFile) =>
+        globSync("*.css", { cwd: clientOutDir }).forEach((cssFile) =>
             html.addInHead(`<link rel="stylesheet" href="/${cssFile}">`));
         fs.writeFileSync(resolve(clientOutDir, "index.html"), html.toString());
 

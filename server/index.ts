@@ -3,13 +3,11 @@ import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
 import {fileURLToPath, pathToFileURL} from "url";
-import type Watcher from "./watcher";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 class ServerInstance {
     server: http.Server;
-    watcher: Promise<Watcher>;
     port: number = 80;
     publicDir = path.resolve(__dirname, 'public');
     logger: {
@@ -18,7 +16,7 @@ class ServerInstance {
     } = null;
     listeners: {
         title?: string,
-        handler(req: IncomingMessage, res: ServerResponse): void | Promise<void>,
+        handler(req: IncomingMessage, res: ServerResponse): any | Promise<any>,
     }[] = [];
 
     constructor() {
@@ -48,15 +46,7 @@ class ServerInstance {
 
                 const maybePromise = listener.handler(req, res);
                 if(maybePromise instanceof Promise) {
-                    await new Promise<void>(async resolve => {
-                        let closed = false;
-                        res.on("close", () => {
-                            closed = true;
-                            resolve();
-                        });
-                        await maybePromise;
-                        if(!closed) resolve();
-                    });
+                    await maybePromise;
                 }
             }
 
@@ -91,16 +81,6 @@ class ServerInstance {
         });
 
         this.server.listen(this.port);
-
-        if(!process.argv.includes("--watch")) return;
-
-        this.watcher = new Promise(resolve => {
-            import("./watcher").then(watcherModule => {
-                const watcher = new watcherModule.default();
-                watcher.init(this.server);
-                resolve(watcher);
-            });
-        });
     }
 
     promisify(requestListener: RequestListener<typeof IncomingMessage, typeof ServerResponse>): {handler(req, res): Promise<void>, resolver(req, res): void}{

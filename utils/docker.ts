@@ -9,7 +9,8 @@ export default class Docker {
             this.client = new Dockerode();
 
             if(!this.checkIfDockerCLIIsInstalled()){
-                console.log("Docker is a requirement for FullStacked. Please install Docker Desktop from here: https://www.docker.com/");
+                console.log("Docker is a requirement for some of the FullStacked commands.\n" +
+                    "Please install Docker Desktop from here: https://www.docker.com/");
                 process.exit(1);
             }else if(!await this.pingDocker()){
                 console.log("Make sure Docker is running...");

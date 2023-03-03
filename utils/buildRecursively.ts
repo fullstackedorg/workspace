@@ -1,9 +1,6 @@
 import {build} from "esbuild";
 import {dirname, resolve} from "path";
 import fs from "fs";
-import {fileURLToPath} from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export function convertPathToJSExt(filePath){
     if(filePath.endsWith(".js"))
