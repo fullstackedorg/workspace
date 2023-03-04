@@ -11,7 +11,7 @@ export default function() {
     const {projectDir, fullstackedVersion} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
 
     if(fs.existsSync(resolve(projectDir, "package.json")))
-        throw new Error(`package.json already exist at [${projectDir}]`);
+        throw Error(`package.json already exist at [${projectDir}]`);
 
     if(!fs.existsSync(projectDir)) fs.mkdirSync(projectDir, {recursive: true});
 

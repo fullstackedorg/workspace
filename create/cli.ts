@@ -68,7 +68,7 @@ if(help){
 }
 
 if(!commands.find(com => com.name === command))
-    throw new Error(`Unknown command [${command}]`);
+    throw Error(`Unknown command [${command}]`);
 
 try{
     await import(resolve(__dirname, command + ".js"));

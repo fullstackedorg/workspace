@@ -18,14 +18,15 @@ overlay.style.cssText = `
     height: 100vh;
     width: 100vw;
     z-index: 999999;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(30, 41, 59, 0.6);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 `;
-overlay.innerText = "Waiting for Web App reboot...";
 
 async function reload(){
+    overlay.innerText = "Waiting for Web App reboot...";
     document.body.append(overlay);
     let caughtServerDown = false;
     let serverBackUp = false;
@@ -44,11 +45,15 @@ async function reload(){
 }
 
 function connectToWatcher(host: string){
-    const ws = new WebSocket((window.location.protocol === "https:" ? "wss:" : "ws:") + "//" + host);
-    ws.onmessage = reload;
+    try{
+        const ws = new WebSocket((window.location.protocol === "https:" ? "wss:" : "ws:") + "//" + host);
+        ws.onmessage = reload;
+    }catch (e){
+        this.displayForm();
+    }
 }
 
-if(!watcherEndpoint){
+function displayForm(){
     const form = document.createElement("form");
     const input = document.createElement("input");
     form.addEventListener("submit", e => {
@@ -57,11 +62,17 @@ if(!watcherEndpoint){
         if(!value.startsWith("http"))
             value = window.location.protocol + "//" + value;
         const url = new URL(value);
-        connectToWatcher(url.host);
         window.localStorage.setItem(storageKey, url.host);
+        window.location.reload();
     });
     form.append(input);
-    document.body.append(form);
+    overlay.innerHTML = `<div>Enter FullStacked Watcher WebSocket Server Endpoint</div>`;
+    overlay.append(form);
+    document.body.append(overlay);
+}
+
+if(!watcherEndpoint){
+    displayForm();
 }else{
     connectToWatcher(watcherEndpoint)
 }

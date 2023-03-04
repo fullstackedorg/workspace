@@ -7,5 +7,18 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "CP Lepage",
-  "license": "ISC"
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
+    "glob": "^9.2.1",
+    "js-yaml": "^4.1.0",
+    "progress-stream": "^2.0.0",
+    "prompts": "^2.4.2",
+    "ssh2-sftp-client": "^9.0.4"
+  },
+  "devDependencies": {
+    "@types/prompts": "^2.4.2",
+    "@types/ssh2-sftp-client": "^9.0.0"
+  }
 }
