@@ -3,9 +3,10 @@
   "version": "0.10.0-1",
   "description": "Backup and restore your FullStacked Web App",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "CP Lepage",
-  "license": "ISC"
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"
+  }
 }

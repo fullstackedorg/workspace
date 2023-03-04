@@ -6,8 +6,6 @@ import fs from "fs";
 import WebSocket, {WebSocketServer} from "ws";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
 import {fullstackedClientWatcher} from "fullstacked/utils/paths";
-import os from "os";
-import readline from "readline";
 import * as process from "process";
 
 export default class Watch extends CommandInterface {

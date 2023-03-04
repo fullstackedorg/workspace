@@ -5,6 +5,8 @@ import {dirname, resolve} from "path";
 import {fileURLToPath} from "url";
 import CommandInterface from "./commands/CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
+import os from "os";
+import readline from "readline";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -79,13 +81,13 @@ if(!commandName) {
     }
 
 
-    throw new Error("Could not find command in command line");
+    throw Error("Could not find command in command line");
 }
 
 const commandLocation = getCommandLocation(commandName);
 
 if(!commandLocation)
-    throw new Error(`Could not locate command [${commandName}]. Maybe try to install it [ npm i @fullstacked/${commandName} ]`);
+    throw Error(`Could not locate command [${commandName}]. Maybe try to install it [ npm i @fullstacked/${commandName} ]`);
 
 const CommandModule = await import(commandLocation);
 
@@ -112,5 +114,16 @@ if(help){
     console.log(`  Usage: npx fullstacked ${commandName} [ARGS...]\n`)
     console.log(outputTable.toString());
 }else{
+
+    if(os.platform() === "win32"){
+        //source : https://stackoverflow.com/a/48837698
+        readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        }).on('close', function() {
+            process.emit('SIGINT')
+        });
+    }
+
     command.runCLI();
 }

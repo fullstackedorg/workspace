@@ -7,7 +7,8 @@
         "moduleResolution": "node",
         "jsx": "react",
         "paths": {
-            "fullstacked/*": ["./*"]
+            "fullstacked/*": ["./*"],
+            "@fullstacked/deploy/*": ["./commands/deploy/*"]
         }
     }
 }

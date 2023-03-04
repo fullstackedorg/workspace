@@ -44,7 +44,7 @@ console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 function updatePackageJsonVersion(location: string, version: string){
     const packageJsonFilePath = resolve(__dirname, location, "package.json");
     if(!fs.existsSync(packageJsonFilePath))
-        throw new Error(`Can not find package.json at [${packageJsonFilePath}]`);
+        throw Error(`Can not find package.json at [${packageJsonFilePath}]`);
 
     const packageJsonData = JSON.parse(fs.readFileSync(packageJsonFilePath).toString())
     packageJsonData.version = version;

@@ -1,14 +1,13 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
 import {RUN_CMD} from "fullstacked/types/run";
-import {resolve} from "path";
+import {dirname, resolve} from "path";
 import CLIParser from "fullstacked/utils/CLIParser";
 import Docker from "fullstacked/utils/docker";
 import DockerCompose from "dockerode-compose";
 import Info from "fullstacked/commands/info";
 import Dockerode from "dockerode";
-import readline, {clearLine, cursorTo} from "readline";
+import {clearLine, cursorTo} from "readline";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
-import os from "os";
 
 export default class Run extends CommandInterface {
     static commandLineArguments = {
@@ -130,16 +129,6 @@ export default class Run extends CommandInterface {
         });
 
         if(!this.config.attach) return;
-
-        if(os.platform() === "win32"){
-            //source : https://stackoverflow.com/a/48837698
-            readline.createInterface({
-                input: process.stdin,
-                output: process.stdout,
-            }).on('close', function() {
-                process.emit('SIGINT')
-            });
-        }
 
         process.on("SIGINT", () => {
             this.stop().then(() => process.exit(0));
