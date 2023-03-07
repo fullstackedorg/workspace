@@ -1,6 +1,4 @@
-import {CMD} from "../types/gui";
 import {clearLine, cursorTo} from "readline";
-
 
 export default abstract class {
     write: (str) => void = process.stdout.write.bind(process.stdout);
@@ -13,8 +11,4 @@ export default abstract class {
 
     abstract run(): void;
     abstract runCLI(): void;
-    abstract guiCommands(): {
-        cmd: CMD,
-        callback(data, tick?: () => void): any
-    }[]
 }

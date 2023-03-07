@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "cli-table3": "^0.6.3",
-    "docker-names": "^1.2.1",
     "dockerode": "^3.3.4",
     "mime": "^3.0.0"
   },

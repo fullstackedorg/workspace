@@ -1,12 +1,11 @@
 import CommandInterface from "../CommandInterface";
 import CLIParser from "../../utils/CLIParser";
-import dockerNames from "docker-names";
-import {CMD} from "../../types/gui";
 import crypto from "crypto";
 import {resolve} from "path";
 import fs from "fs";
 import {execSync} from "child_process";
 import version from "../../version";
+import randStr from "fullstacked/utils/randStr";
 
 export default class Info extends CommandInterface {
     static commandLineArguments = {
@@ -50,7 +49,7 @@ export default class Info extends CommandInterface {
 
         this.config = {
             ...this.config,
-            name: this.config.name ?? packageJsonData?.name ?? dockerNames.getRandomName(),
+            name: this.config.name ?? packageJsonData?.name ?? randStr(),
             version: this.config.version ?? packageJsonData?.version ?? "0",
             hash: this.config.hash ?? this.getGitShortCommitHash() ?? crypto.randomBytes(6).toString('hex')
         }
@@ -64,10 +63,6 @@ export default class Info extends CommandInterface {
         catch (e){
             return ""
         }
-    }
-
-    guiCommands(): { cmd: CMD; callback(data, tick?: () => void): any }[] {
-        return [];
     }
 
     run(): void {

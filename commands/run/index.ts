@@ -1,13 +1,13 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
-import {RUN_CMD} from "fullstacked/types/run";
-import {dirname, resolve} from "path";
+import {resolve} from "path";
 import CLIParser from "fullstacked/utils/CLIParser";
 import Docker from "fullstacked/utils/docker";
 import DockerCompose from "dockerode-compose";
 import Info from "fullstacked/commands/info";
 import Dockerode from "dockerode";
-import {clearLine, cursorTo} from "readline";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
+import {maybePullDockerImage} from "fullstacked/utils/maybePullDockerImage";
+import sleep from "fullstacked/utils/sleep";
 
 export default class Run extends CommandInterface {
     static commandLineArguments = {
@@ -26,7 +26,12 @@ export default class Run extends CommandInterface {
         restart: {
             type: "boolean",
             short: "r",
-            description: "Restart your running Web App",
+            description: "Restart only node from your running Web App",
+            defaultDescription: "false"
+        },
+        restartAll: {
+            type: "boolean",
+            description: "Restart all containers from your running Web App",
             defaultDescription: "false"
         },
         stop: {
@@ -74,7 +79,7 @@ export default class Run extends CommandInterface {
         let nodePort;
         for(const service of services){
             const serviceObject = this.dockerCompose.recipe.services[service];
-            await this.maybePullDockerImage(this.dockerClient, serviceObject.image);
+            await maybePullDockerImage(serviceObject.image);
             const exposedPorts = serviceObject.ports;
             if(!exposedPorts) continue;
             for (let i = 0; i < exposedPorts.length; i++) {
@@ -100,13 +105,22 @@ export default class Run extends CommandInterface {
             return this.stop();
         }
 
-        const container = this.dockerClient.getContainer(`${this.dockerCompose.projectName}_node_1`);
-        if (this.config.restart) {
+        const nodeContainer = this.dockerClient.getContainer(`${this.dockerCompose.projectName}_node_1`);
+        if (this.config.restart || this.config.restartAll) {
             try{
-                await container.restart({t: 0});
+                await nodeContainer.restart({t: 0});
             }catch (e) {
                 // not even running, lets start
                 await this.start()
+            }
+
+            if(this.config.restartAll) {
+                await Promise.all(Object.keys(this.dockerCompose.recipe.services).map(containerName => {
+                    if (containerName === "node") return;
+
+                    const container = this.dockerClient.getContainer(`${this.dockerCompose.projectName}_${containerName}_1`);
+                    return container.restart();
+                }));
             }
         }
 
@@ -114,7 +128,7 @@ export default class Run extends CommandInterface {
             // basic run start command
             try{
                 // might be already running
-                const port = (await container.inspect()).HostConfig.PortBindings["80/tcp"].at(0).HostPort;
+                const port = (await nodeContainer.inspect()).HostConfig.PortBindings["80/tcp"].at(0).HostPort;
                 console.log(`${this.infos.config.name} v${this.infos.config.version} already running at http://localhost:${port}`);
             }catch (e) {
                 await this.start()
@@ -122,11 +136,7 @@ export default class Run extends CommandInterface {
         }
 
         // attach
-        this.config.attach?.forEach(containerName => {
-            const container = this.dockerClient.getContainer(`${this.dockerCompose.projectName}_${containerName}_1`);
-            container.attach({stream: true, stdout: true, stderr: true})
-                .then(stream => container.modem.demuxStream(stream, process.stdout, process.stderr));
-        });
+        this.config.attach?.forEach(containerName => this.attachToContainer(containerName))
 
         if(!this.config.attach) return;
 
@@ -135,46 +145,19 @@ export default class Run extends CommandInterface {
         });
     }
 
+    async attachToContainer(containerName: string){
+        const container = this.dockerClient.getContainer(`${this.dockerCompose.projectName}_${containerName}_1`);
+        try{
+            const stream = await container.attach({stream: true, stdout: true, stderr: true})
+            container.modem.demuxStream(stream, process.stdout, process.stderr);
+            stream.on("end", () => this.attachToContainer(containerName));
+        }catch (e){
+            await sleep(100);
+            await this.attachToContainer(containerName);
+        }
+    }
+
     runCLI(): Promise<void> {
         return this.run();
-    }
-
-    guiCommands(): { cmd: RUN_CMD; callback(data, tick?: () => void): any }[] {
-        return [
-            {
-                cmd: RUN_CMD.START,
-                callback: () => this.run()
-            },{
-                cmd: RUN_CMD.BENCH,
-                async callback({url}) {
-                    const start = Date.now();
-                    await fetch(url);
-                    return Date.now() - start;
-                }
-            }
-        ];
-    }
-
-    private async maybePullDockerImage(docker, image){
-        try{
-            await (await docker.getImage(image)).inspect();
-        }catch (e){
-            const pullStream = await docker.pull(image);
-            await new Promise<void>(resolve => {
-                pullStream.on("data", dataRaw => {
-                    const dataParts = dataRaw.toString().match(/{.*}/g);
-                    dataParts.forEach((part) => {
-                        const {status, progress} = JSON.parse(part);
-                        process.stdout.write(`[${image}] ${status} ${progress || " "}`);
-                    });
-
-                })
-                pullStream.on("end", () => {
-                    clearLine(process.stdout, 0);
-                    cursorTo(process.stdout, 0, null);
-                    resolve();
-                });
-            });
-        }
     }
 }

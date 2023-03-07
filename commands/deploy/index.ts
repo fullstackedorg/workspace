@@ -1,5 +1,4 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
-import {CMD} from "fullstacked/types/gui";
 import {dirname, resolve} from "path";
 import CLIParser from "fullstacked/utils/CLIParser";
 import prompts from "prompts";
@@ -7,7 +6,6 @@ import fs from "fs";
 import ServerSSH from "./serverSSH";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
-import {randomBytes} from "crypto";
 import yaml from "js-yaml";
 import {fileURLToPath} from "url";
 import Info from "fullstacked/commands/info";
@@ -15,10 +13,13 @@ import {globSync} from "glob";
 import progress from "progress-stream";
 import DockerInstallScripts from "./dockerInstallScripts";
 import {Writable} from "stream";
+import randStr from "fullstacked/utils/randStr";
+import dns from "dns";
+import {decryptDataWithPassword, encryptDataWithPassword} from "fullstacked/utils/encrypt";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export type CredentialSSH = {
+export type CredentialsSSH = {
     host: string,
     port: number,
     username: string,
@@ -56,39 +57,32 @@ export default class Deploy extends CommandInterface {
     static commandLineArguments = {
         host: {
             type: "string",
-            short: "i",
             description: "Server IP address or hostname",
         },
         port: {
             type: "number",
-            short: "p",
             default: 22,
             description: "Server SSH port",
             defaultDescription: "22"
         },
         username: {
             type: "string",
-            short: "u",
             description: "Server SSH username",
         },
         password: {
             type: "string",
-            short: "p",
             description: "Authenticate with password",
         },
         privateKey: {
             type: "string",
-            short: "k",
             description: "Authenticate with a private key",
         },
         privateKeyFile: {
             type: "string",
-            short: "f",
             description: "Authenticate with a file containing your private key",
         },
         hostDir: {
             type: "string",
-            short: "d",
             default: "/home",
             defaultDescription: "/home",
             description: "Server directory where your FullStacked Web Apps are"
@@ -103,21 +97,30 @@ export default class Deploy extends CommandInterface {
         dryRun: {
             type: "boolean",
             description: "Simulate a deployment on a local Docker-in-Docker container emulating a Linux remote server"
+        },
+        configFile: {
+            type: "string",
+            defaultDescription: "./.fullstacked",
+            description: "Define the location of your saved configs"
+        },
+        configPassword: {
+            type: "string",
+            description: "Password to decrypt your saved configs"
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Deploy.commandLineArguments);
 
     webAppInfo = new Info();
 
-    credentialsSSH: CredentialSSH;
-    nginxConfigs: NginxConfig[];
+    credentialsSSH: CredentialsSSH;
+    nginxConfigs: NginxConfig[] = [];
     certificateSSL: CertificateSSL;
 
     sftp: WrappedSFTP;
 
     askToInstallDockerOnRemoteHost: () => Promise<boolean>;
 
-    async execOnRemoteHost(cmd): Promise<string>{
+    async execOnRemoteHost(cmd: string): Promise<string>{
         const {client} = await this.getSFTP();
 
         return new Promise(resolve => {
@@ -165,6 +168,17 @@ export default class Deploy extends CommandInterface {
                 ...this.config,
                 username
             }
+
+            const {hostDir} = await prompts({
+                type: "text",
+                name: "hostDir",
+                initial: "/home/" + username,
+                message: "Define your remote host directory where FullStacked can run your Web Apps"
+            });
+            this.config = {
+                ...this.config,
+                hostDir
+            }
         }
 
         if(!this.config.password && !this.config.privateKey && !this.config.privateKeyFile){
@@ -206,12 +220,146 @@ export default class Deploy extends CommandInterface {
             this.credentialsSSH.privateKey = fs.readFileSync(resolve(process.cwd(), this.config.privateKeyFile)).toString();
     }
 
+    async setupNginxConfigsWithPrompts(){
+        const dockerCompose = yaml.load(fs.readFileSync(resolve(this.config.outputDir, "docker-compose.yml")).toString());
+
+        for (const serviceName of Object.keys(dockerCompose.services)) {
+            const service = dockerCompose.services[serviceName];
+
+            if(!service.ports || !service.ports.length)
+                continue;
+
+            for (const port of service.ports) {
+                const internalPort = port.split(":").pop();
+
+                const nginxConfig: NginxConfig = {
+                    name: serviceName,
+                    port: internalPort
+                }
+
+                const { setup } = await prompts({
+                    type: "confirm",
+                    name: "setup",
+                    message: `Would you like to add server names for ${serviceName} port ${internalPort}`
+                });
+
+                if(setup) {
+                    const { serverNames } = await prompts({
+                        type: "list",
+                        name: "serverNames",
+                        message: "Enter the server names (split with commas)",
+                    });
+
+                    const { nginxExtraConfigs } = await prompts({
+                        type: "text",
+                        name: "nginxExtraConfigs",
+                        message: "Enter any nginx extra configuration (ie: proxy_set_header Host $host; proxy_set_header X-Forwarded-For $remote_addr; )",
+                    });
+
+                    nginxConfig.serverNames = serverNames;
+                    nginxConfig.nginxExtraConfigs = nginxExtraConfigs
+                        .split(";")
+                        .filter(config => Boolean(config.trim()))
+                        .map(config => config.trim() + ";");
+                }
+
+                const { customPort } = await prompts({
+                    type: "confirm",
+                    name: "customPort",
+                    message: `Would you like ${serviceName} port ${internalPort} to listen on a custom port ? Default is 80 and 443(SSL)`
+                });
+
+                if(customPort){
+                    const { port } = await prompts({
+                        type: "number",
+                        name: "port",
+                        message: "Which port?"
+                    });
+
+                    const { ssl } = await prompts({
+                        type: "confirm",
+                        name: "ssl",
+                        message: "With SSL encryption?"
+                    });
+
+                    nginxConfig.customPublicPort = {
+                        port,
+                        ssl
+                    }
+                }
+
+                this.nginxConfigs.push(nginxConfig);
+            }
+        }
+    }
+
+    async setupCertificatesWithPrompts(){
+        const { setup } = await prompts({
+            type: "confirm",
+            name: "setup",
+            message: "Would you like to create new SSL Certificates"
+        })
+
+        if(!setup) return;
+
+        const { email } = await prompts({
+            type: "text",
+            name: "email",
+            message: "Enter an email address that will receive notifications about the certificate"
+        });
+
+        const { domains } = await prompts({
+            type: "multiselect",
+            name: "domains",
+            message: "Select domains to include in certificate",
+            choices: this.nginxConfigs.map(nginxConfig => nginxConfig.serverNames?.map(serverName => ({
+                title: serverName,
+                value: serverName
+            }))).flat(),
+            instructions: false,
+            hint: '- Space to select. Return to submit'
+        });
+
+        let allDomainPointingToHost = false;
+        while(!allDomainPointingToHost){
+            const { ready } = await prompts({
+                type: "confirm",
+                name: "ready",
+                message: `Make sure you have an A record pointing to ${this.credentialsSSH.host} for each domain`
+            });
+
+            if(!ready) return;
+
+            const success = [];
+            for (const domain of domains) {
+                try{
+                    const lookupResult = await dns.promises.lookup(domain);
+                    console.log(`${domain} resolves to [${lookupResult.address}]`);
+                    success.push(lookupResult.address === this.credentialsSSH.host);
+                }catch (e) {
+                    console.log(`✖ Could not resolve [${domain}]`);
+                    success.push(false);
+                }
+            }
+
+            allDomainPointingToHost = success.every((lookup) => lookup);
+
+            if(!allDomainPointingToHost){
+                console.log("If you recently changed your DNS records. Try flushing yo DNS cache.")
+                console.log("Windows: ipconfig /flushdns")
+                console.log("MacOS: sudo killall -HUP mDNSResponder; sudo dscacheutil -flushcache")
+            }
+        }
+
+        this.certificateSSL = await this.generateCertificateOnRemoteHost(email, domains);
+    }
+
     /**
      *
      * Get sftp client in less than 3s
      *
      */
-    protected async getSFTP(): Promise<WrappedSFTP>{
+    async getSFTP(): Promise<WrappedSFTP>{
         if(this.sftp) return this.sftp;
 
         if(!this.credentialsSSH)
@@ -250,9 +398,8 @@ export default class Deploy extends CommandInterface {
         this.sftp = await this.getSFTP();
         console.log("Success!");
 
-        console.log("Testing mkdir in App Directory")
-        const randomDirectoryName = randomBytes(6).toString('hex');
-        const testDir = `${this.credentialsSSH.directory}/${randomDirectoryName}`;
+        console.log("Testing mkdir in App Directory");
+        const testDir = `${this.credentialsSSH.directory}/${randStr()}`;
         if(await this.sftp.exists(testDir)){
             throw Error(`Test directory ${testDir} exist. Exiting to prevent any damage to remote server.`);
         }
@@ -340,25 +487,33 @@ export default class Deploy extends CommandInterface {
      * @return an array of available ports on remote host
      *
      */
-    private async getAvailablePorts(count: number, startingPort: number = 8001): Promise<string[]> {
-        const dockerContainerPorts = await this.execOnRemoteHost("docker container ls --format \"{{.Ports}}\" -a");
-        const portsInUse = new Set();
-        dockerContainerPorts.split("\n").map(line => line.split(",")).flat().map(portUsed =>
-            portUsed.split(":").pop().split("->").shift()) // each line looks like "0.0.0.0:8000->8000/tcp"
-            .map(port => parseInt(port)) // cast to number
-            .filter(port => port || !isNaN(port)) // filter empty strings
-            .forEach(port => portsInUse.add(port));
+    private async getAvailablePorts(count: number): Promise<string[]> {
+        const sftp = await this.getSFTP();
 
-        const availablePorts = [];
-        while (availablePorts.length < count){
-            if(!portsInUse.has(startingPort))
-                availablePorts.push(startingPort);
-            startingPort++;
-        }
+        const getAvailablePortsScriptPath = this.credentialsSSH.directory + "/getAvailablePorts.js";
+        await sftp.put(resolve(__dirname, "nginx", "getAvailablePorts.js"), getAvailablePortsScriptPath);
+
+        const dockerNodeCommand = [
+            "docker",
+            "run",
+            "--rm",
+            `-v ${getAvailablePortsScriptPath}:/node/script.mjs`,
+            `--network host`,
+            "node:18-alpine",
+            `node /node/script.mjs -c ${count}`
+        ].join(" ");
+        const portsRaw = await this.execOnRemoteHost(dockerNodeCommand);
+
+        const availablePorts = portsRaw
+            .split("\n")
+            .filter(port => Boolean(port))
+            .map(port => port.trim());
+
+        if(availablePorts.length !== count)
+            throw Error("Something went wrong when trying to get available ports on remote host.");
 
         return availablePorts;
     }
-
 
     /**
      *
@@ -369,8 +524,7 @@ export default class Deploy extends CommandInterface {
     private async setupDockerComposeAndNginx(): Promise<{ nginxFiles: NginxFile[], dockerCompose: string }>{
         const dockerCompose = yaml.load(fs.readFileSync(resolve(this.config.outputDir, "docker-compose.yml")).toString());
         // set default to node if no nginx configs
-        const nginxConfigs = this.nginxConfigs || [{name: "node", port: 80}];
-        const availablePorts = await this.getAvailablePorts(nginxConfigs.length);
+        const availablePorts = await this.getAvailablePorts(this.nginxConfigs.length);
 
         const nginxFiles: NginxFile[] = [];
 
@@ -401,9 +555,7 @@ export default class Deploy extends CommandInterface {
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "")
             .replace(/\{APP_NAME\}/g, this.webAppInfo.config.name);
 
-        nginxConfigs.forEach((nginxConfig, configIndex) => {
-            // TODO, Prompt for information
-
+        this.nginxConfigs.forEach((nginxConfig, configIndex) => {
             const availablePort = availablePorts[configIndex];
 
             if(nginxConfig.customPublicPort?.port){
@@ -545,10 +697,11 @@ export default class Deploy extends CommandInterface {
      * Generate SSL certificate on remote host using certbot
      *
      */
-    // TODO
-    async generateCertificateOnRemoteHost(email: string, serverNames: string[]){
+    async generateCertificateOnRemoteHost(email: string, domains: string[]){
         const sftp = await this.getSFTP();
         console.log("Connected to remote host");
+
+        await this.testDockerOnRemoteHost()
 
         let tempNginxDirRenamed = false;
         const nginxDir = `${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/nginx`;
@@ -561,7 +714,7 @@ export default class Deploy extends CommandInterface {
 
         await sftp.put(Buffer.from(`server {
     listen              80;
-    server_name         ${serverNames.join(" ")};
+    server_name         ${domains.join(" ")};
     root /apps/${this.webAppInfo.config.name}/nginx;
     location / {
         try_files $uri $uri/ =404;
@@ -578,7 +731,7 @@ export default class Deploy extends CommandInterface {
             `-v ${nginxDir}/certs:/etc/letsencrypt/archive`,
             `certbot/certbot certonly --webroot --agree-tos --no-eff-email -n -m ${email} -w /html`,
             `--cert-name certbot`,
-            serverNames.map(serverName => `-d ${serverName}`).join(" ")
+            domains.map(serverName => `-d ${serverName}`).join(" ")
         ];
 
         await this.execOnRemoteHost(command.join(" "));
@@ -619,6 +772,90 @@ export default class Deploy extends CommandInterface {
         return {fullchain, privkey};
     }
 
+    hasSavedConfigs(): {hasConfig: boolean, encrypted?: boolean}{
+        if(!this.config.configFile) return { hasConfig: false };
+
+        if(this.config.configFile && !fs.existsSync(this.config.configFile))
+            throw Error(`Cannot locate FullStacked config file at [${this.config.configFile}]`);
+
+        const content = fs.readFileSync(this.config.configFile).toString();
+        return {
+            hasConfig: true,
+            encrypted: content.trim()[0] !== "{"
+        }
+    }
+
+    /**
+     *
+     * Load saved configs
+     *
+     */
+    loadConfigs(): boolean{
+        if(!this.config.configFile || !fs.existsSync(this.config.configFile)) return false;
+
+        const content = fs.readFileSync(this.config.configFile).toString();
+        try{
+            const {credentialsSSH, nginxConfigs, certificateSSL} = this.config.configPassword
+                ? decryptDataWithPassword(content, this.config.configPassword)
+                : JSON.parse(content);
+
+            this.credentialsSSH = credentialsSSH;
+            this.nginxConfigs = nginxConfigs;
+            this.certificateSSL = certificateSSL;
+            return true;
+        }catch (e) {
+            console.log("Failed to load config");
+            return false;
+        }
+
+    }
+
+    /**
+     *
+     * Save config to project
+     *
+     */
+    async saveConfigs(password: string) {
+        const configs = {
+            credentialsSSH: this.credentialsSSH,
+            nginxConfigs: this.nginxConfigs,
+            certificateSSL: this.certificateSSL
+        }
+
+        const configFile = this.config.configFile || resolve(process.cwd(), ".fullstacked");
+
+        fs.writeFileSync(configFile, password
+            ? encryptDataWithPassword(configs, password)
+            : JSON.stringify(configs, null, 2));
+    }
+
+    downloadWithProgress(remoteFilePath: string, localFilePath: string){
+        const dlStream = fs.createWriteStream(localFilePath);
+
+        return new Promise<void>(async resolve => {
+            const sftp = await this.getSFTP();
+
+            let readStream = sftp.createReadStream(remoteFilePath, { autoClose: true });
+            readStream.once('end', () => {
+                dlStream.close(() => {
+                    this.endLine();
+                    resolve();
+                });
+            });
+
+            const fileStat = await sftp.stat(remoteFilePath);
+
+            const progressStream = progress({length: fileStat.size});
+
+            progressStream.on('progress', progress => {
+                this.printLine("Download progress : " + progress.percentage.toFixed(2) + "%");
+            });
+
+            readStream.pipe(progressStream).pipe(dlStream);
+        })
+
+    }
+
     async run() {
         if(!fs.existsSync(this.config.outputDir))
             throw Error(`Could not find bundled Web App directory at [${this.config.outputDir}]`);
@@ -629,7 +866,7 @@ export default class Deploy extends CommandInterface {
         let serverSSH: ServerSSH;
         if(this.config.dryRun){
             serverSSH = new ServerSSH();
-            const { portSSH, username, password } = await serverSSH.init(this.credentialsSSH);
+            const { portSSH, username, password } = await serverSSH.init();
             this.credentialsSSH = {
                 host: "0.0.0.0",
                 port: portSSH,
@@ -674,6 +911,45 @@ export default class Deploy extends CommandInterface {
         });
     }
 
+    async tryToLoadLocalConfigCLI(){
+        const defaultConfigFile = resolve(process.cwd(), ".fullstacked");
+
+        if(!this.config.configFile && fs.existsSync(defaultConfigFile)){
+            const { useFoundConfigFile } = this.config.configPassword
+                ? {useFoundConfigFile: true}
+                : await prompts({
+                    type: "confirm",
+                    name: "useFoundConfigFile",
+                    message: "We detected a saved config file (./.fullstacked). Would you like to use it?"
+                });
+
+            if(useFoundConfigFile){
+                this.config = {
+                    ...this.config,
+                    configFile: defaultConfigFile
+                }
+            }
+        }
+
+        const checkConfigFile = this.hasSavedConfigs();
+
+        if(checkConfigFile.hasConfig && checkConfigFile.encrypted && !this.config.configPassword){
+            const { configPassword } = await prompts({
+                type: "password",
+                name: "configPassword",
+                message: "Enter config file password"
+            })
+
+            this.config = {
+                ...this.config,
+                configPassword
+            }
+        }
+
+        if(this.config.configFile)
+            return this.loadConfigs();
+    }
+
     async runCLI() {
         this.askToInstallDockerOnRemoteHost = async function(){
             const { install } = await prompts({
@@ -685,13 +961,32 @@ export default class Deploy extends CommandInterface {
             return install;
         }
 
-        if(!this.config.dryRun)
-            await this.setupCredentialsWithConfigAndPrompts();
+        if(!this.config.dryRun) {
+            if (!await this.tryToLoadLocalConfigCLI()) {
+                await this.setupCredentialsWithConfigAndPrompts();
+                await this.setupNginxConfigsWithPrompts();
+                await this.setupCertificatesWithPrompts();
+            }
+        }
 
-        return this.run();
-    }
+        await this.run();
 
-    guiCommands(): { cmd: CMD; callback(data, tick?: () => void): any }[] {
-        return [];
+        if(this.config.configFile) return;
+
+        const { save } = await prompts({
+            type: "confirm",
+            name: "save",
+            message: "Would you like to save the configuration used?"
+        });
+
+        if(!save) return;
+
+        const { password } = await prompts({
+            type: "password",
+            name: "password",
+            message: "Encrypt saved config with password (leave blank for unencrypted)"
+        });
+
+        await this.saveConfigs(password);
     }
 }

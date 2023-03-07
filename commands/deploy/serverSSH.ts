@@ -1,11 +1,10 @@
 import Docker from "fullstacked/utils/docker";
-import dockerNames from "docker-names";
-import {CredentialsSSH} from "fullstacked/commands/deploy/index";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
 import {execSync} from "child_process";
 import {fileURLToPath} from "url";
 import {dirname} from "path";
 import Dockerode from "dockerode";
+import randStr from "fullstacked/utils/randStr";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -19,7 +18,7 @@ export default class ServerSSH {
         portHTTP: number,
     };
 
-    async init(credentials: CredentialsSSH): Promise<typeof this.container> {
+    async init(): Promise<typeof this.container> {
         const dockerClient = await Docker.getClient();
 
         const FullStackedServerSSHImageName = "fullstacked-server-ssh";
@@ -36,7 +35,7 @@ export default class ServerSSH {
         });
 
         this.container = {
-            name: "server_ssh-" + dockerNames.getRandomName(),
+            name: "fullstacked_server_ssh_" + randStr(),
             username: "root",
             password: "docker",
             portSSH: await getNextAvailablePort(2222),

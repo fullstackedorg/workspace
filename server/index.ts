@@ -15,7 +15,7 @@ class ServerInstance {
         out(req, res): void
     } = null;
     listeners: {
-        title?: string,
+        name?: string,
         handler(req: IncomingMessage, res: ServerResponse): any | Promise<any>,
     }[] = [];
 
@@ -42,7 +42,7 @@ class ServerInstance {
                 // break if response has managed to send
                 if(res.headersSent) break;
 
-                res.currentListener = listener.title;
+                res.currentListener = listener.name;
 
                 const maybePromise = listener.handler(req, res);
                 if(maybePromise instanceof Promise) {
@@ -66,7 +66,7 @@ class ServerInstance {
     start(){
         // default static file serving in front
         this.listeners.unshift({
-            title: "Default Public File Serving",
+            name: "Default Public File Serving",
             handler: (req, res) => {
                 if (res.headersSent) return;
 
