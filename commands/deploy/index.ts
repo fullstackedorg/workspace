@@ -1,5 +1,5 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
-import path, {dirname, resolve} from "path";
+import path, {resolve} from "path";
 import CLIParser from "fullstacked/utils/CLIParser";
 import prompts from "prompts";
 import fs from "fs";
