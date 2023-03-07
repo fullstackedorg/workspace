@@ -6,8 +6,6 @@ import {dirname} from "path";
 import Dockerode from "dockerode";
 import randStr from "fullstacked/utils/randStr";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 export default class ServerSSH {
     container: {
         instance: Dockerode.Container,
@@ -26,7 +24,7 @@ export default class ServerSSH {
         console.log("Building FullStacked Server SSH Docker image");
 
         const stream = await dockerClient.buildImage({
-            context: __dirname,
+            context: dirname(fileURLToPath(import.meta.url)),
             src: ["Dockerfile"]
         }, {t: FullStackedServerSSHImageName});
 
