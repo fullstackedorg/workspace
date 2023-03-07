@@ -7,6 +7,10 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.5"
   }
 }

@@ -44,10 +44,6 @@ const commands = [
         description: "Automatically reBuild and reRun your Web App on file changes"
     },
     {
-        name: "test",
-        description: "Run a test suite on your Web App"
-    },
-    {
         name: "deploy",
         description: "Send your bundled Web App to a remote host"
     },

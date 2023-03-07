@@ -1,5 +1,4 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
-import {CMD} from "fullstacked/types/gui";
 import CLIParser from "fullstacked/utils/CLIParser";
 import {ChildProcess, exec, execSync} from "child_process";
 import fs from "fs";
@@ -46,10 +45,6 @@ export default class Watch extends CommandInterface {
     ws: Set<WebSocket> = new Set();
 
     runProcess: ChildProcess;
-
-    guiCommands(): { cmd: CMD; callback(data, tick?: () => void): any }[] {
-        return [];
-    }
 
     watchFileListener(this: {file: string, instance: Watch}){
         console.log(`File Change Detected [${this.file.slice(process.cwd().length)}]`);

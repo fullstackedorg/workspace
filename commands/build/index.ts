@@ -46,11 +46,11 @@ export default class Build extends CommandInterface {
         dockerCompose: {
             type: "string[]",
             short: "d",
-            default: [resolve(process.cwd(), "docker-compose.yml")]
-                .concat(globSync(resolve(process.cwd(), "**", "*.docker-compose.yml")))
+            default: [resolve(process.cwd(), "docker", "compose.yml")]
+                .concat(globSync(resolve(process.cwd(), "docker", "**", "*.compose.yml")))
                 .filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Docker Compose files to be bundled",
-            defaultDescription: "./docker-compose.yml, ./*.docker-compose.yml"
+            defaultDescription: "./docker/compose.yml, ./docker/*.compose.yml"
         },
         outputDir: {
             type: "string",
@@ -107,6 +107,7 @@ export default class Build extends CommandInterface {
             platform: "node" as Platform,
             bundle: true,
             format: "esm" as Format,
+            sourcemap: true,
             external: this.config.externalModules ?? [],
             define: this.getProcessEnv(),
 
@@ -249,6 +250,7 @@ export default class Build extends CommandInterface {
     async buildDockerCompose() {
         const nodeDockerComposeSpec = structuredClone(Build.fullstackedNodeDockerComposeSpec);
         if (!this.config.production) {
+            nodeDockerComposeSpec.services.node.command.unshift("--enable-source-maps");
             nodeDockerComposeSpec.services.node.command.push("--development");
         }
         const dockerComposeSpecs = [nodeDockerComposeSpec].concat(this.config.dockerCompose.map((dockerComposeFile) => yaml.load(fs.readFileSync(dockerComposeFile).toString())));
@@ -273,9 +275,5 @@ export default class Build extends CommandInterface {
 
     runCLI() {
         return this.run();
-    }
-
-    guiCommands() {
-        return [];
     }
 }
