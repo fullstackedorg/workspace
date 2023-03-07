@@ -1,0 +1,13 @@
+{
+    "install": {
+        "@nestjs/core": "latest",
+        "@nestjs/platform-express": "latest"
+    },
+    "ignore": [
+        "cache-manager",
+        "class-validator",
+        "class-transformer",
+        "@nestjs/microservices",
+        "@nestjs/websockets"
+    ]
+}
