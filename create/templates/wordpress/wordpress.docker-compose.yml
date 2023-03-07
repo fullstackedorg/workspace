@@ -1,0 +1,32 @@
+services:
+  wordpress_db:
+    image: mysql:5.7
+    volumes:
+      - wordpress-db:/var/lib/mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  wordpress:
+    depends_on:
+      - wordpress_db
+    image: wordpress:latest
+    restart: unless-stopped
+    volumes:
+      - wordpress-uploads:/var/www/html/wp-content/uploads
+      - wordpress-plugins:/var/www/html/wp-content/plugins
+      - wordpress-lang:/var/www/html/wp-content/languages
+    environment:
+      WORDPRESS_DB_HOST: wordpress_db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+
+volumes:
+  wordpress-db: {}
+  wordpress-uploads: {}
+  wordpress-plugins: {}
+  wordpress-lang: {}
