@@ -1,15 +1,12 @@
-import path, {dirname} from "path";
 import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
-import {fileURLToPath, pathToFileURL} from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import {pathToFileURL} from "url";
 
 class ServerInstance {
     server: http.Server;
     port: number = 80;
-    publicDir = path.resolve(__dirname, 'public');
+    publicDir = "./public";
     logger: {
         in(req, res): void,
         out(req, res): void
@@ -70,8 +67,8 @@ class ServerInstance {
             handler: (req, res) => {
                 if (res.headersSent) return;
 
-                const url = new URL(this.publicDir + req.url, "http://localhost");
-                const filePath = url.pathname + (url.pathname.endsWith("/") ? "index.html" : "");
+                const fileURL = req.url.split("?").shift();
+                const filePath = this.publicDir + fileURL + (fileURL.endsWith("/") ? "index.html" : "");
 
                 if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
 
@@ -102,11 +99,11 @@ class ServerInstance {
     }
 
     stop(){
-        Index.server.close()
+        Server.server.close()
     }
 }
 
-const Index = new ServerInstance();
+const Server = new ServerInstance();
 
 (() => {
     // prevent from starting when imported
@@ -114,8 +111,8 @@ const Index = new ServerInstance();
     if (import.meta.url !== pathToFileURL(process.argv[1]).href || process.argv.includes("--prevent-auto-start"))
         return;
 
-    Index.start();
+    Server.start();
 })()
 
-export default Index;
+export default Server;
 

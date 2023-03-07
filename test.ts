@@ -1,12 +1,9 @@
 import {execSync} from "child_process";
 import {dirname, resolve} from "path";
-import {fileURLToPath} from "url";
 import fs from "fs";
+import {fileURLToPath} from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function packPackage(location: string){
-    const packageDirectory = resolve(__dirname, location);
+function packPackage(packageDirectory: string){
     const packageFilename = execSync("npm pack", {cwd: packageDirectory})
         .toString()
         .split("\n")
@@ -18,10 +15,9 @@ function packPackage(location: string){
 // pack fullstacked main package
 const fullstackedPackage = packPackage(".");
 
-function installPackageThenPack(location: string, packageToInstall: string){
-    const packageDirectory = resolve(__dirname, location);
+function installPackageThenPack(packageDirectory: string, packageToInstall: string){
     execSync(`npm i ${packageToInstall}`, {cwd: packageDirectory})
-    return packPackage(location);
+    return packPackage(packageDirectory);
 }
 
 // pack commands
@@ -35,13 +31,23 @@ const backupPackage = installPackageThenPack("commands/backup", fullstackedPacka
 const createPackage = installPackageThenPack("create", fullstackedPackage);
 
 // cleanup test folder
-const testDirectory = resolve(__dirname, "test");
+const testDirectory = new URL("./test", import.meta.url);
 if(fs.existsSync(testDirectory))
     fs.rmSync(testDirectory, {recursive: true});
 fs.mkdirSync(testDirectory);
 
+const relativeCreatePackageLocation = createPackage.replace(dirname(fileURLToPath(import.meta.url)), "..")
+
 // test [npm init @fullstacked]
-execSync(`npm exec ${createPackage.replace(__dirname, "..")} --no-save --prefix ${testDirectory} -y -- -v ${fullstackedPackage}`, {cwd: testDirectory, stdio: "inherit"});
+execSync([
+    "npm",
+    "exec",
+    relativeCreatePackageLocation,
+    "--no-save",
+    `--prefix ${fileURLToPath(testDirectory)}`,
+    "-y",
+    "--",
+    `-v ${fullstackedPackage}`].join(" "), {cwd: testDirectory, stdio: "inherit"});
 
 // testing [npm i @fullstacked/build @fullstacked/run @fullstacked/watch @fullstacked/deploy @fullstacked/backup]
 execSync(`npm i ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage}`, {cwd: testDirectory, stdio: "inherit"});

@@ -1,11 +1,8 @@
 import CLIParser from "fullstacked/utils/CLIParser";
-import {dirname, resolve} from "path";
+import {resolve} from "path";
 import fs from "fs";
 import {execSync} from "child_process";
-import {fileURLToPath} from "url";
 import {argsSpecs} from "./args";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default function() {
     const {projectDir, fullstackedVersion} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
@@ -17,7 +14,7 @@ export default function() {
 
     execSync("npm init --y", {stdio: "ignore", cwd: projectDir});
 
-    const fullstackedPackage = fs.existsSync(resolve(__dirname, fullstackedVersion))
+    const fullstackedPackage = fs.existsSync(fullstackedVersion)
         ? fullstackedVersion
         : `fullstacked@${fullstackedVersion}`;
 

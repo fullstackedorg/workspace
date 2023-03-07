@@ -3,8 +3,6 @@ import CLIParser from "./utils/CLIParser";
 import fs from "fs";
 import CommandInterface from "./commands/CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
-import os from "os";
-import readline from "readline";
 import {dirname} from "path";
 
 const {help} = CLIParser.getCommandLineArgumentsValues({
@@ -18,9 +16,9 @@ const {help} = CLIParser.getCommandLineArgumentsValues({
 const commandName = CLIParser.commandLinePositional;
 
 function getCommandLocation(commandName: string){
-    const currentDirectory = dirname(import.meta.url);
-    const devLocation       = `${currentDirectory}/commands/${commandName}/index.js`;
-    const installedLocation = `${currentDirectory}/../@fullstacked/${commandName}/index.js`;
+    const currentDirectory  = dirname(import.meta.url);
+    const devLocation       = new URL(`${currentDirectory}/commands/${commandName}/index.js`);
+    const installedLocation = new URL(`${currentDirectory}/../@fullstacked/${commandName}/index.js`);
     return fs.existsSync(devLocation)
         ? devLocation
         : fs.existsSync(installedLocation)
@@ -78,12 +76,18 @@ if(!commandName) {
     throw Error("Could not find command in command line");
 }
 
+if(!commands.find(command => command.name === commandName)){
+    console.log(`[${commandName}] is not a FullStacked command`);
+    console.log(`If you need help, run [ npx fullstacked --help ]`);
+    process.exit(0);
+}
+
 const commandLocation = getCommandLocation(commandName);
 
 if(!commandLocation)
     throw Error(`Could not locate command [${commandName}]. Maybe try to install it [ npm i @fullstacked/${commandName} ]`);
 
-const CommandModule = await import(commandLocation);
+const CommandModule = await import(commandLocation.toString());
 
 const command: CommandInterface = new CommandModule.default();
 
@@ -108,16 +112,5 @@ if(help){
     console.log(`  Usage: npx fullstacked ${commandName} [ARGS...]\n`)
     console.log(outputTable.toString());
 }else{
-
-    if(os.platform() === "win32"){
-        //source : https://stackoverflow.com/a/48837698
-        readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-        }).on('close', function() {
-            process.emit('SIGINT')
-        });
-    }
-
     command.runCLI();
 }

@@ -11,13 +11,12 @@ import Info from "fullstacked/commands/info";
 import randStr from "fullstacked/utils/randStr";
 import {execSync} from "child_process";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 // source: https://stackoverflow.com/a/43001581
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
-const DeployModule = (fs.existsSync(resolve(__dirname, "..", "deploy", "index.js"))
-    ? (await import(resolve(__dirname, "..", "deploy", "index.js"))).default
+const deployModuleLocation = new URL("../deploy/index.js", import.meta.url);
+const DeployModule = (fs.existsSync(deployModuleLocation)
+    ? (await import(deployModuleLocation.toString())).default
     : null) as typeof Deploy;
 
 const deployCommandLineArgs = (DeployModule
