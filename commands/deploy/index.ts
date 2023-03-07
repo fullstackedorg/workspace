@@ -1,5 +1,5 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
-import {dirname, resolve} from "path";
+import path, {dirname, resolve} from "path";
 import CLIParser from "fullstacked/utils/CLIParser";
 import prompts from "prompts";
 import fs from "fs";
@@ -7,7 +7,6 @@ import ServerSSH from "./serverSSH";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
 import yaml from "js-yaml";
-import {fileURLToPath} from "url";
 import Info from "fullstacked/commands/info";
 import {globSync} from "glob";
 import progress from "progress-stream";
@@ -16,8 +15,7 @@ import {Writable} from "stream";
 import randStr from "fullstacked/utils/randStr";
 import dns from "dns";
 import {decryptDataWithPassword, encryptDataWithPassword} from "fullstacked/utils/encrypt";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import {fileURLToPath} from "url";
 
 export type CredentialsSSH = {
     host: string,
@@ -90,7 +88,7 @@ export default class Deploy extends CommandInterface {
         outputDir: {
             type: "string",
             short: "o",
-            default: resolve(process.cwd(), "dist"),
+            default: "./dist",
             defaultDescription: "./dist",
             description: "Built Web App directory"
         },
@@ -491,7 +489,7 @@ export default class Deploy extends CommandInterface {
         const sftp = await this.getSFTP();
 
         const getAvailablePortsScriptPath = this.credentialsSSH.directory + "/getAvailablePorts.js";
-        await sftp.put(resolve(__dirname, "nginx", "getAvailablePorts.js"), getAvailablePortsScriptPath);
+        await sftp.put(fileURLToPath(new URL("./nginx/getAvailablePorts.js", import.meta.url)), getAvailablePortsScriptPath);
 
         const dockerNodeCommand = [
             "docker",
@@ -540,14 +538,14 @@ export default class Deploy extends CommandInterface {
             console.log("Added certificate")
         }
 
-        const nginxTemplate = fs.readFileSync(resolve(__dirname, "nginx", "service.conf"), {encoding: "utf-8"});
+        const nginxTemplate = fs.readFileSync(new URL("./nginx/service.conf", import.meta.url), {encoding: "utf-8"});
         const generateNginxFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxTemplate
             .replace(/\{PUBLIC_PORT\}/g, publicPort)
             .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
             .replace(/\{PORT\}/g, internalPort)
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "");
 
-        const nginxSSLTemplate = fs.readFileSync(resolve(__dirname, "nginx", "service-ssl.conf"), {encoding: "utf-8"});
+        const nginxSSLTemplate = fs.readFileSync(new URL("./nginx/service-ssl.conf", import.meta.url), {encoding: "utf-8"});
         const generateNginxSSLFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxSSLTemplate
             .replace(/\{PUBLIC_PORT\}/g, publicPort)
             .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
@@ -624,7 +622,9 @@ export default class Deploy extends CommandInterface {
             await sftp.mkdir(`${this.credentialsSSH.directory}/${this.webAppInfo.config.name}`, true);
 
         const files = globSync("**/*", {cwd: this.config.outputDir})
-        const localFiles = files.map(file => resolve(this.config.outputDir, file));
+            .map(file => file.split(path.sep).join("/")); // forward slash only here
+
+        const localFiles = files.map((file) => resolve(this.config.outputDir, file));
         const remotePath = `${this.credentialsSSH.directory}/${this.webAppInfo.config.name}`;
 
         for (let i = 0; i < files.length; i++) {
@@ -686,7 +686,7 @@ export default class Deploy extends CommandInterface {
 
         console.log(`Starting FullStacked Nginx on remote server`);
         await this.execOnRemoteHost(`sudo chmod -R 755 ${this.credentialsSSH.directory}`);
-        await sftp.put(resolve(__dirname, "nginx", "root.conf"), `${this.credentialsSSH.directory}/root.conf`);
+        await sftp.put(fileURLToPath(new URL("./nginx/root.conf", import.meta.url)), `${this.credentialsSSH.directory}/root.conf`);
         await sftp.put(Buffer.from(yaml.dump(nginxDockerCompose)), `${this.credentialsSSH.directory}/docker-compose.yml`);
         await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml up -d`);
         await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml restart -t 0`);
@@ -734,7 +734,7 @@ export default class Deploy extends CommandInterface {
             domains.map(serverName => `-d ${serverName}`).join(" ")
         ];
 
-        await this.execOnRemoteHost(command.join(" "));
+        console.log(await this.execOnRemoteHost(command.join(" ")));
 
         await this.execOnRemoteHost(`sudo chmod 777 ${nginxDir} -R`);
 
