@@ -874,6 +874,7 @@ export default class Deploy extends CommandInterface {
                 password: password,
                 directory: "/home"
             };
+            this.nginxConfigs = [{name: "node", port: 80}];
         }
 
         await this.testRemoteServer();
@@ -971,7 +972,7 @@ export default class Deploy extends CommandInterface {
 
         await this.run();
 
-        if(this.config.configFile) return;
+        if(this.config.configFile || this.config.dryRun) return;
 
         const { save } = await prompts({
             type: "confirm",
