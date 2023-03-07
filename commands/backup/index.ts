@@ -1,8 +1,7 @@
 import CommandInterface from "fullstacked/commands/CommandInterface";
 import CLIParser from "fullstacked/utils/CLIParser";
 import fs from "fs";
-import {dirname, resolve} from "path";
-import {fileURLToPath} from "url";
+import {resolve} from "path";
 import type Deploy from "../deploy";
 import {maybePullDockerImage} from "fullstacked/utils/maybePullDockerImage";
 import yaml from "js-yaml";
