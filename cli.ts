@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 import CLIParser from "./utils/CLIParser";
 import fs from "fs";
-import {dirname, resolve} from "path";
-import {fileURLToPath} from "url";
 import CommandInterface from "./commands/CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
 import os from "os";
 import readline from "readline";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import {dirname} from "path";
 
 const {help} = CLIParser.getCommandLineArgumentsValues({
     help: {
@@ -21,8 +18,9 @@ const {help} = CLIParser.getCommandLineArgumentsValues({
 const commandName = CLIParser.commandLinePositional;
 
 function getCommandLocation(commandName: string){
-    const devLocation       = resolve(__dirname, "commands", commandName, "index.js");
-    const installedLocation = resolve(__dirname, "..", "@fullstacked", commandName, "index.js");
+    const currentDirectory = dirname(import.meta.url);
+    const devLocation       = `${currentDirectory}/commands/${commandName}/index.js`;
+    const installedLocation = `${currentDirectory}/../@fullstacked/${commandName}/index.js`;
     return fs.existsSync(devLocation)
         ? devLocation
         : fs.existsSync(installedLocation)

@@ -1,48 +1,38 @@
 import {buildSync} from "esbuild";
 import {globSync} from "glob";
-import {dirname, resolve} from "path"
 import fs from "fs";
-import {fileURLToPath} from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 buildSync({
-    entryPoints: [resolve(__dirname, "utils", "buildRecursively.ts")],
-    outfile: resolve(__dirname, "utils", "buildRecursively.js"),
+    entryPoints: ["./utils/buildRecursively.ts"],
+    outfile: "./utils/buildRecursively.js",
     platform: "node",
     format: "esm",
     sourcemap: true
 });
 
-const builtModule = resolve(__dirname, "utils", "buildRecursively.js")
-    // windows path...
-    .replace(/C:/, "").replace(/\\/g, "/");
+const buildRecursively = await import("./utils/buildRecursively.js");
 
-const buildRecursively = (await import(builtModule)).default;
-
-const commands  = globSync(resolve(__dirname, "commands", "**", "*.ts"));
-const types     = globSync(resolve(__dirname, "types", "**", "*.ts"));
-const server    = globSync(resolve(__dirname, "server", "**", "*.ts"));
-const webapp    = globSync(resolve(__dirname, "webapp", "**", "*.ts"));
-const utils     = globSync(resolve(__dirname, "utils", "**", "*.ts"));
+const commands  = globSync("./commands/**/*.ts", {ignore: ["**/node_modules/**"]});
+const server    = globSync("./server/**/*.ts");
+const client    = globSync("./client/**/*.ts");
+const utils     = globSync("./utils/**/*.ts");
 
 const toBuild = [
     ...commands,
-    ...types,
     ...server,
     ...utils,
-    ...webapp,
-    resolve(__dirname, "create", "cli.ts"),
-    resolve(__dirname, "create", "create.ts"),
-    resolve(__dirname, "cli.ts"),
+    ...client,
+    "./create/cli.ts",
+    "./create/create.ts",
+    "./cli.ts"
 ].filter(file => !file.endsWith(".d.ts"));
 
-await buildRecursively(toBuild);
+await buildRecursively.default(toBuild);
 
-const nginxDir = resolve(__dirname, "commands", "deploy", "nginx");
+const getAvailablePortScript = "./commands/deploy/nginx/getAvailablePorts.ts";
 buildSync({
-    entryPoints: [resolve(nginxDir, "getAvailablePorts.ts")],
-    outfile: resolve(nginxDir, "getAvailablePorts.js"),
+    entryPoints: [getAvailablePortScript],
+    outfile: buildRecursively.convertPathToJSExt(getAvailablePortScript),
     bundle: true,
     sourcemap: true,
     format: "esm",
@@ -52,7 +42,7 @@ buildSync({
 console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 
 function updatePackageJsonVersion(location: string, version: string){
-    const packageJsonFilePath = resolve(__dirname, location, "package.json");
+    const packageJsonFilePath = `${location}/package.json`;
     if(!fs.existsSync(packageJsonFilePath))
         throw Error(`Can not find package.json at [${packageJsonFilePath}]`);
 
@@ -61,18 +51,18 @@ function updatePackageJsonVersion(location: string, version: string){
     fs.writeFileSync(packageJsonFilePath, JSON.stringify(packageJsonData, null, 2));
 }
 
-const version = JSON.parse(fs.readFileSync(resolve(__dirname, "package.json"), {encoding: "utf8"})).version;
+const version = JSON.parse(fs.readFileSync("./package.json", {encoding: "utf8"})).version;
 
-updatePackageJsonVersion("commands/backup", version);
-updatePackageJsonVersion("commands/build", version);
-updatePackageJsonVersion("commands/deploy", version);
-updatePackageJsonVersion("commands/run", version);
-updatePackageJsonVersion("commands/watch", version);
-updatePackageJsonVersion("create", version);
-updatePackageJsonVersion("gui", version);
+updatePackageJsonVersion("./commands/backup", version);
+updatePackageJsonVersion("./commands/build", version);
+updatePackageJsonVersion("./commands/deploy", version);
+updatePackageJsonVersion("./commands/run", version);
+updatePackageJsonVersion("./commands/watch", version);
+updatePackageJsonVersion("./create", version);
+updatePackageJsonVersion("./gui", version);
 
-fs.writeFileSync(resolve(__dirname, "version.ts"), `const FullStackedVersion = "${version}";
+fs.writeFileSync("./version.ts", `const FullStackedVersion = "${version}";
 export default FullStackedVersion;`);
-await buildRecursively([resolve(__dirname, "./version.ts")], true);
+await buildRecursively.default(["./version.ts"], true);
 
 console.log(`v${version}`);
