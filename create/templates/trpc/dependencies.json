@@ -1,0 +1,6 @@
+{
+    "install": {
+        "@trpc/client": "latest",
+        "@trpc/server": "latest"
+    }
+}

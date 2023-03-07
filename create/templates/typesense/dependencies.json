@@ -1,0 +1,6 @@
+{
+    "install": {
+        "http-proxy": "latest",
+        "typesense": "latest"
+    }
+}

@@ -1,0 +1,5 @@
+{
+    "install": {
+        "@redis/client": "latest"
+    }
+}
