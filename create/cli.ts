@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 import CLIParser from "fullstacked/utils/CLIParser";
 import Table from "cli-table3";
-import {dirname, resolve} from "path";
-import {fileURLToPath} from "url";
 import {argsSpecs} from "./args";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const commands = [
     {
@@ -70,10 +66,5 @@ if(help){
 if(!commands.find(com => com.name === command))
     throw Error(`Unknown command [${command}]`);
 
-try{
-    await import(resolve(__dirname, command + ".js"));
-}catch (e) {
-    console.log(e)
-}
-const commandModule = await import(resolve(__dirname, command + ".js"));
+const commandModule = await import(`./${command}.js`);
 commandModule.default();

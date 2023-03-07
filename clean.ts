@@ -1,9 +1,5 @@
 import {globSync} from "glob";
-import {dirname, resolve} from "path";
-import {fileURLToPath} from "url";
 import fs from "fs";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const filesToRm = new Set<string>();
 
@@ -28,8 +24,8 @@ const globs = [
     "*.tgz",
 ];
 
-globs.map(pattern => globSync(resolve(__dirname, "**", pattern), options)).flat()
-    .concat(globSync(resolve(__dirname, "**") + "/", options).filter(dir => !fs.readdirSync(dir).length))
+globs.map(pattern => globSync(`./**/${pattern}`, options)).flat()
+    .concat(globSync(`./**/`, options).filter(dir => !fs.readdirSync(dir).length))
     .forEach(file => filesToRm.add(file));
 
 filesToRm.forEach(file => {
