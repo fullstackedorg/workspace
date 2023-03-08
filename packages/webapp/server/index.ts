@@ -2,6 +2,8 @@ import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
 import HTML from "./HTML";
+import {resolve} from "path";
+import {fileURLToPath} from "url";
 
 type Listener = {
     name?: string,
@@ -11,7 +13,7 @@ type Listener = {
 class ServerInstance {
     server: http.Server;
     port: number = 80;
-    publicDir = "./public";
+    publicDir = fileURLToPath(new URL("./public", import.meta.url));
     logger: {
         in(req, res): void,
         out(req, res): void
@@ -52,7 +54,7 @@ class ServerInstance {
             }
         }
 
-        if(fs.existsSync(this.publicDir + "/index.css"))
+        if(fs.existsSync(resolve(this.publicDir, "index.css")))
             this.pages["/"].addInHead(`<link rel="stylesheet" href="/index.css">`);
 
         this.server = http.createServer(async (req, res: ServerResponse & {currentListener: string}) => {
@@ -110,7 +112,8 @@ class ServerInstance {
             return;
         }
 
-        const filePath = this.publicDir + fileURL;
+        // remove leading slash : /asset/image.png => asset/image.png
+        const filePath = resolve(this.publicDir, fileURL.slice(1));
 
         if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
 

@@ -21,13 +21,14 @@ function installPackageThenPack(packageDirectory: string, packageToInstall: stri
 }
 
 // pack packages
-const buildPackage = installPackageThenPack("packages/build", fullstackedPackage);
-const runPackage = installPackageThenPack("packages/run", fullstackedPackage);
-const watchPackage = installPackageThenPack("packages/watch", fullstackedPackage);
-const deployPackage = installPackageThenPack("packages/deploy", fullstackedPackage);
-const backupPackage = installPackageThenPack("packages/backup", fullstackedPackage);
-const webappPackage = installPackageThenPack("packages/webapp", fullstackedPackage);
-const createPackage = installPackageThenPack("packages/create", fullstackedPackage);
+const buildPackage  = installPackageThenPack("packages/build"   , fullstackedPackage);
+const runPackage    = installPackageThenPack("packages/run"     , fullstackedPackage);
+const watchPackage  = installPackageThenPack("packages/watch"   , fullstackedPackage);
+const deployPackage = installPackageThenPack("packages/deploy"  , fullstackedPackage);
+const backupPackage = installPackageThenPack("packages/backup"  , fullstackedPackage);
+const webappPackage = installPackageThenPack("packages/webapp"  , fullstackedPackage);
+const createPackage = installPackageThenPack("packages/create"  , fullstackedPackage);
+const guiPackage    = installPackageThenPack("packages/gui"     , fullstackedPackage);
 
 
 // cleanup test folder

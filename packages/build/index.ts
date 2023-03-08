@@ -29,7 +29,7 @@ export default class Build extends CommandInterface {
             short: "c",
             default: [
                 "./client/index.ts",
-                "./client./index.tsx",
+                "./client/index.tsx",
                 ...globSync("./client/**/*.client.ts"),
                 ...globSync("./client/**/*.client.tsx")
             ].filter((defaultFiles) => fs.existsSync(defaultFiles)),

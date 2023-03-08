@@ -62,6 +62,10 @@ const commands = [
     {
         name: "backup",
         description: "Extract and put back archives of your Web App data"
+    },
+    {
+        name: "gui",
+        description: "Launch the GUI to execute the different FullStacked commands"
     }
 ]
 
