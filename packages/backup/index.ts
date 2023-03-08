@@ -6,9 +6,9 @@ import type Deploy from "../deploy";
 import {maybePullDockerImage} from "fullstacked/utils/maybePullDockerImage";
 import yaml from "js-yaml";
 import Docker from "fullstacked/utils/docker";
-import Info from "fullstacked/commands/info";
 import randStr from "fullstacked/utils/randStr";
 import {execSync} from "child_process";
+import Info from "fullstacked/info";
 
 // source: https://stackoverflow.com/a/43001581
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
@@ -72,7 +72,7 @@ export default class Backup extends CommandInterface {
     async restoreRemote(){
         const sftp = await this.deploy.getSFTP();
 
-        const dockerComposeRemoteFile = `${this.deploy.credentialsSSH.directory}/${this.deploy.webAppInfo.config.name}/docker-compose.yml`;
+        const dockerComposeRemoteFile = `${this.deploy.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml`;
 
         if(!await sftp.exists(dockerComposeRemoteFile))
             throw Error("Cannot find docker compose file in remote host");
@@ -95,9 +95,9 @@ export default class Backup extends CommandInterface {
             await this.deploy.uploadFileWithProgress(backupFile, `/tmp/backup/${volume}.tar`, `[${volume}] `);
             this.endLine();
 
-            await this.deploy.execOnRemoteHost(`docker compose -p ${this.deploy.webAppInfo.config.name} -f ${dockerComposeRemoteFile} stop -t 0`);
-            await this.deploy.execOnRemoteHost(`docker run -v ${this.deploy.webAppInfo.config.name + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
-            await this.deploy.execOnRemoteHost(`docker compose -p ${this.deploy.webAppInfo.config.name} -f ${dockerComposeRemoteFile} start`);
+            await this.deploy.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${dockerComposeRemoteFile} stop -t 0`);
+            await this.deploy.execOnRemoteHost(`docker run -v ${Info.webAppName + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
+            await this.deploy.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${dockerComposeRemoteFile} start`);
             await this.deploy.execOnRemoteHost(`docker rm fullstacked-restore -f -v`);
         }
 
@@ -108,7 +108,7 @@ export default class Backup extends CommandInterface {
     async backupRemote() {
         const sftp = await this.deploy.getSFTP();
 
-        const remoteDockerComposeFilePath = `${this.deploy.credentialsSSH.directory}/${this.deploy.webAppInfo.config.name}/docker-compose.yml`;
+        const remoteDockerComposeFilePath = `${this.deploy.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml`;
         if(!await sftp.exists(remoteDockerComposeFilePath))
             throw new Error("Cannot find docker-compose file in remote host");
 
@@ -123,7 +123,7 @@ export default class Backup extends CommandInterface {
             console.log(`Backing up ${volume} from remote host`);
 
             const commandArr = ["docker", "run",
-                "-v", this.deploy.webAppInfo.config.name + "_" + volume + ":/data",
+                "-v", Info.webAppName + "_" + volume + ":/data",
                 "-v", "/tmp/backup:/backup",
                 "--name=fullstacked-backup",
                 "busybox",
@@ -153,7 +153,6 @@ export default class Backup extends CommandInterface {
 
     async restoreLocally(volumes: string[]){
         const dockerClient = await Docker.getClient();
-        const info = new Info();
 
         await Promise.all(volumes.map(async volume => {
             const backupFile = resolve(this.config.backupDir, `${volume}.tar`);
@@ -172,7 +171,7 @@ export default class Backup extends CommandInterface {
                     name: "fullstacked-restore",
                     HostConfig: {
                         Binds: [
-                            info.config.name + "_" + volume + ":/data",
+                            Info.webAppName + "_" + volume + ":/data",
                             this.config.backupDir + ":/backup"
                         ],
                     }
@@ -190,7 +189,6 @@ export default class Backup extends CommandInterface {
 
     async backupLocally(volumes: string[]){
         const dockerClient = await Docker.getClient();
-        const info = new Info();
 
         return Promise.all(volumes.map(async volume => {
             console.log(`Backing up ${volume} from localhost`);
@@ -203,7 +201,7 @@ export default class Backup extends CommandInterface {
                     name: backupContainerName,
                     HostConfig: {
                         Binds: [
-                            info.config.name + "_" + volume + ":/data",
+                            Info.webAppName + "_" + volume + ":/data",
                             this.config.backupDir + ":/backup"
                         ],
                     }

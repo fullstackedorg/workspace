@@ -1,12 +1,14 @@
-import { resolve } from "path";
+import path, { resolve } from "path";
 import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import yaml from "js-yaml";
 import CommandInterface from "fullstacked/CommandInterface";
 import {globSync} from "glob";
 import CLIParser from "fullstacked/utils/CLIParser";
+import {fileURLToPath} from "url";
 
 export default class Build extends CommandInterface {
+    static emptyEntryPoint = fileURLToPath(new URL("./empty.ts", import.meta.url));
     static fullstackedNodeDockerComposeSpec = {
         services: {
             node: {
@@ -97,10 +99,16 @@ export default class Build extends CommandInterface {
 
         const serverFiles = this.config.server;
 
+        // use @fullstacked/webapp as default if installed
+        const fullstackedWebAppServerStartFile = new URL("../webapp/server/start.js", import.meta.url);
+        const entryPoint = serverFiles.length === 0 && fs.existsSync(fullstackedWebAppServerStartFile)
+            ? fileURLToPath(fullstackedWebAppServerStartFile)
+            : Build.emptyEntryPoint;
+
         const filesBuilt = new Set();
 
         const options = {
-            entryPoints: [fullstackedServer],
+            entryPoints: [entryPoint],
             outfile: resolve(serverOutDir, "index.mjs"),
             platform: "node" as Platform,
             bundle: true,
@@ -115,20 +123,17 @@ export default class Build extends CommandInterface {
             plugins: [{
                 name: "fullstacked-bundled-server",
                 setup(build) {
-                    build.onResolve({ filter: /fullstacked\/server$/ }, (args) => {
-                        return {
-                            path: fullstackedServer
-                        };
-                    });
                     build.onLoad({ filter: /.*/ }, (args) => {
                         if (!args.path.includes("node_modules"))
                             filesBuilt.add(args.path);
 
-                        if (args.path !== fullstackedServer)
+                        if (args.path !== Build.emptyEntryPoint)
                             return null;
 
-                        const contents = fs.readFileSync(fullstackedServer) + "\n" +
-                            serverFiles.map((file) => `import("${file.replace(/\\/g, "\\\\")}");`).join("\n");
+                        if(fs.existsSync(fullstackedWebAppServerStartFile))
+                            serverFiles.push(fileURLToPath(fullstackedWebAppServerStartFile));
+
+                        const contents = serverFiles.map((file) => `import("${file.split(path.sep).join("/")}");`).join("\n");
 
                         return {
                             contents,
@@ -156,10 +161,11 @@ export default class Build extends CommandInterface {
         const filesBuilt = new Set();
 
         const clientFiles = this.config.client;
-        const clientWatcher = this.config.clientWatcher;
+        if(this.config.clientWatcher)
+            clientFiles.push(this.config.clientWatcher);
 
         const options = {
-            entryPoints: [ fullstackedClient ],
+            entryPoints: [Build.emptyEntryPoint],
             outdir: clientOutDir,
             entryNames: "index",
             format: "esm" as Format,
@@ -176,31 +182,18 @@ export default class Build extends CommandInterface {
                 ".md": "file" as Loader,
                 ".ttf": "file" as Loader
             },
+
             plugins: [{
                 name: "fullstacked-bundled-client",
                 setup(build) {
-                    build.onStart(() => {
-                        if (fs.existsSync(clientOutDir))
-                            fs.rmSync(clientOutDir, { force: true, recursive: true });
-                    });
                     build.onLoad({ filter: /.*/ }, (args) => {
                         if (!args.path.includes("node_modules"))
                             filesBuilt.add(args.path);
 
-                        if (args.path === fullstackedClientWatcher) {
-                            return {
-                                contents: clientWatcher && fs.existsSync(clientWatcher)
-                                    ? fs.readFileSync(clientWatcher).toString()
-                                    : "",
-                                loader: "ts"
-                            }
-                        }
+                        if (args.path !== Build.emptyEntryPoint)
+                            return null;
 
-                        if (!args.path.match(new RegExp(fullstackedClient.replace(/\\/g, "\\\\"))))
-                            return;
-
-                        const contents = fs.readFileSync(fullstackedClient) + "\n" +
-                            clientFiles.map((file) => `import "${file.replace(/\\/g, "\\\\")}";`).join("\n");
+                        const contents = clientFiles.map((file) => `import "${file.split(path.sep).join("/")}";`).join("\n");
 
                         return {
                             contents,
@@ -252,8 +245,10 @@ export default class Build extends CommandInterface {
     }
 
     async run() {
-        if (!fs.existsSync(this.config.outputDir))
-            fs.mkdirSync(this.config.outputDir);
+        if (fs.existsSync(this.config.outputDir))
+            fs.rmSync(this.config.outputDir, {recursive: true});
+
+        fs.mkdirSync(this.config.outputDir);
 
         const files = await Promise.all([
             this.buildServer(),

@@ -3,7 +3,7 @@ import {resolve} from "path";
 import CLIParser from "fullstacked/utils/CLIParser";
 import Docker from "fullstacked/utils/docker";
 import DockerCompose from "dockerode-compose";
-import Info from "fullstacked/commands/info";
+import Info from "fullstacked/info";
 import Dockerode from "dockerode";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
 import {maybePullDockerImage} from "fullstacked/utils/maybePullDockerImage";
@@ -69,7 +69,7 @@ export default class Run extends CommandInterface {
             await this.dockerCompose.down({ volumes: true });
         }catch (e){ }
 
-        console.log(`${this.infos.config.name} v${this.infos.config.version} stopped`);
+        console.log(`${Info.webAppName} v${Info.version} stopped`);
     }
 
     async start(){
@@ -93,13 +93,12 @@ export default class Run extends CommandInterface {
 
         await this.dockerCompose.up();
 
-        console.log(`${this.infos.config.name} v${this.infos.config.version} is running at http://localhost:${nodePort}`);
+        console.log(`${Info.webAppName} v${Info.version} is running at http://localhost:${nodePort}`);
     }
 
     async run(): Promise<void> {
         this.dockerClient = await Docker.getClient();
-        this.infos = new Info();
-        this.dockerCompose = new DockerCompose(this.dockerClient, this.config.dockerCompose, this.infos.config.name);
+        this.dockerCompose = new DockerCompose(this.dockerClient, this.config.dockerCompose, Info.webAppName);
 
         if (this.config.stop) {
             return this.stop();
@@ -129,7 +128,7 @@ export default class Run extends CommandInterface {
             try{
                 // might be already running
                 const port = (await nodeContainer.inspect()).HostConfig.PortBindings["80/tcp"].at(0).HostPort;
-                console.log(`${this.infos.config.name} v${this.infos.config.version} already running at http://localhost:${port}`);
+                console.log(`${Info.webAppName} v${Info.version} already running at http://localhost:${port}`);
             }catch (e) {
                 await this.start()
             }

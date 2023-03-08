@@ -1,0 +1,13 @@
+{
+    "dependencies": [
+        "@nestjs/core",
+        "@nestjs/platform-express"
+    ],
+    "ignore": [
+        "cache-manager",
+        "class-validator",
+        "class-transformer",
+        "@nestjs/microservices",
+        "@nestjs/websockets"
+    ]
+}

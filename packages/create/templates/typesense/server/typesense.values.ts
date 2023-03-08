@@ -1,2 +1,2 @@
-export const typesensePath = "/search";
+export const typesenseUrlPrefix = "/typesense";
 export const testCollection = "test-collection";

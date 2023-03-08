@@ -1,8 +1,0 @@
-{
-    "install": {
-        "@types/react": "latest",
-        "@types/react-dom": "latest",
-        "react": "latest",
-        "react-dom": "latest"
-    }
-}

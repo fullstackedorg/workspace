@@ -1,18 +1,14 @@
+import Server from "@fullstacked/webapp/server"
 import httpProxy from "http-proxy";
-import Server from "fullstacked/server";
 import Typesense from "typesense";
-import {testCollection, typesensePath} from "./typesense.values";
+import {testCollection, typesenseUrlPrefix} from "./typesense.values";
 
-const proxy = httpProxy.createServer({ws: false});
+const {web} = httpProxy.createServer();
 
-Server.listeners.push({
-    title: "Typesense proxy",
+Server.addListener(typesenseUrlPrefix, {
+    title: "Typesense",
     handler(req, res){
-        if (!req.url.startsWith(typesensePath)) return;
-        req.url = req.url.slice(typesensePath.length);
-        return new Promise<void>(resolve => {
-            proxy.web(req, res, {target: "http://typesense:8108"}, resolve);
-        });
+        web(req, res, {target: "http://typesense:8108"})
     }
 });
 

@@ -1,9 +1,18 @@
-import fastifyRegister from "./fastify.register";
+import Server from "@fullstacked/webapp/server"
+import Fastify from 'fastify'
 
-const fastify = fastifyRegister();
+const fastify = Fastify({
+    serverFactory: (handler, opts) => {
+        Server.addListener("/fastify", {
+            name: "Fastify",
+            handler
+        });
+        return Server.server;
+    }
+});
 
-fastify.get('/hello-fastify', function (request, reply) {
-    reply.send("Hello from Fastify");
+fastify.get('/hello-world', function (request, reply) {
+    reply.send("Hello World");
 });
 
 fastify.ready();

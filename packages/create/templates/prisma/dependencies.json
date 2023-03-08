@@ -1,9 +1,0 @@
-{
-    "native": {
-        "prisma": "latest",
-        "@prisma/client": "latest"
-    },
-    "files": [
-        "prisma"
-    ]
-}

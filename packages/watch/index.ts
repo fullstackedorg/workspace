@@ -4,8 +4,8 @@ import {ChildProcess, exec, execSync} from "child_process";
 import fs from "fs";
 import WebSocket, {WebSocketServer} from "ws";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
-import {fullstackedClientWatcher} from "fullstacked/utils/paths";
-import * as process from "process";
+
+const fullstackedClientWatcher = "@fullstacked/watch/clientWatcher"
 
 export default class Watch extends CommandInterface {
     static commandLineArguments = {
@@ -13,7 +13,7 @@ export default class Watch extends CommandInterface {
             short: "b",
             type: "string",
             default: `npx fullstacked build -w ${fullstackedClientWatcher} -v`,
-            defaultDescription: "npx fullstacked build -w fullstacked/client/watcher.ts -v",
+            defaultDescription: `npx fullstacked build -w ${fullstackedClientWatcher} -v`,
             description: "Provide a command that builds your Web App and outputs the list of files to watch"
         },
         start: {

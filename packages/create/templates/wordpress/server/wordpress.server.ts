@@ -1,14 +1,11 @@
+import Server from "@fullstacked/webapp/server"
 import httpProxy from "http-proxy";
-import Server from "fullstacked/server";
 
-const proxy = httpProxy.createServer();
+const {web} = httpProxy.createServer();
 
-Server.listeners.unshift({
-    title: "WordPress proxy",
+Server.addListener("/wordpress", {
+    title: "WordPress",
     handler(req, res) {
-        if (!req.headers.host.startsWith("wp.")) return;
-        return new Promise<void>(resolve => {
-            proxy.web(req, res, {target: "http://wordpress"}, resolve);
-        });
+        web(req, res, {target: "http://wordpress"});
     }
 });
