@@ -5,12 +5,22 @@
   "author": "CP Lepage",
   "license": "MIT",
   "scripts": {
-    "build": "npx fullstacked build"
+    "build": "npx fullstacked build --externalModules @fullstacked/deploy",
+    "dev": "npx fullstacked watch -b \"npm run build -- -v -w @fullstacked/watch/clientWatcher\""
   },
   "dependencies": {
+    "@fullstacked/run": "file:../run/fullstacked-run-0.10.0-1.tgz",
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"
+  },
+  "devDependencies": {
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-1.tgz",
+    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-1.tgz",
+    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-1.tgz",
+    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-1.tgz",
     "@tabler/core": "^1.0.0-beta17",
-    "fullstacked": "file:../fullstacked-0.10.0-1.tgz",
+    "@types/react": "^18.0.28",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "typescript-rpc": "^0.0.14"
   }
 }

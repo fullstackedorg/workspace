@@ -1,6 +1,4 @@
 import React, {useEffect, useState} from "react";
-import {WS} from "../WebSocket";
-import {RUN_CMD} from "../../../types/run";
 import Nav from "./Nav";
 import Logs from "./Logs";
 import Bench from "./Bench";
@@ -39,11 +37,7 @@ export const views = [
 ]
 
 export default function (){
-    const [activeViewIndex, setActiveViewIndex] = useState(0)
-
-    useEffect(() => {
-        WS.cmd(RUN_CMD.START);
-    }, []);
+    const [activeViewIndex, setActiveViewIndex] = useState(0);
 
     return <>
         <Nav activeTabIndex={activeViewIndex} onTabClick={setActiveViewIndex} />

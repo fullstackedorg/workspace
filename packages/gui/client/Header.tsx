@@ -1,17 +1,15 @@
-import version from "../../version";
 import React from "react";
+import version from "../../../version";
+//@ts-ignore
+import logo from "./favicon.png";
 
 export default function (){
     return <header className="navbar navbar-expand-md navbar-light d-print-none">
         <div className="container-xl">
-            <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
-                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
-                <span className="navbar-toggler-icon"></span>
-            </button>
             <div className="d-flex align-items-center">
                 <h1 className="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
                     <a href=".">
-                        <img src="/favicon.png" width="32" height="32" alt="Tabler"
+                        <img src={logo} width="32" height="32" alt="Tabler"
                              className="navbar-brand-image me-3" />
                         FullStacked GUI
                     </a>
