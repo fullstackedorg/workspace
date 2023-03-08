@@ -28,7 +28,7 @@ const deployPackage = installPackageThenPack("packages/deploy"  , fullstackedPac
 const backupPackage = installPackageThenPack("packages/backup"  , fullstackedPackage);
 const webappPackage = installPackageThenPack("packages/webapp"  , fullstackedPackage);
 const createPackage = installPackageThenPack("packages/create"  , fullstackedPackage);
-const guiPackage    = installPackageThenPack("packages/gui"     , fullstackedPackage);
+// const guiPackage    = installPackageThenPack("packages/gui"     , fullstackedPackage);
 
 
 // cleanup test folder
