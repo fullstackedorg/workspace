@@ -1,4 +1,4 @@
-import CommandInterface from "../CommandInterface";
+import CommandInterface from "../../CommandInterface";
 import CLIParser from "../../utils/CLIParser";
 import crypto from "crypto";
 import {resolve} from "path";

@@ -8,6 +8,7 @@ export default class HTML {
 <head>
 </head>
 <body>
+<script type="module" src="/index.js"></script>
 </body>
 </html>`);
     private head = this.getDescendantByTag(this.root, "head");

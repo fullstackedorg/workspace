@@ -1,7 +1,7 @@
 import fs from "fs";
 import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
-import {pathToFileURL} from "url";
+import HTML from "./HTML";
 
 class ServerInstance {
     server: http.Server;
@@ -15,6 +15,9 @@ class ServerInstance {
         name?: string,
         handler(req: IncomingMessage, res: ServerResponse): any | Promise<any>,
     }[] = [];
+    pages: {[url: string]: HTML} = {
+        ["/"]: new HTML()
+    };
 
     constructor() {
         if(process.argv.includes("--development") || process.argv.includes("--gui")){
@@ -47,7 +50,6 @@ class ServerInstance {
                 }
             }
 
-            // response did not manage to respond
             if(!res.headersSent){
                 res.statusCode = 404;
 
@@ -68,7 +70,14 @@ class ServerInstance {
                 if (res.headersSent) return;
 
                 const fileURL = req.url.split("?").shift();
-                const filePath = this.publicDir + fileURL + (fileURL.endsWith("/") ? "index.html" : "");
+
+                if (this.pages[fileURL]) {
+                    res.writeHead(200, {"content-type": "text/html"});
+                    res.end(this.pages[fileURL].toString());
+                    return;
+                }
+
+                const filePath = this.publicDir + fileURL;
 
                 if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
 
@@ -105,14 +114,7 @@ class ServerInstance {
 
 const Server = new ServerInstance();
 
-(() => {
-    // prevent from starting when imported
-    // https://stackoverflow.com/a/68848622
-    if (import.meta.url !== pathToFileURL(process.argv[1]).href || process.argv.includes("--prevent-auto-start"))
-        return;
-
-    Server.start();
-})()
+Server.start();
 
 export default Server;
 

@@ -1,0 +1,18 @@
+{
+  "name": "@fullstacked/webapp",
+  "version": "0.10.0-1",
+  "description": "Use FullStacked Server and Client to rapidly build a Web App",
+  "main": "index.js",
+  "author": "CP Lepage",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
+    "mime": "^3.0.0",
+    "parse5": "^7.1.2"
+  },
+  "exports": {
+    "./server": "./server/index.js",
+    "./server/HTML": "./server/HTML.js"
+  }
+}

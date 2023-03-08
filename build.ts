@@ -12,24 +12,24 @@ buildSync({
 
 const buildRecursively = await import("./utils/buildRecursively.js");
 
-const commands  = globSync("./commands/**/*.ts", {ignore: ["**/node_modules/**"]});
-const server    = globSync("./server/**/*.ts");
-const client    = globSync("./client/**/*.ts");
 const utils     = globSync("./utils/**/*.ts");
 
 const toBuild = [
-    ...commands,
-    ...server,
     ...utils,
-    ...client,
-    "./create/cli.ts",
-    "./create/create.ts",
+    "./packages/backup/index.ts",
+    "./packages/build/index.ts",
+    "./packages/deploy/index.ts",
+    "./packages/info/index.ts",
+    "./packages/run/index.ts",
+    "./packages/watch/index.ts",
+    "./packages/create/cli.ts",
+    "./packages/create/create.ts",
     "./cli.ts"
 ].filter(file => !file.endsWith(".d.ts"));
 
 await buildRecursively.default(toBuild);
 
-const getAvailablePortScript = "./commands/deploy/nginx/getAvailablePorts.ts";
+const getAvailablePortScript = "./packages/deploy/nginx/getAvailablePorts.ts";
 buildSync({
     entryPoints: [getAvailablePortScript],
     outfile: buildRecursively.convertPathToJSExt(getAvailablePortScript),
@@ -53,13 +53,14 @@ function updatePackageJsonVersion(location: string, version: string){
 
 const version = JSON.parse(fs.readFileSync("./package.json", {encoding: "utf8"})).version;
 
-updatePackageJsonVersion("./commands/backup", version);
-updatePackageJsonVersion("./commands/build", version);
-updatePackageJsonVersion("./commands/deploy", version);
-updatePackageJsonVersion("./commands/run", version);
-updatePackageJsonVersion("./commands/watch", version);
-updatePackageJsonVersion("./create", version);
-updatePackageJsonVersion("./gui", version);
+updatePackageJsonVersion("./packages/backup", version);
+updatePackageJsonVersion("./packages/build", version);
+updatePackageJsonVersion("./packages/deploy", version);
+updatePackageJsonVersion("./packages/run", version);
+updatePackageJsonVersion("./packages/watch", version);
+updatePackageJsonVersion("./packages/webapp", version);
+updatePackageJsonVersion("./packages/create", version);
+updatePackageJsonVersion("./packages/gui", version);
 
 fs.writeFileSync("./version.ts", `const FullStackedVersion = "${version}";
 export default FullStackedVersion;`);
