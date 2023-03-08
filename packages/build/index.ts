@@ -27,28 +27,32 @@ export default class Build extends CommandInterface {
         client: {
             type: "string[]",
             short: "c",
-            default: [resolve(process.cwd(), "client", "index.ts"), resolve(process.cwd(), "client", "index.tsx")]
-                .concat(globSync(resolve(process.cwd(), "client", "**", "*.client.ts")))
-                .concat(globSync(resolve(process.cwd(), "client", "**", "*.client.tsx")))
-                .filter((defaultFiles) => fs.existsSync(defaultFiles)),
+            default: [
+                "./client/index.ts",
+                "./client./index.tsx",
+                ...globSync("./client/**/*.client.ts"),
+                ...globSync("./client/**/*.client.tsx")
+            ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Client entry points to be bundled",
             defaultDescription: "./client/index.ts(x), ./client/*.client.ts(x)"
         },
         server: {
             type: "string[]",
             short: "s",
-            default: [resolve(process.cwd(), "server", "index.ts")]
-                .concat(globSync(resolve(process.cwd(), "server", "**", "*.server.ts")))
-                .filter((defaultFiles) => fs.existsSync(defaultFiles)),
+            default: [
+                "./server/index.ts",
+                ...globSync("./server/**/*.server.ts")
+            ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Server entry points to be bundled",
             defaultDescription: "./server/index.ts, ./server/*.server.ts"
         },
         dockerCompose: {
             type: "string[]",
             short: "d",
-            default: [resolve(process.cwd(), "docker", "compose.yml")]
-                .concat(globSync(resolve(process.cwd(), "docker", "**", "*.compose.yml")))
-                .filter((defaultFiles) => fs.existsSync(defaultFiles)),
+            default: [
+                "./docker/compose.yml",
+                ...globSync("./docker/**/*.compose.yml")
+            ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Docker Compose files to be bundled",
             defaultDescription: "./docker/compose.yml, ./docker/*.compose.yml"
         },
@@ -97,7 +101,7 @@ export default class Build extends CommandInterface {
     async buildServer() {
         const serverOutDir = resolve(this.config.outputDir, "app");
 
-        const serverFiles = this.config.server;
+        const serverFiles = this.config.server.map(file => resolve(file));
 
         // use @fullstacked/webapp as default if installed
         const fullstackedWebAppServerStartFile = new URL("../webapp/server/start.js", import.meta.url);
@@ -160,9 +164,12 @@ export default class Build extends CommandInterface {
 
         const filesBuilt = new Set();
 
-        const clientFiles = this.config.client;
-        if(this.config.clientWatcher)
-            clientFiles.push(this.config.clientWatcher);
+        const clientFiles = this.config.client.map(file => resolve(file));
+        if(this.config.clientWatcher) {
+            clientFiles.push(this.config.clientWatcher.startsWith(".")
+                ? resolve(this.config.clientWatcher)
+                : this.config.clientWatcher);
+        }
 
         const options = {
             entryPoints: [Build.emptyEntryPoint],
