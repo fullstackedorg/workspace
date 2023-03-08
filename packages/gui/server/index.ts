@@ -15,5 +15,3 @@ Server.addListener("/typescript-rpc", {
     name: "typescript-rpc",
     handler
 });
-
-Server.port = 8000;
