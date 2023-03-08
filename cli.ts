@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import CLIParser from "./utils/CLIParser";
 import fs from "fs";
-import CommandInterface from "./commands/CommandInterface";
+import CommandInterface from "./CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
 import {dirname} from "path";
 
@@ -17,7 +17,7 @@ const commandName = CLIParser.commandLinePositional;
 
 function getCommandLocation(commandName: string){
     const currentDirectory  = dirname(import.meta.url);
-    const devLocation       = new URL(`${currentDirectory}/commands/${commandName}/index.js`);
+    const devLocation       = new URL(`${currentDirectory}/packages/${commandName}/index.js`);
     const installedLocation = new URL(`${currentDirectory}/../@fullstacked/${commandName}/index.js`);
     return fs.existsSync(devLocation)
         ? devLocation

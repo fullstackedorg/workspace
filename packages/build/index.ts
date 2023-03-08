@@ -2,11 +2,9 @@ import { resolve } from "path";
 import esbuild, {Format, Loader, Platform} from "esbuild";
 import fs from "fs";
 import yaml from "js-yaml";
-import CommandInterface from "fullstacked/commands/CommandInterface";
+import CommandInterface from "fullstacked/CommandInterface";
 import {globSync} from "glob";
-import HTML from "./HTML.js";
 import CLIParser from "fullstacked/utils/CLIParser";
-import {fullstackedClient, fullstackedClientWatcher, fullstackedServer} from "fullstacked/utils/paths";
 
 export default class Build extends CommandInterface {
     static fullstackedNodeDockerComposeSpec = {
@@ -55,7 +53,7 @@ export default class Build extends CommandInterface {
         outputDir: {
             type: "string",
             short: "o",
-            default: resolve(process.cwd(), "dist"),
+            default: "./dist",
             description: "Output directory where all the bundled files will be",
             defaultDescription: "./dist"
         },
@@ -117,7 +115,7 @@ export default class Build extends CommandInterface {
             plugins: [{
                 name: "fullstacked-bundled-server",
                 setup(build) {
-                    build.onResolve({ filter: /fullstacked\/server/ }, (args) => {
+                    build.onResolve({ filter: /fullstacked\/server$/ }, (args) => {
                         return {
                             path: fullstackedServer
                         };
@@ -214,12 +212,6 @@ export default class Build extends CommandInterface {
         };
 
         const result = await esbuild.build(options);
-
-        const html = new HTML();
-        html.addInBODY(`<script type="module" src="/index.js"></script>`);
-        globSync("*.css", { cwd: clientOutDir }).forEach((cssFile) =>
-            html.addInHead(`<link rel="stylesheet" href="/${cssFile}">`));
-        fs.writeFileSync(resolve(clientOutDir, "index.html"), html.toString());
 
         if (result.errors.length > 0)
             return;

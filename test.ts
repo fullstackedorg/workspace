@@ -20,15 +20,15 @@ function installPackageThenPack(packageDirectory: string, packageToInstall: stri
     return packPackage(packageDirectory);
 }
 
-// pack commands
-const buildPackage = installPackageThenPack("commands/build", fullstackedPackage);
-const runPackage = installPackageThenPack("commands/run", fullstackedPackage);
-const watchPackage = installPackageThenPack("commands/watch", fullstackedPackage);
-const deployPackage = installPackageThenPack("commands/deploy", fullstackedPackage);
-const backupPackage = installPackageThenPack("commands/backup", fullstackedPackage);
+// pack packages
+const buildPackage = installPackageThenPack("packages/build", fullstackedPackage);
+const runPackage = installPackageThenPack("packages/run", fullstackedPackage);
+const watchPackage = installPackageThenPack("packages/watch", fullstackedPackage);
+const deployPackage = installPackageThenPack("packages/deploy", fullstackedPackage);
+const backupPackage = installPackageThenPack("packages/backup", fullstackedPackage);
+const webappPackage = installPackageThenPack("packages/webapp", fullstackedPackage);
+const createPackage = installPackageThenPack("packages/create", fullstackedPackage);
 
-// pack create
-const createPackage = installPackageThenPack("create", fullstackedPackage);
 
 // cleanup test folder
 const testDirectory = new URL("./test", import.meta.url);
@@ -49,5 +49,5 @@ execSync([
     "--",
     `-v ${fullstackedPackage}`].join(" "), {cwd: testDirectory, stdio: "inherit"});
 
-// testing [npm i @fullstacked/build @fullstacked/run @fullstacked/watch @fullstacked/deploy @fullstacked/backup]
-execSync(`npm i ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage}`, {cwd: testDirectory, stdio: "inherit"});
+// testing [npm i @fullstacked/build @fullstacked/run @fullstacked/watch @fullstacked/deploy @fullstacked/backup @fullstacked/webapp]
+execSync(`npm i ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage} ${webappPackage}`, {cwd: testDirectory, stdio: "inherit"});
