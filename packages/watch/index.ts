@@ -93,7 +93,7 @@ export default class Watch extends CommandInterface {
     }
 
     restart(){
-        this.runProcess.kill();
+        this.runProcess.kill("SIGINT");
 
         this.buildAndWatch();
 
