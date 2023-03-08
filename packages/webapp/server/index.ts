@@ -3,6 +3,11 @@ import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
 import HTML from "./HTML";
 
+type Listener = {
+    name?: string,
+    handler(req: IncomingMessage, res: ServerResponse): any | Promise<any>,
+}
+
 class ServerInstance {
     server: http.Server;
     port: number = 80;
@@ -11,10 +16,22 @@ class ServerInstance {
         in(req, res): void,
         out(req, res): void
     } = null;
-    listeners: {
-        name?: string,
-        handler(req: IncomingMessage, res: ServerResponse): any | Promise<any>,
-    }[] = [];
+
+    listeners: {[url: string]: Listener[]} = {
+        default: [
+            {
+                name: "Default Public File Serving",
+                handler: this.staticFilesAndPagesHandler.bind(this)
+            },{
+                name: "Not Found",
+                handler(req: IncomingMessage, res: ServerResponse): any {
+                    res.writeHead(404);
+                    res.end("Not Found");
+                }
+            }
+        ]
+    };
+
     pages: {[url: string]: HTML} = {
         ["/"]: new HTML()
     };
@@ -35,10 +52,22 @@ class ServerInstance {
             }
         }
 
+        if(fs.existsSync(this.publicDir + "/index.css"))
+            this.pages["/"].addInHead(`<link rel="stylesheet" href="/index.css">`);
+
         this.server = http.createServer(async (req, res: ServerResponse & {currentListener: string}) => {
             if(this.logger?.in) this.logger.in(req, res);
 
-            for (const listener of this.listeners) {
+            const urlPrefixes = Object.keys(this.listeners);
+            const listenersKey = urlPrefixes.find(prefix => req.url.startsWith(prefix)) ?? "default";
+
+            if(listenersKey !== "default")
+                req.url = req.url.slice(listenersKey.length);
+
+            if(req.url === "")
+                req.url = "/";
+
+            for (const listener of this.listeners[listenersKey]) {
                 // break if response has managed to send
                 if(res.headersSent) break;
 
@@ -50,42 +79,46 @@ class ServerInstance {
                 }
             }
 
-            if(!res.headersSent){
-                res.statusCode = 404;
-
-                res.currentListener = "Bottomed Out";
-                res.writeHead(res.statusCode);
-                res.end("Not Found");
-            }
-
             if(this.logger?.out) this.logger.out(req, res);
         });
     }
 
+    addListener(urlPrefix: string, listener: Listener, prepend = false){
+        if(!this.listeners[urlPrefix]) this.listeners[urlPrefix] = [];
+
+        if(prepend)
+            this.listeners[urlPrefix].unshift(listener);
+        else
+            this.listeners[urlPrefix].push(listener);
+    }
+
+    staticFilesAndPagesHandler(req, res) {
+        // remove query params
+        let fileURL = req.url.split("?").shift();
+
+        // remove /index.html
+        if(fileURL.endsWith("/index.html"))
+        fileURL = fileURL.slice(0, -("/index.html".length));
+
+        // if nothing left, we're at root "/"
+        if(fileURL === "")
+        fileURL = "/";
+
+        if (this.pages[fileURL]) {
+            res.writeHead(200, {"content-type": "text/html"});
+            res.end(this.pages[fileURL].toString());
+            return;
+        }
+
+        const filePath = this.publicDir + fileURL;
+
+        if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
+
+        res.writeHead(200, {"content-type": mime.getType(filePath)});
+        res.end(fs.readFileSync(filePath));
+    }
+
     start(){
-        // default static file serving in front
-        this.listeners.unshift({
-            name: "Default Public File Serving",
-            handler: (req, res) => {
-                if (res.headersSent) return;
-
-                const fileURL = req.url.split("?").shift();
-
-                if (this.pages[fileURL]) {
-                    res.writeHead(200, {"content-type": "text/html"});
-                    res.end(this.pages[fileURL].toString());
-                    return;
-                }
-
-                const filePath = this.publicDir + fileURL;
-
-                if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
-
-                res.writeHead(200, {"content-type": mime.getType(filePath)});
-                res.end(fs.readFileSync(filePath));
-            }
-        });
-
         this.server.listen(this.port);
     }
 
@@ -113,8 +146,6 @@ class ServerInstance {
 }
 
 const Server = new ServerInstance();
-
-Server.start();
 
 export default Server;
 

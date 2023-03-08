@@ -11,10 +11,6 @@ const commands = [
     {
         name: "install",
         description: "Install a template to your Web App"
-    },
-    {
-        name: "remove",
-        description: "Remove a template from your Web App"
     }
 ]
 
@@ -67,4 +63,4 @@ if(!commands.find(com => com.name === command))
     throw Error(`Unknown command [${command}]`);
 
 const commandModule = await import(`./${command}.js`);
-commandModule.default();
+await commandModule.default();

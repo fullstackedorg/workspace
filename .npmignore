@@ -11,59 +11,23 @@ node_modules
 /cli.js.map
 /cli.ts
 
-/commands/**/*.js
-/commands/**/*.js.map
-/commands/**/*.ts
-/commands/**/*.d.ts
-
-!/commands/info/index.js
-!/commands/CommandInterface.js
-
-/create
+/packages
 
 /docs
 
 /fullstacked-code-coverage
 
-/gui/**/*
-!/gui/dist/**/*
-/gui/dist/**/*.map
-
-/index.ts
-
-/server/index.js.map
-
-/server/installNative.d.ts
-/server/installNative.js.map
-/server/installNative.ts
-
-/server/watcher.d.ts
-/server/watcher.js
-/server/watcher.js.map
-
-/tests
+/test
 
 /tsconfig.json
 
-/types/**/*.ts
-/types/**/*.d.ts
-/types/**/*.js.map
-
 /utils/**/*
 !/utils/**/*.js
+!/utils/**/*.d.ts
 
-!/utils/fetch.d.ts
-!/utils/randStr.d.ts
-!/utils/sleep.d.ts
-!/utils/testE2E.d.ts
-!/utils/testIntegration.d.ts
-!/utils/uploadFileWithProgress.d.ts
-!/utils/waitForServer.d.ts
 
 /version.js.map
 /version.ts
 
-/webapp/**/*.js.map
-/webapp/**/*.ts
 
 

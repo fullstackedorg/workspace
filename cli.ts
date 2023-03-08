@@ -4,14 +4,30 @@ import fs from "fs";
 import CommandInterface from "./CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
 import {dirname} from "path";
+import Info from "fullstacked/info";
+import FullStackedVersion from "./version";
 
-const {help} = CLIParser.getCommandLineArgumentsValues({
+const {help, version, packageJson} = CLIParser.getCommandLineArgumentsValues({
+    packageJson: {
+        type: "string",
+        short: "p",
+        description: "package.json location",
+        default: "./package.json",
+        defaultDescription: "./package.json"
+    },
     help: {
         type: "boolean",
         short: "h",
         description: "Get help"
+    },
+    version: {
+        type: "boolean",
+        short: "v",
+        description: "Output your Web App and FullStacked versions"
     }
 });
+
+new Info(packageJson);
 
 const commandName = CLIParser.commandLinePositional;
 
@@ -46,12 +62,9 @@ const commands = [
     {
         name: "backup",
         description: "Extract and put back archives of your Web App data"
-    },
-    {
-        name: "info",
-        description: "Output your Web App name, version and commit hash"
     }
 ]
+
 
 
 if(!commandName) {
@@ -69,6 +82,10 @@ if(!commandName) {
         ]))));
         console.log("\n  Usage: npx fullstacked [COMMAND] [ARGS...]\n");
         console.log(table.toString());
+        process.exit(0);
+    }else if(version){
+        console.log(`${Info.webAppName} v${Info.version}-${Info.hash}`);
+        console.log(`FullStacked v${FullStackedVersion}`);
         process.exit(0);
     }
 

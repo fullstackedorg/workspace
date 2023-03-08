@@ -7,7 +7,7 @@ import ServerSSH from "./serverSSH";
 import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
 import yaml from "js-yaml";
-import Info from "fullstacked/commands/info";
+import Info from "fullstacked/info";
 import {globSync} from "glob";
 import progress from "progress-stream";
 import DockerInstallScripts from "./dockerInstallScripts";
@@ -107,8 +107,6 @@ export default class Deploy extends CommandInterface {
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Deploy.commandLineArguments);
-
-    webAppInfo = new Info();
 
     credentialsSSH: CredentialsSSH;
     nginxConfigs: NginxConfig[] = [];
@@ -551,7 +549,7 @@ export default class Deploy extends CommandInterface {
             .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
             .replace(/\{PORT\}/g, internalPort)
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "")
-            .replace(/\{APP_NAME\}/g, this.webAppInfo.config.name);
+            .replace(/\{APP_NAME\}/g, Info.webAppName);
 
         this.nginxConfigs.forEach((nginxConfig, configIndex) => {
             const availablePort = availablePorts[configIndex];
@@ -618,14 +616,14 @@ export default class Deploy extends CommandInterface {
     async uploadFilesToRemoteServer(nginxFiles: NginxFile[], dockerCompose: string){
         const sftp = await this.getSFTP();
 
-        if(!await sftp.exists(`${this.credentialsSSH.directory}/${this.webAppInfo.config.name}`))
-            await sftp.mkdir(`${this.credentialsSSH.directory}/${this.webAppInfo.config.name}`, true);
+        if(!await sftp.exists(`${this.credentialsSSH.directory}/${Info.webAppName}`))
+            await sftp.mkdir(`${this.credentialsSSH.directory}/${Info.webAppName}`, true);
 
         const files = globSync("**/*", {cwd: this.config.outputDir})
             .map(file => file.split(path.sep).join("/")); // forward slash only here
 
         const localFiles = files.map((file) => resolve(this.config.outputDir, file));
-        const remotePath = `${this.credentialsSSH.directory}/${this.webAppInfo.config.name}`;
+        const remotePath = `${this.credentialsSSH.directory}/${Info.webAppName}`;
 
         for (let i = 0; i < files.length; i++) {
             const fileInfo = fs.statSync(localFiles[i]);
@@ -636,7 +634,7 @@ export default class Deploy extends CommandInterface {
         }
 
         // nginx files
-        const nginxRemoteDir = `${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/nginx`;
+        const nginxRemoteDir = `${this.credentialsSSH.directory}/${Info.webAppName}/nginx`;
         if(!await sftp.exists(nginxRemoteDir))
             await sftp.mkdir(nginxRemoteDir, true);
 
@@ -645,7 +643,7 @@ export default class Deploy extends CommandInterface {
         }
 
         // docker compose file
-        await sftp.put(Buffer.from(dockerCompose), `${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/docker-compose.yml`);
+        await sftp.put(Buffer.from(dockerCompose), `${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml`);
 
         this.endLine();
     }
@@ -656,9 +654,9 @@ export default class Deploy extends CommandInterface {
      *
      */
     async startAppOnRemoteServer(){
-        console.log(`Starting ${this.webAppInfo.config.name} v${this.webAppInfo.config.version} on remote server`);
-        await this.execOnRemoteHost(`docker compose -p ${this.webAppInfo.config.name} -f ${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/docker-compose.yml up -d`);
-        await this.execOnRemoteHost(`docker compose -p ${this.webAppInfo.config.name} -f ${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/docker-compose.yml restart`);
+        console.log(`Starting ${Info.webAppName} v${Info.version} on remote server`);
+        await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml up -d`);
+        await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml restart`);
     }
 
     /**
@@ -704,10 +702,10 @@ export default class Deploy extends CommandInterface {
         await this.testDockerOnRemoteHost()
 
         let tempNginxDirRenamed = false;
-        const nginxDir = `${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/nginx`;
+        const nginxDir = `${this.credentialsSSH.directory}/${Info.webAppName}/nginx`;
         if(await sftp.exists(nginxDir)){
             tempNginxDirRenamed = true;
-            await sftp.rename(nginxDir, `${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/_nginx`);
+            await sftp.rename(nginxDir, `${this.credentialsSSH.directory}/${Info.webAppName}/_nginx`);
         }
 
         await sftp.mkdir(nginxDir, true);
@@ -715,7 +713,7 @@ export default class Deploy extends CommandInterface {
         await sftp.put(Buffer.from(`server {
     listen              80;
     server_name         ${domains.join(" ")};
-    root /apps/${this.webAppInfo.config.name}/nginx;
+    root /apps/${Info.webAppName}/nginx;
     location / {
         try_files $uri $uri/ =404;
     }
@@ -764,7 +762,7 @@ export default class Deploy extends CommandInterface {
 
         console.log("Cleaning Up");
         if(tempNginxDirRenamed){
-            await sftp.rename(`${this.credentialsSSH.directory}/${this.webAppInfo.config.name}/_nginx`, nginxDir);
+            await sftp.rename(`${this.credentialsSSH.directory}/${Info.webAppName}/_nginx`, nginxDir);
         }
 
         console.log("Done");

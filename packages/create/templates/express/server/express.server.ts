@@ -1,10 +1,13 @@
+import Server from "@fullstacked/webapp/server"
 import express from "express"
-import expressRegister from "./express.register";
 
 const app = express();
 
-app.get("/hello-express", (req, res) => {
-    res.send("Hello from express");
+app.get("/hello-world", (req, res) => {
+    res.send("Hello World");
 });
 
-expressRegister(app);
+Server.addListener("/express", {
+    name: "express",
+    handler: app
+});

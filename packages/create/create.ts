@@ -3,8 +3,9 @@ import {resolve} from "path";
 import fs from "fs";
 import {execSync} from "child_process";
 import {argsSpecs} from "./args";
+import install from "./install";
 
-export default function() {
+export default async function() {
     const {projectDir, fullstackedVersion} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
 
     if(fs.existsSync(resolve(projectDir, "package.json")))
@@ -19,4 +20,18 @@ export default function() {
         : `fullstacked@${fullstackedVersion}`;
 
     execSync(`npm i ${fullstackedPackage}`, {stdio: "inherit", cwd: projectDir});
+
+    const tsConfig = {
+        "compilerOptions": {
+            "module": "es2022",
+            "target": "es2022",
+            "moduleResolution": "node",
+            "esModuleInterop": true,
+            "jsx": "react"
+        }
+    };
+
+    fs.writeFileSync(resolve(projectDir, "tsconfig.json"), JSON.stringify(tsConfig, null, 2));
+
+    await install();
 }

@@ -12,18 +12,25 @@ buildSync({
 
 const buildRecursively = await import("./utils/buildRecursively.js");
 
-const utils     = globSync("./utils/**/*.ts");
+const utils = globSync("./utils/**/*.ts");
+const templa = globSync("./utils/**/*.ts");
 
 const toBuild = [
     ...utils,
     "./packages/backup/index.ts",
     "./packages/build/index.ts",
     "./packages/deploy/index.ts",
-    "./packages/info/index.ts",
     "./packages/run/index.ts",
     "./packages/watch/index.ts",
+    "./packages/watch/clientWatcher.ts",
     "./packages/create/cli.ts",
     "./packages/create/create.ts",
+    "./packages/create/install.ts",
+    "./packages/webapp/server/index.ts",
+    "./packages/webapp/server/HTML.ts",
+    "./packages/webapp/server/start.ts",
+    "./CommandInterface.ts",
+    "./info.ts",
     "./cli.ts"
 ].filter(file => !file.endsWith(".d.ts"));
 

@@ -1,9 +1,9 @@
-import Server from "fullstacked/server";
+import Server from "@fullstacked/webapp/server"
 import createHandler from "typescript-rpc/createHandler";
 
 const api = {
-    hello(){
-        return "Hello from typescript-rpc";
+    helloWorld(){
+        return "Hello World";
     }
 }
 
@@ -11,7 +11,7 @@ export default api;
 
 const handler = createHandler(api);
 
-Server.listeners.unshift({
-    title: "typescript-rpc",
+Server.addListener("/typescript-rpc", {
+    name: "typescript-rpc",
     handler
 });
