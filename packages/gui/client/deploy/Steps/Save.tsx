@@ -1,8 +1,6 @@
 import React, {useRef, useState} from "react";
-import {DEPLOY_CMD} from "../../../../types/deploy";
-import {WS} from "../../WebSocket";
 
-export default function ({getSteps}) {
+export default function () {
     const [saving, setSaving] = useState(false);
     const [didSave, setDidSave] = useState(false);
 
@@ -11,33 +9,7 @@ export default function ({getSteps}) {
         <p>
             Save your current configurations to your project.
         </p>
-        <form onSubmit={async e => {
-            e.preventDefault();
-            setSaving(true);
-            const password = passRef.current.value;
-
-            const sshCredentials = {...getSteps().at(0).data};
-
-            if(sshCredentials?.file?.text)
-                sshCredentials.privateKey = await sshCredentials.file.text();
-
-            const nginxConfigs = getSteps().at(1).data?.nginxConfigs;
-            const certificate = getSteps().at(2).data?.certificate;
-
-            const success = await WS.cmd(DEPLOY_CMD.SAVE, {
-                sshCredentials,
-                nginxConfigs,
-                certificate,
-                password
-            });
-
-            setSaving(false);
-            if(success) {
-                setDidSave(true);
-                passRef.current.value = "";
-                passRef.current.blur();
-            }
-        }}>
+        <form onSubmit={async e => {}}>
             <div className="mb-3">
                 <label className="form-label">Password</label>
                 <input ref={passRef} type="password" className="form-control" placeholder="********" />

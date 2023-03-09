@@ -2,17 +2,20 @@ import React from "react";
 import version from "../../../version";
 //@ts-ignore
 import logo from "./favicon.png";
+import {useNavigate} from "react-router-dom";
 
 export default function (){
+    const navigate = useNavigate();
+
     return <header className="navbar navbar-expand-md navbar-light d-print-none">
         <div className="container-xl">
             <div className="d-flex align-items-center">
                 <h1 className="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
-                    <a href=".">
+                    <div onClick={() => navigate("/")} className={"cursor-pointer"}>
                         <img src={logo} width="32" height="32" alt="Tabler"
                              className="navbar-brand-image me-3" />
                         FullStacked GUI
-                    </a>
+                    </div>
                 </h1>
                 <div>
                     <small className={"text-muted"}>v{version}</small>
