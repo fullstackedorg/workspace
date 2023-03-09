@@ -6,21 +6,22 @@
   "license": "MIT",
   "scripts": {
     "build": "npx fullstacked build --externalModules @fullstacked/deploy",
-    "dev": "npx fullstacked watch -b \"npm run build -- -v -w @fullstacked/watch/clientWatcher\""
+    "dev": "npx fullstacked watch -b \"npm run build -- -v -w @fullstacked/watch/clientWatcher\" -s \"node dist/app/index.mjs --development\""
   },
   "dependencies": {
     "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"
   },
   "devDependencies": {
-    "@fullstacked/run": "file:../run/fullstacked-run-0.10.0-1.tgz",
     "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-1.tgz",
     "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-1.tgz",
+    "@fullstacked/run": "file:../run/fullstacked-run-0.10.0-1.tgz",
     "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-1.tgz",
     "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-1.tgz",
     "@tabler/core": "^1.0.0-beta17",
     "@types/react": "^18.0.28",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.2",
     "typescript-rpc": "^0.0.14"
   }
 }

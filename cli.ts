@@ -4,8 +4,9 @@ import fs from "fs";
 import CommandInterface from "./CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
 import {dirname} from "path";
-import Info from "fullstacked/info";
+import Info from "./info";
 import FullStackedVersion from "./version";
+import Commands from "./Commands";
 
 const {help, version, packageJson} = CLIParser.getCommandLineArgumentsValues({
     packageJson: {
@@ -42,35 +43,6 @@ function getCommandLocation(commandName: string){
             : null;
 }
 
-const commands = [
-    {
-        name: "build",
-        description: "Build your Web App source code into a ready to run bundle"
-    },
-    {
-        name: "run",
-        description: "Run your Web App"
-    },
-    {
-        name: "watch",
-        description: "Automatically reBuild and reRun your Web App on file changes"
-    },
-    {
-        name: "deploy",
-        description: "Send your bundled Web App to a remote host"
-    },
-    {
-        name: "backup",
-        description: "Extract and put back archives of your Web App data"
-    },
-    {
-        name: "gui",
-        description: "Launch the GUI to execute the different FullStacked commands"
-    }
-]
-
-
-
 if(!commandName) {
     if(help){
         const table = new Table({
@@ -79,7 +51,7 @@ if(!commandName) {
                 head: ["blue"]
             }
         });
-        table.push(...(commands.map(command => ([
+        table.push(...(Commands.map(command => ([
             command.name,
             {hAlign: "center" as HorizontalAlignment, content: getCommandLocation(command.name) ? "✓" : "x"},
             command.description
@@ -97,7 +69,7 @@ if(!commandName) {
     throw Error("Could not find command in command line");
 }
 
-if(!commands.find(command => command.name === commandName)){
+if(!Commands.find(command => command.name === commandName)){
     console.log(`[${commandName}] is not a FullStacked command`);
     console.log(`If you need help, run [ npx fullstacked --help ]`);
     process.exit(0);
@@ -129,7 +101,7 @@ if(help){
             argSpec.description
         ])
     })
-    console.log(`\n  ${commands.find(command => command.name === commandName).description}\n`)
+    console.log(`\n  ${Commands.find(command => command.name === commandName).description}\n`)
     console.log(`  Usage: npx fullstacked ${commandName} [ARGS...]\n`)
     console.log(outputTable.toString());
 }else{

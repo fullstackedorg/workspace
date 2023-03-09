@@ -1,6 +1,4 @@
 import React, {useEffect, useRef, useState} from "react";
-import {WS} from "../../WebSocket";
-import {DEPLOY_CMD} from "../../../../types/deploy";
 
 const months = [
     "January",
@@ -23,24 +21,12 @@ const dateToHuman = (date: Date) => {
     return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} ${date.getHours()}:${minutes}:${seconds}`;
 }
 
-export default function ({getSteps, defaultData, updateData}){
+export default function (){
     const [certificate, setCertificate] = useState(null);
     const [showNewCertForm, setShowNewCertForm] = useState(false);
     const [showManualCert, setShowManualCert] = useState(false);
 
-    const getCertData = ({fullchain, privkey}) => {
-        WS.cmd(DEPLOY_CMD.CERT, {fullchain}).then(data => {
-            setCertificate({fullchain, privkey, data})
-        });
-    }
-
-    useEffect(() => {
-        if(!defaultData?.certificate) return;
-
-        getCertData(defaultData.certificate);
-    }, [])
-
-    const serverNames = getSteps().at(1)?.data?.nginxConfigs?.map(service => service.serverNames).flat();
+    const serverNames = [];
 
     const domains = certificate?.data?.subjectAltName?.split(",").map(record => record.trim().substring("DNS:".length))
 
@@ -100,18 +86,12 @@ export default function ({getSteps, defaultData, updateData}){
         {showNewCertForm && <NewCertForm
             close={() => setShowNewCertForm(false)}
             serverNames={serverNames}
-            addNewCert={certificate => {
-                getCertData(certificate);
-                updateData({certificate});
-            }}
+            addNewCert={certificate => {}}
         />}
 
         {showManualCert && <ManualCertForm
             close={() => setShowManualCert(false)}
-            addNewCert={certificate => {
-                getCertData(certificate);
-                updateData({certificate});
-            }}
+            addNewCert={certificate => {}}
         />}
     </div>
 }
@@ -161,24 +141,7 @@ function NewCertForm({close, serverNames, addNewCert}){
                         <div onClick={close} className="btn btn-link link-secondary" data-bs-dismiss="modal">
                             Cancel
                         </div>
-                        <div onClick={async () => {
-                            setLoading(true);
-
-                            let serverNames = [];
-                            document.querySelectorAll("#server-names-select input").forEach((input: HTMLInputElement) => {
-                                if(input.checked) serverNames.push(input.value);
-                            });
-
-                            const email = (document.querySelector("#input-email") as HTMLInputElement).value;
-
-                            const newCert = await WS.cmd(DEPLOY_CMD.NEW_CERT, {serverNames, email})
-
-                            if(newCert) {
-                                setLoading(false);
-                                addNewCert(newCert);
-                                close();
-                            }
-                        }} className={`btn btn-primary ms-auto ${loading ? "disabled" : ""}`} data-bs-dismiss="modal">
+                        <div onClick={async () => {}} className={`btn btn-primary ms-auto ${loading ? "disabled" : ""}`} data-bs-dismiss="modal">
                             {loading
                                 ? <div className="spinner-border" role="status"></div>
                                 : "Create new certificate"}

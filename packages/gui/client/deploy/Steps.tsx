@@ -1,11 +1,24 @@
 import React from "react";
-import {steps} from "./Deploy";
+import {steps} from "./index";
+import {useLocation, useNavigate} from "react-router-dom";
 
-export default function ({stepIndex, goToStep}){
+export default function (){
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    let currentStepIndex = 0;
+    steps.forEach((step, i) => {
+        if(location.pathname.endsWith(step.slug))
+            currentStepIndex = i
+    });
+
     return <div className={"card"}>
         <ul className="steps steps-counter my-4">
-            {steps.map((step, index) =>
-                <li onClick={() => goToStep(index)} className={`cursor-pointer step-item ${stepIndex === index ? "active" : ""}`}>{step.title}</li>)}
+            {steps.map((step, i) =>
+                <li onClick={() => navigate(`/deploy${step.slug}`)}
+                    className={`cursor-pointer step-item ${currentStepIndex === i ? "active" : ""}`}>
+                    {step.title}
+                </li>)}
         </ul>
     </div>
 }
