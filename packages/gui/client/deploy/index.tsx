@@ -1,6 +1,5 @@
 import React, {ReactElement, useEffect, useState} from "react";
 import SSH from "./Steps/SSH";
-import Configs from "./Steps/Configs";
 import SSL from "./Steps/SSL";
 import Deployment from "./Steps/Deployment";
 import Save from "./Steps/Save";
@@ -9,6 +8,7 @@ import {Route, Routes} from "react-router-dom";
 import {openConsole} from "../index";
 import {Client} from "../client";
 import ConfigLoader from "./ConfigLoader";
+import Nginx from "./Steps/Nginx";
 
 export let steps = [
     {
@@ -18,7 +18,7 @@ export let steps = [
     },{
         slug: "/nginx",
         title: "Nginx Configuration",
-        component: Configs
+        component: Nginx
     },{
         slug: "/ssl",
         title: "SSL Certificates",
@@ -40,7 +40,12 @@ export default function () {
     useEffect(openConsole, []);
 
     useEffect(() => {
-        Client.deploy.hasConfig().then(setCheckConfig);
+        Client.deploy.hasConfig()
+            .then(setCheckConfig)
+            .catch(() => {
+                setCheckConfig({hasConfig: false});
+                setDidLoadConfig(true)
+            });
     }, []);
 
     if(checkConfig === null) return <></>;
@@ -53,7 +58,7 @@ export default function () {
                 <h2 className={"page-title"}>Deploy</h2>
             </div>
 
-            {checkConfig.hasConfig && !didLoadConfig
+            {checkConfig?.hasConfig && !didLoadConfig
                 ? <ConfigLoader pass={checkConfig.encrypted} didLoadConfig={() => setDidLoadConfig(true)} />
                 : <div className={"page-body"}>
                     <Routes>

@@ -46,7 +46,7 @@ export default class CLIParser {
     static parseCommandLineArguments(){
         const args = process.argv.slice(2);
 
-        if(!args.at(0).startsWith("-"))
+        if(!args.at(0)?.startsWith("-"))
             this.commandLinePositional = args.shift();
 
         this.commandLineTokens = {};
