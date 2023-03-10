@@ -8,3 +8,17 @@ body {
 .theme-dark pre {
     background-color: #0f141f
 }
+
+.main-view > div {
+    transition: 0.3s width;
+}
+
+.main-view > div:first-child {
+    width: 100%;
+}
+.main-view > div:last-child {
+    width: 0;
+}
+.main-view.open-console > div {
+    width: 50%;
+}

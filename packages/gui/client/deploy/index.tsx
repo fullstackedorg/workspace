@@ -1,4 +1,4 @@
-import React, {ReactElement} from "react";
+import React, {ReactElement, useEffect, useState} from "react";
 import SSH from "./Steps/SSH";
 import Configs from "./Steps/Configs";
 import SSL from "./Steps/SSL";
@@ -6,6 +6,9 @@ import Deployment from "./Steps/Deployment";
 import Save from "./Steps/Save";
 import Steps from "./Steps";
 import {Route, Routes} from "react-router-dom";
+import {openConsole} from "../index";
+import {Client} from "../client";
+import ConfigLoader from "./ConfigLoader";
 
 export let steps = [
     {
@@ -32,6 +35,16 @@ export let steps = [
 ]
 
 export default function () {
+    const [checkConfig, setCheckConfig] = useState<Awaited<ReturnType<typeof Client.deploy.hasConfig>>>(null);
+    const [didLoadConfig, setDidLoadConfig] = useState<boolean>(false);
+    useEffect(openConsole, []);
+
+    useEffect(() => {
+        Client.deploy.hasConfig().then(setCheckConfig);
+    }, []);
+
+    if(checkConfig === null) return <></>;
+
     return <>
         <Steps />
 
@@ -39,9 +52,15 @@ export default function () {
             <div className={"page-header"}>
                 <h2 className={"page-title"}>Deploy</h2>
             </div>
-            <Routes>
-                {steps.map(step => <Route path={step.slug} element={<step.component />} />)}
-            </Routes>
+
+            {checkConfig.hasConfig && !didLoadConfig
+                ? <ConfigLoader pass={checkConfig.encrypted} didLoadConfig={() => setDidLoadConfig(true)} />
+                : <div className={"page-body"}>
+                    <Routes>
+                        {steps.map(step => <Route path={step.slug} element={<step.component />} />)}
+                    </Routes>
+                </div>}
+
         </div>
     </>
 }

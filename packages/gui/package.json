@@ -19,9 +19,12 @@
     "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-1.tgz",
     "@tabler/core": "^1.0.0-beta17",
     "@types/react": "^18.0.28",
+    "@types/ws": "^8.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-github-btn": "^1.4.0",
     "react-router-dom": "^6.8.2",
-    "typescript-rpc": "^0.0.14"
+    "typescript-rpc": "^0.0.15",
+    "ws": "^8.12.1"
   }
 }

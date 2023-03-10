@@ -3,6 +3,10 @@ import createHandler from "typescript-rpc/createHandler";
 import Commands from "fullstacked/Commands";
 import fs from "fs";
 import deploy from "./deploy";
+import WebSocket, {WebSocketServer} from "ws";
+import {MESSAGE_TYPE} from "../WS";
+import {Socket} from "net";
+import {ServerResponse} from "http";
 
 Server.port = 8001;
 
@@ -26,7 +30,7 @@ Server.addListener("/typescript-rpc", {
     handler
 });
 
-Server.listeners.default.pop();
+const lastListener = Server.listeners.default.pop();
 Server.listeners.default.push({
     handler(req, res): any {
         if(req.url.includes(".")) {
@@ -36,4 +40,49 @@ Server.listeners.default.push({
         }
         res.end(Server.pages["/"].toString());
     }
+}, lastListener);
+
+const wss = new WebSocketServer({ noServer: true });
+const activeWS = new Set<WebSocket>();
+
+wss.on("connection", (ws) => {
+    activeWS.add(ws);
+    ws.on('close', () => activeWS.delete(ws));
+});
+
+console.log = (...args) => {
+    activeWS.forEach(ws => {
+        ws.send(JSON.stringify({
+            type: MESSAGE_TYPE.LOG,
+            data: args.join(" ")
+        }));
+    })
+}
+
+export const bindCommandToWS = (command) => {
+    command.write = (str) => activeWS.forEach(ws => {
+        ws.send(JSON.stringify({
+            type: MESSAGE_TYPE.LOG,
+            data: str
+        }));
+    });
+
+    command.printLine = (str) => activeWS.forEach(ws => {
+        ws.send(JSON.stringify({
+            type: MESSAGE_TYPE.LINE,
+            data: str
+        }));
+    });
+
+    command.endLine = () => activeWS.forEach(ws => {
+        ws.send(JSON.stringify({
+            type: MESSAGE_TYPE.END_LINE
+        }));
+    });
+}
+
+Server.server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, function done(ws) {
+        wss.emit('connection', ws, request);
+    });
 });

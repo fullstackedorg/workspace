@@ -52,7 +52,13 @@ export default class Watch extends CommandInterface {
     }
 
     buildAndWatch(){
-        const rawFilesOutput = execSync(this.config.builder).toString();
+        let rawFilesOutput = "";
+        try{
+            rawFilesOutput = execSync(this.config.builder).toString();
+        }catch (e) {
+            console.log(e);
+        }
+
         const filesToWatch = new Set(rawFilesOutput
             .split("\n")
             .map(line => line.split(","))

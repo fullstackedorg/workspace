@@ -16,6 +16,7 @@ import randStr from "fullstacked/utils/randStr";
 import dns from "dns";
 import {decryptDataWithPassword, encryptDataWithPassword} from "fullstacked/utils/encrypt";
 import {fileURLToPath} from "url";
+import sleep from "fullstacked/utils/sleep";
 
 export type CredentialsSSH = {
     host: string,
@@ -116,7 +117,7 @@ export default class Deploy extends CommandInterface {
 
     askToInstallDockerOnRemoteHost: () => Promise<boolean>;
 
-    async execOnRemoteHost(cmd: string): Promise<string>{
+    async execOnRemoteHost(cmd: string, print = false): Promise<string>{
         const {client} = await this.getSFTP();
 
         return new Promise(resolve => {
@@ -126,9 +127,13 @@ export default class Deploy extends CommandInterface {
                 if (err) throw err;
 
                 stream.on('data', chunk => {
+                    if(print) this.write(chunk.toString());
+
                     message.push(chunk);
                 });
                 stream.on('error', chunk => {
+                    if(print) this.write(chunk.toString());
+
                     message.push(chunk);
                 })
                 stream.on('close', () => resolve(message.toString()));
@@ -361,19 +366,35 @@ export default class Deploy extends CommandInterface {
         if(!this.credentialsSSH)
             throw Error("Trying to get connection to remote server without having set ssh credentials");
 
-        const timeout = setTimeout(() => {
-            try{
-                this.sftp.end();
-            }catch (e){ }
-            throw Error("Hanging 3s to connect to remote server");
-        }, 3000);
-
         this.sftp = new SFTP() as WrappedSFTP;
-        await this.sftp.connect(this.credentialsSSH);
 
-        clearTimeout(timeout);
+        return new Promise(async (resolve, reject) => {
+            let rejected = false;
+            const hangTime = setTimeout(() => {
+                // try to clean up a bit
+                try {
+                    this.sftp.end()
+                }catch (e){}
+                this.sftp = null;
 
-        return this.sftp;
+                // reject
+                rejected = true;
+                reject(Error("Hanging for more than 3s"));
+            }, 3e3);
+
+            try{
+                await this.sftp.connect(this.credentialsSSH);
+            }catch (e) {
+                this.sftp = null;
+                reject(e);
+                return;
+            }
+
+            if(rejected) return;
+
+            clearTimeout(hangTime);
+            resolve(this.sftp);
+        });
     }
 
     /**
@@ -422,15 +443,15 @@ export default class Deploy extends CommandInterface {
         if(DockerInstallScripts[distroName]){
             for(const cmd of DockerInstallScripts[distroName]) {
                 console.log(cmd)
-                await this.execOnRemoteHost(cmd);
+                await this.execOnRemoteHost(cmd, true);
             }
         }
 
-        if(await this.testDockerOnRemoteHost()) return;
+        if(await this.testDockerOnRemoteHost(true)) return;
 
         const dockerInstallScript = await (await fetch("https://get.docker.com")).text();
         await sftp.put(Buffer.from(dockerInstallScript), "/tmp/get-docker.sh");
-        await this.execOnRemoteHost("sh /tmp/get-docker.sh");
+        await this.execOnRemoteHost("sh /tmp/get-docker.sh", true);
         await sftp.delete("/tmp/get-docker.sh");
     }
 

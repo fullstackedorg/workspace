@@ -1,4 +1,5 @@
 import React, {useRef, useState} from "react";
+import {Client} from "../../client";
 
 export default function () {
     const [saving, setSaving] = useState(false);
@@ -9,7 +10,13 @@ export default function () {
         <p>
             Save your current configurations to your project.
         </p>
-        <form onSubmit={async e => {}}>
+        <form onSubmit={async e => {
+            e.preventDefault();
+            setSaving(true);
+            await Client.deploy.saveConfig(passRef.current.value);
+            setSaving(false);
+            setDidSave(true);
+        }}>
             <div className="mb-3">
                 <label className="form-label">Password</label>
                 <input ref={passRef} type="password" className="form-control" placeholder="********" />
