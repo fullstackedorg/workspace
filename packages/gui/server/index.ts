@@ -5,10 +5,10 @@ import fs from "fs";
 import deploy from "./deploy";
 import WebSocket, {WebSocketServer} from "ws";
 import {MESSAGE_TYPE} from "../WS";
-import {Socket} from "net";
-import {ServerResponse} from "http";
 
 Server.port = 8001;
+
+Server.pages["/"].addInHead(`<title>FullStacked GUI</title>`);
 
 const api = {
     async installedCommand(){

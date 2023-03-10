@@ -29,6 +29,10 @@ export default {
         return getDeploy().tryToInstallDockerOnRemoteHost();
     },
 
+    getServices(){
+        return getDeploy().getServicesWithPortToSetup();
+    },
+
     hasConfig(){
         return getDeploy().hasSavedConfigs();
     },

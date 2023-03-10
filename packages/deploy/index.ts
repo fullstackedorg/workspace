@@ -221,7 +221,9 @@ export default class Deploy extends CommandInterface {
             this.credentialsSSH.privateKey = fs.readFileSync(resolve(process.cwd(), this.config.privateKeyFile)).toString();
     }
 
-    async setupNginxConfigsWithPrompts(){
+    getServicesWithPortToSetup(): {name: string, port: number}[] {
+        let servicesToSetup: ReturnType<typeof this.getServicesWithPortToSetup> = [];
+
         const dockerCompose = yaml.load(fs.readFileSync(resolve(this.config.outputDir, "docker-compose.yml")).toString());
 
         for (const serviceName of Object.keys(dockerCompose.services)) {
@@ -233,64 +235,76 @@ export default class Deploy extends CommandInterface {
             for (const port of service.ports) {
                 const internalPort = port.split(":").pop();
 
-                const nginxConfig: NginxConfig = {
+                servicesToSetup.push({
                     name: serviceName,
                     port: internalPort
-                }
-
-                const { setup } = await prompts({
-                    type: "confirm",
-                    name: "setup",
-                    message: `Would you like to add server names for ${serviceName} port ${internalPort}`
-                });
-
-                if(setup) {
-                    const { serverNames } = await prompts({
-                        type: "list",
-                        name: "serverNames",
-                        message: "Enter the server names (split with commas)",
-                    });
-
-                    const { nginxExtraConfigs } = await prompts({
-                        type: "text",
-                        name: "nginxExtraConfigs",
-                        message: "Enter any nginx extra configuration (ie: proxy_set_header Host $host; proxy_set_header X-Forwarded-For $remote_addr; )",
-                    });
-
-                    nginxConfig.serverNames = serverNames;
-                    nginxConfig.nginxExtraConfigs = nginxExtraConfigs
-                        .split(";")
-                        .filter(config => Boolean(config.trim()))
-                        .map(config => config.trim() + ";");
-                }
-
-                const { customPort } = await prompts({
-                    type: "confirm",
-                    name: "customPort",
-                    message: `Would you like ${serviceName} port ${internalPort} to listen on a custom port ? Default is 80 and 443(SSL)`
-                });
-
-                if(customPort){
-                    const { port } = await prompts({
-                        type: "number",
-                        name: "port",
-                        message: "Which port?"
-                    });
-
-                    const { ssl } = await prompts({
-                        type: "confirm",
-                        name: "ssl",
-                        message: "With SSL encryption?"
-                    });
-
-                    nginxConfig.customPublicPort = {
-                        port,
-                        ssl
-                    }
-                }
-
-                this.nginxConfigs.push(nginxConfig);
+                })
             }
+        }
+
+        return servicesToSetup;
+    }
+
+    async setupNginxConfigsWithPrompts(){
+        const servicesToSetup = this.getServicesWithPortToSetup();
+
+        for(const service of servicesToSetup){
+            const nginxConfig: NginxConfig = {
+                ...service
+            }
+
+            const { setup } = await prompts({
+                type: "confirm",
+                name: "setup",
+                message: `Would you like to add server names for ${service.name} port ${service.port}`
+            });
+
+            if(setup) {
+                const { serverNames } = await prompts({
+                    type: "list",
+                    name: "serverNames",
+                    message: "Enter the server names (split with commas)",
+                });
+
+                const { nginxExtraConfigs } = await prompts({
+                    type: "text",
+                    name: "nginxExtraConfigs",
+                    message: "Enter any nginx extra configuration (ie: proxy_set_header Host $host; proxy_set_header X-Forwarded-For $remote_addr; )",
+                });
+
+                nginxConfig.serverNames = serverNames;
+                nginxConfig.nginxExtraConfigs = nginxExtraConfigs
+                    .split(";")
+                    .filter(config => Boolean(config.trim()))
+                    .map(config => config.trim() + ";");
+            }
+
+            const { customPort } = await prompts({
+                type: "confirm",
+                name: "customPort",
+                message: `Would you like ${service.name} port ${service.port} to listen on a custom port ? Default is 80 and 443(SSL)`
+            });
+
+            if(customPort){
+                const { port } = await prompts({
+                    type: "number",
+                    name: "port",
+                    message: "Which port?"
+                });
+
+                const { ssl } = await prompts({
+                    type: "confirm",
+                    name: "ssl",
+                    message: "With SSL encryption?"
+                });
+
+                nginxConfig.customPublicPort = {
+                    port,
+                    ssl
+                }
+            }
+
+            this.nginxConfigs.push(nginxConfig);
         }
     }
 

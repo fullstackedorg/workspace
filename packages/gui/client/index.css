@@ -10,7 +10,7 @@ body {
 }
 
 .main-view > div {
-    transition: 0.3s width;
+    transition: 0.3s all;
 }
 
 .main-view > div:first-child {
@@ -18,6 +18,13 @@ body {
 }
 .main-view > div:last-child {
     width: 0;
+}
+.main-view > div:last-child pre {
+    transition: 0.3s padding;
+}
+.main-view:not(.open-console) > div:last-child pre {
+    padding-right: 0;
+    padding-left: 0;
 }
 .main-view.open-console > div {
     width: 50%;

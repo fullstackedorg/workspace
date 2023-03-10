@@ -1,18 +1,24 @@
 import React, {useEffect, useState} from "react";
+import {Client} from "../../client";
+import type {NginxConfig} from "@fullstacked/deploy/index";
 
 
 export default function () {
-    const [nginxConfigs, setNginxConfigs] = useState([]);
-    const [activeConfigIndex, setActiveConfigIndex] = useState(0);
+    const [nginxConfigs, setNginxConfigs] = useState<NginxConfig[]>([]);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    useEffect(() => {
+        Client.deploy.getServices().then(setNginxConfigs);
+    }, []);
 
     return <div>
         <div className="card">
             <div className="card-header">
                 <ul className="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
                     {
-                        nginxConfigs.map((nginxConfig, configIndex) => <li className="nav-item" role="presentation">
-                            <div className={`nav-link d-block cursor-pointer ${configIndex === activeConfigIndex && "active"}`}
-                                 onClick={() => setActiveConfigIndex(configIndex)}>
+                        nginxConfigs.map((nginxConfig, index) => <li className="nav-item" role="presentation">
+                            <div className={`nav-link d-block cursor-pointer ${index === activeIndex && "active"}`}
+                                 onClick={() => setActiveIndex(index)}>
                                 <div>{nginxConfig.name}</div>
                                 <div><small className={"text-muted"}>Port: {nginxConfig.port}</small></div>
                             </div>
@@ -22,8 +28,8 @@ export default function () {
             </div>
             <div className="card-body">
                 <div className="tab-content">
-                    {nginxConfigs.map((nginxConfig, configIndex) => <div className={`tab-pane ${configIndex === activeConfigIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
-                        <div id={`server-name-inputs-${configIndex}`}>
+                    {nginxConfigs.map((nginxConfig, index) => <div className={`tab-pane ${index === activeIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
+                        <div id={`server-name-inputs-${index}`}>
                             <label className="form-label">Server Name</label>
                             <input type="text" className="form-control mb-2" defaultValue={""} placeholder="foo.example.com" onChange={() => {}}/>
                         </div>
@@ -49,12 +55,12 @@ export default function () {
                             <div className={"card-body"}>
                                 <label className="form-check form-switch">
                                     <input className="form-check-input" type="checkbox" onChange={(e) => {
-                                        document.getElementById(`custom-port-form-${configIndex}`).classList.toggle("d-none");
+                                        document.getElementById(`custom-port-form-${index}`).classList.toggle("d-none");
                                     }} defaultChecked={!!(nginxConfig?.customPublicPort?.port)}/>
                                     <span className="form-check-label">Custom Public Port</span>
                                 </label>
 
-                                <div id={`custom-port-form-${configIndex}`}
+                                <div id={`custom-port-form-${index}`}
                                      className={nginxConfig?.customPublicPort?.port ? "" : "d-none"}>
                                     <label className="form-label">Port</label>
                                     <input type="text" className="form-control mb-2" placeholder="8000"
@@ -71,7 +77,6 @@ export default function () {
                                         <span className="form-check-label">SSL</span>
                                     </label>
                                 </div>
-
                             </div>
                         </div>
                     </div>)}
