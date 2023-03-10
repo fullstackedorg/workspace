@@ -1,5 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {Client} from "../../client";
+import Console from "../../Console";
+import {MESSAGE_TYPE} from "../../../WS";
+
+let throttler = null;
 
 export default function (){
     const [authOption, setAuthOption] = useState(false);
@@ -8,10 +12,23 @@ export default function (){
     const [showInstallDocker, setShowInstallDocker] = useState(false);
 
     const [credentialsSSH, setCredentialsSSH] = useState<Awaited<ReturnType<typeof Client.deploy.getCredentialsSSH>>>(null);
-    useEffect(() => {Client.deploy.getCredentialsSSH().then(setCredentialsSSH)}, []);
+    useEffect(() => {Client.deploy.getCredentialsSSH().then(creds => {
+        if(creds.privateKey) {
+            setAuthOption(true);
+            setSshKeyOption(true);
+        }
+
+        setCredentialsSSH(creds);
+    })}, []);
     useEffect(() => {
         if(!credentialsSSH) return;
-        Client.post().deploy.updateCredentialsSSH(credentialsSSH)
+
+        if(throttler) clearTimeout(throttler);
+        throttler = setTimeout(() => {
+            throttler = null;
+            Client.post().deploy.updateCredentialsSSH(credentialsSSH);
+        }, 300);
+
     }, [credentialsSSH]);
 
     if(credentialsSSH === null) return;
@@ -72,15 +89,30 @@ export default function (){
                             ? <div className="mb-3">
                                 <label className="form-label">SSH Key</label>
                                 <textarea className="form-control" name="example-textarea-input" rows={6} placeholder="-----BEGIN RSA PRIVATE KEY-----..."
-                                          defaultValue={""}
-                                          onChange={e => {}}
+                                          defaultValue={credentialsSSH.privateKey}
+                                          onChange={e => setCredentialsSSH({
+                                              ...credentialsSSH,
+                                              password: null,
+                                              privateKey: e.currentTarget.value
+                                          })}
                                 ></textarea>
                             </div>
                             : <div className="mb-3">
                                 <div className="form-label">SSH Key File</div>
-                                {false && <div>File: {""}</div>}
                                 <input type="file" className="form-control"
-                                       onChange={e => {}}
+                                       onChange={async e => {
+                                           if(!e.currentTarget.files[0]) return;
+                                           const fd = new FileReader();
+                                           const readPromise = new Promise((res) => {
+                                               fd.onload = res
+                                               fd.readAsText(e.currentTarget.files[0])
+                                           });
+                                           await readPromise;
+                                           setCredentialsSSH({
+                                               ...credentialsSSH,
+                                               privateKey: fd.result.toString()
+                                           });
+                                       }}
                                 />
                             </div>
                     }
@@ -92,7 +124,8 @@ export default function (){
                            defaultValue={credentialsSSH.password}
                            onChange={e => setCredentialsSSH({
                                ...credentialsSSH,
-                               password: e.currentTarget.value
+                               password: e.currentTarget.value,
+                               privateKey: null
                            })}/>
                 </div>}
 
@@ -108,13 +141,50 @@ export default function (){
         </div>
 
         <div className={`btn btn-success w-100 mt-3 ${testing && "disabled"}`}
-             onClick={async () => {}} >
+             onClick={async () => {
+                setTesting(true);
+                let test = false;
+                try {
+                    test = await Client.deploy.testConnection();
+                }catch (e) {
+                    Console.instance.push({data: e, type: MESSAGE_TYPE.ERROR})
+                }
+                if(!test)
+                     Console.instance.push({data: "Failed to connect", type: MESSAGE_TYPE.ERROR});
+                else{
+
+                    let dockerInstalled = false;
+                    try {
+                        dockerInstalled = await Client.deploy.testDocker();
+                    }catch (e) {
+                        Console.instance.push({data: e, type: MESSAGE_TYPE.ERROR});
+                    }
+
+                    setShowInstallDocker(!dockerInstalled);
+                }
+
+                setTesting(false);
+             }} >
             {testing
                 ? <div className="spinner-border" role="status"></div>
                 : "Test Connection"}
         </div>
         {showInstallDocker && <div className={`btn btn-warning w-100 mt-3 ${testing && "disabled"}`}
-                                   onClick={async () => {}} >
+                                   onClick={async () => {
+                                       setTesting(true);
+                                       await Client.deploy.installDocker();
+
+                                       let dockerInstalled = false;
+                                       try {
+                                           dockerInstalled = await Client.deploy.testDocker();
+                                       }catch (e) {
+                                           Console.instance.push({data: e, type: MESSAGE_TYPE.ERROR});
+                                       }
+
+                                       setShowInstallDocker(!dockerInstalled);
+
+                                       setTesting(false);
+                                   }} >
             {testing
                 ? <div className="spinner-border" role="status"></div>
                 : "Install Docker"}
