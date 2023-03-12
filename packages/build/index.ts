@@ -78,11 +78,6 @@ export default class Build extends CommandInterface {
             short: "v",
             defaultDescription: "false",
             description: "Output the list of files bundled"
-        },
-        clientWatcher: {
-            type: "string",
-            short: "w",
-            description: "Define a script file that the client will bundle as './watcher'.\nUsed by @fullstacked/watch to add the script for the connection\nflow to the Watcher WebSocket Server."
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Build.commandLineArguments);
@@ -165,11 +160,6 @@ export default class Build extends CommandInterface {
         const filesBuilt = new Set();
 
         const clientFiles = this.config.client.map(file => resolve(file));
-        if(this.config.clientWatcher) {
-            clientFiles.push(this.config.clientWatcher.startsWith(".")
-                ? resolve(this.config.clientWatcher)
-                : this.config.clientWatcher);
-        }
 
         const options = {
             entryPoints: [Build.emptyEntryPoint],

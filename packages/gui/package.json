@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "npx fullstacked build --externalModules @fullstacked/deploy",
-    "dev": "npx fullstacked watch -b \"npm run build -- -v -w @fullstacked/watch/clientWatcher\" -s \"node dist/app/index.mjs --development\""
+    "dev": "npx fullstacked watch -b \"npm run build -- -v\" -s \"node dist/app/index.mjs --development\" --portFinder \"echo 8001\""
   },
   "dependencies": {
     "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"

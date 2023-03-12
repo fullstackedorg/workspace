@@ -51,7 +51,6 @@ export default class Run extends CommandInterface {
 
     dockerCompose: DockerCompose;
     dockerClient: Dockerode;
-    infos: Info;
 
     async stop(){
         const services = Object.keys(this.dockerCompose.recipe.services);

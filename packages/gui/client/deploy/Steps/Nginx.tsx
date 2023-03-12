@@ -1,22 +1,32 @@
 import React, {useEffect, useState} from "react";
 import {Client} from "../../client";
-import type {NginxConfig} from "@fullstacked/deploy/index";
+import type {NginxConfig} from "@fullstacked/deploy";
+import server from "../../../server";
 
+let throttler = null;
 
 export default function () {
-    const [nginxConfigs, setNginxConfigs] = useState<NginxConfig[]>([]);
+    const [nginxConfigs, setNginxConfigs] = useState<NginxConfig[]>(null);
     const [activeIndex, setActiveIndex] = useState(0);
 
+    useEffect(() => {Client.deploy.getServices().then(setNginxConfigs)}, []);
     useEffect(() => {
-        Client.deploy.getServices().then(setNginxConfigs);
-    }, []);
+        if(!nginxConfigs) return;
+
+        if(throttler) clearTimeout(throttler);
+        throttler = setTimeout(() => {
+            throttler = null;
+            Client.post().deploy.updateNginxConfigs(nginxConfigs);
+        }, 300);
+
+    }, [nginxConfigs]);
 
     return <div>
         <div className="card">
             <div className="card-header">
                 <ul className="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
                     {
-                        nginxConfigs.map((nginxConfig, index) => <li className="nav-item" role="presentation">
+                        nginxConfigs?.map((nginxConfig, index) => <li className="nav-item" role="presentation">
                             <div className={`nav-link d-block cursor-pointer ${index === activeIndex && "active"}`}
                                  onClick={() => setActiveIndex(index)}>
                                 <div>{nginxConfig.name}</div>
@@ -28,12 +38,22 @@ export default function () {
             </div>
             <div className="card-body">
                 <div className="tab-content">
-                    {nginxConfigs.map((nginxConfig, index) => <div className={`tab-pane ${index === activeIndex && "active show"}`} id="tabs-home-11" role="tabpanel">
-                        <div id={`server-name-inputs-${index}`}>
+                    {nginxConfigs?.map((nginxConfig, index) => <div className={`tab-pane ${index === activeIndex && "active show"}`}>
+                        <div>
                             <label className="form-label">Server Name</label>
-                            <input type="text" className="form-control mb-2" defaultValue={""} placeholder="foo.example.com" onChange={() => {}}/>
+                            {nginxConfig.serverNames?.map((serverName, i) =>
+                                <input type="text" className="form-control mb-2" defaultValue={serverName} placeholder="foo.example.com" onChange={(e) => {
+                                    nginxConfig.serverNames[i] = e.currentTarget.value;
+                                    setNginxConfigs([...nginxConfigs])
+                                }}/>)}
                         </div>
-                        <div className={"text-center mt-1"} onClick={() => {}}>
+                        <div className={"text-center mt-1"} onClick={() => {
+                            if(!nginxConfig.serverNames)
+                                nginxConfig.serverNames = [];
+
+                            nginxConfig.serverNames.push("")
+                            setNginxConfigs([...nginxConfigs]);
+                        }}>
                             <div className="btn btn-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="m-0 icon icon-tabler icon-tabler-plus" width="24"
                                      height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none"
@@ -48,14 +68,14 @@ export default function () {
                             <label className="form-label">Nginx Extra Configs</label>
                             <textarea className="form-control" rows={6}
                                       defaultValue={""}
-                                      placeholder="proxy_set_header Host $host;\nproxy_set_header X-Real-IP $remote_addr;"
+                                      placeholder={`proxy_set_header Host $host;\nproxy_set_header X-Real-IP $remote_addr;`}
                                       onChange={(e) => {}}></textarea>
                         </div>
                         <div className={"card"}>
                             <div className={"card-body"}>
                                 <label className="form-check form-switch">
                                     <input className="form-check-input" type="checkbox" onChange={(e) => {
-                                        document.getElementById(`custom-port-form-${index}`).classList.toggle("d-none");
+
                                     }} defaultChecked={!!(nginxConfig?.customPublicPort?.port)}/>
                                     <span className="form-check-label">Custom Public Port</span>
                                 </label>
