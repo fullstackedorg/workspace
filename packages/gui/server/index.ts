@@ -38,6 +38,8 @@ Server.listeners.default.push({
             Server.listeners.default.at(0).handler(req, res);
             return;
         }
+
+        res.writeHead(200, {"content-type": "text/html"});
         res.end(Server.pages["/"].toString());
     }
 }, lastListener);

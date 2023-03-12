@@ -1,7 +1,5 @@
 const storageKey = "watcherEndpoint";
 
-const watcherEndpoint = window.localStorage.getItem(storageKey);
-
 function sleep(ms: number){
     return new Promise<void>(resolve => {
         setTimeout(resolve, ms);
@@ -31,48 +29,21 @@ async function reload(){
     let caughtServerDown = false;
     let serverBackUp = false;
     while (!serverBackUp){
-        try{
-            await fetch("/");
-            if(caughtServerDown)
-                serverBackUp = true;
-        }
-        catch (e) {
+        const serverIsDown = (await fetch("/")).status === 500;
+        if(!caughtServerDown && serverIsDown)
             caughtServerDown = true;
-            await sleep(100);
+        else if(caughtServerDown && !serverIsDown) {
+            serverBackUp = true;
+            break;
         }
+        await sleep(200);
     }
     window.location.reload();
 }
 
 function connectToWatcher(host: string){
-    try{
-        const ws = new WebSocket((window.location.protocol === "https:" ? "wss:" : "ws:") + "//" + host);
-        ws.onmessage = reload;
-    }catch (e){
-        this.displayForm();
-    }
+    const ws = new WebSocket((window.location.protocol === "https:" ? "wss:" : "ws:") + "//" + host + "/fullstacked-ws");
+    ws.onmessage = reload;
 }
 
-function displayForm(){
-    const form = document.createElement("form");
-    const input = document.createElement("input");
-    form.addEventListener("submit", e => {
-        e.preventDefault();
-        let value = input.value;
-        if(!value.startsWith("http"))
-            value = window.location.protocol + "//" + value;
-        const url = new URL(value);
-        window.localStorage.setItem(storageKey, url.host);
-        window.location.reload();
-    });
-    form.append(input);
-    overlay.innerHTML = `<div>Enter FullStacked Watcher WebSocket Server Endpoint</div>`;
-    overlay.append(form);
-    document.body.append(overlay);
-}
-
-if(!watcherEndpoint){
-    displayForm();
-}else{
-    connectToWatcher(watcherEndpoint)
-}
+connectToWatcher(window.location.host)

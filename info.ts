@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import {resolve} from "path";
 import fs from "fs";
 import {execSync} from "child_process";
 import randStr from "fullstacked/utils/randStr";

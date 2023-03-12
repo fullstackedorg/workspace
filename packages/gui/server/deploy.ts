@@ -1,5 +1,6 @@
 import Deploy, {CredentialsSSH} from "@fullstacked/deploy"
 import {bindCommandToWS} from "./index";
+import {NginxConfig} from "@fullstacked/deploy/index";
 
 let deploy: Deploy;
 function getDeploy(){
@@ -30,8 +31,30 @@ export default {
     },
 
     getServices(){
-        return getDeploy().getServicesWithPortToSetup();
+        const services = getDeploy().getServicesWithPortToSetup();
+        const nginxConfigs = getDeploy().nginxConfigs;
+
+        if(!nginxConfigs)
+            return services;
+
+        return services.map(service => {
+            const nginxConfig = nginxConfigs.find(config => config.name === service.name && config.port === service.port);
+            if(!nginxConfig)
+                return service;
+
+            return {
+                ...service,
+                ...nginxConfig
+            }
+        });
     },
+    updateNginxConfigs(nginxConfigs: NginxConfig[]){
+        getDeploy().nginxConfigs = nginxConfigs.map(nginxConfig => ({
+            ...nginxConfig,
+            serverNames: nginxConfig.serverNames.filter(serverName => serverName)
+        }));
+    },
+
 
     hasConfig(){
         return getDeploy().hasSavedConfigs();

@@ -1,9 +1,9 @@
 import GitHubButton from "react-github-btn";
-import React from "react";
+import React, {useEffect} from "react";
 import {closeConsole} from "./index";
 
 export default function (props: {command: string}) {
-    closeConsole();
+    useEffect(closeConsole, []);
 
     return <div className="container-xl d-flex flex-column justify-content-center">
         <div className="empty">
