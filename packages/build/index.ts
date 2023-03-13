@@ -10,7 +10,7 @@ import * as process from "process";
 import Info from "fullstacked/info";
 
 export default class Build extends CommandInterface {
-    static entryPoint = fileURLToPath(new URL("./entrypoint.ts", import.meta.url));
+    static entryPoint = fileURLToPath(new URL("./entrypoint.js", import.meta.url));
     static fullstackedNodeDockerComposeSpec = {
         services: {
             node: {

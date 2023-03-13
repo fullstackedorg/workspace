@@ -1,0 +1,13 @@
+*.js.map
+*.ts
+*.tsx
+!*.d.ts
+
+client
+server
+
+WS.ts
+WS.d.ts
+
+dist/docker-compose.yml
+dist/app/index.mjs.map

@@ -7,7 +7,10 @@ let deploy: Deploy;
 function getDeploy(){
     if(!deploy) deploy = new Deploy();
 
-    deploy.config.configFile = "./.fullstacked";
+    deploy.config = {
+        ...deploy.config,
+        configFile: "./.fullstacked"
+    };
     bindCommandToWS(deploy);
     return deploy;
 }
@@ -91,7 +94,10 @@ export default {
     },
     loadConfig(password: string){
         const deploy = getDeploy();
-        deploy.config.configPassword = password;
+        deploy.config = {
+            ...deploy.config,
+            configPassword: password
+        };
         return getDeploy().loadConfigs();
     },
     saveConfig(password: string){

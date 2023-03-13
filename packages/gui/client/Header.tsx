@@ -9,7 +9,7 @@ export default function (){
     const navigate = useNavigate();
 
     return <header className="navbar navbar-expand-md navbar-light d-print-none">
-        <div className="container-xl">
+        <div className="container-fluid">
             <div className="d-flex align-items-center">
                 <h1 className="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
                     <div onClick={() => navigate("/")} className={"cursor-pointer"}>

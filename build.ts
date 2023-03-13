@@ -19,6 +19,7 @@ const toBuild = [
     "./packages/backup/index.ts",
     "./packages/gui/index.ts",
     "./packages/build/index.ts",
+    "./packages/build/entrypoint.ts",
     "./packages/deploy/index.ts",
     "./packages/run/index.ts",
     "./packages/watch/index.ts",
@@ -49,26 +50,7 @@ buildSync({
 
 console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 
-function updatePackageJsonVersion(location: string, version: string){
-    const packageJsonFilePath = `${location}/package.json`;
-    if(!fs.existsSync(packageJsonFilePath))
-        throw Error(`Can not find package.json at [${packageJsonFilePath}]`);
-
-    const packageJsonData = JSON.parse(fs.readFileSync(packageJsonFilePath).toString())
-    packageJsonData.version = version;
-    fs.writeFileSync(packageJsonFilePath, JSON.stringify(packageJsonData, null, 2));
-}
-
 const version = JSON.parse(fs.readFileSync("./package.json", {encoding: "utf8"})).version;
-
-updatePackageJsonVersion("./packages/backup", version);
-updatePackageJsonVersion("./packages/build", version);
-updatePackageJsonVersion("./packages/deploy", version);
-updatePackageJsonVersion("./packages/run", version);
-updatePackageJsonVersion("./packages/watch", version);
-updatePackageJsonVersion("./packages/webapp", version);
-updatePackageJsonVersion("./packages/create", version);
-updatePackageJsonVersion("./packages/gui", version);
 
 fs.writeFileSync("./version.ts", `const FullStackedVersion = "${version}";
 export default FullStackedVersion;`);

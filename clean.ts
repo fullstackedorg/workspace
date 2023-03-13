@@ -13,7 +13,9 @@ const options = {
 const globs = [
     ".fullstacked",
     "*.js",
+    "*.mjs",
     "*.js.map",
+    "*.mjs.map",
     "*.d.ts",
     "dist",
     ".c8",

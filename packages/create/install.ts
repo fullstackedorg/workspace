@@ -62,6 +62,8 @@ export default async function (templates: string[], projectDir: string){
     const existentExternalModules = packageJsonData.externalModules ?? [];
     const mergedExternalModules = new Set(existentExternalModules.concat(Array.from(externalModules)));
 
+    if(!mergedExternalModules.size) return;
+
     packageJsonData.externalModules = Array.from(mergedExternalModules).sort();
 
     fs.writeFileSync(packageJsonFilePath, JSON.stringify(packageJsonData, null, 2));
