@@ -67,31 +67,49 @@ export default function () {
                         <div className="mb-3">
                             <label className="form-label">Nginx Extra Configs</label>
                             <textarea className="form-control" rows={6}
-                                      defaultValue={""}
+                                      defaultValue={nginxConfig?.nginxExtraConfigs}
                                       placeholder={`proxy_set_header Host $host;\nproxy_set_header X-Real-IP $remote_addr;`}
-                                      onChange={(e) => {}}></textarea>
+                                      onChange={(e) => {
+                                          nginxConfig.nginxExtraConfigs = e.currentTarget.value
+                                              .split("\n");
+                                          setNginxConfigs([...nginxConfigs]);
+                                      }}></textarea>
                         </div>
                         <div className={"card"}>
                             <div className={"card-body"}>
                                 <label className="form-check form-switch">
                                     <input className="form-check-input" type="checkbox" onChange={(e) => {
+                                        if(e.currentTarget.checked){
+                                            nginxConfig.customPublicPort = {
+                                                port: undefined,
+                                                ssl: false
+                                            };
+                                        }else
+                                            delete nginxConfig.customPublicPort;
 
-                                    }} defaultChecked={!!(nginxConfig?.customPublicPort?.port)}/>
+                                        setNginxConfigs([...nginxConfigs])
+                                    }} defaultChecked={!!(nginxConfig?.customPublicPort)}/>
                                     <span className="form-check-label">Custom Public Port</span>
                                 </label>
 
                                 <div id={`custom-port-form-${index}`}
-                                     className={nginxConfig?.customPublicPort?.port ? "" : "d-none"}>
+                                     className={nginxConfig?.customPublicPort ? "" : "d-none"}>
                                     <label className="form-label">Port</label>
                                     <input type="text" className="form-control mb-2" placeholder="8000"
-                                        onChange={(e) => {}}
-                                           defaultValue={nginxConfig?.customPublicPort?.port}
+                                        onChange={(e) => {
+                                            nginxConfig.customPublicPort.port = parseInt(e.currentTarget.value);
+                                            setNginxConfigs([...nginxConfigs]);
+                                        }}
+                                           defaultValue={nginxConfig.customPublicPort?.port}
                                     />
 
                                     <label className="form-check">
                                         <input className="form-check-input" type="checkbox"
                                                defaultChecked={nginxConfig?.customPublicPort?.ssl}
-                                               onChange={(e) => {}}
+                                               onChange={(e) => {
+                                                   nginxConfig.customPublicPort.ssl = e.currentTarget.checked;
+                                                   setNginxConfigs([...nginxConfigs]);
+                                               }}
 
                                         />
                                         <span className="form-check-label">SSL</span>

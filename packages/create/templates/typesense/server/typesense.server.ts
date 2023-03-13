@@ -3,12 +3,12 @@ import httpProxy from "http-proxy";
 import Typesense from "typesense";
 import {testCollection, typesenseUrlPrefix} from "./typesense.values";
 
-const {web} = httpProxy.createServer();
+const proxy = httpProxy.createServer();
 
 Server.addListener(typesenseUrlPrefix, {
-    title: "Typesense",
+    name: "Typesense",
     handler(req, res){
-        web(req, res, {target: "http://typesense:8108"})
+        proxy.web(req, res, {target: "http://typesense:8108"})
     }
 });
 

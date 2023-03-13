@@ -1,6 +1,6 @@
 services:
   wordpress_db:
-    image: mysql:5.7
+    image: mysql:8
     volumes:
       - wordpress-db:/var/lib/mysql
     restart: unless-stopped

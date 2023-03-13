@@ -13,16 +13,17 @@ buildSync({
 const buildRecursively = await import("./utils/buildRecursively.js");
 
 const utils = globSync("./utils/**/*.ts");
-const templa = globSync("./utils/**/*.ts");
 
 const toBuild = [
     ...utils,
     "./packages/backup/index.ts",
+    "./packages/gui/index.ts",
     "./packages/build/index.ts",
     "./packages/deploy/index.ts",
     "./packages/run/index.ts",
     "./packages/watch/index.ts",
     "./packages/watch/clientWatcher.ts",
+    "./packages/create/index.ts",
     "./packages/create/cli.ts",
     "./packages/create/create.ts",
     "./packages/create/install.ts",
@@ -74,3 +75,5 @@ export default FullStackedVersion;`);
 await buildRecursively.default(["./version.ts"], true);
 
 console.log(`v${version}`);
+
+

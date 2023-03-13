@@ -30,7 +30,6 @@ const webappPackage = installPackageThenPack("packages/webapp"  , fullstackedPac
 const createPackage = installPackageThenPack("packages/create"  , fullstackedPackage);
 const guiPackage    = installPackageThenPack("packages/gui"     , fullstackedPackage);
 
-
 // cleanup test folder
 const testDirectory = new URL("./test", import.meta.url);
 if(fs.existsSync(testDirectory))
@@ -50,5 +49,5 @@ execSync([
     "--",
     `-v ${fullstackedPackage}`].join(" "), {cwd: testDirectory, stdio: "inherit"});
 
-// testing [npm i @fullstacked/build @fullstacked/run @fullstacked/watch @fullstacked/deploy @fullstacked/backup @fullstacked/webapp]
-execSync(`npm i ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage} ${webappPackage}`, {cwd: testDirectory, stdio: "inherit"});
+// testing [npm i @fullstacked/create @fullstacked/build @fullstacked/run @fullstacked/watch @fullstacked/deploy @fullstacked/backup @fullstacked/webapp @fullstacked/gui]
+execSync(`npm i ${createPackage} ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage} ${webappPackage} ${guiPackage}`, {cwd: testDirectory, stdio: "inherit"});

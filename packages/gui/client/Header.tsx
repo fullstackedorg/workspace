@@ -3,6 +3,7 @@ import version from "../../../version";
 //@ts-ignore
 import logo from "./favicon.png";
 import {useNavigate} from "react-router-dom";
+import {Client} from "./client";
 
 export default function (){
     const navigate = useNavigate();
@@ -72,7 +73,7 @@ export default function (){
                     <div style={{cursor: "pointer"}} onClick={() => {
                         window.localStorage.setItem("theme", "light");
                         document.body.classList.remove("theme-dark");
-                    }} className="nav-link px-0 hide-theme-light" data-bs-toggle="tooltip"
+                    }} className="nav-link px-0 hide-theme-light mr-2" data-bs-toggle="tooltip"
                          data-bs-placement="bottom" aria-label="Enable light mode"
                          data-bs-original-title="Enable light mode">
                         <svg xmlns="http://www.w3.org/2000/svg" className="icon" width="24" height="24"
