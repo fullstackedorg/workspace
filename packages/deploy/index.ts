@@ -16,7 +16,6 @@ import randStr from "fullstacked/utils/randStr";
 import dns from "dns";
 import {decryptDataWithPassword, encryptDataWithPassword} from "fullstacked/utils/encrypt";
 import {fileURLToPath} from "url";
-import sleep from "fullstacked/utils/sleep";
 
 export type CredentialsSSH = {
     host: string,
@@ -112,6 +111,8 @@ export default class Deploy extends CommandInterface {
     credentialsSSH: CredentialsSSH;
     nginxConfigs: NginxConfig[] = [];
     certificateSSL: CertificateSSL;
+
+    progress: number;
 
     sftp: WrappedSFTP;
 
@@ -910,16 +911,27 @@ export default class Deploy extends CommandInterface {
             this.nginxConfigs = [{name: "node", port: 80}];
         }
 
+        this.progress = 0;
+
         await this.testRemoteServer();
         console.log("Connected to Remote Host");
 
+        this.progress++;
+
         await this.testDockerOnRemoteHost();
+
+        this.progress++;
 
         const { nginxFiles, dockerCompose } = await this.setupDockerComposeAndNginx();
         console.log("Docker Compose and Nginx are setup");
 
+
+        this.progress++;
+
         await this.uploadFilesToRemoteServer(nginxFiles, dockerCompose);
         console.log("Web App is uploaded to the remote server");
+
+        this.progress++;
 
         await this.startAppOnRemoteServer();
         await this.startFullStackedNginxOnRemoteHost();

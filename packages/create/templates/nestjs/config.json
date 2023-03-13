@@ -3,7 +3,7 @@
         "@nestjs/core",
         "@nestjs/platform-express"
     ],
-    "ignore": [
+    "externalModules": [
         "cache-manager",
         "class-validator",
         "class-transformer",

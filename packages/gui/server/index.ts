@@ -5,8 +5,24 @@ import fs from "fs";
 import deploy from "./deploy";
 import WebSocket, {WebSocketServer} from "ws";
 import {MESSAGE_TYPE} from "../WS";
+import CLIParser from "fullstacked/utils/CLIParser";
+import {fileURLToPath} from "url";
+import { dirname } from "path";
 
-Server.port = 8001;
+const {port} = CLIParser.getCommandLineArgumentsValues({
+    port: {
+        type: "number",
+        default: 8001
+    }
+});
+
+Server.port = port;
+
+setTimeout(async () => {
+    global.__dirname = fileURLToPath(dirname(import.meta.url));
+    const open = (await import("open")).default;
+    open(`http://localhost:${port}`);
+}, 1000);
 
 Server.pages["/"].addInHead(`<title>FullStacked GUI</title>`);
 
@@ -16,6 +32,9 @@ const api = {
             ...command,
             installed: fs.existsSync(`./node_modules/@fullstacked/${command.name}/index.js`)
         }));
+    },
+    close(){
+        process.exit(0);
     },
 
     deploy

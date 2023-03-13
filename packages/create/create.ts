@@ -6,7 +6,7 @@ import {argsSpecs} from "./args";
 import install from "./install";
 
 export default async function() {
-    const {projectDir, fullstackedVersion} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
+    const {projectDir, fullstackedVersion, templates} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
 
     if(fs.existsSync(resolve(projectDir, "package.json")))
         throw Error(`package.json already exist at [${projectDir}]`);
@@ -33,5 +33,5 @@ export default async function() {
 
     fs.writeFileSync(resolve(projectDir, "tsconfig.json"), JSON.stringify(tsConfig, null, 2));
 
-    await install();
+    await install(templates, projectDir);
 }

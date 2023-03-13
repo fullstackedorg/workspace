@@ -6,13 +6,12 @@ import {fileURLToPath} from "url";
 import {globSync} from "glob";
 import {execSync} from "child_process";
 
-export default async function (){
-    const {templates, projectDir} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
+export default async function (templates: string[], projectDir: string){
 
     if(!templates) return;
 
     const dependencies = new Set<string>();
-    const packageToIgnore = new Set<string>();
+    const externalModules = new Set<string>();
     const filesToCopy: {
         dir: boolean,
         from: string,
@@ -30,9 +29,9 @@ export default async function (){
         const config = fs.existsSync(configFile) ? JSON.parse(fs.readFileSync(configFile).toString()) : {};
 
         config.dependencies?.forEach(dependency => dependencies.add(dependency));
-        config.ignore?.forEach(packageName => packageToIgnore.add(packageName));
+        config.externalModules?.forEach(packageName => externalModules.add(packageName));
 
-        const files = globSync(["**/*.ts", "**/*.tsx"], {cwd: templatePath});
+        const files = globSync(["**/*.ts", "**/*.tsx", "**/*.compose.yml"], {cwd: templatePath});
 
         files.forEach(file => {
             const dir = fs.statSync(resolve(templatePath, file)).isDirectory()
@@ -55,5 +54,15 @@ export default async function (){
     filesToCopy.forEach(toCopy => {
         if(toCopy.dir) fs.mkdirSync(toCopy.to, {recursive: true});
         else fs.cpSync(toCopy.from, toCopy.to);
-    })
+    });
+
+    const packageJsonFilePath = resolve(projectDir, "package.json");
+    const packageJsonData = JSON.parse(fs.readFileSync(packageJsonFilePath).toString());
+
+    const existentExternalModules = packageJsonData.externalModules ?? [];
+    const mergedExternalModules = new Set(existentExternalModules.concat(Array.from(externalModules)));
+
+    packageJsonData.externalModules = Array.from(mergedExternalModules).sort();
+
+    fs.writeFileSync(packageJsonFilePath, JSON.stringify(packageJsonData, null, 2));
 }

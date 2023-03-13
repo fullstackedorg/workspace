@@ -1,4 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
+import {Client} from "../../client";
+import type {CertificateSSL} from "@fullstacked/deploy"
 
 const months = [
     "January",
@@ -22,13 +24,18 @@ const dateToHuman = (date: Date) => {
 }
 
 export default function (){
-    const [certificate, setCertificate] = useState(null);
     const [showNewCertForm, setShowNewCertForm] = useState(false);
     const [showManualCert, setShowManualCert] = useState(false);
+    const [certificateSSL, setCertificateSSL] = useState<Awaited<ReturnType<typeof Client.deploy.getCertificateSSL>>>(null);
+    const [certificateData, setCertificateData] = useState<Awaited<ReturnType<typeof Client.deploy.getCertificateData>>>(null);
 
-    const serverNames = [];
+    useEffect(() => {Client.deploy.getCertificateSSL().then(setCertificateSSL);}, []);
+    useEffect(() => {
+        Client.post().deploy.updateCertificateSSL(certificateSSL)
+            .then(() => {Client.deploy.getCertificateData().then(setCertificateData)})
+    }, [certificateSSL]);
 
-    const domains = certificate?.data?.subjectAltName?.split(",").map(record => record.trim().substring("DNS:".length))
+    const domains = certificateData?.subjectAltName?.split(",").map(record => record.trim().substring("DNS:".length))
 
     return <div>
         <div className={"d-flex justify-content-between"}>
@@ -43,9 +50,9 @@ export default function (){
             </div>
         </div>
 
-        {certificate
+        {certificateData
             ? (() => {
-                const validTo = new Date(certificate.data.validTo)
+                const validTo = new Date(certificateData.validTo)
                 const isExpired = validTo.getTime() < Date.now();
                 return <div className="card">
                     <div className={`card-status-start ${isExpired ? "bg-danger" : "bg-success"}`}></div>
@@ -64,7 +71,7 @@ export default function (){
                         <dl>
                             <div>
                                 <dt>Common Name (CN)</dt>
-                                <dd>{certificate.data.subject.slice("CN=".length)}</dd>
+                                <dd>{certificateData.subject.slice("CN=".length)}</dd>
                             </div>
                             <div>
                                 <dt>Domains</dt>
@@ -85,27 +92,37 @@ export default function (){
 
         {showNewCertForm && <NewCertForm
             close={() => setShowNewCertForm(false)}
-            serverNames={serverNames}
-            addNewCert={certificate => {}}
+            addNewCert={setCertificateSSL}
         />}
 
         {showManualCert && <ManualCertForm
             close={() => setShowManualCert(false)}
-            addNewCert={certificate => {}}
+            addNewCert={setCertificateSSL}
         />}
     </div>
 }
 
 
-function NewCertForm({close, serverNames, addNewCert}){
+function NewCertForm({close, addNewCert} : {
+    close: () => void,
+    addNewCert: (certificate: CertificateSSL) => void
+}){
     const [loading, setLoading] = useState(false);
-    serverNames = serverNames.filter(serverName => serverName);
+    const [serverNames, setServerNames] = useState<string[]>(null);
+
+    const emailRef = useRef<HTMLInputElement>();
+    const serverNamesToInclude = new Set<string>();
+
+    useEffect(() => {
+        Client.deploy.getServices().then(nginxConfigs => {
+            setServerNames(nginxConfigs.map(nginxConfig => nginxConfig.serverNames || []).flat());
+        });
+    }, []);
 
     return <>
         <div className="modal-backdrop fade show w-50" style={{bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}></div>
         <div className="modal modal-blur fade show w-50 p-3"
-             style={{display: "block", bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}
-             tabIndex={-1}>
+             style={{display: "block", bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}>
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -115,14 +132,20 @@ function NewCertForm({close, serverNames, addNewCert}){
                     <div className="modal-body">
                         <div className="mb-3">
                             <label className="form-label">Email</label>
-                            <input id="input-email" type="text" className="form-control" placeholder="Email" />
+                            <input ref={emailRef} type="text" className="form-control" placeholder="Email" />
                         </div>
                         <div id="server-names-select" className="form-selectgroup form-selectgroup-boxes d-flex flex-column">
                             <label className="form-label">Domains</label>
-                            {serverNames.length
+                            {serverNames && serverNames.length
                                 ? serverNames.map((serverName) =>
                                 <label className="form-selectgroup-item flex-fill">
-                                    <input type="checkbox" value={serverName} className="form-selectgroup-input" />
+                                    <input type="checkbox" value={serverName} className="form-selectgroup-input"
+                                           onChange={e => {
+                                               if(e.currentTarget.checked)
+                                                   serverNamesToInclude.add(serverName);
+                                               else
+                                                   serverNamesToInclude.delete(serverName);
+                                           }}/>
                                     <div className="form-selectgroup-label d-flex align-items-center p-3">
                                         <div className="me-3">
                                             <span className="form-selectgroup-check"></span>
@@ -141,7 +164,14 @@ function NewCertForm({close, serverNames, addNewCert}){
                         <div onClick={close} className="btn btn-link link-secondary" data-bs-dismiss="modal">
                             Cancel
                         </div>
-                        <div onClick={async () => {}} className={`btn btn-primary ms-auto ${loading ? "disabled" : ""}`} data-bs-dismiss="modal">
+                        <div onClick={async () => {
+                            if(!emailRef.current?.value) return;
+
+                            setLoading(true);
+                            addNewCert(await Client.post().deploy.generateCertificateSSL(emailRef.current.value, Array.from(serverNamesToInclude)));
+                            setLoading(false);
+                            close();
+                        }} className={`btn btn-primary ms-auto ${loading ? "disabled" : ""}`} data-bs-dismiss="modal">
                             {loading
                                 ? <div className="spinner-border" role="status"></div>
                                 : "Create new certificate"}
@@ -153,15 +183,17 @@ function NewCertForm({close, serverNames, addNewCert}){
     </>
 }
 
-function ManualCertForm({close, addNewCert}){
+function ManualCertForm({close, addNewCert}: {
+    close: () => void,
+    addNewCert: (certificate: CertificateSSL) => void
+}){
     const fullchainRef = useRef<HTMLTextAreaElement>();
     const privkeyRef = useRef<HTMLTextAreaElement>();
 
     return <>
         <div className="modal-backdrop fade show w-50" style={{bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}></div>
         <div className="modal modal-blur fade show w-50 p-3"
-             style={{display: "block", bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}
-             tabIndex={-1}>
+             style={{display: "block", bottom: 0, top: "unset", height: "calc(100vh - 166px)"}}>
             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -182,11 +214,11 @@ function ManualCertForm({close, addNewCert}){
                         <div onClick={close} className="btn btn-link link-secondary" data-bs-dismiss="modal">
                             Cancel
                         </div>
-                        <div onClick={async () => {
+                        <div onClick={() => {
                             addNewCert({
                                 fullchain: fullchainRef.current.value,
                                 privkey: privkeyRef.current.value,
-                            })
+                            });
                             close();
                         }} className="btn btn-primary ms-auto" data-bs-dismiss="modal">
                             Add Certificate

@@ -40,7 +40,7 @@ export default class HTML {
         });
     }
 
-    addInBODY(contentHTML: string) {
+    addInBody(contentHTML: string) {
         parseFragment(contentHTML).childNodes.forEach(node => {
             this.parser.treeAdapter.appendChild(this.body, node)
         });

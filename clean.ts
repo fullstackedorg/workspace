@@ -24,15 +24,11 @@ const globs = [
     "*.tgz",
 ];
 
-globs.map(pattern => globSync(`./**/${pattern}`, {...options, nodir: true})).flat()
-    .concat(globSync(`./**/`, options).filter(dir => dir && !fs.readdirSync(dir).length))
+globs.map(pattern => globSync(`./**/${pattern}`, {...options})).flat()
     .forEach(file => filesToRm.add(file));
 
 filesToRm.forEach(filePath => {
-    if(fs.statSync(filePath).isFile())
-        fs.rmSync(filePath);
-    else
-        fs.rmdirSync(filePath)
+    fs.rmSync(filePath, {recursive: true});
 });
 
 

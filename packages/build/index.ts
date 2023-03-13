@@ -6,9 +6,11 @@ import CommandInterface from "fullstacked/CommandInterface";
 import {globSync} from "glob";
 import CLIParser from "fullstacked/utils/CLIParser";
 import {fileURLToPath} from "url";
+import * as process from "process";
+import Info from "fullstacked/info";
 
 export default class Build extends CommandInterface {
-    static emptyEntryPoint = fileURLToPath(new URL("./empty.ts", import.meta.url));
+    static entryPoint = fileURLToPath(new URL("./entrypoint.ts", import.meta.url));
     static fullstackedNodeDockerComposeSpec = {
         services: {
             node: {
@@ -41,10 +43,12 @@ export default class Build extends CommandInterface {
             short: "s",
             default: [
                 "./server/index.ts",
-                ...globSync("./server/**/*.server.ts")
+                "./server/index.tsx",
+                ...globSync("./server/**/*.server.ts"),
+                ...globSync("./server/**/*.server.tsx")
             ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Server entry points to be bundled",
-            defaultDescription: "./server/index.ts, ./server/*.server.ts"
+            defaultDescription: "./server/index.ts(x), ./server/*.server.ts(x)"
         },
         dockerCompose: {
             type: "string[]",
@@ -65,13 +69,12 @@ export default class Build extends CommandInterface {
         },
         production: {
             type: "boolean",
-            short: "p",
             description: "Build in production mode",
             defaultDescription: "false"
         },
         externalModules: {
             type: "string[]",
-            description: "Ignore modules when building"
+            description: "Ignore modules when building.\nYou can also define them at .externalModules in your package.json"
         },
         verbose: {
             type: "boolean",
@@ -81,6 +84,19 @@ export default class Build extends CommandInterface {
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Build.commandLineArguments);
+
+    externalModules: string[] = [];
+
+    constructor() {
+        super();
+
+        if(this.config.externalModules)
+            this.externalModules.push(...this.config.externalModules)
+
+        if(Info.packageJsonData.externalModules)
+            this.externalModules.push(...Info.packageJsonData.externalModules)
+    }
+
 
     // get all env variables in the form of an object
     getProcessEnv() {
@@ -100,20 +116,17 @@ export default class Build extends CommandInterface {
 
         // use @fullstacked/webapp as default if installed
         const fullstackedWebAppServerStartFile = new URL("../webapp/server/start.js", import.meta.url);
-        const entryPoint = serverFiles.length === 0 && fs.existsSync(fullstackedWebAppServerStartFile)
-            ? fileURLToPath(fullstackedWebAppServerStartFile)
-            : Build.emptyEntryPoint;
 
         const filesBuilt = new Set();
 
         const options = {
-            entryPoints: [entryPoint],
+            entryPoints: [Build.entryPoint],
             outfile: resolve(serverOutDir, "index.mjs"),
             platform: "node" as Platform,
             bundle: true,
             format: "esm" as Format,
             sourcemap: true,
-            external: this.config.externalModules ?? [],
+            external: this.externalModules ?? [],
             define: this.getProcessEnv(),
 
             // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
@@ -126,7 +139,7 @@ export default class Build extends CommandInterface {
                         if (!args.path.includes("node_modules"))
                             filesBuilt.add(args.path);
 
-                        if (args.path !== Build.emptyEntryPoint)
+                        if (args.path !== Build.entryPoint)
                             return null;
 
                         if(fs.existsSync(fullstackedWebAppServerStartFile))
@@ -162,7 +175,7 @@ export default class Build extends CommandInterface {
         const clientFiles = this.config.client.map(file => resolve(file));
 
         const options = {
-            entryPoints: [Build.emptyEntryPoint],
+            entryPoints: [Build.entryPoint],
             outdir: clientOutDir,
             entryNames: "index",
             format: "esm" as Format,
@@ -170,14 +183,16 @@ export default class Build extends CommandInterface {
             bundle: true,
             minify: Boolean(this.config.production),
             sourcemap: !Boolean(this.config.production),
-            external: this.config.externalModules ?? [],
+            external: this.externalModules ?? [],
             define: this.getProcessEnv(),
             loader: {
-                ".png": "file" as Loader,
-                ".jpg": "file" as Loader,
-                ".svg": "file" as Loader,
-                ".md": "file" as Loader,
-                ".ttf": "file" as Loader
+                ".png"  : "file" as Loader,
+                ".jpg"  : "file" as Loader,
+                ".svg"  : "file" as Loader,
+                ".md"   : "file" as Loader,
+                ".ttf"  : "file" as Loader,
+                ".woff" : "file" as Loader,
+                ".woff2": "file" as Loader
             },
 
             plugins: [{
@@ -187,7 +202,7 @@ export default class Build extends CommandInterface {
                         if (!args.path.includes("node_modules"))
                             filesBuilt.add(args.path);
 
-                        if (args.path !== Build.emptyEntryPoint)
+                        if (args.path !== Build.entryPoint)
                             return null;
 
                         const contents = clientFiles.map((file) => `import "${file.split(path.sep).join("/")}";`).join("\n");

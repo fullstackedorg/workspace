@@ -1,4 +1,5 @@
 import {clearLine, cursorTo} from "readline";
+import Info from "fullstacked/info";
 
 export default abstract class {
     write: (str) => void = process.stdout.write.bind(process.stdout);
@@ -8,6 +9,8 @@ export default abstract class {
         process.stdout.write(str);
     };
     endLine: () => void = () => process.stdout.write("\n\r");
+
+    constructor() { Info.init() }
 
     abstract run(): void;
     abstract runCLI(): void;

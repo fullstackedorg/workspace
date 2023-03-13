@@ -6,7 +6,7 @@ import {AppModule} from "./nestjs/app.module";
 const nestjs = await NestFactory.create(AppModule, {});
 
 Server.addListener("/nestjs", {
-    title: "NestJS",
+    name: "NestJS",
     handler: nestjs.getHttpAdapter().getInstance()
 });
 

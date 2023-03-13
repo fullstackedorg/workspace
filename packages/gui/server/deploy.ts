@@ -1,6 +1,7 @@
-import Deploy, {CredentialsSSH} from "@fullstacked/deploy"
+import Deploy, {CertificateSSL, CredentialsSSH} from "@fullstacked/deploy"
 import {bindCommandToWS} from "./index";
-import {NginxConfig} from "@fullstacked/deploy/index";
+import {NginxConfig} from "@fullstacked/deploy";
+import {X509Certificate} from "crypto";
 
 let deploy: Deploy;
 function getDeploy(){
@@ -30,7 +31,7 @@ export default {
         return getDeploy().tryToInstallDockerOnRemoteHost();
     },
 
-    getServices(){
+    getServices(): NginxConfig[]{
         const services = getDeploy().getServicesWithPortToSetup();
         const nginxConfigs = getDeploy().nginxConfigs;
 
@@ -51,8 +52,37 @@ export default {
     updateNginxConfigs(nginxConfigs: NginxConfig[]){
         getDeploy().nginxConfigs = nginxConfigs.map(nginxConfig => ({
             ...nginxConfig,
-            serverNames: nginxConfig.serverNames.filter(serverName => serverName)
+            serverNames: nginxConfig.serverNames?.filter(serverName => serverName)
         }));
+    },
+
+    getCertificateSSL(){
+        return getDeploy().certificateSSL;
+    },
+    updateCertificateSSL(certificate: CertificateSSL){
+        getDeploy().certificateSSL = certificate;
+    },
+    getCertificateData(){
+        const certificate = getDeploy().certificateSSL;
+
+        if(!certificate) return null;
+
+        const cert = new X509Certificate(certificate.fullchain);
+        return {
+            subject: cert.subject,
+            validTo: cert.validTo,
+            subjectAltName: cert.subjectAltName
+        };
+    },
+    generateCertificateSSL(email: string, domains: string[]){
+        return getDeploy().generateCertificateOnRemoteHost(email, domains);
+    },
+
+    launch(){
+        return getDeploy().run();
+    },
+    getDeploymentProgress(){
+        return getDeploy().progress;
     },
 
 

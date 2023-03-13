@@ -4,10 +4,17 @@
   "description": "Spawn a graphical user interface to access FullStacked functionalities",
   "author": "CP Lepage",
   "license": "MIT",
+  "type": "module",
   "scripts": {
-    "build": "npx fullstacked build --externalModules @fullstacked/deploy",
-    "dev": "npx fullstacked watch -b \"npm run build -- -v\" -s \"node dist/app/index.mjs --development\" --portFinder \"echo 8001\""
+    "dev": "npx fullstacked watch -s \"node dist/app/index.mjs --development\" --portFinder \"echo 8001\"",
+    "prepack": "npx fullstacked build --production"
   },
+  "externalModules": [
+    "@fullstacked/build",
+    "@fullstacked/deploy",
+    "@fullstacked/run",
+    "@fullstacked/watch"
+  ],
   "dependencies": {
     "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"
   },
@@ -20,6 +27,7 @@
     "@tabler/core": "^1.0.0-beta17",
     "@types/react": "^18.0.28",
     "@types/ws": "^8.5.4",
+    "open": "^8.4.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-github-btn": "^1.4.0",

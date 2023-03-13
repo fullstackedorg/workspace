@@ -10,6 +10,8 @@ import Run from "./run";
 import Watch from "./watch";
 import Backup from "./backup";
 import Console from "./Console";
+import Create from "./create";
+
 import "./index.css";
 
 const savedTheme = window.localStorage.getItem("theme");
@@ -30,6 +32,7 @@ root.render(<BrowserRouter>
             <div>
                 <Routes>
                     <Route path={"/deploy/*"} element={<Deploy />} />
+                    <Route path={"/create/*"} element={<Create />} />
                     <Route path={"/build/*"} element={<Build />} />
                     <Route path={"/run/*"} element={<Run />} />
                     <Route path={"/watch/*"} element={<Watch />} />

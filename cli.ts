@@ -3,7 +3,7 @@ import CLIParser from "./utils/CLIParser";
 import fs from "fs";
 import CommandInterface from "./CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
-import {dirname} from "path";
+import {dirname, resolve} from "path";
 import Info from "./info";
 import FullStackedVersion from "./version";
 import Commands from "./Commands";
@@ -28,7 +28,7 @@ const {help, version, packageJson} = CLIParser.getCommandLineArgumentsValues({
     }
 });
 
-new Info(packageJson);
+Info.init(packageJson);
 
 const commandName = CLIParser.commandLinePositional;
 

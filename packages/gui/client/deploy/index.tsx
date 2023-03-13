@@ -9,6 +9,7 @@ import {openConsole} from "../index";
 import {Client} from "../client";
 import ConfigLoader from "./ConfigLoader";
 import Nginx from "./Steps/Nginx";
+import NextPrev from "./NextPrev";
 
 export let steps = [
     {
@@ -66,6 +67,7 @@ export default function () {
                     </Routes>
                 </div>}
 
+            <NextPrev />
         </div>
     </>
 }
