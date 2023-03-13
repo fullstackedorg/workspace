@@ -9,7 +9,8 @@ dist
 **/*.tjs
 **/*.tjs.map
 **/*.d.ts
-/version.ts
+version.ts
 .fullstacked
 *.tgz
-/test
+test
+package-lock.json
