@@ -1,4 +1,7 @@
-.idea
-.gitignore
-node_modules
-tsconfig.json
+*.js.map
+*.ts
+*.tsx
+!*.d.ts
+!templates/**/*.ts
+!templates/**/*.tsx
+cli.d.ts

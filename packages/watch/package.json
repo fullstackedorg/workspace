@@ -3,21 +3,21 @@
   "version": "0.10.0-1",
   "description": "Run and reBuild your FullStacked Web App on file changes",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "CP Lepage",
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@types/harmon": "^1.4.1",
-    "@types/http-proxy": "^1.17.10",
-    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
+    "fullstacked": "^0.10.0-1",
     "harmon": "^1.4.4",
     "http-proxy": "^1.18.1",
     "ws": "^8.12.1"
   },
   "devDependencies": {
+    "@types/harmon": "^1.4.1",
+    "@types/http-proxy": "^1.17.10",
     "@types/ws": "^8.5.4"
+  },
+  "exports": {
+    ".": "./index.js"
   }
 }

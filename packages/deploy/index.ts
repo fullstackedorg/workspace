@@ -219,7 +219,7 @@ export default class Deploy extends CommandInterface {
         else if(this.config.privateKey)
             this.credentialsSSH.privateKey = this.config.privateKey;
         else if(this.config.privateKeyFile)
-            this.credentialsSSH.privateKey = fs.readFileSync(resolve(process.cwd(), this.config.privateKeyFile)).toString();
+            this.credentialsSSH.privateKey = fs.readFileSync(resolve(process.cwd(), this.config.privateKeyFile.trim())).toString();
     }
 
     getServicesWithPortToSetup(): {name: string, port: number}[] {

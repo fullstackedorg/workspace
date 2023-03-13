@@ -4,11 +4,14 @@
   "description": "Build your FullStacked Web App",
   "dependencies": {
     "esbuild": "^0.14.27",
-    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
+    "fullstacked": "^0.10.0-1",
     "glob": "^9.2.1",
     "js-yaml": "^4.1.0"
   },
   "author": "CP Lepage",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  }
 }

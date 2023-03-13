@@ -1,33 +1,26 @@
 .DS_Store
 .idea
-node_modules
 
-/.github
-/.gitignore
-/.gitmodules
+*.tgz
 
-/cleanup.ts
+*.ts
+!*.d.ts
+*.js.map
 
-/cli.js.map
-/cli.ts
+.github
+.gitignore
 
-/packages
+build.js
+clean.js
+test.js
 
-/docs
+packages
+docs
+test
 
-/fullstacked-code-coverage
+tsconfig.json
 
-/test
-
-/tsconfig.json
-
-/utils/**/*
-!/utils/**/*.js
-!/utils/**/*.d.ts
-
-
-/version.js.map
-/version.ts
+Commands.d.ts
 
 
 

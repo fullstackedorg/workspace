@@ -1,8 +1,8 @@
-import {parse, parseFragment, Parser, serialize} from "parse5";
+import {DefaultTreeAdapterMap, parse, parseFragment, Parser, serialize} from "parse5";
 
 export default class HTML {
     parser = new Parser();
-    root = parse(`
+    root: DefaultTreeAdapterMap['document'] = parse(`
 <!DOCTYPE html>
 <html>
 <head>
