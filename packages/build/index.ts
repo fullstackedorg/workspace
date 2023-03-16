@@ -9,6 +9,13 @@ import {fileURLToPath} from "url";
 import * as process from "process";
 import Info from "fullstacked/info";
 
+// Polyfill for stackblitz
+if(!global.structuredClone) {
+    global.structuredClone = function (obj) {
+        return JSON.parse(JSON.stringify(obj))
+    }
+}
+
 export default class Build extends CommandInterface {
     static entryPoint = fileURLToPath(new URL("./entrypoint.js", import.meta.url));
     static fullstackedNodeDockerComposeSpec = {
