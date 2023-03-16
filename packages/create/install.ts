@@ -6,7 +6,8 @@ import {fileURLToPath} from "url";
 import {globSync} from "glob";
 import {execSync} from "child_process";
 
-export default async function (templates: string[], projectDir: string){
+export default async function (){
+    const {templates, projectDir} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
 
     if(!templates) return;
 

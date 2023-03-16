@@ -33,5 +33,5 @@ export default async function() {
 
     fs.writeFileSync(resolve(projectDir, "tsconfig.json"), JSON.stringify(tsConfig, null, 2));
 
-    await install(templates, projectDir);
+    await install();
 }
