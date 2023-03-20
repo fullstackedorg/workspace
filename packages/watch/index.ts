@@ -135,7 +135,7 @@ export default class Watch extends CommandInterface {
         const wss = new WebSocketServer({ noServer: true });
         server.on('upgrade', (req, socket, head) => {
             if(req.url !== "/fullstacked-ws"){
-                proxy.ws(req, socket, head, {target: `ws://localhost:${webAppPort}`});
+                proxy.ws(req, socket, head, {target: `ws://localhost:${webAppPort}`}, () => {});
                 return;
             }
 
