@@ -57,6 +57,9 @@ class ServerInstance {
         if(fs.existsSync(resolve(this.publicDir, "index.css")))
             this.pages["/"].addInHead(`<link rel="stylesheet" href="/index.css">`);
 
+        if(fs.existsSync(resolve(this.publicDir, "index.js")))
+            this.pages["/"].addInBody(`<script type="module" src="/index.js"></script>`);
+
         this.server = http.createServer(async (req, res: ServerResponse & {currentListener: string}) => {
             if(this.logger?.in) this.logger.in(req, res);
 

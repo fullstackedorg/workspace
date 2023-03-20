@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/webapp",
-  "version": "0.10.0-1",
+  "version": "0.10.0-4",
   "description": "Use FullStacked Server and Client to rapidly build a Web App",
   "main": "index.js",
   "author": "CP Lepage",
