@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/build",
-  "version": "0.10.0-2",
+  "version": "0.10.0-3",
   "description": "Build your FullStacked Web App",
   "dependencies": {
     "esbuild": "^0.14.27",

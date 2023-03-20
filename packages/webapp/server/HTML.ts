@@ -6,22 +6,14 @@ export default class HTML {
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
-<script type="module" src="/index.js"></script>
 </body>
 </html>`);
-    private head = this.getDescendantByTag(this.root, "head");
-    private body = this.getDescendantByTag(this.root, "body");
-
-    static defaultHeadText = `
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-    `;
-
-    constructor() {
-        this.addInHead(HTML.defaultHeadText);
-    }
+    head = this.getDescendantByTag(this.root, "head");
+    body = this.getDescendantByTag(this.root, "body");
 
     getDescendantByTag(node, tag) {
         for (let i = 0; i < node.childNodes?.length; i++) {
