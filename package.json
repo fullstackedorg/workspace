@@ -6,8 +6,8 @@
   "types": "index.d.ts",
   "scripts": {
     "clean": "npx esbuild clean.ts --outfile=clean.js --format=esm && node clean",
-    "build": "npm run clean && npx esbuild build.ts --outfile=build.js --format=esm && node build",
-    "prepack": "npm run build && npx tsc",
+    "build": "npm run clean && npx esbuild build.ts --outfile=build.js --format=esm && node build && npx tsc",
+    "prepack": "npm run build",
     "pretest": "npx esbuild test.ts --outfile=test.js --format=esm",
     "test": "node test"
   },

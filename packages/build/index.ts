@@ -259,6 +259,10 @@ export default class Build extends CommandInterface {
         }
         const dockerComposeSpecs = [nodeDockerComposeSpec].concat(this.config.dockerCompose.map((dockerComposeFile) => yaml.load(fs.readFileSync(dockerComposeFile).toString())));
         const mergedDockerCompose = this.mergeDockerComposeSpecs(dockerComposeSpecs);
+
+        if(!fs.existsSync(this.config.outputDir))
+            fs.mkdirSync(this.config.outputDir, {recursive: true});
+
         fs.writeFileSync(resolve(this.config.outputDir, "docker-compose.yml"), yaml.dump(mergedDockerCompose));
         return new Set(this.config.dockerCompose);
     }
