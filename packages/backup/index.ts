@@ -156,6 +156,7 @@ export default class Backup extends CommandInterface {
 
         await Promise.all(volumes.map(async volume => {
             const backupFile = resolve(this.config.backupDir, `${volume}.tar`);
+            const restoreContainerName = "fullstacked_restore_" + randStr();
             if(!fs.existsSync(backupFile)) {
                 console.log(`Cannot find backup file for volume ${volume} at [${backupFile}]`);
                 return;
@@ -168,7 +169,7 @@ export default class Backup extends CommandInterface {
                 ["/bin/sh", "-c", "sleep 5 && cd data && rm -rf ./* && tar xvf /backup/" + volume + ".tar --strip 1"],
                 process.stdout,
                 {
-                    name: "fullstacked-restore",
+                    name: restoreContainerName,
                     HostConfig: {
                         Binds: [
                             Info.webAppName + "_" + volume + ":/data",
