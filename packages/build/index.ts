@@ -264,8 +264,13 @@ export default class Build extends CommandInterface {
     }
 
     async run() {
-        if (fs.existsSync(this.config.outputDir))
-            fs.rmSync(this.config.outputDir, {recursive: true});
+        if (fs.existsSync(this.config.outputDir)) {
+            try{
+                fs.rmSync(this.config.outputDir, {recursive: true, force: true});
+            }catch (e) {
+                console.log("Could not full clear out directory... Proceeding...");
+            }
+        }
 
         fs.mkdirSync(this.config.outputDir);
 

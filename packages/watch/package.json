@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/watch",
-  "version": "0.10.0-1",
+  "version": "0.10.0-2",
   "description": "Run and reBuild your FullStacked Web App on file changes",
   "main": "index.js",
   "author": "CP Lepage",
