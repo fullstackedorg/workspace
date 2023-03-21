@@ -59,13 +59,13 @@ export default class Run extends CommandInterface {
                 const container = await this.dockerClient.getContainer(`${this.dockerCompose.projectName}_${serviceName}_1`);
                 if((await container.inspect()).State.Status === 'running')
                     await container.stop({t: 0});
-                await container.remove({force: true, v: true});
+                await container.remove({force: true});
             }catch (e) { }
 
             resolve();
         })));
         try{
-            await this.dockerCompose.down({ volumes: true });
+            await this.dockerCompose.down();
         }catch (e){ }
 
         console.log(`${Info.webAppName} v${Info.version} stopped`);

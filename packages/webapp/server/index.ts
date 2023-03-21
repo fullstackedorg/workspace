@@ -97,17 +97,17 @@ class ServerInstance {
             this.listeners[urlPrefix].push(listener);
     }
 
-    staticFilesAndPagesHandler(req, res) {
+    staticFilesAndPagesHandler(req, res: ServerResponse) {
         // remove query params
         let fileURL = req.url.split("?").shift();
 
         // remove /index.html
         if(fileURL.endsWith("/index.html"))
-        fileURL = fileURL.slice(0, -("/index.html".length));
+            fileURL = fileURL.slice(0, -("/index.html".length));
 
         // if nothing left, we're at root "/"
         if(fileURL === "")
-        fileURL = "/";
+            fileURL = "/";
 
         if (this.pages[fileURL]) {
             res.writeHead(200, {"content-type": "text/html"});
