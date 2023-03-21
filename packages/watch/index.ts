@@ -10,8 +10,6 @@ import harmon from "harmon";
 import Info from "fullstacked/info";
 import sleep from "fullstacked/utils/sleep";
 
-const fullstackedClientWatcher = "@fullstacked/watch/clientWatcher"
-
 export default class Watch extends CommandInterface {
     static commandLineArguments = {
         builder: {

@@ -59,7 +59,6 @@ export default class Deploy extends CommandInterface {
         },
         port: {
             type: "number",
-            default: 22,
             description: "Server SSH port",
             defaultDescription: "22"
         },
@@ -157,6 +156,19 @@ export default class Deploy extends CommandInterface {
             this.config = {
                 ...this.config,
                 host
+            }
+        }
+
+        if(!this.config.port) {
+            const {port} = await prompts({
+                type: "text",
+                name: "port",
+                message: "Enter your remote server SSH Port",
+                initial: "22"
+            });
+            this.config = {
+                ...this.config,
+                port
             }
         }
 
