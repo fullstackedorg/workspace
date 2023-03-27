@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://fullstacked.org/">
-<img src="https://fullstacked.org/favicon.png" alt="FullStacked Logo" width="50px" />
+<img src="https://fullstacked.org/static/favicon.png" alt="FullStacked Logo" width="50px" />
 </a>
 </p>
 <h1 align="center">FullStacked</h1>
