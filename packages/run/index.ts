@@ -126,7 +126,7 @@ export default class Run extends CommandInterface {
             // basic run start command
             try{
                 // might be already running
-                const port = (await nodeContainer.inspect()).HostConfig.PortBindings["80/tcp"].at(0).HostPort;
+                const port = (await nodeContainer.inspect()).HostConfig.PortBindings["8000/tcp"].at(0).HostPort;
                 console.log(`${Info.webAppName} v${Info.version} already running at http://localhost:${port}`);
             }catch (e) {
                 await this.start()

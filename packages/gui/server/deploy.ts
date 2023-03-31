@@ -1,11 +1,12 @@
-import Deploy, {CertificateSSL, CredentialsSSH} from "@fullstacked/deploy"
 import {bindCommandToWS} from "./index";
-import {NginxConfig} from "@fullstacked/deploy";
+import type {CertificateSSL, CredentialsSSH, NginxConfig} from "@fullstacked/deploy";
+import type Deploy from "@fullstacked/deploy";
 import {X509Certificate} from "crypto";
 
 let deploy: Deploy;
-function getDeploy(){
-    if(!deploy) deploy = new Deploy();
+async function getDeploy(){
+    const DeployModules = (await import("@fullstacked/deploy")).default;
+    if(!deploy) deploy = new DeployModules();
 
     deploy.config = {
         ...deploy.config,
@@ -16,27 +17,27 @@ function getDeploy(){
 }
 
 export default {
-    getCredentialsSSH(){
-        return getDeploy().credentialsSSH ?? null;
+    async getCredentialsSSH(){
+        return (await getDeploy()).credentialsSSH ?? null;
     },
-    updateCredentialsSSH(credentialSSH: CredentialsSSH){
-        getDeploy().credentialsSSH = credentialSSH;
-    },
-
-    testConnection(){
-        return getDeploy().testRemoteServer();
-    },
-    testDocker(){
-        return getDeploy().testDockerOnRemoteHost();
+    async updateCredentialsSSH(credentialSSH: CredentialsSSH){
+        (await getDeploy()).credentialsSSH = credentialSSH;
     },
 
-    installDocker(){
-        return getDeploy().tryToInstallDockerOnRemoteHost();
+    async testConnection(){
+        return (await getDeploy()).testRemoteServer();
+    },
+    async testDocker(){
+        return (await getDeploy()).testDockerOnRemoteHost();
     },
 
-    getServices(): NginxConfig[]{
-        const services = getDeploy().getServicesWithPortToSetup();
-        const nginxConfigs = getDeploy().nginxConfigs;
+    async installDocker(){
+        return (await getDeploy()).tryToInstallDockerOnRemoteHost();
+    },
+
+    async getServices(): Promise<NginxConfig[]>{
+        const services = (await getDeploy()).getServicesWithPortToSetup();
+        const nginxConfigs = (await getDeploy()).nginxConfigs;
 
         if(!nginxConfigs)
             return services;
@@ -52,21 +53,21 @@ export default {
             }
         });
     },
-    updateNginxConfigs(nginxConfigs: NginxConfig[]){
-        getDeploy().nginxConfigs = nginxConfigs.map(nginxConfig => ({
+    async updateNginxConfigs(nginxConfigs: NginxConfig[]){
+        (await getDeploy()).nginxConfigs = nginxConfigs.map(nginxConfig => ({
             ...nginxConfig,
             serverNames: nginxConfig.serverNames?.filter(serverName => serverName)
         }));
     },
 
-    getCertificateSSL(){
-        return getDeploy().certificateSSL;
+    async getCertificateSSL(){
+        return (await getDeploy()).certificateSSL;
     },
-    updateCertificateSSL(certificate: CertificateSSL){
-        getDeploy().certificateSSL = certificate;
+    async updateCertificateSSL(certificate: CertificateSSL){
+        (await getDeploy()).certificateSSL = certificate;
     },
-    getCertificateData(){
-        const certificate = getDeploy().certificateSSL;
+    async getCertificateData(){
+        const certificate = (await getDeploy()).certificateSSL;
 
         if(!certificate) return null;
 
@@ -77,30 +78,30 @@ export default {
             subjectAltName: cert.subjectAltName
         };
     },
-    generateCertificateSSL(email: string, domains: string[]){
-        return getDeploy().generateCertificateOnRemoteHost(email, domains);
+    async generateCertificateSSL(email: string, domains: string[]){
+        return (await getDeploy()).generateCertificateOnRemoteHost(email, domains);
     },
 
-    launch(){
-        return getDeploy().run();
+    async launch(){
+        return (await getDeploy()).run();
     },
-    getDeploymentProgress(){
-        return getDeploy().progress;
+    async getDeploymentProgress(){
+        return (await getDeploy()).progress;
     },
 
 
-    hasConfig(){
-        return getDeploy().hasSavedConfigs();
+    async hasConfig(){
+        return (await getDeploy()).hasSavedConfigs();
     },
-    loadConfig(password: string){
-        const deploy = getDeploy();
+    async loadConfig(password: string){
+        const deploy = (await getDeploy());
         deploy.config = {
             ...deploy.config,
             configPassword: password
         };
-        return getDeploy().loadConfigs();
+        return (await getDeploy()).loadConfigs();
     },
-    saveConfig(password: string){
-        return getDeploy().saveConfigs(password);
+    async saveConfig(password: string){
+        return (await getDeploy()).saveConfigs(password);
     }
 }

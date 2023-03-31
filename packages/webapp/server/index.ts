@@ -12,8 +12,18 @@ type Listener = {
 
 class ServerInstance {
     server: http.Server;
-    port: number = 80;
-    publicDir = fileURLToPath(new URL("./public", import.meta.url));
+    port: number = 8000;
+    /* default file structure if
+    *  dist
+    *  |_ client
+    *  |  |_ index.js
+    *  |_ server
+    *  |  |_ index.mjs
+    *  |_ docker-compose.yml
+    */
+    publicDir = process.env.CLIENT_DIR
+        ? resolve(process.cwd(), process.env.CLIENT_DIR)
+        : fileURLToPath(new URL("../client", import.meta.url));
     logger: {
         in(req, res): void,
         out(req, res): void
@@ -39,7 +49,7 @@ class ServerInstance {
     };
 
     constructor() {
-        if(process.argv.includes("--development") || process.argv.includes("--gui")){
+        if(process.argv.includes("--development")){
             const activeRequests = new Map();
             this.logger = {
                 in(req, res){
@@ -55,10 +65,10 @@ class ServerInstance {
         }
 
         if(fs.existsSync(resolve(this.publicDir, "index.css")))
-            this.pages["/"].addInHead(`<link rel="stylesheet" href="/index.css">`);
+            this.pages["/"].addStyle("/index.css");
 
         if(fs.existsSync(resolve(this.publicDir, "index.js")))
-            this.pages["/"].addInBody(`<script type="module" src="/index.js"></script>`);
+            this.pages["/"].addScript("/index.js");
 
         this.server = http.createServer(async (req, res: ServerResponse & {currentListener: string}) => {
             if(this.logger?.in) this.logger.in(req, res);
@@ -110,7 +120,8 @@ class ServerInstance {
             fileURL = "/";
 
         if (this.pages[fileURL]) {
-            res.writeHead(200, {"content-type": "text/html"});
+            res.setHeader("content-type", "text/html")
+            res.writeHead(200);
             res.end(this.pages[fileURL].toString());
             return;
         }
@@ -120,7 +131,8 @@ class ServerInstance {
 
         if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
 
-        res.writeHead(200, {"content-type": mime.getType(filePath)});
+        res.setHeader("content-type", mime.getType(filePath));
+        res.writeHead(200);
         res.end(fs.readFileSync(filePath));
     }
 
@@ -154,4 +166,6 @@ class ServerInstance {
 const Server = new ServerInstance();
 
 export default Server;
+
+process.nextTick(() => Server.start());
 
