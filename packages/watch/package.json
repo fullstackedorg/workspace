@@ -7,14 +7,11 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "fullstacked": "^0.10.0-1",
-    "harmon": "^1.4.4",
-    "http-proxy": "^1.18.1",
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
+    "js-yaml": "^4.1.0",
     "ws": "^8.12.1"
   },
   "devDependencies": {
-    "@types/harmon": "^1.4.1",
-    "@types/http-proxy": "^1.17.10",
     "@types/ws": "^8.5.4"
   },
   "exports": {

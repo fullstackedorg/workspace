@@ -23,39 +23,32 @@ export default class Build extends CommandInterface {
             node: {
                 image: "node:18-alpine",
                 working_dir: "/app",
-                command: ["index.mjs"],
+                command: ["server/index.mjs"],
                 restart: "unless-stopped",
-                expose: ["80"],
-                ports: ["80"],
-                volumes: [`./app:/app`]
+                expose: ["8000"],
+                ports: ["8000"],
+                volumes: [
+                    `./client:/app/client`,
+                    `./server:/app/server`
+                ]
             }
         }
     };
 
     static commandLineArguments = {
         client: {
-            type: "string[]",
+            type: "string",
             short: "c",
-            default: [
-                "./client/index.ts",
-                "./client/index.tsx",
-                ...globSync("./client/**/*.client.ts"),
-                ...globSync("./client/**/*.client.tsx")
-            ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
-            description: "Client entry points to be bundled",
-            defaultDescription: "./client/index.ts(x), ./client/*.client.ts(x)"
+            default: ["./client/index.ts", "./client/index.tsx"].find((defaultFile) => fs.existsSync(defaultFile)),
+            description: "Client entry point",
+            defaultDescription: "./client/index.ts(x)"
         },
         server: {
-            type: "string[]",
+            type: "string",
             short: "s",
-            default: [
-                "./server/index.ts",
-                "./server/index.tsx",
-                ...globSync("./server/**/*.server.ts"),
-                ...globSync("./server/**/*.server.tsx")
-            ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
-            description: "Server entry points to be bundled",
-            defaultDescription: "./server/index.ts(x), ./server/*.server.ts(x)"
+            default: ["./server/index.ts", "./server/index.tsx"].find((defaultFile) => fs.existsSync(defaultFile)),
+            description: "Server entry point",
+            defaultDescription: "./server/index.ts(x)"
         },
         dockerCompose: {
             type: "string[]",
@@ -82,12 +75,6 @@ export default class Build extends CommandInterface {
         externalModules: {
             type: "string[]",
             description: "Ignore modules when building.\nYou can also define them at .externalModules in your package.json"
-        },
-        verbose: {
-            type: "boolean",
-            short: "v",
-            defaultDescription: "false",
-            description: "Output the list of files bundled"
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Build.commandLineArguments);
@@ -107,7 +94,11 @@ export default class Build extends CommandInterface {
 
     // get all env variables in the form of an object
     getProcessEnv() {
-        let processEnv = {};
+        let processEnv = {
+            'process.env.APP_NAME': JSON.stringify(Info.webAppName),
+            'process.env.VERSION': JSON.stringify(Info.version),
+            'process.env.HASH': JSON.stringify(Info.hash)
+        };
         Object.keys(process.env).forEach((envKey) => {
             if (envKey.includes("(") || envKey.includes(")") || envKey.includes("-") || envKey.includes("%"))
                 return;
@@ -117,17 +108,10 @@ export default class Build extends CommandInterface {
     }
 
     async buildServer() {
-        const serverOutDir = resolve(this.config.outputDir, "app");
-
-        const serverFiles = this.config.server.map(file => resolve(file));
-
-        // use @fullstacked/webapp as default if installed
-        const fullstackedWebAppServerStartFile = new URL("../webapp/server/start.js", import.meta.url);
-
-        const filesBuilt = new Set();
+        const serverOutDir = resolve(this.config.outputDir, "server");
 
         const options = {
-            entryPoints: [Build.entryPoint],
+            entryPoints: [this.config.server],
             outfile: resolve(serverOutDir, "index.mjs"),
             platform: "node" as Platform,
             bundle: true,
@@ -137,30 +121,7 @@ export default class Build extends CommandInterface {
             define: this.getProcessEnv(),
 
             // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
-            banner: { js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);" },
-
-            plugins: [{
-                name: "fullstacked-bundled-server",
-                setup(build) {
-                    build.onLoad({ filter: /.*/ }, (args) => {
-                        if (!args.path.includes("node_modules"))
-                            filesBuilt.add(args.path);
-
-                        if (args.path !== Build.entryPoint)
-                            return null;
-
-                        if(fs.existsSync(fullstackedWebAppServerStartFile))
-                            serverFiles.push(fileURLToPath(fullstackedWebAppServerStartFile));
-
-                        const contents = serverFiles.map((file) => `import("${file.split(path.sep).join("/")}");`).join("\n");
-
-                        return {
-                            contents,
-                            loader: "ts"
-                        };
-                    });
-                }
-            }]
+            banner: { js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);" }
         };
 
         const result = await esbuild.build(options);
@@ -169,20 +130,14 @@ export default class Build extends CommandInterface {
             return;
 
         console.log("\x1B[32m%s\x1B[0m", "Server Built");
-
-        return filesBuilt;
     }
 
 
     async buildClient() {
-        const clientOutDir = resolve(this.config.outputDir, "app", "public");
-
-        const filesBuilt = new Set();
-
-        const clientFiles = this.config.client.map(file => resolve(file));
+        const clientOutDir = resolve(this.config.outputDir, "client");
 
         const options = {
-            entryPoints: [Build.entryPoint],
+            entryPoints: [this.config.client],
             outdir: clientOutDir,
             entryNames: "index",
             format: "esm" as Format,
@@ -192,31 +147,18 @@ export default class Build extends CommandInterface {
             sourcemap: !Boolean(this.config.production),
             external: this.externalModules ?? [],
             define: this.getProcessEnv(),
-            loader: {
-                ".png"  : "file" as Loader,
-                ".jpg"  : "file" as Loader,
-                ".svg"  : "file" as Loader,
-                ".md"   : "file" as Loader,
-                ".ttf"  : "file" as Loader,
-                ".woff" : "file" as Loader,
-                ".woff2": "file" as Loader
-            },
-
             plugins: [{
-                name: "fullstacked-bundled-client",
+                name: "all-files",
                 setup(build) {
-                    build.onLoad({ filter: /.*/ }, (args) => {
-                        if (!args.path.includes("node_modules"))
-                            filesBuilt.add(args.path);
-
-                        if (args.path !== Build.entryPoint)
-                            return null;
-
-                        const contents = clientFiles.map((file) => `import "${file.split(path.sep).join("/")}";`).join("\n");
-
+                    build.onLoad({ filter: /.*/ }, ({path}) => {
                         return {
-                            contents,
-                            loader: "ts"
+                            loader: path.endsWith(".ts")
+                                ? "ts"
+                                : path.endsWith(".jsx") || path.endsWith(".tsx")
+                                    ? "jsx"
+                                    : path.endsWith("js")
+                                        ? "js"
+                                        : "file"
                         };
                     });
                 }
@@ -229,8 +171,6 @@ export default class Build extends CommandInterface {
             return;
 
         console.log("\x1B[32m%s\x1B[0m", "Client Built");
-
-        return filesBuilt;
     }
 
     mergeDockerComposeSpecs(dockerComposeSpecs) {
@@ -278,14 +218,12 @@ export default class Build extends CommandInterface {
 
         fs.mkdirSync(this.config.outputDir);
 
-        const files = await Promise.all([
+
+        await Promise.all([
             this.buildServer(),
             this.buildClient(),
             this.buildDockerCompose()
         ]);
-
-        if (this.config.verbose)
-            console.log(Array.from(/* @__PURE__ */ new Set([...files[0], ...files[1], ...files[2]])).join("\n"));
     }
 
     runCLI() {

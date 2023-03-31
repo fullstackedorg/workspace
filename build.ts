@@ -1,4 +1,4 @@
-import {buildSync} from "esbuild";
+import {buildSync, Platform} from "esbuild";
 import {globSync} from "glob";
 import fs from "fs";
 
@@ -19,18 +19,20 @@ const toBuild = [
     "./packages/backup/index.ts",
     "./packages/gui/index.ts",
     "./packages/build/index.ts",
-    "./packages/build/entrypoint.ts",
     "./packages/deploy/index.ts",
     "./packages/run/index.ts",
     "./packages/watch/index.ts",
-    "./packages/watch/clientWatcher.ts",
+    "./packages/watch/fileParser.ts",
+    "./packages/watch/watcher.ts",
+    "./packages/watch/fileParser.ts",
+    "./packages/watch/builder.ts",
+    "./packages/watch/utils.ts",
     "./packages/create/index.ts",
     "./packages/create/cli.ts",
     "./packages/create/create.ts",
     "./packages/create/install.ts",
     "./packages/webapp/server/index.ts",
     "./packages/webapp/server/HTML.ts",
-    "./packages/webapp/server/start.ts",
     "./CommandInterface.ts",
     "./info.ts",
     "./cli.ts"
@@ -38,15 +40,23 @@ const toBuild = [
 
 await buildRecursively.default(toBuild);
 
-const getAvailablePortScript = "./packages/deploy/nginx/getAvailablePorts.ts";
-buildSync({
-    entryPoints: [getAvailablePortScript],
-    outfile: buildRecursively.convertPathToJSExt(getAvailablePortScript),
+[
+    {
+        file: "./packages/deploy/nginx/getAvailablePorts.ts",
+        platform: "node"
+    },
+    {
+        file: "./packages/watch/client.ts",
+        platform: "browser"
+    }
+].forEach(toBundle => buildSync({
+    entryPoints: [toBundle.file],
+    outfile: buildRecursively.convertPathToJSExt(toBundle.file),
     bundle: true,
     sourcemap: true,
     format: "esm",
-    platform: "node"
-})
+    platform: toBundle.platform as Platform
+}));
 
 console.log('\x1b[32m%s\x1b[0m', "cli and scripts built");
 

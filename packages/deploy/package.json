@@ -7,7 +7,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "fullstacked": "^0.10.0-1",
+    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
     "glob": "^9.2.1",
     "js-yaml": "^4.1.0",
     "progress-stream": "^2.0.0",

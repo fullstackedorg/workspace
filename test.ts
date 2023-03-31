@@ -49,5 +49,5 @@ execSync([
     "--",
     `-v ${fullstackedPackage}`].join(" "), {cwd: testDirectory, stdio: "inherit"});
 
-// testing [npm i @fullstacked/create @fullstacked/build @fullstacked/run @fullstacked/watch @fullstacked/deploy @fullstacked/backup @fullstacked/webapp @fullstacked/gui]
+// testing local packages
 execSync(`npm i ${createPackage} ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage} ${webappPackage} ${guiPackage}`, {cwd: testDirectory, stdio: "inherit"});
