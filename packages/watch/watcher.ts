@@ -1,6 +1,6 @@
 import {execSync} from "child_process";
 import {dirname, resolve} from "path";
-import {getModulePathExtension} from "./builder";
+import {bundleCSSFiles, getModulePathExtension} from "./builder";
 import WebSocket, {WebSocketServer} from "ws";
 import fs from "fs";
 import {getModulePathWithT, invalidateModule, moduleExtensions} from "./utils";
@@ -62,7 +62,7 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         }));
     });
 
-    let server = (await import(resolve("./dist", modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)).default;
+    const server = (await import(resolve("./dist", modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)).default;
 
     server.prependListener('request', (_, res) => {
         const originalEnd = res.end.bind(res);
@@ -86,16 +86,21 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         });
     });
 
-    const activeSockets = new Set<Socket>();
-    server.on('connection', (socket) => {
-        activeSockets.add(socket)
-        socket.on('close', () => activeSockets.delete(socket));
-    });
-
-
     Object.keys(clientBuild.modulesFlatTree).forEach(modulePath => {
         fs.watch(modulePath, async (eventType, filename) => {
+
             if (!moduleExtensions.find(ext => modulePath.endsWith(ext))) {
+
+                if (modulePath.endsWith(".css")) {
+                    await bundleCSSFiles(clientBuild.cssFiles, resolve("dist", clientBaseDir), "index.css");
+
+                    activeWS.forEach(ws => ws.send(JSON.stringify({
+                        type: "css",
+                        data: "index.css"
+                    })));
+
+                    return;
+                }
 
                 return;
             }
@@ -133,24 +138,17 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         return getModulePathWithT(fixedModulePath, serverBuild.modulesFlatTree);
     };
 
-    let reloading = false;
+    let reloadThrottler;
     const reloadServer = () => {
-        if (reloading) return
-        reloading = true;
-        if (server) {
-            console.log("Reloading server");
-            activeSockets.forEach(socket => socket.destroy());
-            server.close(() => {
-                loadServer()
-                reloading = false;
-            });
-        } else {
-            reloading = false;
-            loadServer();
-        }
+        if(reloadThrottler) clearTimeout(reloadThrottler);
+        reloadThrottler = setTimeout(async () => {
+            reloadThrottler = null;
+            await import(resolve("./dist", modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)
+            activeWS.forEach(ws => ws.send(JSON.stringify({
+                type: "server"
+            })));
+        }, 100);
     }
-
-    reloadServer();
 
     Object.keys(serverBuild.modulesFlatTree).forEach(modulePath => {
         fs.watch(modulePath, async () => {
@@ -173,11 +171,6 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
             }
 
             serverBuild.modulesFlatTree = invalidateModule(modulePath, serverBuild.modulesFlatTree);
-
-            activeWS.forEach(ws => ws.send(JSON.stringify({
-                type: "server",
-                data: modulePath
-            })));
 
             reloadServer();
         });
