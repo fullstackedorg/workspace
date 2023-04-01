@@ -4,6 +4,7 @@ import {globSync} from "glob";
 import fs from "fs";
 import watcher from "./watcher";
 import yaml from "js-yaml";
+import {resolve} from "path";
 
 
 export default class Watch extends CommandInterface {
@@ -13,11 +14,6 @@ export default class Watch extends CommandInterface {
             node: {
                 image: Watch.containerImageName,
                 working_dir: "/project",
-                command: [
-                    "/bin/sh",
-                    "-c",
-                    "DOCKER=1 npx fullstacked watch"
-                ],
                 restart: "unless-stopped",
                 expose: ["8000"],
                 ports: ["8000"],
@@ -69,6 +65,8 @@ export default class Watch extends CommandInterface {
         if(fs.existsSync(this.config.outputDir))
             fs.rmSync(this.config.outputDir, {recursive: true});
 
+        fs.mkdirSync(this.config.outputDir)
+
         if(!this.config.dockerCompose.length){
             console.log("IMPLEMENT NATIVE FUNCTIONALITY PLEASE");
         }
@@ -113,7 +111,8 @@ export default class Watch extends CommandInterface {
             yaml.load(fs.readFileSync(dockerComposeFile).toString())));
         const mergedDockerCompose = fullstackedBuild.mergeDockerComposeSpecs(dockerComposeSpecs);
 
-        const dockerComposeFileName = `${this.config.outputDir}/fullstacked-watcher.yml`
+
+        const dockerComposeFileName = `${this.config.outputDir}/fullstacked-watcher.yml`;
         fs.writeFileSync(dockerComposeFileName, yaml.dump(mergedDockerCompose));
 
         fullstackedRun.config = {
