@@ -4,7 +4,7 @@ const ws = new WebSocket("ws" +
     (window.location.protocol === "https:" ? "s" : "") +
     "://" + window.location.host);
 
-let tree, basePath, assetsPath, entrypoint;
+let tree, basePath, entrypoint;
 
 function removeError() {
     document.querySelector("#error-container")?.remove();
@@ -64,10 +64,8 @@ declare global {
 }
 
 window.getModuleImportPath = (modulePath) => {
-    const {path, isAsset} = getModulePathWithT(modulePath, tree);
-    return isAsset
-        ? `${assetsPath}/${path}`
-        : path.replace(basePath, "");
+    const {path} = getModulePathWithT(modulePath, tree);
+    return path.replace(basePath, "");
 }
 
 function reloadFromEntrypoint(){
@@ -81,7 +79,6 @@ ws.onmessage = async (message) => {
         case "setup":
             tree = data.tree;
             basePath = data.basePath;
-            assetsPath = data.assetsPath;
             entrypoint = data.entrypoint;
             return reloadFromEntrypoint();
         case "module":
@@ -101,8 +98,18 @@ ws.onmessage = async (message) => {
             window.location.reload();
             break;
         case "server":
+            window.localStorage.setItem("scroll", window.scrollY.toString());
             await sleep(100);
             await waitForServer();
             window.location.reload();
     }
 };
+
+const recoverScroll = window.localStorage.getItem("scroll");
+if(recoverScroll){
+    (async () => {
+        window.localStorage.removeItem("scroll");
+        await sleep(100);
+        window.scrollTo(0, parseInt(recoverScroll));
+    })()
+}

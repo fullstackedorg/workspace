@@ -118,4 +118,9 @@ export default class CLIParser {
 
         return parsedValues as U;
     }
+
+    static reconstructCommandLineArguments(){
+        console.log(this.commandLineTokens);
+        return ""
+    }
 }

@@ -4,7 +4,9 @@ import {globSync} from "glob";
 import fs from "fs";
 import watcher from "./watcher";
 import yaml from "js-yaml";
-import {resolve} from "path";
+import {dirname, resolve} from "path";
+import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
+import Info from "fullstacked/info";
 
 
 export default class Watch extends CommandInterface {
@@ -67,12 +69,12 @@ export default class Watch extends CommandInterface {
 
         fs.mkdirSync(this.config.outputDir)
 
-        if(!this.config.dockerCompose.length){
-            console.log("IMPLEMENT NATIVE FUNCTIONALITY PLEASE");
-        }
-
-        if(process.env.DOCKER){
-            await watcher(this.config.client, this.config.server)
+        if(!this.config.dockerCompose.length || process.env.DOCKER){
+            process.env.CLIENT_DIR = resolve(this.config.outputDir, dirname(this.config.client));
+            process.env.NODE_ENV = 'development';
+            process.env.PORT = process.env.DOCKER ? "8000" : (await getNextAvailablePort(8000)).toString();
+            console.log(`${Info.webAppName} v${Info.version} is running at http://localhost:${process.env.PORT}`);
+            await watcher(this.config.client, this.config.server, this.config.outputDir);
             return;
         }
 
@@ -101,7 +103,7 @@ export default class Watch extends CommandInterface {
                     command: [
                         "/bin/sh",
                         "-c",
-                        `DOCKER=1 CLIENT_DIR=${this.config.outputDir}/client npx fullstacked watch`
+                        `DOCKER=1 npx fullstacked watch`
                     ]
                 }
             }

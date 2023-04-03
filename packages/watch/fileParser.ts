@@ -120,6 +120,7 @@ export function tokenizeImports(content): {lines: [number, number], statements: 
 
 export type ImportDefinition = {
     module: string,
+    type?: boolean,
     defaultImports?: string[],
     namespaceImports?: string[],
     namedImports?: {
@@ -152,7 +153,8 @@ export function analyzeRawImportStatement(importStatement: string[]) : ImportDef
         defaultImports = [],
         namespaceImports = [],
         namedImports = [],
-        inNamedImport = false;
+        inNamedImport = false,
+        foundType = false;
 
     const analyzeAccumulator = () => {
         if (!accumulator.length) return;
@@ -182,6 +184,11 @@ export function analyzeRawImportStatement(importStatement: string[]) : ImportDef
     }
 
     for (const word of importations) {
+        if(word === "type"){
+            foundType = true;
+            continue;
+        }
+
         if (word === ",") {
             analyzeAccumulator();
             continue;
@@ -212,6 +219,9 @@ export function analyzeRawImportStatement(importStatement: string[]) : ImportDef
     if (namedImports.length)
         definition.namedImports = namedImports;
 
+    if (foundType)
+        definition.type = true;
+
     return definition;
 }
 
@@ -225,6 +235,7 @@ function namedDefinitionHasNamedImport(namedDefinition, namedImport): boolean {
 }
 
 type MergedImportDefinition = {
+    type?: boolean,
     defaultImports?: Set<string>,
     namespaceImports?: Set<string>,
     namedImports?: {
@@ -244,10 +255,12 @@ export function mergeImportsDefinitions(definitions: ImportDefinition[]): Merged
     for (const definition of definitions) {
         if (!definition.module) continue;
 
-
         let moduleDef: MergedImportDefinition = importsDefinition.get(definition.module);
         if (!moduleDef)
-            moduleDef = {}
+            moduleDef = {};
+
+        if (definition.type)
+            moduleDef.type = true;
 
         if (definition.defaultImports) {
             if (!moduleDef.defaultImports)
@@ -315,6 +328,33 @@ export function convertImportDefinitionToAsyncImport(
                 ? `const ${Array.from(importDefinition.defaultImports).join(", ")} = ${moduleResolverWrapperFunction}("${moduleName}");`
                 : `const ${Array.from(importDefinition.defaultImports).join(", ")} = "${moduleName}";`
         ]
+    }
+
+    if(importDefinition?.type){
+        let importations = [];
+        importDefinition.defaultImports?.forEach(defaultImport => {
+            importations.push(defaultImport)
+        });
+
+        importDefinition.namespaceImports?.forEach(nsImport => {
+            importations.push(`* as ${nsImport}`);
+        });
+
+        importDefinition.namedImports?.forEach((namedImport, i) => {
+            let importation = i === 0 ? "{ " : "";
+
+            if (namedImport.alias) {
+                importation += `${namedImport.name} as ${namedImport.alias}`;
+            } else {
+                importation += namedImport.name;
+            }
+
+            if(i === importDefinition.namedImports.length - 1) importation += " }";
+
+            importations.push(importation);
+        });
+
+        return [ `import type ${importations.join(" ,")} from "${moduleName}";` ]
     }
 
     let importString = moduleResolverWrapperFunction
