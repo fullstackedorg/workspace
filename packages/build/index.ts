@@ -152,6 +152,7 @@ export default class Build extends CommandInterface {
                 setup(build) {
                     build.onLoad({ filter: /.*/ }, ({path}) => {
                         return {
+                            contents: fs.readFileSync(path),
                             loader: path.endsWith(".ts")
                                 ? "ts"
                                 : path.endsWith(".jsx") || path.endsWith(".tsx")
@@ -192,10 +193,12 @@ export default class Build extends CommandInterface {
     }
 
     async buildDockerCompose() {
-        const nodeDockerComposeSpec = structuredClone(Build.fullstackedNodeDockerComposeSpec);
+        const nodeDockerComposeSpec: any = structuredClone(Build.fullstackedNodeDockerComposeSpec);
         if (!this.config.production) {
             nodeDockerComposeSpec.services.node.command.unshift("--enable-source-maps");
-            nodeDockerComposeSpec.services.node.command.push("--development");
+            nodeDockerComposeSpec.services.node.environment = [
+                "NODE_ENV=development"
+            ];
         }
         const dockerComposeSpecs = [nodeDockerComposeSpec].concat(this.config.dockerCompose.map((dockerComposeFile) => yaml.load(fs.readFileSync(dockerComposeFile).toString())));
         const mergedDockerCompose = this.mergeDockerComposeSpecs(dockerComposeSpecs);
@@ -212,7 +215,7 @@ export default class Build extends CommandInterface {
             try{
                 fs.rmSync(this.config.outputDir, {recursive: true, force: true});
             }catch (e) {
-                console.log("Could not full clear out directory... Proceeding...");
+                console.log("Could not fully clear out directory... Proceeding...");
             }
         }
 

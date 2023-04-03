@@ -2,9 +2,9 @@ import {execSync} from "child_process";
 import {dirname, resolve} from "path";
 import {bundleCSSFiles, getModulePathExtension} from "./builder";
 import WebSocket, {WebSocketServer} from "ws";
-import fs from "fs";
+import fs, {FSWatcher} from "fs";
 import {getModulePathWithT, invalidateModule, moduleExtensions} from "./utils";
-import type {Socket} from "net";
+import {Socket} from "net";
 
 if(process.env.DOCKER)
     execSync("npm i esbuild-linux-64 --no-save", {stdio: "inherit"});
@@ -12,27 +12,38 @@ if(process.env.DOCKER)
 const clientWatcherScript = fs.readFileSync(new URL("./client.js", import.meta.url));
 const Builder = (await import("./builder")).default;
 
-const modulePathToSafeJS = (modulePath: string) => {
+function isEqualSets(xs, ys) {
+    return xs.size === ys.size && [...xs].every((x) => ys.has(x));
+}
+
+function modulePathToSafeJS(modulePath: string) {
     const realModulePath = modulePath + getModulePathExtension(modulePath);
     const splitAtDot = realModulePath.split(".");
     splitAtDot.pop();
     return splitAtDot.join(".") + ".js";
 }
 
-export default async function(clientEntrypoint: string, serverEntrypoint: string) {
+export default async function(clientEntrypoint: string, serverEntrypoint: string, outdir: string) {
     const clientBaseDir = dirname(clientEntrypoint);
-    const clientBuild = await Builder({
-        entrypoint: clientEntrypoint,
-        recurse: true,
-        moduleResolverWrapperFunction: "getModuleImportPath",
-        externalModules: {
-            convert: true,
-            bundle: true
-        }
-    });
+    let clientBuild: Awaited<ReturnType<typeof Builder>>;
+    const reloadClientBuild = async () => {
+        clientBuild = await Builder({
+            entrypoint: clientEntrypoint,
+            outdir,
+            recurse: true,
+            moduleResolverWrapperFunction: "getModuleImportPath",
+            externalModules: {
+                convert: true,
+                bundle: true
+            }
+        });
+    }
+    await reloadClientBuild();
+
 
     const serverBuild = await Builder({
         entrypoint: serverEntrypoint,
+        outdir,
         recurse: true,
         moduleResolverWrapperFunction: "getModuleImportPath",
         externalModules: {
@@ -56,38 +67,64 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
             data: {
                 tree: clientBuild.modulesFlatTree,
                 basePath: clientBaseDir,
-                assetsPath: "/assets",
                 entrypoint: clientEntrypoint + getModulePathExtension(clientEntrypoint)
             }
         }));
     });
 
-    const server = (await import(resolve("./dist", modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)).default;
+    let server, activeSockets = new Set<Socket>();
+    const loadServer = async () => {
+        if(server){
 
-    server.prependListener('request', (_, res) => {
-        const originalEnd = res.end.bind(res);
-        res.end = function(chunk, encoding, callback) {
+            activeWS.forEach((ws) => {
+                ws.send(JSON.stringify({
+                    type: "server"
+                }));
+                activeWS.delete(ws);
+            });
 
-            const mimeType = res.getHeader("Content-Type");
-
-            if (mimeType === 'text/html') {
-                res.write(chunk, encoding);
-                res.write(`<script>${clientWatcherScript}</script>`);
-                return originalEnd(undefined, undefined, callback);
-            }
-
-            originalEnd(chunk, encoding, callback);
+            await new Promise(resolve => {
+                activeSockets.forEach(socket => socket.destroy());
+                server.close(resolve);
+            });
         }
-    });
 
-    server.on('upgrade', (request, socket, head) => {
-        wss.handleUpgrade(request, socket, head, (ws) => {
-            wss.emit('connection', ws, request);
+        server = (await import(resolve(outdir, modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)).default;
+
+        server.prependListener('request', (_, res) => {
+            const originalEnd = res.end.bind(res);
+            res.end = function(chunk, encoding, callback) {
+
+                const mimeType = res.getHeader("Content-Type");
+
+                if (mimeType === 'text/html') {
+                    res.write(chunk, encoding);
+                    res.write(`<script>${clientWatcherScript}</script>`);
+                    return originalEnd(undefined, undefined, callback);
+                }
+
+                originalEnd(chunk, encoding, callback);
+            }
         });
-    });
 
+        server.on('upgrade', (request, socket, head) => {
+            wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.emit('connection', ws, request);
+            });
+        });
+
+        server.on('connection', function(socket) {
+            activeSockets.add(socket)
+
+            socket.on('close', function() {
+                activeSockets.delete(socket)
+            });
+        });
+    }
+
+    const clientWatchers = new Map<string, FSWatcher>();
     Object.keys(clientBuild.modulesFlatTree).forEach(modulePath => {
-        fs.watch(modulePath, async (eventType, filename) => {
+        const initWatch = () => fs.watch(modulePath, async (eventType, filename) => {
 
             if (!moduleExtensions.find(ext => modulePath.endsWith(ext))) {
 
@@ -102,11 +139,24 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
                     return;
                 }
 
+                fs.copyFileSync(modulePath, clientBuild.modulesFlatTree[modulePath].out)
+
+                activeWS.forEach(ws => ws.send(JSON.stringify({
+                    type: "asset",
+                    data: modulePath
+                })));
+
+                if (!fs.existsSync(filename)) {
+                    clientWatchers.get(modulePath).close();
+                    clientWatchers.set(modulePath, initWatch());
+                }
+
                 return;
             }
 
+            let fileBuild: Awaited<ReturnType<typeof Builder>>;
             try {
-                await Builder({
+                fileBuild = await Builder({
                     entrypoint: modulePath,
                     recurse: false,
                     moduleResolverWrapperFunction: "getModuleImportPath",
@@ -123,18 +173,27 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
                 return;
             }
 
+            if (!isEqualSets(fileBuild.modulesFlatTree[modulePath].imports, clientBuild.modulesFlatTree[modulePath].imports)) {
+                await reloadClientBuild();
+                activeWS.forEach(ws => ws.send(JSON.stringify({
+                    type: "reload"
+                })));
+                return;
+            }
+
             activeWS.forEach(ws => ws.send(JSON.stringify({
                 type: "module",
                 data: modulePath
             })));
         });
-    });
 
+        clientWatchers.set(modulePath, initWatch());
+    });
 
     global.getModuleImportPath = (modulePath, currentModulePath) => {
         const fixedModulePath = resolve(dirname((new URL(currentModulePath)).pathname), modulePath)
             .replace(process.cwd(), ".")
-            .replace("/dist", "");
+            .replace(outdir, "");
         return getModulePathWithT(fixedModulePath, serverBuild.modulesFlatTree);
     };
 
@@ -143,12 +202,14 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         if(reloadThrottler) clearTimeout(reloadThrottler);
         reloadThrottler = setTimeout(async () => {
             reloadThrottler = null;
-            await import(resolve("./dist", modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)
+            await loadServer();
             activeWS.forEach(ws => ws.send(JSON.stringify({
                 type: "server"
             })));
         }, 100);
     }
+
+    await reloadServer();
 
     Object.keys(serverBuild.modulesFlatTree).forEach(modulePath => {
         fs.watch(modulePath, async () => {

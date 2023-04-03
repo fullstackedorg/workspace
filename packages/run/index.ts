@@ -1,5 +1,5 @@
 import CommandInterface from "fullstacked/CommandInterface";
-import {resolve} from "path";
+import {dirname, resolve} from "path";
 import CLIParser from "fullstacked/utils/CLIParser";
 import Docker from "fullstacked/utils/docker";
 import DockerCompose from "dockerode-compose";
@@ -8,6 +8,7 @@ import Dockerode from "dockerode";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
 import {maybePullDockerImage} from "fullstacked/utils/maybePullDockerImage";
 import sleep from "fullstacked/utils/sleep";
+import {execSync} from "child_process";
 
 export default class Run extends CommandInterface {
     static commandLineArguments = {
@@ -71,10 +72,22 @@ export default class Run extends CommandInterface {
         console.log(`${Info.webAppName} v${Info.version} stopped`);
     }
 
+    async startNative(command: string | string[]){
+        process.env.NODE_ENV='development';
+        command = Array.isArray(command) ? command.join(" ") : command;
+        const port = await getNextAvailablePort(8000);
+        console.log(`${Info.webAppName} v${Info.version} is running at http://localhost:${port}`);
+        execSync(`PORT=${port} node ${command}`, {cwd: dirname(this.config.dockerCompose), stdio: "inherit"})
+    }
+
     async start(){
         const services = Object.keys(this.dockerCompose.recipe.services);
-        let availablePort = 8000;
 
+        if(services.length === 1 && this.dockerCompose.recipe.services.node?.command){
+            return this.startNative(this.dockerCompose.recipe.services.node.command);
+        }
+
+        let availablePort = 8000;
         let nodePort;
         for(const service of services){
             const serviceObject = this.dockerCompose.recipe.services[service];

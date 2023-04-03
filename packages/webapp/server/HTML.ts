@@ -3,7 +3,6 @@ import {DefaultTreeAdapterMap, parse, parseFragment, Parser, serialize} from "pa
 const version = process.env.VERSION ?? "0";
 const hash = process.env.HASH ?? "0";
 
-
 export default class HTML {
     parser = new Parser();
     root: DefaultTreeAdapterMap['document'] = parse(`
@@ -57,7 +56,7 @@ export default class HTML {
     }
 
     toString(){
-        if(!this.cache) {
+        if(!this.cache || process.env.NODE_ENV === "development") {
             const versionStr = `?v=${version}-${hash}`
             this.styles.forEach(style =>
                 this.addInHead(`<link rel="stylesheet" href="${style + versionStr}">`))

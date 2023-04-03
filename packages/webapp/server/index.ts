@@ -10,9 +10,14 @@ type Listener = {
     handler(req: IncomingMessage, res: ServerResponse): any | Promise<any>,
 }
 
-class ServerInstance {
-    server: http.Server;
-    port: number = 8000;
+function getPort(){
+    const port = parseInt(process.env.PORT);
+    return port && !isNaN(port) ? port : 8000;
+}
+
+export default class {
+    serverHTTP: http.Server;
+    port: number = getPort();
     /* default file structure if
     *  dist
     *  |_ client
@@ -49,7 +54,7 @@ class ServerInstance {
     };
 
     constructor() {
-        if(process.argv.includes("--development")){
+        if(process.env.NODE_ENV === "development"){
             const activeRequests = new Map();
             this.logger = {
                 in(req, res){
@@ -70,7 +75,7 @@ class ServerInstance {
         if(fs.existsSync(resolve(this.publicDir, "index.js")))
             this.pages["/"].addScript("/index.js");
 
-        this.server = http.createServer(async (req, res: ServerResponse & {currentListener: string}) => {
+        this.serverHTTP = http.createServer(async (req, res: ServerResponse & {currentListener: string}) => {
             if(this.logger?.in) this.logger.in(req, res);
 
             const urlPrefixes = Object.keys(this.listeners);
@@ -137,7 +142,7 @@ class ServerInstance {
     }
 
     start(){
-        this.server.listen(this.port);
+        this.serverHTTP.listen(this.port);
     }
 
     promisify(requestListener: RequestListener<typeof IncomingMessage, typeof ServerResponse>): {handler(req, res): Promise<void>, resolver(req, res): void}{
@@ -159,13 +164,8 @@ class ServerInstance {
     }
 
     stop(){
-        Server.server.close()
+        return new Promise(resolve => {
+            this.serverHTTP.close(resolve)
+        });
     }
 }
-
-const Server = new ServerInstance();
-
-export default Server;
-
-process.nextTick(() => Server.start());
-

@@ -58,7 +58,7 @@ export default async function() {
     const serverDir = resolve(projectDir, "server");
     if(!fs.existsSync(serverDir))
         fs.mkdirSync(serverDir)
-    fs.writeFileSync(resolve(serverDir, "index.ts"), `// Server Entrypoint\nimport Server from "@fullstacked/webapp/server";\n\nexport default Server.server;\n`)
+    fs.writeFileSync(resolve(serverDir, "index.ts"), `// Server Entrypoint\nimport Server from "@fullstacked/webapp/server";\n\nconst server = new Server();\nserver.start();\n\nexport default server.serverHTTP;\n`)
 
     await install();
 }

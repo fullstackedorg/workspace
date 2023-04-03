@@ -25,7 +25,7 @@ type BuilderOptions = {
 
 const defaultOptions: Omit<BuilderOptions, 'entrypoint'> = {
     outdir: "dist",
-    assetDir: "assets",
+    assetDir: "",
     publicPath: "/",
     externalModules: {
         bundleOutName: "externals.js"
@@ -120,7 +120,9 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                     const lines = importStatements?.lines ?? [undefined, undefined];
 
                     const asyncImports = [];
-                    let importsDefinitions = statements.map(statement => analyzeRawImportStatement(statement));
+                    let importsDefinitions = statements
+                        .map(statement => analyzeRawImportStatement(statement))
+                        .filter(statement => !statement.type);
 
                     if (!options.externalModules.convert) {
                         importsDefinitions = importsDefinitions.filter((importDef, index) => {
