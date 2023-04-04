@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.10.0-1",
+  "version": "0.10.0-2",
   "description": "A CLI that takes care of all the redundant tasks in TypeScript web app development.",
   "types": "index.d.ts",
   "scripts": {

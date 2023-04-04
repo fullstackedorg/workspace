@@ -33,8 +33,11 @@ function displayError(errorData) {
 
 function reloadCSSFile(cssFileName) {
     const styleTags = document.querySelectorAll("link");
-    const currentTagToRemove = Array.from(styleTags).find(styleTag =>
-        new URL(styleTag.getAttribute("href"), window.location.origin).pathname.endsWith(cssFileName));
+    const currentTagToRemove = Array.from(styleTags).find(styleTag => {
+        const href = styleTag.getAttribute("href");
+        if(!href) return false;
+        return href.split("?").shift().endsWith(cssFileName);
+    });
 
     const newTag = document.createElement("link");
     newTag.href = "/" + cssFileName + "?t=" + Date.now();
@@ -68,8 +71,15 @@ window.getModuleImportPath = (modulePath) => {
     return path.replace(basePath, "");
 }
 
+let throttler;
 function reloadFromEntrypoint(){
-    return import(window.getModuleImportPath(entrypoint));
+    if(!entrypoint) return;
+
+    if(throttler) clearTimeout(throttler);
+    throttler = setTimeout(async () => {
+        await import(window.getModuleImportPath(entrypoint));
+        throttler = null;
+    }, 200);
 }
 
 ws.onmessage = async (message) => {
@@ -79,8 +89,15 @@ ws.onmessage = async (message) => {
         case "setup":
             tree = data.tree;
             basePath = data.basePath;
-            entrypoint = data.entrypoint;
-            return reloadFromEntrypoint();
+            const possibleEntrypoint = window.getModuleImportPath(data.entrypoint, tree).split("?").shift();
+            document.querySelectorAll("script").forEach(scriptElement => {
+                const src = scriptElement.getAttribute("src");
+                if(!src) return;
+
+                if(src.split("?").shift() === possibleEntrypoint)
+                    entrypoint = data.entrypoint;
+            })
+            return;
         case "module":
             removeError()
             tree = invalidateModule(data, tree);

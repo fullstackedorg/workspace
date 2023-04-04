@@ -18,11 +18,6 @@ export default class HTML {
     head = this.getDescendantByTag(this.root, "head");
     body = this.getDescendantByTag(this.root, "body");
     private cache;
-    private scripts: {
-        filePath: string,
-        isModule: boolean
-    }[] = [];
-    private styles: string[] = [];
 
     getDescendantByTag(node, tag) {
         for (let i = 0; i < node.childNodes?.length; i++) {
@@ -36,11 +31,13 @@ export default class HTML {
     };
 
     addScript(filePath: string, isModule = true){
-        this.scripts.push({filePath, isModule});
+        const versionStr = `?v=${version}-${hash}`
+        this.addInBody(`<script ${isModule ? `type="module"` : ""} src="${filePath + versionStr}"></script>`);
     }
 
     addStyle(filePath: string){
-        this.styles.push(filePath);
+        const versionStr = `?v=${version}-${hash}`
+        this.addInHead(`<link rel="stylesheet" href="${filePath + versionStr}">`);
     }
 
     addInHead(contentHTML: string) {
@@ -57,12 +54,7 @@ export default class HTML {
 
     toString(){
         if(!this.cache || process.env.NODE_ENV === "development") {
-            const versionStr = `?v=${version}-${hash}`
-            this.styles.forEach(style =>
-                this.addInHead(`<link rel="stylesheet" href="${style + versionStr}">`))
-            this.scripts.forEach(script =>
-                this.addInBody(`<script ${script.isModule ? `type="module"` : ""} src="${script.filePath + versionStr}"></script>`))
-            this.cache = serialize(this.root)
+            this.cache = serialize(this.root);
         }
         return this.cache;
     }

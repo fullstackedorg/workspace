@@ -164,7 +164,7 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
                         convert: true,
                         bundle: false
                     }
-                });
+                }, clientBuild.externalModules);
             } catch (e) {
                 activeWS.forEach(ws => ws.send(JSON.stringify({
                     type: "error",
@@ -190,11 +190,11 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         clientWatchers.set(modulePath, initWatch());
     });
 
-    global.getModuleImportPath = (modulePath, currentModulePath) => {
-        const fixedModulePath = resolve(dirname((new URL(currentModulePath)).pathname), modulePath)
-            .replace(process.cwd(), ".")
-            .replace(outdir, "");
-        return getModulePathWithT(fixedModulePath, serverBuild.modulesFlatTree);
+    global.getModuleImportPath = (modulePath) => {
+        const modulePathWithT = getModulePathWithT(modulePath, serverBuild.modulesFlatTree);
+        if(modulePathWithT.isAsset) return serverBuild.modulesFlatTree[modulePath].out;
+
+        return resolve(process.cwd(), outdir, modulePathWithT.path);
     };
 
     let reloadThrottler;

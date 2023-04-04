@@ -5,8 +5,6 @@ import yaml from "js-yaml";
 import CommandInterface from "fullstacked/CommandInterface";
 import {globSync} from "glob";
 import CLIParser from "fullstacked/utils/CLIParser";
-import {fileURLToPath} from "url";
-import * as process from "process";
 import Info from "fullstacked/info";
 
 // Polyfill for stackblitz
@@ -16,8 +14,30 @@ if(!global.structuredClone) {
     }
 }
 
+const dynamicLoaderPlugin = {
+    name: "dynamic-loader",
+    setup(build) {
+        build.onLoad({ filter: /.*/ }, ({path}) => {
+            if(path.includes("node_modules") || path.endsWith(".css"))
+                return null;
+
+            return {
+                contents: fs.readFileSync(path),
+                loader: path.endsWith(".ts")
+                    ? "ts"
+                    : path.endsWith(".tsx")
+                        ? "tsx"
+                        : path.endsWith(".jsx")
+                            ? "jsx"
+                            : path.endsWith("js")
+                                ? "js"
+                                : "file"
+            };
+        });
+    }
+}
+
 export default class Build extends CommandInterface {
-    static entryPoint = fileURLToPath(new URL("./entrypoint.js", import.meta.url));
     static fullstackedNodeDockerComposeSpec = {
         services: {
             node: {
@@ -121,7 +141,9 @@ export default class Build extends CommandInterface {
             define: this.getProcessEnv(),
 
             // source: https://github.com/evanw/esbuild/issues/1921#issuecomment-1166291751
-            banner: { js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);" }
+            banner: { js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);" },
+
+            plugins: [dynamicLoaderPlugin]
         };
 
         const result = await esbuild.build(options);
@@ -147,23 +169,7 @@ export default class Build extends CommandInterface {
             sourcemap: !Boolean(this.config.production),
             external: this.externalModules ?? [],
             define: this.getProcessEnv(),
-            plugins: [{
-                name: "all-files",
-                setup(build) {
-                    build.onLoad({ filter: /.*/ }, ({path}) => {
-                        return {
-                            contents: fs.readFileSync(path),
-                            loader: path.endsWith(".ts")
-                                ? "ts"
-                                : path.endsWith(".jsx") || path.endsWith(".tsx")
-                                    ? "jsx"
-                                    : path.endsWith("js")
-                                        ? "js"
-                                        : "file"
-                        };
-                    });
-                }
-            }]
+            plugins: [dynamicLoaderPlugin]
         };
 
         const result = await esbuild.build(options);

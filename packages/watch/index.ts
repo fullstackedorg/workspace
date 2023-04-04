@@ -64,10 +64,8 @@ export default class Watch extends CommandInterface {
     config = CLIParser.getCommandLineArgumentsValues(Watch.commandLineArguments);
 
     async run() {
-        if(fs.existsSync(this.config.outputDir))
-            fs.rmSync(this.config.outputDir, {recursive: true});
-
-        fs.mkdirSync(this.config.outputDir)
+        if(!fs.existsSync(this.config.outputDir))
+            fs.mkdirSync(this.config.outputDir, {recursive: true})
 
         if(!this.config.dockerCompose.length || process.env.DOCKER){
             process.env.CLIENT_DIR = resolve(this.config.outputDir, dirname(this.config.client));
@@ -114,7 +112,7 @@ export default class Watch extends CommandInterface {
         const mergedDockerCompose = fullstackedBuild.mergeDockerComposeSpecs(dockerComposeSpecs);
 
 
-        const dockerComposeFileName = `${this.config.outputDir}/fullstacked-watcher.yml`;
+        const dockerComposeFileName = `${this.config.outputDir}/docker-compose.yml`;
         fs.writeFileSync(dockerComposeFileName, yaml.dump(mergedDockerCompose));
 
         fullstackedRun.config = {
