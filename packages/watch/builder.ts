@@ -32,7 +32,7 @@ const defaultOptions: Omit<BuilderOptions, 'entrypoint'> = {
     }
 }
 
-export default async function(options: BuilderOptions) {
+export default async function(options: BuilderOptions, withExternalModules: string[] = []) {
     options = {
         ...defaultOptions,
         ...options
@@ -42,7 +42,7 @@ export default async function(options: BuilderOptions) {
         ...(options.externalModules ?? {})
     }
 
-    const { modulesFlatTree, externalModules, cssFiles, assetFiles } = await builder(options);
+    const { modulesFlatTree, externalModules, cssFiles, assetFiles } = await builder(options, {}, withExternalModules);
 
     const entrypointDir = dirname(options.entrypoint);
     const mainOutDir = resolve(options.outdir, entrypointDir);
@@ -67,7 +67,7 @@ export default async function(options: BuilderOptions) {
         })
     }
 
-    return { modulesFlatTree, cssFiles, assetFiles }
+    return { modulesFlatTree, externalModules, cssFiles, assetFiles }
 }
 
 type ModulePath = string;
@@ -120,9 +120,7 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                     const lines = importStatements?.lines ?? [undefined, undefined];
 
                     const asyncImports = [];
-                    let importsDefinitions = statements
-                        .map(statement => analyzeRawImportStatement(statement))
-                        .filter(statement => !statement.type);
+                    let importsDefinitions = statements.map(statement => analyzeRawImportStatement(statement));
 
                     if (!options.externalModules.convert) {
                         importsDefinitions = importsDefinitions.filter((importDef, index) => {
@@ -131,6 +129,8 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                             return false;
                         })
                     }
+
+                    importsDefinitions = importsDefinitions.filter(statement => !statement.type);
 
                     const mergedDefinition = mergeImportsDefinitions(importsDefinitions);
                     const entries = Array.from(mergedDefinition.entries());
@@ -214,7 +214,7 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                         }
 
 
-                        if (options.recurse) {
+                        if (options.recurse && !modulesFlatTree[moduleRelativePathToProject]) {
                             buildPromises.push(builder({
                                 ...options,
                                 entrypoint: moduleRelativePathToProject
@@ -239,9 +239,11 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                         contents: replaceLines(lines[0], lines[1], contents, asyncImports.join(" ")),
                         loader: path.endsWith(".ts")
                             ? "ts"
-                            : path.endsWith(".jsx") || path.endsWith(".tsx")
-                                ? "jsx"
-                                : "js"
+                            : path.endsWith(".tsx")
+                                ? "tsx"
+                                : path.endsWith(".jsx")
+                                    ? "jsx"
+                                    : "js"
                     }
                 });
             }

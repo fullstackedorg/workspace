@@ -358,7 +358,7 @@ export function convertImportDefinitionToAsyncImport(
     }
 
     let importString = moduleResolverWrapperFunction
-        ? `await import(${moduleResolverWrapperFunction}("${moduleName}", import.meta.url));`
+        ? `await import(${moduleResolverWrapperFunction}("${moduleName}"));`
         : `await import("${moduleName}");`;
 
     if (!(importDefinition?.defaultImports || importDefinition?.namespaceImports || importDefinition?.namedImports))

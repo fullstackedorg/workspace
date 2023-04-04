@@ -1,10 +1,10 @@
 {
   "name": "@fullstacked/build",
-  "version": "0.10.0-7",
+  "version": "0.10.0-12",
   "description": "Build your FullStacked Web App",
   "dependencies": {
     "esbuild": "^0.14.27",
-    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz",
+    "fullstacked": "^0.10.0-2",
     "glob": "^9.2.1",
     "js-yaml": "^4.1.0"
   },
