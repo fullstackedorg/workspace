@@ -1,12 +1,13 @@
 import React, {useEffect, useState} from "react";
 import {Client} from "../client";
 import {useNavigate} from "react-router-dom";
-import {closeConsole} from "../index";
+import type {api} from "../../server/index";
+import {closeConsole} from "../Console";
 
 export default function () {
     const navigate = useNavigate();
-    const [commands, setCommands] = useState<Awaited<ReturnType<typeof Client.installedCommand>>>()
-    useEffect(() => {Client.installedCommand().then(setCommands)}, []);
+    const [commands, setCommands] = useState<Awaited<ReturnType<typeof api.installedCommand>>>()
+    useEffect(() => {Client.get().installedCommand().then(setCommands)}, []);
 
     useEffect(closeConsole, []);
 

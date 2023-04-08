@@ -1,9 +1,8 @@
 import React from "react";
-import version from "../../../version";
+import version from "fullstacked/version";
 //@ts-ignore
 import logo from "./favicon.png";
 import {useNavigate} from "react-router-dom";
-import {Client} from "./client";
 
 export default function (){
     const navigate = useNavigate();

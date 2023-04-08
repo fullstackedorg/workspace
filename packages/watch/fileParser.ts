@@ -1,7 +1,17 @@
-export function tokenizeImports(content): {lines: [number, number], statements: string[][]} {
+type TokenDynamicImport = {
+    line: number,
+    statement: string[]
+}
+
+export function tokenizeImports(content): {
+    lines: [number, number],
+    statements: string[][],
+    dynamics: TokenDynamicImport[]
+} {
     if (!content || typeof content !== 'string') return null;
 
     const statements = [];
+    const dynamics = [];
 
     let accumulator = [""],
         line = 0,
@@ -9,7 +19,8 @@ export function tokenizeImports(content): {lines: [number, number], statements: 
         inComment = false,
         inImportStatement = false,
         inNamingImport = false,
-        inModuleName = false;
+        inModuleName = false,
+        inDynamicImport = false;
     for (const char of content) {
         if (char === "\n") line++;
 
@@ -54,6 +65,33 @@ export function tokenizeImports(content): {lines: [number, number], statements: 
             inNamingImport = false;
             if (accumulator[accumulator.length - 1] !== "")
                 accumulator.push("");
+        }
+
+        /*
+        *
+        * await import("module-name")
+        *             ⌃ Here
+        */
+        if (inDynamicImport && char === "(") {
+            accumulator.push("(")
+            accumulator.push("");
+            continue;
+        }
+
+        /*
+        *
+        * await import("module-name")
+        *                           ⌃ Here
+        */
+        if (inDynamicImport && char === ")") {
+            accumulator.push(char);
+            dynamics.push({
+                line,
+                statement: accumulator
+            });
+            inDynamicImport = false;
+            accumulator = [];
+            continue;
         }
 
         accumulator[accumulator.length - 1] += char;
@@ -110,11 +148,22 @@ export function tokenizeImports(content): {lines: [number, number], statements: 
             inModuleName = true;
         }
 
+        /*
+        *
+        * await import("module-name")
+        *       ⌃ Here
+        */
+        if (currentWord === "import" && accumulator.length > 1) {
+            inDynamicImport = true;
+            accumulator = accumulator.slice(accumulator.length - 1);
+        }
+
     }
 
     return {
         lines: [lineStart, lineEnd],
-        statements
+        statements,
+        dynamics
     };
 }
 
@@ -241,7 +290,8 @@ type MergedImportDefinition = {
     namedImports?: {
         name: string,
         alias: string
-    }[]
+    }[],
+    line?: number
 };
 type ModuleName = string;
 type MergedImportDefinitions = Map<ModuleName, MergedImportDefinition>;
@@ -405,4 +455,37 @@ export function replaceLines(from: number, to: number, content: string, data: st
         contentLines[i] = "";
     }
     return contentLines.join("\n");
+}
+
+type AnalysedDynamicImport = {
+    module: string,
+    line: number
+}
+
+/*
+*
+* ["import", "(", "\"module-name\"", ")"]
+*
+*/
+export function analyzeDynamicImport(dynamicImport): AnalysedDynamicImport {
+    const indexOfFirstParenthesis = dynamicImport.statement.indexOf("(");
+    const indexOfLastParenthesis = dynamicImport.statement.indexOf(")");
+
+    const isolatedModuleName = dynamicImport.statement.slice(indexOfFirstParenthesis + 1, indexOfLastParenthesis);
+
+    if (isolatedModuleName.length !== 1
+        || isolatedModuleName.at(0).includes("+")
+        || !isolatedModuleName.at(0).match(/^(".*"|'.*')$/)) return null;
+
+    const module = isolatedModuleName.at(0).slice(1, -1)
+    return {
+        module,
+        line: dynamicImport.line
+    }
+}
+
+export function reconstructDynamicImport(moduleName: string, moduleResolverWrapperFunction?: string) {
+    return moduleResolverWrapperFunction
+        ? `import(${moduleResolverWrapperFunction}("${moduleName}"))`
+        : `import("${moduleName}")`
 }

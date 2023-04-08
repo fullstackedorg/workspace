@@ -38,7 +38,7 @@ export default function () {
         if(progressPollInterval) return;
 
         progressPollInterval = setInterval(() => {
-            Client.deploy.getDeploymentProgress().then(setDeploymentStepIndex);
+            Client.get().deploy.getDeploymentProgress().then(setDeploymentStepIndex);
         }, 200);
     }, [deploying])
 
@@ -46,7 +46,7 @@ export default function () {
         <div className={`btn btn-success w-100 ${deploying && "disabled"}`}
              onClick={async () => {
                  setDeploying(true);
-                 await Client.deploy.launch();
+                 await Client.get().deploy.launch();
                  setDeploying(false);
              }}>
             {deploying

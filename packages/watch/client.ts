@@ -2,7 +2,7 @@ import { getModulePathWithT, invalidateModule } from "./utils";
 
 const ws = new WebSocket("ws" +
     (window.location.protocol === "https:" ? "s" : "") +
-    "://" + window.location.host);
+    "://" + window.location.host + "/fullstacked-watch");
 
 let tree, basePath, entrypoint;
 

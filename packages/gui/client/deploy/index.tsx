@@ -1,58 +1,22 @@
-import React, {ReactElement, useEffect, useState} from "react";
-import SSH from "./Steps/SSH";
-import SSL from "./Steps/SSL";
-import Deployment from "./Steps/Deployment";
-import Save from "./Steps/Save";
-import Steps from "./Steps";
+import React, {useEffect, useState} from "react";
 import {Route, Routes} from "react-router-dom";
-import {openConsole} from "../index";
 import {Client} from "../client";
 import ConfigLoader from "./ConfigLoader";
-import Nginx from "./Steps/Nginx";
 import NextPrev from "./NextPrev";
-
-export let steps = [
-    {
-        slug: "",
-        title: "SSH Connection",
-        component: SSH
-    },{
-        slug: "/nginx",
-        title: "Nginx Configuration",
-        component: Nginx
-    },{
-        slug: "/ssl",
-        title: "SSL Certificates",
-        component: SSL
-    },{
-        slug: "/deployment",
-        title: "Deployment",
-        component: Deployment
-    },{
-        slug: "/save",
-        title: "Save",
-        component: Save
-    }
-]
+import useAPI from "@fullstacked/webapp/client/react/useAPI";
+import {openConsole} from "../Console";
+import {steps} from "./Steps";
+import Progress from "./Progress";
 
 export default function () {
-    const [checkConfig, setCheckConfig] = useState<Awaited<ReturnType<typeof Client.deploy.hasConfig>>>(null);
     const [didLoadConfig, setDidLoadConfig] = useState<boolean>(false);
+
+    const [checkConfig] = useAPI(Client.get().deploy.hasConfig);
+
     useEffect(openConsole, []);
 
-    useEffect(() => {
-        Client.deploy.hasConfig()
-            .then(setCheckConfig)
-            .catch(() => {
-                setCheckConfig({hasConfig: false});
-                setDidLoadConfig(true)
-            });
-    }, []);
-
-    if(checkConfig === null) return <></>;
-
     return <>
-        <Steps />
+        <Progress />
 
         <div className={"container-xl"}>
             <div className={"page-header"}>

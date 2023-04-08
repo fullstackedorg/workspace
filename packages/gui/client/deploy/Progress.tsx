@@ -1,6 +1,6 @@
 import React from "react";
-import {steps} from "./index";
 import {useLocation, useNavigate} from "react-router-dom";
+import {steps} from "./Steps";
 
 export default function (){
     const location = useLocation();

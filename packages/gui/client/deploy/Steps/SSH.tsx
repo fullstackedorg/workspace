@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {Client} from "../../client";
 import Console from "../../Console";
-import {MESSAGE_TYPE} from "../../../WS";
+import type {CredentialsSSH} from "@fullstacked/deploy";
 
 let throttler = null;
 
@@ -11,8 +11,8 @@ export default function (){
     const [testing, setTesting] = useState(false);
     const [showInstallDocker, setShowInstallDocker] = useState(false);
 
-    const [credentialsSSH, setCredentialsSSH] = useState<Awaited<ReturnType<typeof Client.deploy.getCredentialsSSH>>>(null);
-    useEffect(() => {Client.deploy.getCredentialsSSH().then(creds => {
+    const [credentialsSSH, setCredentialsSSH] = useState<CredentialsSSH>(null);
+    useEffect(() => {Client.get().deploy.getCredentialsSSH().then(creds => {
         if(creds.privateKey) {
             setAuthOption(true);
             setSshKeyOption(true);
@@ -145,19 +145,19 @@ export default function (){
                 setTesting(true);
                 let test = false;
                 try {
-                    test = await Client.deploy.testConnection();
+                    test = await Client.get().deploy.testConnection();
                 }catch (e) {
-                    Console.instance.push({data: e, type: MESSAGE_TYPE.ERROR})
+                    Console.instance.push({data: e, type: "ERROR"})
                 }
                 if(!test)
-                     Console.instance.push({data: "Failed to connect", type: MESSAGE_TYPE.ERROR});
+                     Console.instance.push({data: "Failed to connect", type: "ERROR"});
                 else{
 
                     let dockerInstalled = false;
                     try {
-                        dockerInstalled = await Client.deploy.testDocker();
+                        dockerInstalled = await Client.get().deploy.testDocker();
                     }catch (e) {
-                        Console.instance.push({data: e, type: MESSAGE_TYPE.ERROR});
+                        Console.instance.push({data: e, type: "ERROR"});
                     }
 
                     setShowInstallDocker(!dockerInstalled);
@@ -172,13 +172,13 @@ export default function (){
         {showInstallDocker && <div className={`btn btn-warning w-100 mt-3 ${testing && "disabled"}`}
                                    onClick={async () => {
                                        setTesting(true);
-                                       await Client.deploy.installDocker();
+                                       await Client.get().deploy.installDocker();
 
                                        let dockerInstalled = false;
                                        try {
-                                           dockerInstalled = await Client.deploy.testDocker();
+                                           dockerInstalled = await Client.get().deploy.testDocker();
                                        }catch (e) {
-                                           Console.instance.push({data: e, type: MESSAGE_TYPE.ERROR});
+                                           Console.instance.push({data: e, type: "ERROR"});
                                        }
 
                                        setShowInstallDocker(!dockerInstalled);

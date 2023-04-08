@@ -13,7 +13,7 @@ export default function () {
         <form onSubmit={async e => {
             e.preventDefault();
             setSaving(true);
-            await Client.deploy.saveConfig(passRef.current.value);
+            await Client.post().deploy.saveConfig(passRef.current.value);
             setSaving(false);
             setDidSave(true);
         }}>

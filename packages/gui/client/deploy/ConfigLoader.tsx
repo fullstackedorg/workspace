@@ -10,7 +10,7 @@ export default function ({didLoadConfig, pass}) {
         </p>
         <form onSubmit={async e => {
             e.preventDefault();
-            await Client.deploy.loadConfig(passRef.current?.value ?? "")
+            await Client.get().deploy.loadConfig(passRef.current?.value ?? "")
             didLoadConfig();
         }}>
             {pass && <div className="mb-3">
