@@ -66,7 +66,7 @@ export default function () {
                         <div className="mb-3">
                             <label className="form-label">Nginx Extra Configs</label>
                             <textarea className="form-control" rows={6}
-                                      defaultValue={nginxConfig?.nginxExtraConfigs}
+                                      defaultValue={nginxConfig?.nginxExtraConfigs.join("\n")}
                                       placeholder={`proxy_set_header Host $host;\nproxy_set_header X-Real-IP $remote_addr;`}
                                       onChange={(e) => {
                                           nginxConfig.nginxExtraConfigs = e.currentTarget.value
