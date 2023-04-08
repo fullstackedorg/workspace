@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "npx fullstacked watch -s \"node dist/app/index.mjs --development\" --portFinder \"echo 8001\"",
+    "dev": "npx fullstacked watch",
     "prepack": "npx fullstacked build --production"
   },
   "externalModules": [
@@ -16,14 +16,14 @@
     "@fullstacked/watch"
   ],
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-1.tgz"
+    "fullstacked": "file:../../fullstacked-0.10.0-2.tgz"
   },
   "devDependencies": {
-    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-1.tgz",
-    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-1.tgz",
-    "@fullstacked/run": "file:../run/fullstacked-run-0.10.0-1.tgz",
-    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-1.tgz",
-    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-1.tgz",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-16.tgz",
+    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-3.tgz",
+    "@fullstacked/run": "file:../run/fullstacked-run-0.10.0-4.tgz",
+    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-20.tgz",
+    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-14.tgz",
     "@tabler/core": "^1.0.0-beta17",
     "@types/react": "^18.0.28",
     "@types/ws": "^8.5.4",
@@ -32,7 +32,7 @@
     "react-dom": "^18.2.0",
     "react-github-btn": "^1.4.0",
     "react-router-dom": "^6.8.2",
-    "typescript-rpc": "^0.0.15",
+    "typescript-rpc": "^0.1.1",
     "ws": "^8.12.1"
   }
 }

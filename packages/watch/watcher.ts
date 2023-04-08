@@ -40,16 +40,20 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
     }
     await reloadClientBuild();
 
+    let serverBuild: Awaited<ReturnType<typeof Builder>>;
+    const reloadServerBuild = async () => {
+        serverBuild = await Builder({
+            entrypoint: serverEntrypoint,
+            outdir,
+            recurse: true,
+            moduleResolverWrapperFunction: "getModuleImportPath",
+            externalModules: {
+                convert: false,
+            }
+        });
+    }
+    await reloadServerBuild();
 
-    const serverBuild = await Builder({
-        entrypoint: serverEntrypoint,
-        outdir,
-        recurse: true,
-        moduleResolverWrapperFunction: "getModuleImportPath",
-        externalModules: {
-            convert: false,
-        }
-    });
 
     const wss = new WebSocketServer({ noServer: true });
     const activeWS = new Set<WebSocket>();
@@ -108,6 +112,8 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         });
 
         server.on('upgrade', (request, socket, head) => {
+            if(request.url !== "/fullstacked-watch") return;
+
             wss.handleUpgrade(request, socket, head, (ws) => {
                 wss.emit('connection', ws, request);
             });
@@ -122,72 +128,80 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         });
     }
 
-    const clientWatchers = new Map<string, FSWatcher>();
-    Object.keys(clientBuild.modulesFlatTree).forEach(modulePath => {
-        const initWatch = () => fs.watch(modulePath, async (eventType, filename) => {
 
-            if (!moduleExtensions.find(ext => modulePath.endsWith(ext))) {
+    const initClientWatch = (modulePath) => fs.watch(modulePath, async (eventType, filename) => {
 
-                if (modulePath.endsWith(".css")) {
-                    await bundleCSSFiles(clientBuild.cssFiles, resolve("dist", clientBaseDir), "index.css");
+        if (!moduleExtensions.find(ext => modulePath.endsWith(ext))) {
 
-                    activeWS.forEach(ws => ws.send(JSON.stringify({
-                        type: "css",
-                        data: "index.css"
-                    })));
-
-                    return;
-                }
-
-                fs.copyFileSync(modulePath, clientBuild.modulesFlatTree[modulePath].out)
+            if (modulePath.endsWith(".css")) {
+                await bundleCSSFiles(clientBuild.cssFiles, resolve("dist", clientBaseDir), "index.css");
 
                 activeWS.forEach(ws => ws.send(JSON.stringify({
-                    type: "asset",
-                    data: modulePath
+                    type: "css",
+                    data: "index.css"
                 })));
-
-                if (!fs.existsSync(filename)) {
-                    clientWatchers.get(modulePath).close();
-                    clientWatchers.set(modulePath, initWatch());
-                }
 
                 return;
             }
 
-            let fileBuild: Awaited<ReturnType<typeof Builder>>;
-            try {
-                fileBuild = await Builder({
-                    entrypoint: modulePath,
-                    recurse: false,
-                    moduleResolverWrapperFunction: "getModuleImportPath",
-                    externalModules: {
-                        convert: true,
-                        bundle: false
-                    }
-                }, clientBuild.externalModules);
-            } catch (e) {
-                activeWS.forEach(ws => ws.send(JSON.stringify({
-                    type: "error",
-                    data: e.errors
-                })));
-                return;
-            }
-
-            if (!isEqualSets(fileBuild.modulesFlatTree[modulePath].imports, clientBuild.modulesFlatTree[modulePath].imports)) {
-                await reloadClientBuild();
-                activeWS.forEach(ws => ws.send(JSON.stringify({
-                    type: "reload"
-                })));
-                return;
-            }
+            fs.copyFileSync(modulePath, clientBuild.modulesFlatTree[modulePath].out)
 
             activeWS.forEach(ws => ws.send(JSON.stringify({
-                type: "module",
+                type: "asset",
                 data: modulePath
             })));
-        });
 
-        clientWatchers.set(modulePath, initWatch());
+            if (!fs.existsSync(filename)) {
+                clientWatchers.get(modulePath).close();
+                clientWatchers.set(modulePath, initClientWatch(modulePath));
+            }
+
+            return;
+        }
+
+        let fileBuild: Awaited<ReturnType<typeof Builder>>;
+        try {
+            fileBuild = await Builder({
+                entrypoint: modulePath,
+                recurse: false,
+                moduleResolverWrapperFunction: "getModuleImportPath",
+                externalModules: {
+                    convert: true,
+                    bundle: false
+                }
+            }, clientBuild.externalModules);
+        } catch (e) {
+            activeWS.forEach(ws => ws.send(JSON.stringify({
+                type: "error",
+                data: e.errors
+            })));
+            return;
+        }
+
+        if (!isEqualSets(fileBuild.modulesFlatTree[modulePath].imports, clientBuild.modulesFlatTree[modulePath].imports)) {
+            await reloadClientBuild();
+
+            clientWatchers.forEach(watcher => watcher.close());
+            clientWatchers.clear();
+            Object.keys(clientBuild.modulesFlatTree).forEach(modulePath => {
+                clientWatchers.set(modulePath, initClientWatch(modulePath));
+            });
+
+            activeWS.forEach(ws => ws.send(JSON.stringify({
+                type: "reload"
+            })));
+            return;
+        }
+
+        activeWS.forEach(ws => ws.send(JSON.stringify({
+            type: "module",
+            data: modulePath
+        })));
+    });
+
+    const clientWatchers = new Map<string, FSWatcher>();
+    Object.keys(clientBuild.modulesFlatTree).forEach(modulePath => {
+        clientWatchers.set(modulePath, initClientWatch(modulePath));
     });
 
     global.getModuleImportPath = (modulePath) => {
@@ -211,29 +225,44 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
 
     await reloadServer();
 
+
+    const initServerWatch = modulePath => fs.watch(modulePath, async () => {
+
+        let fileBuild: Awaited<ReturnType<typeof Builder>>;
+        try {
+            fileBuild = await Builder({
+                entrypoint: modulePath,
+                recurse: false,
+                moduleResolverWrapperFunction: "getModuleImportPath",
+                externalModules: {
+                    convert: false,
+                }
+            });
+        } catch (e) {
+            activeWS.forEach(ws => ws.send(JSON.stringify({
+                type: "error",
+                data: e.errors
+            })));
+            return;
+        }
+
+        if (!isEqualSets(fileBuild.modulesFlatTree[modulePath].imports, serverBuild.modulesFlatTree[modulePath].imports)) {
+            await reloadServerBuild();
+
+            serverWatchers.forEach(watcher => watcher.close());
+            serverWatchers.clear();
+            Object.keys(serverBuild.modulesFlatTree).forEach(modulePath => {
+                serverWatchers.set(modulePath, initServerWatch(modulePath));
+            });
+        }
+
+        serverBuild.modulesFlatTree = invalidateModule(modulePath, serverBuild.modulesFlatTree);
+
+        reloadServer();
+    });
+
+    const serverWatchers = new Map<string, FSWatcher>()
     Object.keys(serverBuild.modulesFlatTree).forEach(modulePath => {
-        fs.watch(modulePath, async () => {
-
-            try {
-                await Builder({
-                    entrypoint: modulePath,
-                    recurse: false,
-                    moduleResolverWrapperFunction: "getModuleImportPath",
-                    externalModules: {
-                        convert: false,
-                    }
-                });
-            } catch (e) {
-                activeWS.forEach(ws => ws.send(JSON.stringify({
-                    type: "error",
-                    data: e.errors
-                })));
-                return;
-            }
-
-            serverBuild.modulesFlatTree = invalidateModule(modulePath, serverBuild.modulesFlatTree);
-
-            reloadServer();
-        });
+        serverWatchers.set(modulePath, initServerWatch(modulePath));
     });
 }

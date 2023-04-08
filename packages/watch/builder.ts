@@ -2,8 +2,9 @@ import {dirname, resolve} from "path";
 import fs from "fs";
 import {build} from "esbuild";
 import {
+    analyzeDynamicImport,
     analyzeRawImportStatement, convertImportDefinitionToAsyncImport,
-    mergeImportsDefinitions, replaceLines,
+    mergeImportsDefinitions, reconstructDynamicImport, replaceLines,
     tokenizeImports
 } from "./fileParser";
 import randStr from "fullstacked/utils/randStr";
@@ -112,34 +113,54 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
             setup(build) {
 
                 build.onLoad({ filter: /.*/ }, async ({ path }) => {
-                    const contents = fs.readFileSync(path).toString();
+                    let contents = fs.readFileSync(path).toString();
 
                     const importStatements = tokenizeImports(contents);
 
                     const statements = importStatements?.statements ?? [];
                     const lines = importStatements?.lines ?? [undefined, undefined];
 
+                    const dynamics = importStatements?.dynamics ?? [];
+
                     const asyncImports = [];
                     let importsDefinitions = statements.map(statement => analyzeRawImportStatement(statement));
+                    let dynamicImportsDefinitions = dynamics.map(dynamicImport => analyzeDynamicImport(dynamicImport))
+                        .filter(Boolean);
 
                     if (!options.externalModules.convert) {
                         importsDefinitions = importsDefinitions.filter((importDef, index) => {
                             if (importDef.module.startsWith(".")) return true;
                             asyncImports.push(statements[index].join(" ") + ";");
                             return false;
-                        })
+                        });
+                        dynamicImportsDefinitions = dynamicImportsDefinitions.filter((dynamicImportDef) =>
+                            dynamicImportDef.module.startsWith("."))
                     }
 
                     importsDefinitions = importsDefinitions.filter(statement => !statement.type);
 
                     const mergedDefinition = mergeImportsDefinitions(importsDefinitions);
+
+                    dynamicImportsDefinitions.forEach(dynamicImport => {
+                        if(mergedDefinition.get(dynamicImport.module)) return;
+                        mergedDefinition.set(dynamicImport.module, {
+                            line: dynamicImport.line
+                        });
+                    })
+
                     const entries = Array.from(mergedDefinition.entries());
 
                     if (!modulesFlatTree[entrypoint].imports) {
                         modulesFlatTree[entrypoint].imports = new Set();
                     }
 
-                    const buildPromises = [];
+                    const buildPromises = [], dynamicImports: {
+                        line: number,
+                        replace: {
+                            from: RegExp,
+                            to: string
+                        }
+                    }[] = [];
                     for (let i = 0; i < entries.length; i++) {
                         let [moduleName, importDefinition] = entries[i];
 
@@ -160,7 +181,19 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                                 const indexOfExternalModule = externalModules.indexOf(moduleName);
 
                                 const bundleName = options.publicPath + options.externalModules.bundleOutName;
-                                asyncImports.push(...convertImportDefinitionToAsyncImport(bundleName, importDefinition, "externalModule" + indexOfExternalModule, undefined, true));
+                                const externalModuleIntermediateName = "externalModule" + indexOfExternalModule;
+
+                                if(importDefinition.line){
+                                    dynamicImports.push({
+                                        line: importDefinition.line,
+                                        replace: {
+                                            from: new RegExp(`import.*?\\(.*?${moduleName}.*?\\)`),
+                                            to: `(await import("${bundleName}")).${externalModuleIntermediateName}`
+                                        }
+                                    })
+                                }else{
+                                    asyncImports.push(...convertImportDefinitionToAsyncImport(bundleName, importDefinition, externalModuleIntermediateName, undefined, true));
+                                }
                             }
 
                             continue;
@@ -172,10 +205,10 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                         moduleRelativePathToProject += extension;
                         modulesFlatTree[entrypoint].imports.add(moduleRelativePathToProject);
 
-                        moduleName += extension;
+                        const moduleNameWithExtension = moduleName + extension;
 
                         // CSS or asset file
-                        if (![".js", ".jsx", ".mjs", ".ts", ".tsx"].find(ext => moduleName.endsWith(ext))) {
+                        if (![".js", ".jsx", ".mjs", ".ts", ".tsx"].find(ext => moduleNameWithExtension.endsWith(ext))) {
 
                             if (!modulesFlatTree[moduleRelativePathToProject]) {
                                 modulesFlatTree[moduleRelativePathToProject] = {
@@ -207,7 +240,17 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
 
                                 pathSplitAtSlash.push(uniqName);
 
-                                asyncImports.push(...convertImportDefinitionToAsyncImport(moduleRelativePathToProject, importDefinition, null, options.moduleResolverWrapperFunction));
+                                if(importDefinition.line){
+                                    dynamicImports.push({
+                                        line: importDefinition.line,
+                                        replace: {
+                                            from: new RegExp(`import.*?\\(.*?${moduleName}.*?\\)`),
+                                            to: reconstructDynamicImport(moduleRelativePathToProject, options.moduleResolverWrapperFunction)
+                                        }
+                                    })
+                                }else{
+                                    asyncImports.push(...convertImportDefinitionToAsyncImport(moduleRelativePathToProject, importDefinition, null, options.moduleResolverWrapperFunction));
+                                }
                             }
 
                             continue;
@@ -230,10 +273,30 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
 
                         modulesFlatTree[moduleRelativePathToProject].parents.push(entrypoint);
 
-                        asyncImports.push(...convertImportDefinitionToAsyncImport(moduleRelativePathToProject, importDefinition, "module" + i, options.moduleResolverWrapperFunction));
+                        if(importDefinition.line){
+                            dynamicImports.push({
+                                line: importDefinition.line,
+                                replace: {
+                                    from: new RegExp(`import.*?\\(.*?${moduleName}.*?\\)`),
+                                    to: reconstructDynamicImport(moduleRelativePathToProject, options.moduleResolverWrapperFunction)
+                                }
+                            })
+                        }else{
+                            asyncImports.push(...convertImportDefinitionToAsyncImport(moduleRelativePathToProject, importDefinition, "module" + i, options.moduleResolverWrapperFunction));
+                        }
                     }
 
                     await Promise.all(buildPromises);
+
+                    if(dynamicImports.length){
+                        let contentsByLine = contents.split("\n");
+
+                        dynamicImports.forEach(dynamicImport => {
+                            contentsByLine[dynamicImport.line] = contentsByLine[dynamicImport.line].replace(dynamicImport.replace.from, dynamicImport.replace.to);
+                        })
+
+                        contents = contentsByLine.join("\n");
+                    }
 
                     return {
                         contents: replaceLines(lines[0], lines[1], contents, asyncImports.join(" ")),

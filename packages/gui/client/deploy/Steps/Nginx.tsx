@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Client} from "../../client";
 import type {NginxConfig} from "@fullstacked/deploy";
-import server from "../../../server";
 
 let throttler = null;
 
@@ -9,14 +8,14 @@ export default function () {
     const [nginxConfigs, setNginxConfigs] = useState<NginxConfig[]>(null);
     const [activeIndex, setActiveIndex] = useState(0);
 
-    useEffect(() => {Client.deploy.getServices().then(setNginxConfigs)}, []);
+    useEffect(() => {Client.get().deploy.getServices().then(setNginxConfigs)}, []);
     useEffect(() => {
         if(!nginxConfigs) return;
 
         if(throttler) clearTimeout(throttler);
         throttler = setTimeout(() => {
             throttler = null;
-            Client.post().deploy.updateNginxConfigs(nginxConfigs);
+            return Client.post().deploy.updateNginxConfigs(nginxConfigs);
         }, 300);
 
     }, [nginxConfigs]);

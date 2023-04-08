@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import {Client} from "../../client";
 import type {CertificateSSL} from "@fullstacked/deploy"
+import type deploy from "../../../server/deploy";
 
 const months = [
     "January",
@@ -26,13 +27,13 @@ const dateToHuman = (date: Date) => {
 export default function (){
     const [showNewCertForm, setShowNewCertForm] = useState(false);
     const [showManualCert, setShowManualCert] = useState(false);
-    const [certificateSSL, setCertificateSSL] = useState<Awaited<ReturnType<typeof Client.deploy.getCertificateSSL>>>(null);
-    const [certificateData, setCertificateData] = useState<Awaited<ReturnType<typeof Client.deploy.getCertificateData>>>(null);
+    const [certificateSSL, setCertificateSSL] = useState<Awaited<ReturnType<typeof deploy.getCertificateSSL>>>(null);
+    const [certificateData, setCertificateData] = useState<Awaited<ReturnType<typeof deploy.getCertificateData>>>(null);
 
-    useEffect(() => {Client.deploy.getCertificateSSL().then(setCertificateSSL);}, []);
+    useEffect(() => {Client.get().deploy.getCertificateSSL().then(setCertificateSSL);}, []);
     useEffect(() => {
         Client.post().deploy.updateCertificateSSL(certificateSSL)
-            .then(() => {Client.deploy.getCertificateData().then(setCertificateData)})
+            .then(() => {Client.get().deploy.getCertificateData().then(setCertificateData)})
     }, [certificateSSL]);
 
     const domains = certificateData?.subjectAltName?.split(",").map(record => record.trim().substring("DNS:".length))
@@ -114,7 +115,7 @@ function NewCertForm({close, addNewCert} : {
     const serverNamesToInclude = new Set<string>();
 
     useEffect(() => {
-        Client.deploy.getServices().then(nginxConfigs => {
+        Client.get().deploy.getServices().then(nginxConfigs => {
             setServerNames(nginxConfigs.map(nginxConfig => nginxConfig.serverNames || []).flat());
         });
     }, []);

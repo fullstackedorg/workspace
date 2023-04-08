@@ -1,4 +1,4 @@
-import {bindCommandToWS} from "./index";
+import {bindCommandToWS} from "./websocket";
 import type {CertificateSSL, CredentialsSSH, NginxConfig} from "@fullstacked/deploy";
 import type Deploy from "@fullstacked/deploy";
 import {X509Certificate} from "crypto";

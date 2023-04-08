@@ -5,7 +5,7 @@ import HTML from "./HTML";
 import {resolve} from "path";
 import {fileURLToPath} from "url";
 
-type Listener = {
+export type Listener = {
     name?: string,
     handler(req: IncomingMessage, res: ServerResponse): any | Promise<any>,
 }

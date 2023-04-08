@@ -11,7 +11,6 @@ import Watch from "./watch";
 import Backup from "./backup";
 import Console from "./Console";
 import Create from "./create";
-
 import "./index.css";
 
 const savedTheme = window.localStorage.getItem("theme");
@@ -20,9 +19,6 @@ if(savedTheme === "dark") document.body.classList.add("theme-dark");
 const div = document.createElement("div");
 document.body.append(div);
 const root = createRoot(div);
-
-export const openConsole = () => document.querySelector(".main-view").classList.add("open-console");
-export const closeConsole = () => document.querySelector(".main-view").classList.remove("open-console");
 
 root.render(<BrowserRouter>
     <Header />

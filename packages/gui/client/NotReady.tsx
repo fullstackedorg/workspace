@@ -1,6 +1,6 @@
 import GitHubButton from "react-github-btn";
 import React, {useEffect} from "react";
-import {closeConsole} from "./index";
+import {closeConsole} from "./Console";
 
 export default function (props: {command: string}) {
     useEffect(closeConsole, []);

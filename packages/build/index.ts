@@ -128,6 +128,8 @@ export default class Build extends CommandInterface {
     }
 
     async buildServer() {
+        if(!fs.existsSync(this.config.server)) return;
+
         const serverOutDir = resolve(this.config.outputDir, "server");
 
         const options = {
@@ -156,6 +158,8 @@ export default class Build extends CommandInterface {
 
 
     async buildClient() {
+        if(!fs.existsSync(this.config.client)) return;
+
         const clientOutDir = resolve(this.config.outputDir, "client");
 
         const options = {

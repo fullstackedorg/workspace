@@ -1,5 +1,8 @@
 import React, {Component, createRef} from "react";
-import {MESSAGE_TYPE} from "../WS";
+import type {MESSAGE_TYPE} from "../WS";
+
+export const openConsole = () => document.querySelector(".main-view").classList.add("open-console");
+export const closeConsole = () => document.querySelector(".main-view").classList.remove("open-console");
 
 export default class Console extends Component {
     static instance: Console;
@@ -9,7 +12,7 @@ export default class Console extends Component {
         super(props);
         Console.instance = this;
 
-        const ws = new WebSocket(`ws://${window.location.host}`);
+        const ws = new WebSocket(`ws://${window.location.host}/fullstacked-gui`);
         ws.onmessage = event => {
             this.push(JSON.parse(event.data))
         }
@@ -17,11 +20,11 @@ export default class Console extends Component {
 
     push(message: {data: string, type: MESSAGE_TYPE}){
         switch (message.type) {
-            case MESSAGE_TYPE.LOG:
+            case "LOG":
                 message.data = message.data.replace(/http\S*\b/g, url => `<a href="${url}" target="_blank">${url}</a>`);
                 this.consoleRef.current.innerHTML += `<div>${message.data}</div>`;
                 break;
-            case MESSAGE_TYPE.LINE:
+            case "LINE":
                 let lastDiv = Array.from(this.consoleRef.current.querySelectorAll("div")).at(-1);
                 if(!lastDiv || !lastDiv.classList.contains("line")) {
                     lastDiv = document.createElement("div");
@@ -30,7 +33,7 @@ export default class Console extends Component {
                 }
                 lastDiv.innerText = message.data;
                 break;
-            case MESSAGE_TYPE.ERROR:
+            case "ERROR":
                 this.consoleRef.current.innerHTML += `<div class="text-danger">${message.data}</div>`;
                 break;
         }
