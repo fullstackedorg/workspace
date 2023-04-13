@@ -1,13 +1,15 @@
 {
   "name": "@fullstacked/watch",
-  "version": "0.10.0-20",
+  "version": "0.10.0-25",
   "description": "Run and reBuild your FullStacked Web App on file changes",
   "main": "index.js",
   "author": "CP Lepage",
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "esbuild": "^0.17.15",
     "fullstacked": "file:../../fullstacked-0.10.0-2.tgz",
+    "glob": "^9.2.1",
     "js-yaml": "^4.1.0",
     "ws": "^8.12.1"
   },

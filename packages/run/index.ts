@@ -73,7 +73,7 @@ export default class Run extends CommandInterface {
     }
 
     async startNative(command: string | string[]){
-        process.env.NODE_ENV='development';
+        process.env.NODE_ENV = 'development';
         command = Array.isArray(command) ? command.join(" ") : command;
         const port = await getNextAvailablePort(8000);
         console.log(`${Info.webAppName} v${Info.version} is running at http://localhost:${port}`);

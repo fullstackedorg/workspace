@@ -96,8 +96,8 @@ ws.onmessage = async (message) => {
 
                 if(src.split("?").shift() === possibleEntrypoint)
                     entrypoint = data.entrypoint;
-            })
-            return;
+            });
+            return reloadFromEntrypoint();
         case "module":
             removeError()
             tree = invalidateModule(data, tree);

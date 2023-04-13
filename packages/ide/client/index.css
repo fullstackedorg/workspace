@@ -1,0 +1,108 @@
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+html, body, .wb-body {
+    background-color: #1e293c;
+}
+
+#root {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+}
+
+.select-zone {
+    position: fixed;
+    border: 1px solid #9dd1ec;
+    background-color: #9dd1ec30;
+    z-index: 100;
+}
+
+.winbox {
+    background-color: #0a85b5;
+    border-radius: 6px 6px 0px 0px;
+}
+
+.rc-tree-list {
+    color: #ced9ec;
+}
+
+.background {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+.background > img {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    max-width: 300px;
+}
+
+.button-icon {
+    height: 80px;
+    width: 80px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    color: white;
+    font-size: smaller;
+}
+
+.button-icon > div:first-child {
+    flex-grow: 1;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.button-icon > div:last-child {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.terminal {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+.terminal form {
+    display: flex;
+}
+.terminal form > div {
+    margin-right: 5px;
+}
+
+.terminal input {
+    width: 100%;
+    font-size: inherit;
+    background: none;
+    outline: none;
+    border: 0;
+    color: white;
+    padding: 0;
+    margin: 0;
+}

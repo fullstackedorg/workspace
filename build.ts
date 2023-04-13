@@ -34,6 +34,8 @@ const toBuild = [
     "./packages/webapp/server/index.ts",
     "./packages/webapp/server/HTML.ts",
     "./packages/webapp/client/react/useAPI.ts",
+    "./packages/webapp/rpc/createClient.ts",
+    "./packages/webapp/rpc/createListener.ts",
     "./CommandInterface.ts",
     "./info.ts",
     "./cli.ts"
