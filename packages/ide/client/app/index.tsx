@@ -1,9 +1,13 @@
 import React, {useEffect} from "react";
 import WinBox from "winbox/src/js/winbox";
 import ButtonIcon from "../components/button-icon";
+//@ts-ignore
 import browser from "../icons/browser.svg";
+//@ts-ignore
 import terminal from "../icons/terminal.svg";
+//@ts-ignore
 import files from "../icons/files.svg";
+//@ts-ignore
 import logo from "../icons/fullstacked-logo.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
@@ -16,7 +20,7 @@ function initZoneSelect(){
     const onMouseMove = (e) => {
         if(!mouseStart) return;
         if(!square) {
-            square = document.createElements("div");
+            square = document.createElement("div");
             square.classList.add("select-zone");
             document.body.append(square);
         }

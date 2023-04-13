@@ -103,21 +103,18 @@ function readBody(req: IncomingMessage) {
     });
 }
 
-// source: https://stackoverflow.com/a/11616993/9777391
-function JSONSafeStringify(obj, indent = 2) {
-    let cache = [];
-    const retVal = JSON.stringify(
-        obj,
-        (key, value) =>
-            typeof value === "object" && value !== null
-                ? cache.includes(value)
-                    ? undefined // Duplicate reference found, discard key
-                    : cache.push(value) && value // Store value in our collection
-                : value,
-        indent
-    );
-    cache = null;
-    return retVal;
+// source: https://stackoverflow.com/a/69881039/9777391
+function JSONCircularRemover(){
+    const visited = new WeakSet();
+    return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+            if (visited.has(value)) {
+                return;
+            }
+            visited.add(value);
+        }
+        return value;
+    };
 }
 
 function callAPIMethod(req, res: ServerResponse, method, ...args) {
@@ -133,7 +130,7 @@ function callAPIMethod(req, res: ServerResponse, method, ...args) {
         if(!obj || obj instanceof Buffer) return obj;
 
         if (typeof obj !== "string") {
-            obj = JSONSafeStringify(obj);
+            obj = JSON.stringify(obj, JSONCircularRemover());
             res.setHeader("Content-Type", "application/json");
         }
 

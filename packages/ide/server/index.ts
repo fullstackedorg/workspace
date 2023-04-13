@@ -1,3 +1,4 @@
+import "./es-fix";
 import Server from '@fullstacked/webapp/server';
 import ts from "typescript";
 import fs from "fs";
@@ -26,7 +27,12 @@ const servicesHost: ts.LanguageServiceHost = {
         moduleResolution: ts.ModuleResolutionKind.NodeJs,
         jsx: ts.JsxEmit.React,
     }),
-    getDefaultLibFileName: ts.getDefaultLibFilePath,
+    getDefaultLibFileName: options => {
+        let lib = ts.getDefaultLibFilePath(options);
+        if(!fs.existsSync(lib))
+            lib = lib.replace(__dirname, resolve(process.cwd(), "node_modules", "typescript", "lib"))
+        return lib;
+    },
     fileExists: ts.sys.fileExists,
     readFile: ts.sys.readFile,
     readDirectory: ts.sys.readDirectory,
@@ -52,13 +58,10 @@ export const tsAPI = {
         return fs.readFileSync(fileName).toString();
     },
     updateDoc(fileName: string, contents: string){
-        console.log(fileName)
         fs.writeFileSync(fileName, contents);
         if(!files[fileName]) files[fileName] = {version: 0};
         else files[fileName].version++;
-        const diagnostics = languageService.getSemanticDiagnostics(fileName);
-        console.log("ICICIC")
-        return diagnostics
+        return languageService.getSemanticDiagnostics(fileName);
     },
     getCompletions(fileName: string, pos: number){
         return languageService.getCompletionsAtPosition(fileName, pos, {});
@@ -68,6 +71,3 @@ export const tsAPI = {
 server.addListener(createListener(tsAPI))
 
 server.pages["/"].addInHead(`<title>FullStacked IDE</title>`)
-
-if(!files["index.tsx"]) files["index.tsx"] = {version: 0};
-console.log(languageService.getSemanticDiagnostics("index.tsx"))
