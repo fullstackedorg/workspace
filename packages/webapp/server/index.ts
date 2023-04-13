@@ -103,7 +103,9 @@ export default class {
         });
     }
 
-    addListener(urlPrefix: string, listener: Listener, prepend = false){
+    addListener(listener: Listener & {prefix?: string}, prepend = false){
+        const urlPrefix = listener.prefix || "default";
+
         if(!this.listeners[urlPrefix]) this.listeners[urlPrefix] = [];
 
         if(prepend)

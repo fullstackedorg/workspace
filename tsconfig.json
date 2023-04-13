@@ -21,6 +21,7 @@
         "packages"
     ],
     "exclude": [
-        "packages/create/templates"
+        "packages/create/templates",
+        "packages/ide"
     ]
 }

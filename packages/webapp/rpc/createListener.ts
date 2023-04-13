@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import * as fastQueryString from "fast-querystring";
-import type {Listener} from "fullstacked/packages/webapp/server/index";
+import type {Listener} from "../server/index";
 
 function checkMethod(method: string){
     if(this.method !== method)
@@ -97,19 +97,30 @@ export function Middleware(wrappingFunction: (this: IncomingMessage, ...args: an
 
 function readBody(req: IncomingMessage) {
     return new Promise((resolve) => {
-        let jsonString = '';
-
-        req.on('data', function (data) {
-            jsonString += data;
-        });
-
-        req.on('end', function () {
-            resolve(JSON.parse(jsonString));
-        });
+        const data = [];
+        req.on('data', chunk => data.push(chunk));
+        req.on('end', () => resolve(JSON.parse(data.toString())));
     });
 }
 
-function callAPIMethod(req, res: ServerResponse, method, ...args): true | Promise<true>{
+// source: https://stackoverflow.com/a/11616993/9777391
+function JSONSafeStringify(obj, indent = 2) {
+    let cache = [];
+    const retVal = JSON.stringify(
+        obj,
+        (key, value) =>
+            typeof value === "object" && value !== null
+                ? cache.includes(value)
+                    ? undefined // Duplicate reference found, discard key
+                    : cache.push(value) && value // Store value in our collection
+                : value,
+        indent
+    );
+    cache = null;
+    return retVal;
+}
+
+function callAPIMethod(req, res: ServerResponse, method, ...args) {
     let response, status = 200;
     try{
         response = method.bind(req)(...args);
@@ -122,7 +133,7 @@ function callAPIMethod(req, res: ServerResponse, method, ...args): true | Promis
         if(!obj || obj instanceof Buffer) return obj;
 
         if (typeof obj !== "string") {
-            obj = JSON.stringify(obj);
+            obj = JSONSafeStringify(obj);
             res.setHeader("Content-Type", "application/json");
         }
 
@@ -136,72 +147,73 @@ function callAPIMethod(req, res: ServerResponse, method, ...args): true | Promis
     }
 
     if(response instanceof Promise) {
-        return new Promise(resolve => {
+        return new Promise<void>(resolve => {
             response
                 .then(awaitedResponse => send(awaitedResponse))
                 .catch(error => {
                     status = 500;
                     send(error.message);
                 })
-                .finally(() => resolve(true));
+                .finally(() => resolve());
         });
     }
 
     send(response);
-    return true;
 }
 
-export default function(api, basePath = "/rpc", name?: string): Listener {
-    const listenerName = name ||
-        basePath.split("/").filter(Boolean).join("-");
+export function createHandler(api: any){
+    return (req, res) => {
+        const urlComponents = req.url.split("?");
 
-    return {
-        name,
-        handler(req, res): any {
-            const urlComponents = req.url.split("?");
+        const url = urlComponents.shift();
+        const methodPath = url.split('/');
+        methodPath.shift();
 
-            const url = urlComponents.shift();
-            const methodPath = url.split('/');
-            methodPath.shift();
+        let method = methodPath.reduce((api, key) => api ? api[key] : undefined, api);
 
-            let method = methodPath.reduce((api, key) => api ? api[key] : undefined, api);
+        if(!method) return false;
 
-            if(!method) return false;
+        if(typeof method === "object" && method[""])
+            method = method[""];
 
-            if(typeof method === "object" && method[""])
-                method = method[""];
-
-            if (method.middleware) {
-                method = method.middleware;
-            }
-
-            if (req.method === 'POST' || req.method === 'PUT') {
-                return new Promise<Boolean>(resolve => {
-                    readBody(req).then(body => {
-                        const args = Object.values(body);
-                        const apiCall = callAPIMethod(req, res, method, ...args);
-                        if(apiCall instanceof Promise)
-                            apiCall.then(() => resolve(true));
-                        else
-                            resolve(true);
-                    });
-                })
-            }
-
-            const queryParams = fastQueryString.parse(urlComponents.join("?"));
-            let args = Object.values(queryParams);
-
-            if(req.headers['content-type'] === "application/json"){
-                args = args.map(param => {
-                    try {
-                        return JSON.parse(param)
-                    }catch (e){
-                        return decodeURIComponent(param);
-                    }
-                })
-            }
-
-            return callAPIMethod(req, res, method, ...args);
+        if (method.middleware) {
+            method = method.middleware;
         }
+
+        if (req.method === 'POST' || req.method === 'PUT') {
+            return new Promise<Boolean>(resolve => {
+                readBody(req).then(body => {
+                    const args = Object.values(body);
+                    const apiCall = callAPIMethod(req, res, method, ...args);
+                    if(apiCall instanceof Promise)
+                        apiCall.then(() => resolve(true));
+                    else
+                        resolve(true);
+                });
+            })
+        }
+
+        const queryParams = fastQueryString.parse(urlComponents.join("?"));
+        let args = Object.values(queryParams);
+
+        if(req.headers['content-type'] === "application/json"){
+            args = args.map(param => {
+                try {
+                    return JSON.parse(param)
+                }catch (e){
+                    return decodeURIComponent(param);
+                }
+            })
+        }
+
+        return callAPIMethod(req, res, method, ...args);
+    }
+}
+
+export default function(api, basePath = "/rpc", name?: string): Listener & {prefix: string} {
+    return {
+        prefix: basePath,
+        name: name || basePath.split("/").filter(Boolean).join("-"),
+        handler: createHandler(api)
     }
 }

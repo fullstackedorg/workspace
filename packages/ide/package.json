@@ -1,0 +1,30 @@
+{
+  "name": "@fullstacked/ide",
+  "version": "0.0.0",
+  "author": "cplepage",
+  "dependencies": {
+    "@types/react": "^18.0.35",
+    "winbox": "^0.2.6"
+  },
+  "peerDependencies": {
+    "typescript": "*"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.4.2",
+    "@codemirror/lang-javascript": "^6.1.5",
+    "@codemirror/lint": "^6.2.0",
+    "@codemirror/view": "^6.9.4",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-16.tgz",
+    "@fullstacked/run": "file:../run/fullstacked-run-0.10.0-4.tgz",
+    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-25.tgz",
+    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-16.tgz",
+    "codemirror": "^6.0.1",
+    "rc-tree": "^5.7.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "externalModules": [
+    "typescript"
+  ]
+}
