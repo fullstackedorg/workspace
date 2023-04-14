@@ -16,6 +16,10 @@ html, body, .wb-body {
     background-color: #1e293c;
 }
 
+pre {
+    margin: 0;
+}
+
 #root {
     position: relative;
     z-index: 1;
