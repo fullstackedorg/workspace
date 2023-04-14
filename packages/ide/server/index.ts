@@ -6,6 +6,7 @@ import {extname, resolve} from "path";
 import createListener from "@fullstacked/webapp/rpc/createListener";
 import WebSocket, {WebSocketServer} from "ws";
 import {exec} from "child_process";
+import httpProxy from "http-proxy";
 
 const server = new Server();
 server.start();
@@ -78,14 +79,19 @@ server.addListener(createListener(tsAPI));
 server.pages["/"].addInHead(`<title>FullStacked IDE</title>`);
 
 const commandsWS = new WebSocketServer({noServer: true});
+let command;
 commandsWS.on('connection', (ws) => {
-    ws.on('message', (data, isBinary) => {
-        console.log(data.toString());
-        const command = exec(data.toString());
+    ws.on('message', data => {
+        if(data.toString() === "##KILL##"){
+            command.kill();
+            return;
+        }
+
+        command = exec(data.toString());
         command.stdout.on('data', chunk => ws.send(chunk.toString()));
         command.stderr.on('data', chunk => ws.send(chunk.toString()));
         command.on('close', () => ws.send("##END##"))
-    })
+    });
 });
 server.serverHTTP.on('upgrade', (request, socket, head) => {
     if(request.url !== "/fullstacked-commands") return;
@@ -94,3 +100,23 @@ server.serverHTTP.on('upgrade', (request, socket, head) => {
         commandsWS.emit('connection', ws, request);
     });
 });
+
+const proxy = httpProxy.createProxy({});
+
+server.addListener({
+    handler(req, res): any {
+        if(req.headers?.cookie?.includes("port=8001")){
+            return new Promise<void>(resolve => {
+                proxy.web(req, res, {target: "http://localhost:8001"}, () => {
+                    resolve()
+                });
+            });
+        }
+        if(!req.url.includes("?port=8001")) return
+        res.writeHead(302, {
+            "Set-Cookie": "port=8001",
+            "Location": "/"
+        });
+        res.end(`Redirecting...`);
+    }
+}, true)

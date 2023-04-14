@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "author": "cplepage",
   "dependencies": {
+    "@types/http-proxy": "^1.17.10",
     "@types/react": "^18.0.35",
     "@types/ws": "^8.5.4",
+    "http-proxy": "^1.18.1",
     "typescript": "^5.0.4",
     "winbox": "^0.2.6",
     "ws": "^8.13.0"
