@@ -102,7 +102,7 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
                 const mimeType = res.getHeader("Content-Type");
 
                 if (mimeType === 'text/html') {
-                    res.write(chunk, encoding);
+                    if(chunk) res.write(chunk, encoding);
                     res.write(`<script>${clientWatcherScript}</script>`);
                     return originalEnd(undefined, undefined, callback);
                 }

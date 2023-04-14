@@ -1,19 +1,24 @@
 import React, {useEffect, useRef, useState} from "react";
 
+let commandsWS;
 export default function () {
     const [logs, setLogs] = useState<string[]>([]);
     const [running, setRunning] = useState(false);
     const inputRef = useRef<HTMLInputElement>();
-    const commandsWS = new WebSocket("ws" +
-        (window.location.protocol === "https:" ? "s" : "") +
-        "://" + window.location.host + "/fullstacked-commands");
-    commandsWS.onmessage = e => {
-        if(e.data === "##END##") return setRunning(false);
-        setLogs(logs => [...logs, e.data])
-    };
 
     useEffect(() => {
-        window.addEventListener("click", () => inputRef.current.focus());
+        window.addEventListener('keydown', e => {
+            if(e.key !== "c" || !e.ctrlKey) return;
+            commandsWS.send("##KILL##");
+        })
+        window.addEventListener("click", () => inputRef?.current?.focus());
+        commandsWS = new WebSocket("ws" +
+            (window.location.protocol === "https:" ? "s" : "") +
+            "://" + window.location.host + "/fullstacked-commands");
+        commandsWS.onmessage = e => {
+            if(e.data === "##END##") return setRunning(false);
+            setLogs(logs => [...logs, e.data])
+        };
     }, []);
 
     useEffect(() => {

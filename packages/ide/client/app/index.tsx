@@ -68,6 +68,9 @@ export default function () {
         <ButtonIcon
             icon={browser}
             title={"Browser"}
+            onClick={() => {
+                new WinBox("Browser", { html: `<iframe credentialless src="${window.location.href}?port=8001"></iframe>` });
+            }}
         />
     </div>
 }
