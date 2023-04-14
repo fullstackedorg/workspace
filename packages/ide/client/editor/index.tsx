@@ -39,7 +39,7 @@ async function updateDocAndLint(editorView: EditorView){
 }
 
 async function tsCompletions(context: CompletionContext){
-    let tsCompletions = await client.get().getCompletions(this, context.pos);
+    let tsCompletions = await client.put().updateCompletions(this, context.pos, context.state.doc.toString());
 
     if (!tsCompletions) return { from: context.pos, options: [] };
 
@@ -55,6 +55,7 @@ async function tsCompletions(context: CompletionContext){
     }
 
     if (lastWord) {
+        console.log(lastWord)
         tsCompletions.entries = tsCompletions.entries.filter((completion) =>
             completion.name.startsWith(lastWord)
         );

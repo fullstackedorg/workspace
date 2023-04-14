@@ -70,6 +70,10 @@ export default function () {
             contents.forEach((content, i) => files[keys[i]] = content);
             setFiles( {...files});
         }}
+        onSelect={(_, {node, nativeEvent}) => {
+            if((node as unknown as File).isDir || (nativeEvent as PointerEvent).pointerType === "mouse") return;
+            new WinBox(node.title, {url: `${window.location.href}?edit=${node.key}`});
+        }}
         onDoubleClick={(_, file) => {
             if((file as unknown as File).isDir) return;
             new WinBox(file.title, {url: `${window.location.href}?edit=${file.key}`});

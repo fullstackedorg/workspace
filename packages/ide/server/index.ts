@@ -4,6 +4,8 @@ import ts from "typescript";
 import fs from "fs";
 import {extname, resolve} from "path";
 import createListener from "@fullstacked/webapp/rpc/createListener";
+import WebSocket, {WebSocketServer} from "ws";
+import {exec} from "child_process";
 
 const server = new Server();
 server.start();
@@ -16,7 +18,7 @@ const servicesHost: ts.LanguageServiceHost = {
     getScriptFileNames: () => Object.keys(files),
     getScriptVersion: fileName => files[fileName] && files[fileName].version.toString(),
     getScriptSnapshot: fileName => {
-        if (!fs.existsSync(fileName)) return undefined;
+        if (!fs.existsSync(fileName)) return undefined
         return ts.ScriptSnapshot.fromString(fs.readFileSync(fileName).toString());
     },
     getCurrentDirectory: process.cwd,
@@ -63,11 +65,32 @@ export const tsAPI = {
         else files[fileName].version++;
         return languageService.getSemanticDiagnostics(fileName);
     },
-    getCompletions(fileName: string, pos: number){
+    updateCompletions(fileName: string, pos: number, contents: string){
+        fs.writeFileSync(fileName, contents);
+        if(!files[fileName]) files[fileName] = {version: 0};
+        else files[fileName].version++;
         return languageService.getCompletionsAtPosition(fileName, pos, {});
     }
 }
 
-server.addListener(createListener(tsAPI))
+server.addListener(createListener(tsAPI));
 
-server.pages["/"].addInHead(`<title>FullStacked IDE</title>`)
+server.pages["/"].addInHead(`<title>FullStacked IDE</title>`);
+
+const commandsWS = new WebSocketServer({noServer: true});
+commandsWS.on('connection', (ws) => {
+    ws.on('message', (data, isBinary) => {
+        console.log(data.toString());
+        const command = exec(data.toString());
+        command.stdout.on('data', chunk => ws.send(chunk.toString()));
+        command.stderr.on('data', chunk => ws.send(chunk.toString()));
+        command.on('close', () => ws.send("##END##"))
+    })
+});
+server.serverHTTP.on('upgrade', (request, socket, head) => {
+    if(request.url !== "/fullstacked-commands") return;
+
+    commandsWS.handleUpgrade(request, socket, head, (ws) => {
+        commandsWS.emit('connection', ws, request);
+    });
+});

@@ -6,3 +6,4 @@ export default function (props: {icon: string, title: string, onClick?: () => vo
         <div>{props.title}</div>
     </div>
 }
+

@@ -15,6 +15,7 @@ import Files from "./files";
 function initZoneSelect(){
     let mouseStart = null, square = null;
     const onMouseDown = (e) => {
+        if(e.button !== 0) return;
         mouseStart = [e.clientX, e.clientY]
     }
     const onMouseMove = (e) => {
