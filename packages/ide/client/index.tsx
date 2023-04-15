@@ -6,6 +6,7 @@ import "winbox/dist/css/themes/modern.min.css";
 import "./index.css";
 import Editor from "./editor";
 import Terminal from "./terminal";
+import Browser from "./browser";
 
 const url = new URL(window.location.href);
 
@@ -20,6 +21,8 @@ if(url.searchParams.get("edit")){
     await Editor(url.searchParams.get("edit"));
 }else if(url.searchParams.get("terminal")){
     createRoot(rootDiv).render(<Terminal />)
+}else if(url.searchParams.get("browser")){
+    createRoot(rootDiv).render(<Browser />)
 }else{
     createRoot(rootDiv).render(<App />)
 }

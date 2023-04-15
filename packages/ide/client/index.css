@@ -110,3 +110,33 @@ pre {
     padding: 0;
     margin: 0;
 }
+
+.browser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.browser > .url-bar {
+    width: 100%;
+    background-color: gray;
+    padding: 5px;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+.browser > .url-bar > input {
+    outline: 0;
+    border: 0;
+    border-radius: 15px;
+    height: 25px;
+    margin: 0 10px;
+    padding: 0 10px;
+}
+
+.browser > iframe {
+    flex-grow: 1;
+    border: 0;
+    background-color: white;
+}
