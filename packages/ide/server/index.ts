@@ -7,6 +7,8 @@ import createListener from "@fullstacked/webapp/rpc/createListener";
 import WebSocket, {WebSocketServer} from "ws";
 import {exec} from "child_process";
 import httpProxy from "http-proxy";
+import * as fastQueryString from "fast-querystring";
+import cookie from "cookie";
 
 const server = new Server();
 server.start();
@@ -105,18 +107,46 @@ const proxy = httpProxy.createProxy({});
 
 server.addListener({
     handler(req, res): any {
-        if(req.headers?.cookie?.includes("port=8001")){
-            return new Promise<void>(resolve => {
-                proxy.web(req, res, {target: "http://localhost:8001"}, () => {
-                    resolve()
-                });
-            });
+        const queryString = fastQueryString.parse(req.url.split("?").pop());
+        const cookies = cookie.parse(req.headers.cookie ?? "");
+        if(queryString.test === "credentialless"){
+            res.end(`<script>window.parent.postMessage({credentialless: ${cookies.test !== "credentialless"}}); </script>`)
+            return;
         }
-        if(!req.url.includes("?port=8001")) return
-        res.writeHead(302, {
-            "Set-Cookie": "port=8001",
-            "Location": "/"
-        });
-        res.end(`Redirecting...`);
+
+        if(queryString.port){
+            res.setHeader("Set-Cookie", cookie.serialize("port", queryString.port));
+            res.end(`<script>
+                    const url = new URL(window.location.href); 
+                    url.searchParams.delete("port"); 
+                    window.location.href = url.toString();
+                </script>`);
+        }
+
+        if(cookies.port){
+            return new Promise<void>(resolve => {
+                proxy.web(req, res, {target: `http://localhost:${cookies.port}`}, () => {
+                    if(!res.headersSent){
+                        res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
+                        res.end(`Port ${cookies.port} is down.`);
+                    }
+                    resolve();
+                });
+            })
+        }
+
+        const domainParts = req.headers.host.split(".");
+        const firstDomainPart = domainParts.shift();
+        const maybePort = parseInt(firstDomainPart);
+        if(maybePort.toString() === firstDomainPart){
+            return new Promise<void>(resolve => {
+                proxy.web(req, res, {target: `http://localhost:${firstDomainPart}`}, () => {
+                    if(!res.headersSent){
+                        res.end(`Port ${firstDomainPart} is down.`);
+                    }
+                    resolve();
+                });
+            })
+        }
     }
 }, true)

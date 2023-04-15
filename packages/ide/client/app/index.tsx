@@ -11,6 +11,7 @@ import files from "../icons/files.svg";
 import logo from "../icons/fullstacked-logo.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
+import Browser from "../browser";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -68,9 +69,7 @@ export default function () {
         <ButtonIcon
             icon={browser}
             title={"Browser"}
-            onClick={() => {
-                new WinBox("Browser", { html: `<iframe credentialless src="${window.location.href}?port=8001"></iframe>` });
-            }}
+            onClick={() => {new WinBox("Browser", { url: `${window.location.href}?browser=1` })}}
         />
     </div>
 }
