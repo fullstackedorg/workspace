@@ -12,6 +12,7 @@ import logo from "../icons/fullstacked-logo.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
+import {createWinID, winStore} from "./WinStore";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -55,7 +56,11 @@ export default function () {
         <ButtonIcon
             icon={terminal}
             title={"Terminal"}
-            onClick={() => {new WinBox("Terminal", {url: `${window.location.href}?terminal=1`})}}
+            onClick={() => {
+                const id = createWinID();
+                const winBox = new WinBox("Terminal", {url: `${window.location.href}?terminal=1&winId=${id}`});
+                winStore.set(id, winBox);
+            }}
         />
         <ButtonIcon
             icon={files}
@@ -69,7 +74,11 @@ export default function () {
         <ButtonIcon
             icon={browser}
             title={"Browser"}
-            onClick={() => {new WinBox("Browser", { url: `${window.location.href}?browser=1` })}}
+            onClick={() => {
+                const id = createWinID();
+                const winBox = new WinBox("Browser", { url: `${window.location.href}?browser=1&winId=${id}` });
+                winStore.set(id, winBox);
+            }}
         />
     </div>
 }

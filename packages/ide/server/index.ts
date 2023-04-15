@@ -66,7 +66,8 @@ export const tsAPI = {
         fs.writeFileSync(fileName, contents);
         if(!files[fileName]) files[fileName] = {version: 0};
         else files[fileName].version++;
-        return languageService.getSemanticDiagnostics(fileName);
+        return languageService.getSemanticDiagnostics(fileName)
+            .concat(languageService.getSyntacticDiagnostics(fileName));
     },
     updateCompletions(fileName: string, pos: number, contents: string){
         fs.writeFileSync(fileName, contents);
@@ -95,38 +96,61 @@ commandsWS.on('connection', (ws) => {
         command.on('close', () => ws.send("##END##"))
     });
 });
-server.serverHTTP.on('upgrade', (request, socket, head) => {
-    if(request.url !== "/fullstacked-commands") return;
-
-    commandsWS.handleUpgrade(request, socket, head, (ws) => {
-        commandsWS.emit('connection', ws, request);
-    });
-});
 
 const proxy = httpProxy.createProxy({});
 
+
+server.serverHTTP.on('upgrade', (req, socket, head) => {
+    const cookies = cookie.parse(req.headers.cookie ?? "");
+
+    if(cookies.port){
+        return new Promise(resolve => {
+            proxy.ws(req, socket, head, {target: `http://localhost:${cookies.port}`}, resolve);
+        })
+    }
+
+    const domainParts = req.headers.host.split(".");
+    const firstDomainPart = domainParts.shift();
+    const maybePort = parseInt(firstDomainPart);
+    if(maybePort.toString() === firstDomainPart){
+        return new Promise(resolve => {
+            proxy.ws(req, socket, head, {target: `http://localhost:${firstDomainPart}`}, resolve);
+        })
+    }
+
+
+    if(req.url !== "/fullstacked-commands") return;
+
+    commandsWS.handleUpgrade(req, socket, head, (ws) => {
+        commandsWS.emit('connection', ws, req);
+    });
+});
+
+
 server.addListener({
-    handler(req, res): any {
+    prefix: "global",
+    handler(req, res) {
         const queryString = fastQueryString.parse(req.url.split("?").pop());
         const cookies = cookie.parse(req.headers.cookie ?? "");
-        if(queryString.test === "credentialless"){
+        if (queryString.test === "credentialless") {
             res.end(`<script>window.parent.postMessage({credentialless: ${cookies.test !== "credentialless"}}); </script>`)
             return;
         }
 
-        if(queryString.port){
+        if (queryString.port) {
             res.setHeader("Set-Cookie", cookie.serialize("port", queryString.port));
             res.end(`<script>
-                    const url = new URL(window.location.href); 
-                    url.searchParams.delete("port"); 
-                    window.location.href = url.toString();
-                </script>`);
+                const url = new URL(window.location.href); 
+                url.searchParams.delete("port"); 
+                window.location.href = url.toString();
+            </script>`);
+            return;
         }
 
-        if(cookies.port){
+        if (cookies.port) {
             return new Promise<void>(resolve => {
                 proxy.web(req, res, {target: `http://localhost:${cookies.port}`}, () => {
-                    if(!res.headersSent){
+                    if (!res.headersSent) {
                         res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
                         res.end(`Port ${cookies.port} is down.`);
                     }
@@ -138,10 +162,10 @@ server.addListener({
         const domainParts = req.headers.host.split(".");
         const firstDomainPart = domainParts.shift();
         const maybePort = parseInt(firstDomainPart);
-        if(maybePort.toString() === firstDomainPart){
+        if (maybePort.toString() === firstDomainPart) {
             return new Promise<void>(resolve => {
                 proxy.web(req, res, {target: `http://localhost:${firstDomainPart}`}, () => {
-                    if(!res.headersSent){
+                    if (!res.headersSent) {
                         res.end(`Port ${firstDomainPart} is down.`);
                     }
                     resolve();
@@ -149,4 +173,4 @@ server.addListener({
             })
         }
     }
-}, true)
+})

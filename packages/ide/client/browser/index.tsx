@@ -22,12 +22,27 @@ export default function () {
         window.addEventListener('message', analyzeIframeResponse);
 
         const url = new URL(window.location.href);
+
+        const winID = url.searchParams.get("winId");
+
         setCookie("test", "credentialless", 60);
         url.searchParams.forEach((value, param) => url.searchParams.delete(param));
         url.searchParams.set("test", "credentialless");
         // @ts-ignore
         iframeRef.current.credentialless = true;
         iframeRef.current.src = url.toString();
+
+        let hasFocus = false;
+        setInterval(() => {
+            if(document.activeElement === iframeRef.current){
+                if(window.parent?.postMessage && !hasFocus) {
+                    window.parent.postMessage({winID});
+                    hasFocus = true;
+                }
+            }else{
+                hasFocus = false;
+            }
+        }, 100);
     });
 
     const loadPort = () => {
@@ -46,8 +61,14 @@ export default function () {
 
     return <div className={"browser"}>
         <div className={"url-bar"}>
-            Port : <input ref={inputPortRef} />
-            <button onClick={loadPort}>Go</button>
+            <form onSubmit={e => {
+                e.preventDefault();
+                loadPort();
+                inputPortRef.current.blur();
+            }}>
+                Port : <input ref={inputPortRef} />
+                <button>Go</button>
+            </form>
             Credentialless : {hasCredentialless ? "Active" : "Inactive"}
         </div>
         <iframe ref={iframeRef} />

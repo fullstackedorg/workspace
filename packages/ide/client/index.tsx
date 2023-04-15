@@ -27,4 +27,12 @@ if(url.searchParams.get("edit")){
     createRoot(rootDiv).render(<App />)
 }
 
+const winID = url.searchParams.get("winId");
+if(winID){
+    window.addEventListener('click', () => {
+        if(window.parent?.postMessage) {
+            window.parent.postMessage({winID});
+        }
+    });
+}
 
