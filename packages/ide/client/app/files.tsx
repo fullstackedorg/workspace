@@ -8,6 +8,7 @@ import fileIcons from "../icons/file-icons.svg";
 // @ts-ignore
 import fileIcons2 from "../icons/file-icons-2.svg";
 import type {tsAPI} from "../../server";
+import {createWinID, winStore} from "./WinStore";
 
 
 type FlatFileTree = {
@@ -72,11 +73,16 @@ export default function () {
         }}
         onSelect={(_, {node, nativeEvent}) => {
             if((node as unknown as File).isDir || (nativeEvent as PointerEvent).pointerType === "mouse") return;
-            new WinBox(node.title, {url: `${window.location.href}?edit=${node.key}`});
+            const id = createWinID();
+            const winBox = new WinBox(node.title, {url: `${window.location.href}?edit=${node.key}&winId=${id}`});
+            winStore.set(id, winBox);
         }}
         onDoubleClick={(_, file) => {
             if((file as unknown as File).isDir) return;
-            new WinBox(file.title, {url: `${window.location.href}?edit=${file.key}`});
+            const id = createWinID();
+            const winBox = new WinBox(file.title, {url: `${window.location.href}?edit=${file.key}&winId=${id}`});
+            winStore.set(id, winBox);
+
         }}
     />
 }

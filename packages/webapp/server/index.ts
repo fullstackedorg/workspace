@@ -79,31 +79,42 @@ export default class {
             if(this.logger?.in) this.logger.in(req, res);
 
             const urlPrefixes = Object.keys(this.listeners);
-            const listenersKey = urlPrefixes.find(prefix => req.url.startsWith(prefix)) ?? "default";
+            let listenerKeys: string[] = urlPrefixes.filter(prefix => req.url.startsWith(prefix));
+            if(!listenerKeys.length)
+                listenerKeys = ["default"];
 
-            if(listenersKey !== "default")
-                req.url = req.url.slice(listenersKey.length);
+            if(this.listeners["global"])
+                listenerKeys.unshift("global");
 
-            if(req.url === "")
-                req.url = "/";
+            const originalUrl = req.url;
+            for (const listenerKey of listenerKeys) {
+                const listeners = this.listeners[listenerKey];
 
-            for (const listener of this.listeners[listenersKey]) {
+                req.url = listenerKey !== "default" && listenerKey !== "global"
+                    ? originalUrl.slice(listenerKey.length)
+                    : originalUrl;
+
+                for (const listener of listeners){
+                    // break if response has managed to send
+                    if(res.headersSent) break;
+
+                    res.currentListener = listener.name;
+
+                    const maybePromise = listener.handler(req, res);
+                    if(maybePromise instanceof Promise) {
+                        await maybePromise;
+                    }
+                }
+
                 // break if response has managed to send
                 if(res.headersSent) break;
-
-                res.currentListener = listener.name;
-
-                const maybePromise = listener.handler(req, res);
-                if(maybePromise instanceof Promise) {
-                    await maybePromise;
-                }
             }
 
             if(this.logger?.out) this.logger.out(req, res);
         });
     }
 
-    addListener(listener: Listener & {prefix?: string}, prepend = false){
+    addListener(listener: Listener & {prefix?: "global" | "default" | string}, prepend = false){
         const urlPrefix = listener.prefix || "default";
 
         if(!this.listeners[urlPrefix]) this.listeners[urlPrefix] = [];
