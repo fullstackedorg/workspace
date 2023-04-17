@@ -97,9 +97,9 @@ export function Middleware(wrappingFunction: (this: IncomingMessage, ...args: an
 
 function readBody(req: IncomingMessage) {
     return new Promise((resolve) => {
-        const data = [];
-        req.on('data', chunk => data.push(chunk));
-        req.on('end', () => resolve(JSON.parse(data.toString())));
+        let data = "";
+        req.on('data', chunk => data += chunk.toString());
+        req.on('end', () => resolve(JSON.parse(data)));
     });
 }
 
