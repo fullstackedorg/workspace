@@ -1,10 +1,14 @@
 import React, {useEffect, useRef, useState} from "react";
+import Convert from "ansi-to-html";
+
+const convert = new Convert();
 
 let commandsWS;
 export default function () {
     const [logs, setLogs] = useState<string[]>([]);
     const [running, setRunning] = useState(false);
     const inputRef = useRef<HTMLInputElement>();
+    const terminalRef = useRef<HTMLInputElement>();
 
     useEffect(() => {
         window.addEventListener('keydown', e => {
@@ -25,8 +29,10 @@ export default function () {
         if(!running) inputRef.current.focus()
     }, [running])
 
-    return <div className={"terminal"}>
-        <pre>{logs.map(log => <div>{log}</div>)}</pre>
+    useEffect(() => terminalRef.current.scrollTo(0, terminalRef.current.scrollHeight), [logs]);
+
+    return <div ref={terminalRef} className={"terminal"}>
+        <pre>{logs.map(log => <div dangerouslySetInnerHTML={{__html: convert.toHtml(log)}} />)}</pre>
         <form onSubmit={e => {
             e.preventDefault();
             setRunning(true);

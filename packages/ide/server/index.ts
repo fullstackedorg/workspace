@@ -4,7 +4,7 @@ import ts from "typescript";
 import fs from "fs";
 import {extname, resolve} from "path";
 import createListener from "@fullstacked/webapp/rpc/createListener";
-import WebSocket, {WebSocketServer} from "ws";
+import {WebSocketServer} from "ws";
 import {exec} from "child_process";
 import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
@@ -47,6 +47,35 @@ const servicesHost: ts.LanguageServiceHost = {
 
 const languageService = ts.createLanguageService(servicesHost, ts.createDocumentRegistry());
 
+export function isTokenKind(kind: ts.SyntaxKind) {
+    return kind >= ts.SyntaxKind.FirstToken && kind <= ts.SyntaxKind.LastToken;
+}
+
+function getTokenAtPosition(parent: ts.Node, pos: number, sourceFile?: ts.SourceFile) {
+    if (pos < parent.pos || pos >= parent.end)
+        return;
+    if (isTokenKind(parent.kind))
+        return parent;
+    if (sourceFile === undefined)
+        sourceFile = parent.getSourceFile();
+    return getTokenAtPositionWorker(parent, pos, sourceFile);
+}
+
+function getTokenAtPositionWorker(node: ts.Node, pos: number, sourceFile: ts.SourceFile) {
+    outer: while (true) {
+        for (const child of node.getChildren(sourceFile)) {
+            if (child.end > pos && child.kind !== ts.SyntaxKind.JSDocComment) {
+                if (isTokenKind(child.kind))
+                    return child;
+                // next token is nested in another node
+                node = child;
+                continue outer;
+            }
+        }
+        return;
+    }
+}
+
 export const tsAPI = {
     readDir(dirPath: string){
         return fs.readdirSync(dirPath).map(name => {
@@ -62,18 +91,25 @@ export const tsAPI = {
     getFileContents(fileName: string){
         return fs.readFileSync(fileName).toString();
     },
-    updateDoc(fileName: string, contents: string){
-        fs.writeFileSync(fileName, contents);
-        if(!files[fileName]) files[fileName] = {version: 0};
-        else files[fileName].version++;
-        return languageService.getSemanticDiagnostics(fileName)
-            .concat(languageService.getSyntacticDiagnostics(fileName));
+    updateFile(filename: string, contents: string){
+        fs.writeFileSync(filename, contents);
+        if(!files[filename]) files[filename] = {version: 0};
+        else files[filename].version++;
     },
-    updateCompletions(fileName: string, pos: number, contents: string){
-        fs.writeFileSync(fileName, contents);
-        if(!files[fileName]) files[fileName] = {version: 0};
-        else files[fileName].version++;
-        return languageService.getCompletionsAtPosition(fileName, pos, {});
+    diagnostics(filename: string){
+        return languageService.getSemanticDiagnostics(filename)
+            .concat(languageService.getSyntacticDiagnostics(filename));
+    },
+    completions(filename: string, pos: number){
+        return languageService.getCompletionsAtPosition(filename, pos, {});
+    },
+    typeDefinition(filename: string, pos: number){
+        console.log(languageService.getProgram().getTypeChecker().getTypeAtLocation(getTokenAtPosition(program.getSourceFile(filename), pos)));
+        const types = languageService.getTypeDefinitionAtPosition(filename, pos);
+        return types?.map(reference => {
+            const contents = fs.readFileSync(reference.fileName).toString();
+            return contents.slice(reference.textSpan.start, reference.textSpan.start + reference.textSpan.length);
+        });
     }
 }
 
@@ -112,7 +148,7 @@ server.serverHTTP.on('upgrade', (req, socket, head) => {
     const domainParts = req.headers.host.split(".");
     const firstDomainPart = domainParts.shift();
     const maybePort = parseInt(firstDomainPart);
-    if(maybePort.toString() === firstDomainPart){
+    if(maybePort.toString() === firstDomainPart && maybePort > 2999){
         return new Promise(resolve => {
             proxy.ws(req, socket, head, {target: `http://localhost:${firstDomainPart}`}, resolve);
         })
@@ -162,7 +198,7 @@ server.addListener({
         const domainParts = req.headers.host.split(".");
         const firstDomainPart = domainParts.shift();
         const maybePort = parseInt(firstDomainPart);
-        if (maybePort.toString() === firstDomainPart) {
+        if (maybePort.toString() === firstDomainPart && maybePort > 2999) {
             return new Promise<void>(resolve => {
                 proxy.web(req, res, {target: `http://localhost:${firstDomainPart}`}, () => {
                     if (!res.headersSent) {

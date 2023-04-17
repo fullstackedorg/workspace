@@ -95,12 +95,16 @@ pre {
 
 .terminal form {
     display: flex;
+    font-family: monospace;
+    white-space: pre;
 }
 .terminal form > div {
     margin-right: 5px;
 }
 
 .terminal input {
+    font-family: monospace;
+    white-space: pre;
     width: 100%;
     font-size: inherit;
     background: none;
