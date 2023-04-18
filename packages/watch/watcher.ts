@@ -78,8 +78,7 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
 
     let server, activeSockets = new Set<Socket>();
     const loadServer = async () => {
-        if(server){
-
+        const closeServer = () => {
             activeWS.forEach((ws) => {
                 ws.send(JSON.stringify({
                     type: "server"
@@ -87,13 +86,23 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
                 activeWS.delete(ws);
             });
 
-            await new Promise(resolve => {
+            return new Promise(resolve => {
                 activeSockets.forEach(socket => socket.destroy());
                 server.close(resolve);
             });
         }
+        if(server){
+            await closeServer();
+        }
 
-        server = (await import(resolve(outdir, modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)).default;
+        try{
+            server = (await import(resolve(outdir, modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)).default;
+        }catch (e) {
+            console.error(e);
+            await closeServer();
+            return;
+        }
+
 
         server.prependListener('request', (_, res) => {
             const originalEnd = res.end.bind(res);
@@ -224,7 +233,6 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
     }
 
     await reloadServer();
-
 
     const initServerWatch = modulePath => fs.watch(modulePath, async () => {
 

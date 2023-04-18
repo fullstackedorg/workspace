@@ -3,8 +3,8 @@
 *.tsx
 !*.d.ts
 
-client
-server
+/client
+/server
 
 WS.ts
 WS.d.ts

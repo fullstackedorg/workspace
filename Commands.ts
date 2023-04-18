@@ -26,5 +26,9 @@ export default  [
     {
         name: "gui",
         description: "Launch the GUI to execute the different FullStacked commands"
+    },
+    {
+        name: "ide",
+        description: "Launch the FullStacked IDE"
     }
 ]

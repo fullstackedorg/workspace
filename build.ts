@@ -21,6 +21,7 @@ const toBuild = [
     "./packages/build/index.ts",
     "./packages/deploy/index.ts",
     "./packages/run/index.ts",
+    "./packages/ide/index.ts",
     "./packages/watch/index.ts",
     "./packages/watch/fileParser.ts",
     "./packages/watch/watcher.ts",

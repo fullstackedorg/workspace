@@ -29,6 +29,7 @@ const backupPackage = installPackageThenPack("packages/backup"  , fullstackedPac
 const webappPackage = installPackageThenPack("packages/webapp"  , fullstackedPackage);
 const createPackage = installPackageThenPack("packages/create"  , fullstackedPackage);
 const guiPackage    = installPackageThenPack("packages/gui"     , fullstackedPackage);
+const idePackage    = installPackageThenPack("packages/ide"     , fullstackedPackage);
 
 // cleanup test folder
 const testDirectory = new URL("./test", import.meta.url);
@@ -50,4 +51,4 @@ execSync([
     `-v ${fullstackedPackage}`].join(" "), {cwd: testDirectory, stdio: "inherit"});
 
 // testing local packages
-execSync(`npm i ${createPackage} ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage} ${webappPackage} ${guiPackage}`, {cwd: testDirectory, stdio: "inherit"});
+execSync(`npm i ${createPackage} ${buildPackage} ${runPackage} ${watchPackage} ${deployPackage} ${backupPackage} ${webappPackage} ${guiPackage} ${idePackage}`, {cwd: testDirectory, stdio: "inherit"});

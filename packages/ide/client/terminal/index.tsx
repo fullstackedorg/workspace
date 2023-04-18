@@ -8,7 +8,7 @@ export default function () {
     const [logs, setLogs] = useState<string[]>([]);
     const [running, setRunning] = useState(false);
     const inputRef = useRef<HTMLInputElement>();
-    const terminalRef = useRef<HTMLInputElement>();
+    const logsRef = useRef<HTMLPreElement>();
 
     useEffect(() => {
         window.addEventListener('keydown', e => {
@@ -21,7 +21,13 @@ export default function () {
             "://" + window.location.host + "/fullstacked-commands");
         commandsWS.onmessage = e => {
             if(e.data === "##END##") return setRunning(false);
-            setLogs(logs => [...logs, e.data])
+            if(e.data.at(-1) === "\n")
+                setLogs(logs => [...logs, e.data])
+            else
+                setLogs(logs => {
+                    logs[logs.length - 1] = e.data;
+                    return [...logs];
+                });
         };
     }, []);
 
@@ -29,21 +35,21 @@ export default function () {
         if(!running) inputRef.current.focus()
     }, [running])
 
-    useEffect(() => terminalRef.current.scrollTo(0, terminalRef.current.scrollHeight), [logs]);
+    useEffect(() => logsRef.current.scrollIntoView(false), [logs]);
 
-    return <div ref={terminalRef} className={"terminal"}>
-        <pre>{logs.map(log => <div dangerouslySetInnerHTML={{__html: convert.toHtml(log)}} />)}</pre>
+    return <div className={"terminal"}>
+        <pre ref={logsRef}>{logs.map(log => <div dangerouslySetInnerHTML={{__html: convert.toHtml(log)}} />)}</pre>
         <form onSubmit={e => {
             e.preventDefault();
             setRunning(true);
             const value = inputRef.current.value;
-            setLogs(logs => [...logs, "# " + value]);
+            setLogs(logs => [...logs, "# " + value, ""]);
             e.currentTarget.reset();
             commandsWS.send(value);
         }}>
             {!running && <>
                 <div>#</div>
-                <input ref={inputRef} type={"text"} />
+                <input ref={inputRef} type={"text"} autoCapitalize={"off"}/>
             </>}
         </form>
     </div>
