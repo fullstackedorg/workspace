@@ -7,6 +7,7 @@ import yaml from "js-yaml";
 import {dirname, resolve} from "path";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
 import Info from "fullstacked/info";
+import {exec} from "child_process";
 
 
 export default class Watch extends CommandInterface {

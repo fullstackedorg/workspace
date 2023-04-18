@@ -66,10 +66,10 @@ export default function () {
                 : fileIcons + "#" + iconForFilename(item.data.title as string)}>
             </use>
         </svg>}
-        onExpand={async (keys: string[]) => {
+        onExpand={async (keys: string[], {node, expanded}) => {
             if(!keys?.length) return;
-            const contents = await Promise.all(keys.map(key => client.get(true).readDir(key)));
-            contents.forEach((content, i) => files[keys[i]] = content);
+            if(!expanded) return;
+            files[node.key] = await client.get().readDir(node.key);
             setFiles( {...files});
         }}
         onSelect={(_, data: {node: File, nativeEvent}) => {

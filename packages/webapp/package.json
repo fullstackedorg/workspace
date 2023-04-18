@@ -7,7 +7,7 @@
   "type": "module",
   "dependencies": {
     "fast-querystring": "^1.1.1",
-    "fullstacked": "file:../../fullstacked-0.10.0-2.tgz",
+    "fullstacked": "file:../../fullstacked-0.10.0-3.tgz",
     "mime": "^3.0.0",
     "parse5": "^7.1.2"
   },

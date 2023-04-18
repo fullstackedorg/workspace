@@ -20,9 +20,11 @@ const {port} = CLIParser.getCommandLineArgumentsValues({
 server.port = port;
 
 setTimeout(async () => {
-    global.__dirname = fileURLToPath(dirname(import.meta.url));
-    const open = (await import("open")).default;
-    open(`http://localhost:${port}`);
+    try{
+        global.__dirname = fileURLToPath(dirname(import.meta.url));
+        const open = (await import("open")).default;
+        open(`http://localhost:${port}`);
+    }catch (e) {}
 }, 1000);
 
 server.pages["/"].addInHead(`<title>FullStacked GUI</title>`);

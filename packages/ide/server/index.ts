@@ -1,16 +1,27 @@
-import "./es-fix";
+// import "./es-fix";
 import Server from '@fullstacked/webapp/server';
 import ts from "typescript";
 import fs from "fs";
-import {extname, resolve} from "path";
+import {extname} from "path";
 import createListener from "@fullstacked/webapp/rpc/createListener";
 import {WebSocketServer} from "ws";
-import {exec} from "child_process";
+import pty, {IPty} from "node-pty";
 import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
+import CLIParser from "fullstacked/utils/CLIParser";
 
 const server = new Server();
+
+const {port} = CLIParser.getCommandLineArgumentsValues({
+    port: {
+        type: "number",
+        default: 8000
+    }
+});
+
+server.port = port;
+
 server.start();
 
 export default server.serverHTTP;
@@ -32,12 +43,7 @@ const servicesHost: ts.LanguageServiceHost = {
         moduleResolution: ts.ModuleResolutionKind.NodeJs,
         jsx: ts.JsxEmit.React,
     }),
-    getDefaultLibFileName: options => {
-        let lib = ts.getDefaultLibFilePath(options);
-        if(!fs.existsSync(lib))
-            lib = lib.replace(__dirname, resolve(process.cwd(), "node_modules", "typescript", "lib"))
-        return lib;
-    },
+    getDefaultLibFileName: ts.getDefaultLibFilePath,
     fileExists: ts.sys.fileExists,
     readFile: ts.sys.readFile,
     readDirectory: ts.sys.readDirectory,
@@ -47,7 +53,7 @@ const servicesHost: ts.LanguageServiceHost = {
 
 const languageService = ts.createLanguageService(servicesHost, ts.createDocumentRegistry());
 
-export function isTokenKind(kind: ts.SyntaxKind) {
+function isTokenKind(kind: ts.SyntaxKind) {
     return kind >= ts.SyntaxKind.FirstToken && kind <= ts.SyntaxKind.LastToken;
 }
 
@@ -104,12 +110,11 @@ export const tsAPI = {
         return languageService.getCompletionsAtPosition(filename, pos, {});
     },
     typeDefinition(filename: string, pos: number){
-        console.log(languageService.getProgram().getTypeChecker().getTypeAtLocation(getTokenAtPosition(program.getSourceFile(filename), pos)));
-        const types = languageService.getTypeDefinitionAtPosition(filename, pos);
-        return types?.map(reference => {
-            const contents = fs.readFileSync(reference.fileName).toString();
-            return contents.slice(reference.textSpan.start, reference.textSpan.start + reference.textSpan.length);
-        });
+        const program = languageService.getProgram();
+        const typeChecker = program.getTypeChecker();
+        const token = getTokenAtPosition(program.getSourceFile(filename), pos);
+        const type = typeChecker.getTypeAtLocation(token);
+        return typeChecker.typeToString(type, undefined, ts.TypeFormatFlags.InTypeAlias);
     }
 }
 
@@ -118,7 +123,7 @@ server.addListener(createListener(tsAPI));
 server.pages["/"].addInHead(`<title>FullStacked IDE</title>`);
 
 const commandsWS = new WebSocketServer({noServer: true});
-let command;
+let command: IPty;
 commandsWS.on('connection', (ws) => {
     ws.on('message', data => {
         if(data.toString() === "##KILL##"){
@@ -126,10 +131,15 @@ commandsWS.on('connection', (ws) => {
             return;
         }
 
-        command = exec(data.toString());
-        command.stdout.on('data', chunk => ws.send(chunk.toString()));
-        command.stderr.on('data', chunk => ws.send(chunk.toString()));
-        command.on('close', () => ws.send("##END##"))
+        command = pty.spawn("/bin/sh", ["-c", data.toString()], {
+            name: '',
+            cols: 80,
+            rows: 30,
+            cwd: process.cwd()
+        });
+
+        command.onData( chunk => ws.send(chunk.toString()));
+        command.onExit(() => ws.send("##END##"));
     });
 });
 
