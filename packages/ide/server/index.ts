@@ -10,6 +10,10 @@ import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
 import CLIParser from "fullstacked/utils/CLIParser";
+import { randomUUID } from 'crypto';
+import HTML from "@fullstacked/webapp/server/HTML";
+import base64icon from "./base64icon";
+import arrow from "./arrow";
 
 const server = new Server();
 
@@ -21,6 +25,124 @@ const {port} = CLIParser.getCommandLineArgumentsValues({
 });
 
 server.port = port;
+
+server.pages["/"].addInHead(`
+<link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
+<link rel="manifest" href="/pwa/manifest.json">
+<meta name="theme-color" content="#171f2e"/>`);
+
+let token = randomUUID();
+if(process.env.PASS){
+    const publicFiles = [
+        "/pwa/manifest.json",
+        "/pwa/app-icons/favicon.png",
+        "/pwa/app-icons/app-icon.png",
+        "/pwa/app-icons/maskable.png"
+    ]
+    const loginPage = new HTML();
+    loginPage.addInHead(`<style>
+        html, body{
+            background-color: #1e293c;
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        img {
+            height: 70px;
+            margin: 20px;
+        }
+        form {
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            box-shadow: 0 0 15px 2px #a5afc240;
+            background-color: #2b3952;
+            transition: 0.2s background-color;
+        }
+        form:hover {
+            background-color: #374662;
+        }
+        input, button {
+            background-color: transparent;
+            color: #e9edf4;
+            border: 1px solid #777f8c;
+            font-size: large;
+        }
+        button {
+            height: 100%;
+            border-left: 0;
+            border-radius: 0 5px 5px 0;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+        input {
+            padding: 6px 10px;
+            border-radius: 5px 0 0 5px;
+            outline: 0;
+        }
+        svg{
+            vertical-align: middle;
+        }
+    </style>`)
+    loginPage.addInBody(`
+    <img src="${base64icon.trim()}" />
+    <form action="/" method="post">
+        <input type="password" name="password" />
+        <button>${arrow}</button>
+    </form>
+    <script>
+        document.querySelector("input").focus();
+    </script>`)
+    server.addListener({
+        prefix: "global",
+        async handler(req, res) {
+            const cookies = cookie.parse(req.headers.cookie ?? "");
+            if(cookies.token === token) return;
+            if(publicFiles.includes(req.url)) return;
+
+            const queryParams = fastQueryString.parse(req.url.split("?").pop());
+            if(queryParams.token === token) {
+                res.setHeader("Set-Cookie", cookie.serialize("token", token));
+                return;
+            }
+
+            if(req.method === "POST"){
+                let data = ""
+                await new Promise((resolve) => {
+                    req.on('data', chunk => data += chunk.toString());
+                    req.on('end', resolve);
+                });
+                const body = cookie.parse(data);
+                const pass = body?.password ?? "";
+                if(pass === process.env.PASS){
+                    res.setHeader("Set-Cookie", cookie.serialize("token", token));
+                    res.writeHead(302, {location: "/"});
+                    res.end();
+                    return;
+                }
+            }
+
+            res.setHeader("Content-Type", "text/html");
+            res.end(loginPage.toString());
+        }
+    })
+}
+
+
+server.addListener({
+    handler(req, res) {
+        if(req.url !== "/service-worker.js") return;
+        res.setHeader("Content-Type", "text/javascript");
+        res.end(`self.addEventListener('fetch', (event) => {});`);
+    }
+}, true)
 
 server.start();
 
@@ -83,6 +205,9 @@ function getTokenAtPositionWorker(node: ts.Node, pos: number, sourceFile: ts.Sou
 }
 
 export const tsAPI = {
+    logout(){
+        token = randomUUID();
+    },
     readDir(dirPath: string){
         return fs.readdirSync(dirPath).map(name => {
             const path = (dirPath === "." ? "" : (dirPath + "/")) + name;
@@ -131,15 +256,26 @@ commandsWS.on('connection', (ws) => {
             return;
         }
 
-        command = pty.spawn("/bin/sh", ["-c", data.toString()], {
+        command = pty.spawn("/bin/sh", ["-c", data.toString() + " && echo --$(pwd)--"], {
             name: '',
             cols: 80,
             rows: 30,
             cwd: process.cwd()
         });
 
-        command.onData( chunk => ws.send(chunk.toString()));
-        command.onExit(() => ws.send("##END##"));
+        let endPath = "";
+        command.onData( chunk => {
+            if(chunk.match(/--.*--/)){
+                if(chunk.includes(process.cwd()))
+                    endPath = chunk.trim().replace(process.cwd(), "");
+                return;
+            }
+            ws.send(chunk)
+        });
+        command.onExit(() => {
+            ws.send(endPath);
+            ws.send("##END##")
+        });
     });
 });
 

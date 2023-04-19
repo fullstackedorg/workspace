@@ -24,10 +24,12 @@ export default function () {
         const url = new URL(window.location.href);
 
         const winID = url.searchParams.get("winId");
+        const token = url.searchParams.get("token");
 
         setCookie("test", "credentialless", 60);
         url.searchParams.forEach((value, param) => url.searchParams.delete(param));
         url.searchParams.set("test", "credentialless");
+        if(token) url.searchParams.set("token", token);
         // @ts-ignore
         iframeRef.current.credentialless = true;
         iframeRef.current.src = url.toString();
@@ -47,15 +49,20 @@ export default function () {
 
     const loadPort = () => {
         const url = new URL(window.location.href);
+        const token = url.searchParams.get("token");
         url.searchParams.forEach((value, param) => url.searchParams.delete(param));
 
         const port = inputPortRef.current.value;
 
         if(hasCredentialless){
             url.searchParams.set("port", port);
+            if(token) url.searchParams.set("token", token);
             iframeRef.current.src = url.toString();
         }else{
-            iframeRef.current.src = url.protocol + "//" + port + "." + url.host;
+            let portURL = url.protocol + "//" + port + "." + url.host;
+            if(token)
+                portURL += `?token=${token}`;
+            iframeRef.current.src = portURL;
         }
     }
 

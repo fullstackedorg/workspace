@@ -1,3 +1,4 @@
+import "./sw";
 import {createRoot} from "react-dom/client";
 import React from "react";
 import App from "./app";
@@ -30,6 +31,11 @@ if(url.searchParams.get("edit")){
 const winID = url.searchParams.get("winId");
 if(winID){
     window.addEventListener('click', () => {
+        if(window.parent?.postMessage) {
+            window.parent.postMessage({winID});
+        }
+    });
+    window.addEventListener('mousedown', () => {
         if(window.parent?.postMessage) {
             window.parent.postMessage({winID});
         }

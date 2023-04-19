@@ -1,56 +1,52 @@
-import React, {useEffect, useRef, useState} from "react";
-import Convert from "ansi-to-html";
+import React, {useEffect} from "react";
+import { Terminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import "xterm/css/xterm.css";
 
-const convert = new Convert();
-
-let commandsWS;
 export default function () {
-    const [logs, setLogs] = useState<string[]>([]);
-    const [running, setRunning] = useState(false);
-    const inputRef = useRef<HTMLInputElement>();
-    const logsRef = useRef<HTMLPreElement>();
-
     useEffect(() => {
-        window.addEventListener('keydown', e => {
-            if(e.key !== "c" || !e.ctrlKey) return;
-            commandsWS.send("##KILL##");
-        })
-        window.addEventListener("click", () => inputRef?.current?.focus());
-        commandsWS = new WebSocket("ws" +
+        const commandsWS = new WebSocket("ws" +
             (window.location.protocol === "https:" ? "s" : "") +
             "://" + window.location.host + "/fullstacked-commands");
+
+        let currentLine = "", path = "";
+        const term = new Terminal();
+        let fitAddon = new FitAddon();
+        term.loadAddon(fitAddon);
+        term.open(document.querySelector('.terminal'));
+        fitAddon.fit();
+        term.write('# ');
+        term.onKey(({key, domEvent}) => {
+            if(domEvent.key === "Backspace"){
+                currentLine = currentLine.slice(0, -1);
+                term.write('\b \b');
+            }else if(domEvent.key === "Enter"){
+                const cmd = (path ? `cd ${path} &&` : "") + currentLine;
+                commandsWS.send(cmd);
+                currentLine = "";
+                term.write('\r\n');
+            }else if(domEvent.key === "c" && domEvent.ctrlKey){
+                commandsWS.send("##KILL##")
+            }else{
+                currentLine += key;
+                term.write(key);
+            }
+        });
+
         commandsWS.onmessage = e => {
-            if(e.data === "##END##") return setRunning(false);
-            if(e.data.at(-1) === "\n")
-                setLogs(logs => [...logs, e.data])
-            else
-                setLogs(logs => {
-                    logs[logs.length - 1] = e.data;
-                    return [...logs];
-                });
-        };
-    }, []);
+            if(e.data === "##END##") {
+                term.write((path ? path + " " : "") + "# ")
+            }else if(e.data.match(/--.*--/)){
+                path = e.data.trim().slice(3, -2);
+            }else{
+                term.write(e.data);
+            }
+        }
 
-    useEffect(() => {
-        if(!running) inputRef.current.focus()
-    }, [running])
+        window.addEventListener("resize", () => {
+            fitAddon.fit();
+        });
+    }, [])
 
-    useEffect(() => logsRef.current.scrollIntoView(false), [logs]);
-
-    return <div className={"terminal"}>
-        <pre ref={logsRef}>{logs.map(log => <div dangerouslySetInnerHTML={{__html: convert.toHtml(log)}} />)}</pre>
-        <form onSubmit={e => {
-            e.preventDefault();
-            setRunning(true);
-            const value = inputRef.current.value;
-            setLogs(logs => [...logs, "# " + value, ""]);
-            e.currentTarget.reset();
-            commandsWS.send(value);
-        }}>
-            {!running && <>
-                <div>#</div>
-                <input ref={inputRef} type={"text"} autoCapitalize={"off"}/>
-            </>}
-        </form>
-    </div>
+    return <div className={"terminal"}/>
 }

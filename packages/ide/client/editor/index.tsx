@@ -99,7 +99,7 @@ async function tsTypeDefinition(view: EditorView, pos: number, side: number) {
         end,
         above: true,
         create(view) {
-            let dom = document.createElement('pre');
+            let dom = document.createElement('div');
             dom.innerText = type;
             return { dom };
         },
