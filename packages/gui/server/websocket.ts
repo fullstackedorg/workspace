@@ -1,5 +1,4 @@
 import WebSocket, {WebSocketServer} from "ws";
-import {MESSAGE_TYPE} from "../WS";
 import * as http from "http";
 
 const wss = new WebSocketServer({ noServer: true });

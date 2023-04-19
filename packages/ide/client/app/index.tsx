@@ -9,10 +9,14 @@ import terminal from "../icons/terminal.svg";
 import files from "../icons/files.svg";
 //@ts-ignore
 import logo from "../icons/fullstacked-logo.svg";
+//@ts-ignore
+import logout from "../icons/log-out.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
 import {createWinID, winStore} from "./WinStore";
+import cookie from "cookie";
+import {client} from "../client";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -46,6 +50,13 @@ function initZoneSelect(){
     window.addEventListener('mouseup', onMouseUp);
 }
 
+const maybeAddToken = (url: URL) => {
+    const token = cookie.parse(document.cookie).token;
+    if(token)
+        url.searchParams.set("token", token);
+    return url.toString();
+}
+
 export default function () {
     useEffect(initZoneSelect, [])
 
@@ -53,12 +64,23 @@ export default function () {
         <div className={"background"}>
             <img src={logo} />
         </div>
+        {cookie.parse(document.cookie).token && <ButtonIcon
+            icon={logout}
+            title={"Logout"}
+            onClick={async () => {
+                await client.get().logout();
+                document.cookie = cookie.serialize("token", "", {
+                    expires: new Date(0)
+                });
+                window.location.reload();
+            }}
+        />}
         <ButtonIcon
             icon={terminal}
             title={"Terminal"}
             onClick={() => {
                 const id = createWinID();
-                const winBox = new WinBox("Terminal", {url: `${window.location.href}?terminal=1&winId=${id}`});
+                const winBox = new WinBox("Terminal", {url: maybeAddToken(new URL(`${window.location.href}?terminal=1&winId=${id}`))});
                 winStore.set(id, winBox);
             }}
         />
@@ -76,7 +98,7 @@ export default function () {
             title={"Browser"}
             onClick={() => {
                 const id = createWinID();
-                const winBox = new WinBox("Browser", { url: `${window.location.href}?browser=1&winId=${id}` });
+                const winBox = new WinBox("Browser", { url: maybeAddToken(new URL(`${window.location.href}?browser=1&winId=${id}`)) });
                 winStore.set(id, winBox);
             }}
         />

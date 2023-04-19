@@ -16,6 +16,7 @@ import randStr from "fullstacked/utils/randStr";
 import dns from "dns";
 import {decryptDataWithPassword, encryptDataWithPassword} from "fullstacked/utils/encrypt";
 import {fileURLToPath} from "url";
+import {execSync} from "child_process";
 
 export type CredentialsSSH = {
     host: string,
@@ -348,6 +349,11 @@ export default class Deploy extends CommandInterface {
             hint: '- Space to select. Return to submit'
         });
 
+        if(domains.find(domain => domain.startsWith("*"))){
+            this.certificateSSL = this.generateCertificateWithDNS(email, domains);
+            return;
+        }
+
         let allDomainPointingToHost = false;
         while(!allDomainPointingToHost){
             const { ready } = await prompts({
@@ -373,7 +379,7 @@ export default class Deploy extends CommandInterface {
             allDomainPointingToHost = success.every((lookup) => lookup);
 
             if(!allDomainPointingToHost){
-                console.log("If you recently changed your DNS records. Try flushing yo DNS cache.")
+                console.log("If you recently changed your DNS records. Try flushing your DNS cache.")
                 console.log("Windows: ipconfig /flushdns")
                 console.log("MacOS: sudo killall -HUP mDNSResponder; sudo dscacheutil -flushcache")
             }
@@ -736,6 +742,33 @@ export default class Deploy extends CommandInterface {
         await sftp.put(Buffer.from(yaml.dump(nginxDockerCompose)), `${this.credentialsSSH.directory}/docker-compose.yml`);
         await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml up -d`);
         await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml restart -t 0`);
+    }
+
+    /**
+     *
+     * Generate SSL Certificate for a *. domain
+     *
+     */
+    generateCertificateWithDNS(email: string, domains: string[]){
+        const command = [
+            "docker run -it --rm --name certbot",
+            `-v ${resolve(process.cwd())}:/etc/letsencrypt/archive`,
+            `certbot/certbot certonly --manual --agree-tos --no-eff-email -m ${email}`,
+            `--preferred-challenges=dns`,
+            `--cert-name certbot`,
+            domains.map(serverName => `-d ${serverName}`).join(" ")
+        ];
+
+        try{
+            execSync(command.join(" "), {stdio: "inherit"});
+            const fullchain = fs.readFileSync("certbot/fullchain1.pem").toString();
+            const privkey = fs.readFileSync("certbot/privkey1.pem").toString();
+            fs.rmSync("certbot", {recursive: true});
+            return { fullchain, privkey }
+        }catch (e) {
+            console.error(e);
+            return null;
+        }
     }
 
     /**

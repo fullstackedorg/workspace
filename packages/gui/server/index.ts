@@ -45,7 +45,8 @@ export const api = {
 
 const handler = createHandler(api);
 
-server.addListener("/typescript-rpc", {
+server.addListener({
+    prefix: "/typescript-rpc",
     name: "typescript-rpc",
     handler
 });
