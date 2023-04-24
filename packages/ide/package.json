@@ -1,16 +1,17 @@
 {
   "name": "@fullstacked/ide",
+  "description": "Launch the FullStacked IDE",
   "version": "0.0.0-2",
   "author": "cplepage",
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-3.tgz",
+    "fullstacked": "file:../../fullstacked-0.10.0-4.tgz",
     "node-pty": "^0.10.1",
-    "typescript": "^5.0.4",
-    "xterm": "^5.1.0"
+    "typescript": "^5.0.4"
   },
   "scripts": {
     "build": "fullstacked build --production && cp -R pwa dist/client",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "docker:dev": "docker build ../../ -f Dockerfile-dev -t cplepage/fullstacked-ide:dev"
   },
   "type": "module",
   "devDependencies": {
@@ -18,7 +19,7 @@
     "@codemirror/lang-javascript": "^6.1.5",
     "@codemirror/lint": "^6.2.0",
     "@codemirror/view": "^6.9.4",
-    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-16.tgz",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-18.tgz",
     "@fullstacked/run": "file:../run/fullstacked-run-0.10.0-4.tgz",
     "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-25.tgz",
     "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-16.tgz",
@@ -34,7 +35,9 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "winbox": "^0.2.6",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "xterm": "^5.1.0",
+    "xterm-addon-fit": "^0.7.0"
   },
   "externalModules": [
     "typescript",

@@ -82,8 +82,13 @@ export default {
         return (await getDeploy()).generateCertificateOnRemoteHost(email, domains);
     },
 
-    async launch(){
-        return (await getDeploy()).run();
+    async launch(pull: boolean = false){
+        const deploy = await getDeploy();
+        deploy.config = {
+            ...deploy.config,
+            pull
+        }
+        return deploy.run();
     },
     async getDeploymentProgress(){
         return (await getDeploy()).progress;

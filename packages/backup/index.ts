@@ -7,7 +7,6 @@ import {maybePullDockerImage} from "fullstacked/utils/maybePullDockerImage";
 import yaml from "js-yaml";
 import Docker from "fullstacked/utils/docker";
 import randStr from "fullstacked/utils/randStr";
-import {execSync} from "child_process";
 import Info from "fullstacked/info";
 
 // source: https://stackoverflow.com/a/43001581
@@ -51,12 +50,6 @@ export default class Backup extends CommandInterface {
             defaultDescription: "./backup",
             default: resolve(process.cwd(), "backup"),
             description: "Define a local directory for your archives files"
-        },
-        restart: {
-            type: "string",
-            default: "npx fullstacked run --restartAll",
-            defaultDescription: "npx fullstacked run --restartAll",
-            description: "Provide a command to restart your Web App once the restoration is completed"
         },
         remote: {
             type: "boolean",
@@ -181,11 +174,6 @@ export default class Backup extends CommandInterface {
 
             await container.remove({v: true});
         }));
-
-        if(!this.config.restart) return;
-
-        console.log(`Running restart command [${this.config.restart}]`);
-        execSync(this.config.restart, {stdio: "inherit"});
     }
 
     async backupLocally(volumes: string[]){

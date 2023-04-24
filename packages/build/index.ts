@@ -1,5 +1,5 @@
-import path, { resolve } from "path";
-import esbuild, {Format, Loader, Platform} from "esbuild";
+import { resolve } from "path";
+import esbuild, {Format, Platform} from "esbuild";
 import fs from "fs";
 import yaml from "js-yaml";
 import CommandInterface from "fullstacked/CommandInterface";
@@ -18,9 +18,6 @@ const dynamicLoaderPlugin = {
     name: "dynamic-loader",
     setup(build) {
         build.onLoad({ filter: /.*/ }, ({path}) => {
-            if(path.includes("node_modules") || path.endsWith(".css"))
-                return null;
-
             return {
                 contents: fs.readFileSync(path),
                 loader: path.endsWith(".ts")
@@ -29,9 +26,13 @@ const dynamicLoaderPlugin = {
                         ? "tsx"
                         : path.endsWith(".jsx")
                             ? "jsx"
-                            : path.endsWith("js")
+                            : path.endsWith("js") // .js, .mjs, .cjs
                                 ? "js"
-                                : "file"
+                                : path.endsWith(".css")
+                                    ? "css"
+                                    : path.endsWith(".json")
+                                        ? "json"
+                                        : "file"
             };
         });
     }
@@ -139,6 +140,7 @@ export default class Build extends CommandInterface {
             bundle: true,
             format: "esm" as Format,
             sourcemap: true,
+            publicPath: "server",
             external: this.externalModules ?? [],
             define: this.getProcessEnv(),
 

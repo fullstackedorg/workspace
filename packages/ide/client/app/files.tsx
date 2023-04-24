@@ -11,7 +11,6 @@ import type {tsAPI} from "../../server";
 import {createWinID, winStore} from "./WinStore";
 import {EventDataNode} from "rc-tree/es/interface";
 
-
 type FlatFileTree = {
     [filePath: string]: ReturnType<typeof tsAPI.readDir>
 }
@@ -31,6 +30,8 @@ type File = {
 function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFileTree): File[] | [PlaceholderFile]{
     if(!flatFileTree[fileName])
         return [{ key: Math.floor(Math.random() * 100000).toString(), title: "Loading..." }];
+
+    fileName.at
 
     return flatFileTree[fileName].map((file, i) => ({
         key: file.path,

@@ -13,6 +13,8 @@ export async function maybePullDockerImage(image){
                 const dataParts = dataRaw.toString().match(/{.*}/g);
                 dataParts.forEach((part) => {
                     const {status, progress} = JSON.parse(part);
+                    clearLine(process.stdout, 0);
+                    cursorTo(process.stdout, 0, null);
                     process.stdout.write(`[${image}] ${status} ${progress || " "}`);
                 });
 

@@ -5,7 +5,7 @@ import {execSync} from "child_process";
 import {argsSpecs} from "./args";
 import install from "./install";
 
-export default async function() {
+export default function() {
     const {projectDir, fullstackedVersion, templates} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
 
     const packageJSONFile = resolve(projectDir, "package.json");
@@ -27,16 +27,20 @@ export default async function() {
         ? fullstackedVersion
         : `fullstacked@${fullstackedVersion}`;
 
+    const packageVersion = (pkg) => fs.existsSync(fullstackedVersion)
+        ? pkg
+        : `${pkg}@${fullstackedVersion}`;
+
     execSync(["npm", "i",
         fullstackedPackage,
-        "@fullstacked/create",
-        "@fullstacked/build",
-        "@fullstacked/run",
-        "@fullstacked/watch",
-        "@fullstacked/deploy",
-        "@fullstacked/backup",
-        "@fullstacked/webapp",
-        "@fullstacked/gui"].join(" "), {stdio: "inherit", cwd: projectDir});
+        packageVersion("@fullstacked/create"),
+        packageVersion("@fullstacked/build"),
+        packageVersion("@fullstacked/run"),
+        packageVersion("@fullstacked/watch"),
+        packageVersion("@fullstacked/deploy"),
+        packageVersion("@fullstacked/backup"),
+        packageVersion("@fullstacked/webapp"),
+        packageVersion("@fullstacked/gui")].join(" "), {stdio: "inherit", cwd: projectDir});
 
     const tsConfig = {
         "compilerOptions": {
@@ -60,5 +64,5 @@ export default async function() {
         fs.mkdirSync(serverDir)
     fs.writeFileSync(resolve(serverDir, "index.ts"), `// Server Entrypoint\nimport Server from "@fullstacked/webapp/server";\n\nconst server = new Server();\nserver.start();\n\nexport default server.serverHTTP;\n`)
 
-    await install();
+    return install();
 }

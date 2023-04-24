@@ -4,8 +4,6 @@ import Commands from "fullstacked/Commands";
 import fs from "fs";
 import deploy from "./deploy";
 import CLIParser from "fullstacked/utils/CLIParser";
-import {fileURLToPath} from "url";
-import { dirname } from "path";
 import websocket from "./websocket";
 
 const server = new Server();
@@ -18,14 +16,6 @@ const {port} = CLIParser.getCommandLineArgumentsValues({
 });
 
 server.port = port;
-
-setTimeout(async () => {
-    try{
-        global.__dirname = fileURLToPath(dirname(import.meta.url));
-        const open = (await import("open")).default;
-        open(`http://localhost:${port}`);
-    }catch (e) {}
-}, 1000);
 
 server.pages["/"].addInHead(`<title>FullStacked GUI</title>`);
 
