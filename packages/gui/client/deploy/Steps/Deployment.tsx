@@ -23,6 +23,7 @@ const steps = [
 let progressPollInterval;
 export default function () {
     const [deploying, setDeploying] = useState(false);
+    const [pull, setPull] = useState(false);
     const [deploymentStepIndex, setDeploymentStepIndex] = useState(null);
 
     useEffect(() => {
@@ -42,24 +43,32 @@ export default function () {
         }, 200);
     }, [deploying])
 
-    return <div>
-        <div className={`btn btn-success w-100 ${deploying && "disabled"}`}
-             onClick={async () => {
-                 setDeploying(true);
-                 await Client.get().deploy.launch();
-                 setDeploying(false);
-             }}>
-            {deploying
-                ? <div className="spinner-border" role="status"></div>
-                : "Launch Deployment"}
-        </div>
+    return <div className={"card"}>
+        <div className={"card-body"}>
+            <label className="form-check">
+                <input className="form-check-input" type="checkbox"
+                       disabled={deploying} onChange={e => setPull(e.currentTarget.checked)}
+                       checked={pull} />
+                <span className="form-check-label">Pull</span>
+            </label>
+            <div className={`btn btn-success w-100 ${deploying && "disabled"}`}
+                 onClick={async () => {
+                     setDeploying(true);
+                     await Client.get().deploy.launch(pull);
+                     setDeploying(false);
+                 }}>
+                {deploying
+                    ? <div className="spinner-border" role="status"></div>
+                    : "Launch Deployment"}
+            </div>
 
-        <ul className="steps steps-vertical">
-            {steps.map((step, stepIndex) =>
-                <li className={`step-item ${deploymentStepIndex === stepIndex && "active"}`}>
-                    <div className="h4 m-0">{step.title}</div>
-                    <small className="text-muted">{step.description}</small>
-                </li>)}
-        </ul>
+            <ul className="steps steps-vertical">
+                {steps.map((step, stepIndex) =>
+                    <li className={`step-item ${deploymentStepIndex === stepIndex && "active"}`}>
+                        <div className="h4 m-0">{step.title}</div>
+                        <small className="text-muted">{step.description}</small>
+                    </li>)}
+            </ul>
+        </div>
     </div>
 }

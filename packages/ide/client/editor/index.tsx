@@ -3,7 +3,7 @@ import {indentWithTab} from "@codemirror/commands";
 import {basicSetup} from "codemirror";
 import {javascript} from "@codemirror/lang-javascript";
 import {client} from "../client";
-import {autocompletion, CompletionContext} from "@codemirror/autocomplete";
+import {autocompletion, Completion, CompletionContext} from "@codemirror/autocomplete";
 import {linter} from "@codemirror/lint";
 
 export default async function (filename: string) {
@@ -32,6 +32,7 @@ export default async function (filename: string) {
 async function tsDiagnostics(editorView: EditorView){
     await client.put().updateFile(this, editorView.state.doc.toString());
     const tsDiagnostics = await client.get().diagnostics(this);
+
     return tsDiagnostics.map((diagnostic) => ({
         from: diagnostic.start,
         to: diagnostic.start + diagnostic.length,
@@ -52,7 +53,7 @@ async function tsCompletions(context: CompletionContext){
 
     let lastWord, from;
     for (let i = context.pos - 1; i >= 0; i--) {
-        if ([' ', '.', '\n', ':', '{', "(", "<"].includes(text[i]) || i === 0) {
+        if ([' ', '.', '\n', ':', '{', "(", "<", "/", "\"", "'"].includes(text[i]) || i === 0) {
             from = i === 0 ? i : i + 1;
             lastWord = text.slice(from, context.pos).trim();
             break;
@@ -65,12 +66,25 @@ async function tsCompletions(context: CompletionContext){
         );
     }
 
-    const options = tsCompletions.entries.map((completion) => ({
+    const options: Completion[] = tsCompletions.entries.map((completion) => ({
         label: completion.name,
         apply: (view) => {
             view.dispatch({
-                changes: { from, to: context.pos, insert: completion.name },
+                changes: {
+                    from,
+                    to: context.pos,
+                    insert: completion.name
+                }
             });
+
+            if(from === context.pos) {
+                view.dispatch({
+                    selection: {
+                        anchor: from + completion.name.length,
+                        head: from + completion.name.length,
+                    }
+                })
+            }
         },
     }));
 

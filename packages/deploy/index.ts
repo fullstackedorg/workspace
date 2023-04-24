@@ -104,6 +104,12 @@ export default class Deploy extends CommandInterface {
         configPassword: {
             type: "string",
             description: "Password to decrypt your saved configs"
+        },
+        pull: {
+            type: "boolean",
+            default: false,
+            defaultDescription: "false",
+            description: "Pull image on remote server"
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Deploy.commandLineArguments);
@@ -707,8 +713,11 @@ export default class Deploy extends CommandInterface {
      * Start up app on remote server
      *
      */
-    async startAppOnRemoteServer(){
+    async startAppOnRemoteServer(pull: boolean){
         console.log(`Starting ${Info.webAppName} v${Info.version} on remote server`);
+        if(pull){
+            await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml pull`);
+        }
         await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml up -d`);
         await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml restart`);
     }
@@ -978,7 +987,7 @@ export default class Deploy extends CommandInterface {
 
         this.progress++;
 
-        await this.startAppOnRemoteServer();
+        await this.startAppOnRemoteServer(this.config.pull);
         await this.startFullStackedNginxOnRemoteHost();
         console.log("Web App Deployed");
 

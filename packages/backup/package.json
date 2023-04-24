@@ -1,13 +1,12 @@
 {
   "name": "@fullstacked/backup",
-  "version": "0.10.0-2",
-  "description": "Backup and restore your FullStacked Web App",
-  "main": "index.js",
-  "author": "CP Lepage",
+  "version": "0.10.0-3",
+  "description": "Extract and put back archives of your Web App data",
+  "author": "cplepage",
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-3.tgz",
+    "fullstacked": "file:../../fullstacked-0.10.0-4.tgz",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {

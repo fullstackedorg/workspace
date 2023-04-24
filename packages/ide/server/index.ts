@@ -1,4 +1,3 @@
-// import "./es-fix";
 import Server from '@fullstacked/webapp/server';
 import ts from "typescript";
 import fs from "fs";
@@ -99,7 +98,8 @@ if(process.env.PASS){
     </form>
     <script>
         document.querySelector("input").focus();
-    </script>`)
+    </script>`);
+
     server.addListener({
         prefix: "global",
         async handler(req, res) {
@@ -139,10 +139,10 @@ if(process.env.PASS){
 server.addListener({
     handler(req, res) {
         if(req.url !== "/service-worker.js") return;
-        res.setHeader("Content-Type", "text/javascript");
+        res.setHeader("Content-Type", "application/javascript");
         res.end(`self.addEventListener('fetch', (event) => {});`);
     }
-}, true)
+}, true);
 
 server.start();
 
@@ -239,7 +239,7 @@ export const tsAPI = {
         const typeChecker = program.getTypeChecker();
         const token = getTokenAtPosition(program.getSourceFile(filename), pos);
         const type = typeChecker.getTypeAtLocation(token);
-        return typeChecker.typeToString(type, undefined, ts.TypeFormatFlags.InTypeAlias);
+        return typeChecker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.InTypeAlias);
     }
 }
 
@@ -294,7 +294,7 @@ server.serverHTTP.on('upgrade', (req, socket, head) => {
     const domainParts = req.headers.host.split(".");
     const firstDomainPart = domainParts.shift();
     const maybePort = parseInt(firstDomainPart);
-    if(maybePort.toString() === firstDomainPart && maybePort > 2999){
+    if(maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535){
         return new Promise(resolve => {
             proxy.ws(req, socket, head, {target: `http://localhost:${firstDomainPart}`}, resolve);
         })
@@ -344,7 +344,7 @@ server.addListener({
         const domainParts = req.headers.host.split(".");
         const firstDomainPart = domainParts.shift();
         const maybePort = parseInt(firstDomainPart);
-        if (maybePort.toString() === firstDomainPart && maybePort > 2999) {
+        if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
             return new Promise<void>(resolve => {
                 proxy.web(req, res, {target: `http://localhost:${firstDomainPart}`}, () => {
                     if (!res.headersSent) {

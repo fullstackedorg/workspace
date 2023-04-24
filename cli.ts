@@ -3,10 +3,12 @@ import CLIParser from "./utils/CLIParser";
 import fs from "fs";
 import CommandInterface from "./CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
-import {dirname, resolve} from "path";
+import {dirname, resolve, join} from "path";
 import Info from "./info";
 import FullStackedVersion from "./version";
 import Commands from "./Commands";
+import {fileURLToPath, pathToFileURL} from "url";
+import { createRequire } from "module";
 
 const {help, version, packageJson} = CLIParser.getCommandLineArgumentsValues({
     packageJson: {
@@ -32,30 +34,56 @@ Info.init(packageJson);
 
 const commandName = CLIParser.commandLinePositional;
 
+// source: https://stackoverflow.com/a/72942136/9777391
+const getModuleDir = (moduleEntry) => {
+    const packageName = moduleEntry.includes('/')
+        ? moduleEntry.startsWith('@')
+            ? moduleEntry.split('/').slice(0, 2).join('/')
+            : moduleEntry.split('/')[0]
+        : moduleEntry;
+    const require = createRequire(import.meta.url);
+    const lookupPaths =  require.resolve.paths(moduleEntry).map((p) => join(p, packageName));
+    const foundPath = lookupPaths.find(p => fs.existsSync(p));
+    return foundPath ? pathToFileURL(foundPath) : null;
+};
+
 function getCommandLocation(commandName: string){
     const currentDirectory  = dirname(import.meta.url);
-    const devLocation       = new URL(`${currentDirectory}/packages/${commandName}/index.js`);
-    const installedLocation = new URL(`${currentDirectory}/../@fullstacked/${commandName}/index.js`);
+    const devLocation       = new URL(`${currentDirectory}/packages/${commandName}`);
     return fs.existsSync(devLocation)
         ? devLocation
-        : fs.existsSync(installedLocation)
-            ? installedLocation
-            : null;
+        : getModuleDir(`@fullstacked/${commandName}`);
+}
+
+function getCommandPackageInfos(commandName: string){
+    const location = getCommandLocation(commandName);
+    if(!location) return null;
+    const dir = fileURLToPath(location);
+    const infos = JSON.parse(fs.readFileSync(resolve(dir, "package.json")).toString());
+    return {
+        location,
+        version: infos.version,
+        description: infos.description
+    };
 }
 
 if(!commandName) {
     if(help){
         const table = new Table({
-            head: ["Command", "Installed", "Description"],
+            head: ["Command", "Installed", "Version", "Description"],
             style: {
                 head: ["blue"]
             }
         });
-        table.push(...(Commands.map(command => ([
-            command.name,
-            {hAlign: "center" as HorizontalAlignment, content: getCommandLocation(command.name) ? "✓" : "x"},
-            command.description
-        ]))));
+        table.push(...(Commands.map(command => {
+            const infos = getCommandPackageInfos(command)
+            return [
+                command,
+                {hAlign: "center" as HorizontalAlignment, content: infos?.location ? "✓" : "x"},
+                infos?.version ?? "-",
+                infos?.description
+            ]
+        })));
         console.log("\n  Usage: npx fullstacked [COMMAND] [ARGS...]\n");
         console.log(table.toString());
         process.exit(0);
@@ -69,7 +97,7 @@ if(!commandName) {
     throw Error("Could not find command in command line");
 }
 
-if(!Commands.find(command => command.name === commandName)){
+if(!Commands.find(command => command === commandName)){
     console.log(`[${commandName}] is not a FullStacked command`);
     console.log(`If you need help, run [ npx fullstacked --help ]`);
     process.exit(0);
@@ -80,7 +108,7 @@ const commandLocation = getCommandLocation(commandName);
 if(!commandLocation)
     throw Error(`Could not locate command [${commandName}]. Maybe try to install it [ npm i @fullstacked/${commandName} ]`);
 
-const CommandModule = await import(commandLocation.toString());
+const CommandModule = await import(commandLocation.toString() + "/index.js");
 
 const command: CommandInterface = new CommandModule.default();
 
@@ -101,7 +129,8 @@ if(help){
             argSpec.description
         ])
     })
-    console.log(`\n  ${Commands.find(command => command.name === commandName).description}\n`)
+    const packageInfo = getCommandPackageInfos(commandName);
+    console.log(`\n  ${packageInfo.description}\n`)
     console.log(`  Usage: npx fullstacked ${commandName} [ARGS...]\n`)
     console.log(outputTable.toString());
 }else{

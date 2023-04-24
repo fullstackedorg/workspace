@@ -1,8 +1,8 @@
 {
   "name": "@fullstacked/gui",
-  "version": "0.10.0-4",
-  "description": "Spawn a graphical user interface to access FullStacked functionalities",
-  "author": "CP Lepage",
+  "version": "0.10.0-7",
+  "description": "Launch the GUI to execute the different FullStacked commands",
+  "author": "cplepage",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -16,17 +16,16 @@
     "@fullstacked/watch"
   ],
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-3.tgz"
+    "fullstacked": "file:../../fullstacked-0.10.0-4.tgz"
   },
   "devDependencies": {
-    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-16.tgz",
-    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-3.tgz",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-18.tgz",
+    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-5.tgz",
     "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-25.tgz",
     "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-16.tgz",
     "@tabler/core": "^1.0.0-beta17",
     "@types/react": "^18.0.28",
     "@types/ws": "^8.5.4",
-    "open": "^8.4.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-github-btn": "^1.4.0",

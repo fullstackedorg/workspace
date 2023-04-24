@@ -1,7 +1,12 @@
 FROM docker:dind
 
-RUN apk add --update nodejs npm git
+RUN apk add --update make g++ nodejs npm git python3
 RUN npm i -g typescript node-pty
+
+COPY . /fullstacked
+
+RUN cd /fullstacked && npm ci
+RUN cd /fullstacked && node packages/ide/install
 
 WORKDIR /home
 

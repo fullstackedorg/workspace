@@ -22,6 +22,7 @@ const toBuild = [
     "./packages/deploy/index.ts",
     "./packages/run/index.ts",
     "./packages/ide/index.ts",
+    "./packages/ide/install.ts",
     "./packages/watch/index.ts",
     "./packages/watch/fileParser.ts",
     "./packages/watch/watcher.ts",
@@ -39,6 +40,9 @@ const toBuild = [
     "./packages/webapp/rpc/createListener.ts",
     "./CommandInterface.ts",
     "./info.ts",
+    "./pack.ts",
+    "./prepare.ts",
+    "./test.ts",
     "./cli.ts"
 ].filter(file => !file.endsWith(".d.ts"));
 

@@ -1,14 +1,13 @@
 {
   "name": "fullstacked",
   "title": "FullStacked",
-  "version": "0.10.0-3",
+  "version": "0.10.0-4",
   "description": "A CLI that takes care of all the redundant tasks in TypeScript web app development.",
-  "types": "index.d.ts",
   "scripts": {
     "clean": "npx esbuild clean.ts --outfile=clean.js --format=esm && node clean",
     "build": "npm run clean && npx esbuild build.ts --outfile=build.js --format=esm && node build && npx tsc",
     "prepack": "npm run build",
-    "pretest": "npx esbuild test.ts --outfile=test.js --format=esm",
+    "pretest": "npm run build",
     "test": "node test"
   },
   "type": "module",
@@ -45,8 +44,7 @@
   },
   "dependencies": {
     "cli-table3": "^0.6.3",
-    "dockerode": "^3.3.4",
-    "xterm-addon-fit": "^0.7.0"
+    "dockerode": "^3.3.4"
   },
   "exports": {
     "./commands/info": "./commands/info/index.js",
