@@ -32,7 +32,8 @@
   },
   "homepage": "https://fullstacked.org",
   "bin": {
-    "fullstacked": "cli.js"
+    "fullstacked": "cli.js",
+    "fsc": "cli.js"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.14",

@@ -370,7 +370,8 @@ export function convertImportDefinitionToAsyncImport(
         ".woff2",
         ".ttf",
         ".otf",
-        ".json"
+        ".json",
+        ".wasm"
     ].find(ext => moduleName.endsWith(ext));
     if (fileLoader) {
         return [

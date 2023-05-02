@@ -1,6 +1,0 @@
-{
-    "dependencies": [
-        "@trpc/client",
-        "@trpc/server"
-    ]
-}

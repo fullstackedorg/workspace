@@ -3,18 +3,17 @@ import {resolve} from "path";
 import fs from "fs";
 import {execSync} from "child_process";
 import {argsSpecs} from "./args";
-import install from "./install";
 
 export default function() {
-    const {projectDir, fullstackedVersion, templates} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
+    const {dir, tag, ts} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
 
-    const packageJSONFile = resolve(projectDir, "package.json");
+    const packageJSONFile = resolve(dir, "package.json");
     if(fs.existsSync(packageJSONFile))
-        throw `package.json already exist at [${projectDir}]`;
+        throw `package.json already exist at [${dir}]`;
 
-    if(!fs.existsSync(projectDir)) fs.mkdirSync(projectDir, {recursive: true});
+    if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
 
-    execSync("npm init --y", {stdio: "ignore", cwd: projectDir});
+    execSync("npm init --y", {stdio: "ignore", cwd: dir});
 
     const packageJSONData = JSON.parse(fs.readFileSync(packageJSONFile).toString());
     packageJSONData.type = "module";
@@ -23,24 +22,22 @@ export default function() {
     }
     fs.writeFileSync(packageJSONFile, JSON.stringify(packageJSONData, null, 2));
 
-    const fullstackedPackage = fs.existsSync(fullstackedVersion)
-        ? fullstackedVersion
-        : `fullstacked@${fullstackedVersion}`;
+    const fullstackedPackage = fs.existsSync(tag)
+        ? tag
+        : `fullstacked@${tag}`;
 
-    const packageVersion = (pkg) => fs.existsSync(fullstackedVersion)
+    const packageVersion = (pkg) => fs.existsSync(tag)
         ? pkg
-        : `${pkg}@${fullstackedVersion}`;
+        : `${pkg}@${tag}`;
 
     execSync(["npm", "i",
         fullstackedPackage,
-        packageVersion("@fullstacked/create"),
-        packageVersion("@fullstacked/build"),
-        packageVersion("@fullstacked/run"),
         packageVersion("@fullstacked/watch"),
-        packageVersion("@fullstacked/deploy"),
-        packageVersion("@fullstacked/backup"),
         packageVersion("@fullstacked/webapp"),
-        packageVersion("@fullstacked/gui")].join(" "), {stdio: "inherit", cwd: projectDir});
+        ...(ts
+            ? [packageVersion("@fullstacked/build")]
+            : [])
+    ].join(" "), {stdio: "inherit", cwd: dir});
 
     const tsConfig = {
         "compilerOptions": {
@@ -52,17 +49,30 @@ export default function() {
         }
     };
 
-    fs.writeFileSync(resolve(projectDir, "tsconfig.json"), JSON.stringify(tsConfig, null, 2));
+    if(ts){
+        fs.writeFileSync(resolve(dir, "tsconfig.json"), JSON.stringify(tsConfig, null, 2));
+    }
 
-    const clientDir = resolve(projectDir, "client");
+    const clientDir = resolve(dir, "client");
     if(!fs.existsSync(clientDir))
         fs.mkdirSync(clientDir)
-    fs.writeFileSync(resolve(clientDir, "index.ts"), `// Client Entrypoint\n`)
+    fs.writeFileSync(resolve(clientDir, ts ? "index.ts" : "index.js"), `// Client Entrypoint
+let div = document.querySelector("div");
+if(!div){
+    div = document.createElement("div");
+    document.body.append(div);
+}
 
-    const serverDir = resolve(projectDir, "server");
+div.innerText = "Welcome to FullStacked";`);
+
+    const serverDir = resolve(dir, "server");
     if(!fs.existsSync(serverDir))
         fs.mkdirSync(serverDir)
-    fs.writeFileSync(resolve(serverDir, "index.ts"), `// Server Entrypoint\nimport Server from "@fullstacked/webapp/server";\n\nconst server = new Server();\nserver.start();\n\nexport default server.serverHTTP;\n`)
+    fs.writeFileSync(resolve(serverDir, ts ? "index.ts" : "index.js"), `// Server Entrypoint
+import Server from "@fullstacked/webapp/server";
 
-    return install();
+const server = new Server();
+server.start();
+
+export default server.serverHTTP;`);
 }

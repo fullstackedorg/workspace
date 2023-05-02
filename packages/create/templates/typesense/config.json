@@ -1,6 +1,0 @@
-{
-    "dependencies": [
-        "http-proxy",
-        "typesense"
-    ]
-}

@@ -11,6 +11,7 @@ export default function () {
     const [hasCredentialless, setHasCredentialless] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>();
     const inputPortRef = useRef<HTMLInputElement>();
+    const inputPathRef = useRef<HTMLInputElement>();
 
     useEffect(() => {
         const analyzeIframeResponse = (e) => {
@@ -47,7 +48,7 @@ export default function () {
         }, 100);
     });
 
-    const loadPort = () => {
+    const load = () => {
         const url = new URL(window.location.href);
         const token = url.searchParams.get("token");
         url.searchParams.forEach((value, param) => url.searchParams.delete(param));
@@ -56,27 +57,29 @@ export default function () {
 
         if(hasCredentialless){
             url.searchParams.set("port", port);
-            if(token) url.searchParams.set("token", token);
-            iframeRef.current.src = url.toString();
         }else{
-            let portURL = url.protocol + "//" + port + "." + url.host;
-            if(token)
-                portURL += `?token=${token}`;
-            iframeRef.current.src = portURL;
+            url.host = port + "." + url.host;
         }
+
+        url.pathname = inputPathRef.current.value;
+        if(token) url.searchParams.set("token", token);
+        iframeRef.current.src = url.toString();
     }
 
     return <div className={"browser"}>
         <div className={"url-bar"}>
             <form onSubmit={e => {
                 e.preventDefault();
-                loadPort();
+                load();
                 inputPortRef.current.blur();
             }}>
-                Port : <input ref={inputPortRef} />
+                Port : <input style={{width: 70}} ref={inputPortRef} />
+                Path : <input style={{width: 100}} ref={inputPathRef} />
                 <button>Go</button>
             </form>
-            Credentialless : {hasCredentialless ? "Active" : "Inactive"}
+            <small>
+                Credentialless <div className={"dot"} style={{backgroundColor: hasCredentialless ? "green" : "red"}} />
+            </small>
         </div>
         <iframe ref={iframeRef} />
     </div>

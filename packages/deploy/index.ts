@@ -679,7 +679,7 @@ export default class Deploy extends CommandInterface {
         if(!await sftp.exists(`${this.credentialsSSH.directory}/${Info.webAppName}`))
             await sftp.mkdir(`${this.credentialsSSH.directory}/${Info.webAppName}`, true);
 
-        const files = globSync("**/*", {cwd: this.config.outputDir})
+        const files = globSync("**/*", {dot: true, cwd: this.config.outputDir})
             .map(file => file.split(path.sep).join("/")); // forward slash only here
 
         const localFiles = files.map((file) => resolve(this.config.outputDir, file));

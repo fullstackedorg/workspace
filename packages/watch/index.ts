@@ -27,14 +27,24 @@ export default class Watch extends CommandInterface {
         client: {
             type: "string",
             short: "c",
-            default: ["./client/index.ts", "./client/index.tsx"].find((defaultFile) => fs.existsSync(defaultFile)),
+            default: [
+                "./client/index.ts",
+                "./client/index.tsx",
+                "./client/index.js",
+                "./client/index.jsx"
+            ].find((defaultFile) => fs.existsSync(defaultFile)),
             description: "Client entry point",
             defaultDescription: "./client/index.ts(x)"
         },
         server: {
             type: "string",
             short: "s",
-            default: ["./server/index.ts", "./server/index.tsx"].find((defaultFile) => fs.existsSync(defaultFile)),
+            default: [
+                "./server/index.ts",
+                "./server/index.tsx",
+                "./server/index.js",
+                "./server/index.jsx"
+            ].find((defaultFile) => fs.existsSync(defaultFile)),
             description: "Server entry point",
             defaultDescription: "./server/index.ts(x)"
         },
@@ -68,7 +78,6 @@ export default class Watch extends CommandInterface {
 
         if(!this.config.dockerCompose.length || process.env.DOCKER){
             process.env.CLIENT_DIR = resolve(this.config.outputDir, dirname(this.config.client));
-            process.env.NODE_ENV = 'development';
             process.env.PORT = process.env.DOCKER ? "8000" : (await getNextAvailablePort(8000)).toString();
             console.log(`${Info.webAppName} v${Info.version} is running at http://localhost:${process.env.PORT}`);
             await watcher(this.config.client, this.config.server, this.config.outputDir);

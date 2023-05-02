@@ -11,19 +11,9 @@ import cookie from "cookie";
 import CLIParser from "fullstacked/utils/CLIParser";
 import { randomUUID } from 'crypto';
 import HTML from "@fullstacked/webapp/server/HTML";
-import base64icon from "./base64icon";
 import arrow from "./arrow";
 
-const server = new Server();
-
-const {port} = CLIParser.getCommandLineArgumentsValues({
-    port: {
-        type: "number",
-        default: 8000
-    }
-});
-
-server.port = port;
+export const server = new Server();
 
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
@@ -39,7 +29,13 @@ if(process.env.PASS){
         "/pwa/app-icons/maskable.png"
     ]
     const loginPage = new HTML();
+    loginPage.addInHead(`<meta property="og:image" content="https://files.cplepage.com/fullstacked/sharing-image.jpg">`);
+    loginPage.addInHead(`<title>FullStacked IDE</title>`);
+    loginPage.addInHead(`<link id="favicon" rel="shortcut icon" type="image/png" href="/pwa/app-icons/favicon.png">`);
     loginPage.addInHead(`<style>
+        *{
+            box-sizing: border-box;
+        }
         html, body{
             background-color: #1e293c;
             height: 100%;
@@ -73,6 +69,7 @@ if(process.env.PASS){
             color: #e9edf4;
             border: 1px solid #777f8c;
             font-size: large;
+            margin: 0;
         }
         button {
             height: 100%;
@@ -91,7 +88,7 @@ if(process.env.PASS){
         }
     </style>`)
     loginPage.addInBody(`
-    <img src="${base64icon.trim()}" />
+    <img src="/pwa/app-icons/app-icon.png" />
     <form action="/" method="post">
         <input type="password" name="password" />
         <button>${arrow}</button>
@@ -135,8 +132,8 @@ if(process.env.PASS){
     })
 }
 
-
 server.addListener({
+    prefix: "global",
     handler(req, res) {
         if(req.url !== "/service-worker.js") return;
         res.setHeader("Content-Type", "application/javascript");
@@ -144,7 +141,9 @@ server.addListener({
     }
 }, true);
 
-server.start();
+// called with [npx fullstacked ide]
+if(!process.argv.includes("ide"))
+    server.start();
 
 export default server.serverHTTP;
 
@@ -157,20 +156,21 @@ const servicesHost: ts.LanguageServiceHost = {
         if (!fs.existsSync(fileName)) return undefined
         return ts.ScriptSnapshot.fromString(fs.readFileSync(fileName).toString());
     },
-    getCurrentDirectory: process.cwd,
+    getCurrentDirectory: ts.sys.getCurrentDirectory,
     getCompilationSettings: () => ({
         module: ts.ModuleKind.ES2022,
         target: ts.ScriptTarget.ES2022,
         esModuleInterop: true,
         moduleResolution: ts.ModuleResolutionKind.NodeJs,
         jsx: ts.JsxEmit.React,
+        experimentalDecorators: true
     }),
     getDefaultLibFileName: ts.getDefaultLibFilePath,
     fileExists: ts.sys.fileExists,
     readFile: ts.sys.readFile,
     readDirectory: ts.sys.readDirectory,
     directoryExists: ts.sys.directoryExists,
-    getDirectories: ts.sys.getDirectories,
+    getDirectories: ts.sys.getDirectories
 };
 
 const languageService = ts.createLanguageService(servicesHost, ts.createDocumentRegistry());
@@ -228,11 +228,30 @@ export const tsAPI = {
         else files[filename].version++;
     },
     diagnostics(filename: string){
-        return languageService.getSemanticDiagnostics(filename)
+        const diagnostics = languageService.getSemanticDiagnostics(filename)
             .concat(languageService.getSyntacticDiagnostics(filename));
+        return diagnostics.map(diagnostic => {
+            delete diagnostic.file;
+            delete diagnostic.relatedInformation;
+            return diagnostic;
+        });
     },
     completions(filename: string, pos: number){
-        return languageService.getCompletionsAtPosition(filename, pos, {});
+        return languageService.getCompletionsAtPosition(filename, pos, {
+            allowIncompleteCompletions: true,
+            allowRenameOfImportPath: true,
+            allowTextChangesInNewFiles: true,
+            includeAutomaticOptionalChainCompletions: true,
+            includeCompletionsForImportStatements: true,
+            includeCompletionsForModuleExports: true,
+            includeCompletionsWithClassMemberSnippets: true,
+            includeCompletionsWithObjectLiteralMethodSnippets: true,
+            includeCompletionsWithInsertText: true,
+            includeCompletionsWithSnippetText: true,
+            jsxAttributeCompletionStyle: "auto",
+            providePrefixAndSuffixTextForRename: true,
+            provideRefactorNotApplicableReason: true,
+        });
     },
     typeDefinition(filename: string, pos: number){
         const program = languageService.getProgram();
@@ -246,37 +265,37 @@ export const tsAPI = {
 server.addListener(createListener(tsAPI));
 
 server.pages["/"].addInHead(`<title>FullStacked IDE</title>`);
+server.pages["/"].addInHead(`<link rel="apple-touch-icon" href="/pwa/app-icons/maskable.png">`);
+server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="FullStacked IDE">`);
+server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
+server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
+server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
 
 const commandsWS = new WebSocketServer({noServer: true});
 let command: IPty;
 commandsWS.on('connection', (ws) => {
+    command = pty.spawn("/bin/sh", [], {
+        name: '',
+        cols: 80,
+        rows: 30,
+        cwd: process.cwd()
+    });
+
+    command.onData((data) => ws.send(data))
+
     ws.on('message', data => {
-        if(data.toString() === "##KILL##"){
-            command.kill();
+        const dataStr = data.toString();
+        if(dataStr.startsWith("SIZE#")){
+            const [_, cols, rows] = dataStr.split("#");
+            command.resize(parseInt(cols), parseInt(rows));
+            return;
+        }else if(dataStr === "##PING##"){
             return;
         }
-
-        command = pty.spawn("/bin/sh", ["-c", data.toString() + " && echo --$(pwd)--"], {
-            name: '',
-            cols: 80,
-            rows: 30,
-            cwd: process.cwd()
-        });
-
-        let endPath = "";
-        command.onData( chunk => {
-            if(chunk.match(/--.*--/)){
-                if(chunk.includes(process.cwd()))
-                    endPath = chunk.trim().replace(process.cwd(), "");
-                return;
-            }
-            ws.send(chunk)
-        });
-        command.onExit(() => {
-            ws.send(endPath);
-            ws.send("##END##")
-        });
+        command.write(data.toString());
     });
+
+    ws.on('close', () => command.kill());
 });
 
 const proxy = httpProxy.createProxy({});
@@ -331,6 +350,17 @@ server.addListener({
 
         if (cookies.port) {
             return new Promise<void>(resolve => {
+                const originalEnd = res.end.bind(res);
+                res.end = function(chunk, encoding?, callback?) {
+                    const mimeType = res.getHeader("Content-Type");
+                    if (mimeType?.toString()?.startsWith('text/html')) {
+                        if(chunk) res.write(chunk, encoding);
+                        res.write(`<script src="//cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init({useShadowDom: false});</script>`);
+                        return originalEnd(undefined, undefined, callback);
+                    }
+                    originalEnd(chunk, encoding, callback);
+                }
                 proxy.web(req, res, {target: `http://localhost:${cookies.port}`}, () => {
                     if (!res.headersSent) {
                         res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
@@ -346,6 +376,17 @@ server.addListener({
         const maybePort = parseInt(firstDomainPart);
         if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
             return new Promise<void>(resolve => {
+                const originalEnd = res.end.bind(res);
+                res.end = function(chunk, encoding?, callback?) {
+                    const mimeType = res.getHeader("Content-Type");
+                    if (mimeType?.toString()?.startsWith('text/html')) {
+                        if(chunk) res.write(chunk, encoding);
+                        res.write(`<script src="//cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init({useShadowDom: false});</script>`);
+                        return originalEnd(undefined, undefined, callback);
+                    }
+                    originalEnd(chunk, encoding, callback);
+                }
                 proxy.web(req, res, {target: `http://localhost:${firstDomainPart}`}, () => {
                     if (!res.headersSent) {
                         res.end(`Port ${firstDomainPart} is down.`);

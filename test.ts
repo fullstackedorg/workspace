@@ -21,7 +21,7 @@ execSync([
     `--prefix ${fileURLToPath(testDirectory)}`,
     "-y",
     "--",
-    `-v ${packages.fullstackedPackage}`].join(" "), {cwd: testDirectory, stdio: "inherit"});
+    `--tag ${packages.fullstackedPackage}`].join(" "), {cwd: testDirectory, stdio: "inherit"});
 
-// testing local packages
+// // testing local packages
 execSync(`npm i ${Object.keys(packages).map(pkg => packages[pkg]).join(" ")}`, {cwd: testDirectory, stdio: "inherit"});
