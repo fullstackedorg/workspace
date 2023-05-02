@@ -3,7 +3,6 @@ import http, {IncomingMessage, RequestListener, ServerResponse} from "http";
 import mime from "mime";
 import HTML from "./HTML";
 import {resolve} from "path";
-import {fileURLToPath} from "url";
 
 export type Listener = {
     name?: string,
@@ -26,9 +25,9 @@ export default class {
     *  |  |_ index.mjs
     *  |_ docker-compose.yml
     */
-    publicDir = process.env.CLIENT_DIR
+    clientDir = process.env.CLIENT_DIR
         ? resolve(process.cwd(), process.env.CLIENT_DIR)
-        : fileURLToPath(new URL("../client", import.meta.url));
+        : resolve(process.cwd(), "client");
     logger: {
         in(req, res): void,
         out(req, res): void
@@ -54,7 +53,7 @@ export default class {
     };
 
     constructor() {
-        if(process.env.NODE_ENV === "development"){
+        if(process.env.NODE_ENV !== "production"){
             const activeRequests = new Map();
             this.logger = {
                 in(req, res){
@@ -69,10 +68,10 @@ export default class {
             }
         }
 
-        if(fs.existsSync(resolve(this.publicDir, "index.css")))
+        if(fs.existsSync(resolve(this.clientDir, "index.css")))
             this.pages["/"].addStyle("/index.css");
 
-        if(fs.existsSync(resolve(this.publicDir, "index.js")))
+        if(fs.existsSync(resolve(this.clientDir, "index.js")))
             this.pages["/"].addScript("/index.js");
 
         this.serverHTTP = http.createServer(async (req, res: ServerResponse & {currentListener: string}) => {
@@ -145,7 +144,7 @@ export default class {
         }
 
         // remove leading slash : /asset/image.png => asset/image.png
-        const filePath = resolve(this.publicDir, fileURL.slice(1));
+        const filePath = resolve(this.clientDir, fileURL.slice(1));
 
         if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return;
 

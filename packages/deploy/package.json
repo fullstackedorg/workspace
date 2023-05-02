@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/deploy",
-  "version": "0.10.0-5",
+  "version": "0.10.0-6",
   "description": "Send your bundled Web App to a remote host",
   "main": "index.js",
   "author": "cplepage",

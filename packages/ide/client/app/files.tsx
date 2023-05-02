@@ -31,8 +31,6 @@ function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFil
     if(!flatFileTree[fileName])
         return [{ key: Math.floor(Math.random() * 100000).toString(), title: "Loading..." }];
 
-    fileName.at
-
     return flatFileTree[fileName].map((file, i) => ({
         key: file.path,
         title: file.name,
@@ -68,30 +66,30 @@ export default function () {
             </use>
         </svg>}
         onExpand={async (keys: string[], {node, expanded}) => {
-            if(!keys?.length) return;
-            if(!expanded) return;
+            if(!keys?.length || !expanded || !node.isDir) return;
             files[node.key] = await client.get().readDir(node.key);
             setFiles( {...files});
         }}
-        onSelect={(_, data: {node: File, nativeEvent}) => {
+        onSelect={(selectedKeys, data: {node: File, nativeEvent}) => {
             if(data.node.isDir || (data.nativeEvent as PointerEvent).pointerType === "mouse") return;
             const id = createWinID();
             const winBox = new WinBox(data.node.key, {url: `${window.location.href}?edit=${data.node.key}&winId=${id}`});
             winStore.set(id, winBox);
+            setTimeout(() => winBox.focus(true), 1);
         }}
         onDoubleClick={(_, file: EventDataNode<File>) => {
             if(file.isDir) return;
             const id = createWinID();
             const winBox = new WinBox(file.key, {url: `${window.location.href}?edit=${file.key}&winId=${id}`});
             winStore.set(id, winBox);
-
         }}
+        expandAction={"click"}
     />
 }
 
 
 function iconForFilename(filename: string){
-    if(filename === "docker-compose.yml" || filename === "Dockerfile")
+    if(filename.endsWith("compose.yml") || filename.startsWith("Dockerfile"))
         return "docker";
     const extension = filename.split(".").at(-1);
     switch (extension){
@@ -107,7 +105,10 @@ function iconForFilename(filename: string){
             return "css";
         case "js":
             return "javascript";
+        case "map":
+            return "javascript-map";
         case "png":
+        case "jpg":
             return "image";
         default:
             return "file";

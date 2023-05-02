@@ -4,16 +4,19 @@ export const argsSpecs = {
         type: "string[]",
         description: "Templates to install. View available here\nhttps://github.com/cplepage/create-fullstacked/tree/main/templates"
     },
-    projectDir: {
-        short: "p",
+    dir: {
         type: "string",
         default: process.cwd(),
         defaultDescription: "Current directory"
     },
-    fullstackedVersion: {
-        short: "v",
+    tag: {
         type: "string",
         default: "latest",
         defaultDescription: "latest"
+    },
+    ts: {
+        type: "boolean",
+        default: false,
+        defaultDescription: "false"
     }
 } as const;

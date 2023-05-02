@@ -3,49 +3,56 @@ import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
+let pingThrottler;
 export default function () {
     useEffect(() => {
         const commandsWS = new WebSocket("ws" +
             (window.location.protocol === "https:" ? "s" : "") +
             "://" + window.location.host + "/fullstacked-commands");
 
-        let currentLine = "", path = "";
         const term = new Terminal();
         let fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
         term.open(document.querySelector('.terminal'));
-        fitAddon.fit();
-        term.write('# ');
-        term.onKey(({key, domEvent}) => {
-            if(domEvent.key === "Backspace"){
-                currentLine = currentLine.slice(0, -1);
-                term.write('\b \b');
-            }else if(domEvent.key === "Enter"){
-                const cmd = (path ? `cd ${path} &&` : "") + currentLine;
-                commandsWS.send(cmd);
-                currentLine = "";
-                term.write('\r\n');
-            }else if(domEvent.key === "c" && domEvent.ctrlKey){
-                commandsWS.send("##KILL##")
-            }else{
-                currentLine += key;
-                term.write(key);
-            }
-        });
 
-        commandsWS.onmessage = e => {
-            if(e.data === "##END##") {
-                term.write((path ? path + " " : "") + "# ")
-            }else if(e.data.match(/--.*--/)){
-                path = e.data.trim().slice(3, -2);
-            }else{
-                term.write(e.data);
-            }
+        const resize = () => {
+            fitAddon.fit();
+            commandsWS.send(`SIZE#${term.cols}#${term.rows}`);
         }
 
-        window.addEventListener("resize", () => {
-            fitAddon.fit();
+        const ping = () => {
+            if(pingThrottler) clearTimeout(pingThrottler);
+            pingThrottler = setTimeout(() => {
+                commandsWS.send("##PING##");
+                pingThrottler = null;
+                ping();
+            }, 30 * 1000);
+        }
+        ping();
+
+        term.onKey(({key, domEvent}) => {
+            commandsWS.send(key);
+            ping();
         });
+
+        term.attachCustomKeyEventHandler((arg) => {
+            if ((arg.metaKey || arg.ctrlKey) && arg.code === "KeyV" && arg.type === "keydown") {
+                navigator.clipboard.readText().then(text => {
+                    commandsWS.send(text)
+                });
+            }
+            return true;
+        });
+
+        commandsWS.onopen = () => {
+            resize();
+        }
+
+        commandsWS.onmessage = e => {
+            term.write(e.data);
+        }
+
+        window.addEventListener("resize", () => resize());
     }, [])
 
     return <div className={"terminal"}/>

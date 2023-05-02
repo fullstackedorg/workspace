@@ -72,19 +72,18 @@ export default class Run extends CommandInterface {
         console.log(`${Info.webAppName} v${Info.version} stopped`);
     }
 
-    async startNative(command: string | string[]){
-        process.env.NODE_ENV = 'development';
-        command = Array.isArray(command) ? command.join(" ") : command;
+    async startNative(){
+        const workdir = dirname(this.config.dockerCompose);
         const port = await getNextAvailablePort(8000);
         console.log(`${Info.webAppName} v${Info.version} is running at http://localhost:${port}`);
-        execSync(`PORT=${port} node ${command}`, {cwd: dirname(this.config.dockerCompose), stdio: "inherit"})
+        execSync(`PORT=${port} node --enable-source-maps server/index.mjs`, {cwd: workdir, stdio: "inherit"})
     }
 
     async start(){
         const services = Object.keys(this.dockerCompose.recipe.services);
 
-        if(services.length === 1 && this.dockerCompose.recipe.services.node?.command){
-            return this.startNative(this.dockerCompose.recipe.services.node.command);
+        if(services.length === 1){
+            return this.startNative();
         }
 
         let availablePort = 8000;

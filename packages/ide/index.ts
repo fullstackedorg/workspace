@@ -9,8 +9,15 @@ export default class Ide extends CommandInterface {
     config = CLIParser.getCommandLineArgumentsValues(Ide.commandLineArguments);
 
     async run(): Promise<void> {
+        // @ts-ignore
+        const {server} = await import("./dist/server/index.mjs");
         const port = await getNextAvailablePort();
-        fork(fileURLToPath(new URL("./dist/server/index.mjs", import.meta.url)), ["--port", port.toString()],{stdio: "inherit"});
+        server.port = port;
+        server.publicDir = fileURLToPath(new URL("./dist/client", import.meta.url));
+        server.logger = null;
+        server.pages["/"].addStyle("/index.css");
+        server.pages["/"].addScript("/index.js");
+        server.start();
         console.log(`FullStacked IDE is running at http://localhost:${port}`);
     }
 

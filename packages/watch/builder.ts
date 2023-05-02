@@ -8,7 +8,7 @@ import {
     tokenizeImports
 } from "./fileParser";
 import randStr from "fullstacked/utils/randStr";
-import {possibleJSExtensions} from "./utils";
+import {moduleExtensions, possibleJSExtensions} from "./utils";
 
 type BuilderOptions = {
     entrypoint: ModulePath,
@@ -48,7 +48,7 @@ export default async function(options: BuilderOptions, withExternalModules: stri
     const entrypointDir = dirname(options.entrypoint);
     const mainOutDir = resolve(options.outdir, entrypointDir);
 
-    if (options.externalModules.bundle) {
+    if (options.externalModules.bundle && externalModules?.length) {
         await bundleExternalModules(externalModules, mainOutDir, options.externalModules.bundleOutName);
     }
 
@@ -174,7 +174,6 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                             modulesFlatTree[entrypoint].imports.add(moduleName);
 
                             if (options.externalModules.convert) {
-
                                 if (!externalModules.includes(moduleName))
                                     externalModules.push(moduleName)
 
@@ -208,7 +207,7 @@ async function builder(options: Omit<BuilderOptions, 'entrypoints'> & {entrypoin
                         const moduleNameWithExtension = moduleName + extension;
 
                         // CSS or asset file
-                        if (![".js", ".jsx", ".mjs", ".ts", ".tsx"].find(ext => moduleNameWithExtension.endsWith(ext))) {
+                        if (!moduleExtensions.find(ext => moduleNameWithExtension.endsWith(ext))) {
 
                             if (!modulesFlatTree[moduleRelativePathToProject]) {
                                 modulesFlatTree[moduleRelativePathToProject] = {

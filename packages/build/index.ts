@@ -10,7 +10,7 @@ import Info from "fullstacked/info";
 // Polyfill for stackblitz
 if(!global.structuredClone) {
     global.structuredClone = function (obj) {
-        return JSON.parse(JSON.stringify(obj))
+        return JSON.parse(JSON.stringify(obj));
     }
 }
 
@@ -44,13 +44,20 @@ export default class Build extends CommandInterface {
             node: {
                 image: "node:18-alpine",
                 working_dir: "/app",
-                command: ["server/index.mjs"],
+                command: [
+                    "sh",
+                    "-c",
+                    "node server/index.mjs"
+                ],
                 restart: "unless-stopped",
                 expose: ["8000"],
                 ports: ["8000"],
                 volumes: [
                     `./client:/app/client`,
                     `./server:/app/server`
+                ],
+                environment: [
+                    "NODE_ENV=development"
                 ]
             }
         }
@@ -60,14 +67,24 @@ export default class Build extends CommandInterface {
         client: {
             type: "string",
             short: "c",
-            default: ["./client/index.ts", "./client/index.tsx"].find((defaultFile) => fs.existsSync(defaultFile)),
+            default: [
+                "./client/index.ts",
+                "./client/index.tsx",
+                "./client/index.js",
+                "./client/index.jsx",
+            ].find((defaultFile) => fs.existsSync(defaultFile)),
             description: "Client entry point",
             defaultDescription: "./client/index.ts(x)"
         },
         server: {
             type: "string",
             short: "s",
-            default: ["./server/index.ts", "./server/index.tsx"].find((defaultFile) => fs.existsSync(defaultFile)),
+            default: [
+                "./server/index.ts",
+                "./server/index.tsx",
+                "./server/index.js",
+                "./server/index.jsx",
+            ].find((defaultFile) => fs.existsSync(defaultFile)),
             description: "Server entry point",
             defaultDescription: "./server/index.ts(x)"
         },
@@ -207,11 +224,17 @@ export default class Build extends CommandInterface {
     async buildDockerCompose() {
         const nodeDockerComposeSpec: any = structuredClone(Build.fullstackedNodeDockerComposeSpec);
         if (!this.config.production) {
-            nodeDockerComposeSpec.services.node.command.unshift("--enable-source-maps");
+            nodeDockerComposeSpec.services.node.command = [
+                "sh",
+                "-c",
+                "node --enable-source-maps server/index.mjs"
+            ];
+        }else{
             nodeDockerComposeSpec.services.node.environment = [
-                "NODE_ENV=development"
+                "NODE_ENV=production"
             ];
         }
+
         const dockerComposeSpecs = [nodeDockerComposeSpec].concat(this.config.dockerCompose.map((dockerComposeFile) => yaml.load(fs.readFileSync(dockerComposeFile).toString())));
         const mergedDockerCompose = this.mergeDockerComposeSpecs(dockerComposeSpecs);
 

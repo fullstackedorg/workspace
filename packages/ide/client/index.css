@@ -35,11 +35,42 @@ pre {
 
 .winbox {
     background-color: #0a85b5;
-    border-radius: 6px 6px 0px 0px;
+    border-radius: 6px 6px 0 0;
 }
 
 .rc-tree-list {
     color: #ced9ec;
+}
+
+.rc-tree-switcher {
+    display: none!important;
+}
+
+.rc-tree-treenode {
+    display: flex;
+}
+
+.rc-tree-node-content-wrapper{
+    padding: 0 5px!important;
+    flex-grow: 1;
+}
+
+.rc-tree-node-selected {
+    background-color: transparent!important;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode-selected {
+    background-color: #0a85b5 !important;
+    color: white;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode:nth-child(even){
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 5px;
 }
 
 .background {
@@ -128,6 +159,7 @@ pre {
     color: white;
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 
 .browser > .url-bar  input {
@@ -135,7 +167,7 @@ pre {
     border: 0;
     border-radius: 15px;
     height: 25px;
-    margin: 0 10px;
+    margin: 0 10px 0 0;
     padding: 0 10px;
 }
 
@@ -143,4 +175,12 @@ pre {
     flex-grow: 1;
     border: 0;
     background-color: white;
+}
+
+.dot {
+    height: 8px;
+    width: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
 }

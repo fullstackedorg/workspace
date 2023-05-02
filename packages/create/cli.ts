@@ -7,10 +7,6 @@ const commands = [
     {
         name: "create",
         description: "Create a new FullStacked Web App. Default command."
-    },
-    {
-        name: "install",
-        description: "Install a template to your Web App"
     }
 ]
 
@@ -24,7 +20,7 @@ const {help} = CLIParser.getCommandLineArgumentsValues({
 const command = CLIParser.commandLinePositional ?? commands.at(0).name;
 
 if(help){
-    console.log(`\n  Usage: npm init @fullstacked [COMMAND] [ARGS...]\n`);
+    console.log(`\n  Usage: npm init @fullstacked [ARGS...]\n`);
 
     const commandsTable = new Table({
         head: ["Command", "Description"],

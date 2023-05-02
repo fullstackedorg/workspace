@@ -107,12 +107,14 @@ function readBody(req: IncomingMessage) {
 function JSONCircularRemover(){
     const visited = new WeakSet();
     return (key, value) => {
-        if (typeof value === "object" && value !== null) {
-            if (visited.has(value)) {
-                return;
-            }
-            visited.add(value);
+        if(typeof value !== "object" || value === null)
+            return value;
+
+        if (visited.has(value)) {
+            return "[Circular]";
         }
+
+        visited.add(value);
         return value;
     };
 }

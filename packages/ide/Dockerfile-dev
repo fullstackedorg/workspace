@@ -10,4 +10,4 @@ RUN cd /fullstacked && node packages/ide/install
 
 WORKDIR /home
 
-CMD ["/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & DOCKER_HOST=\"\" fullstacked ide"]
+CMD ["/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & DOCKER_HOST=\"\" fsc ide"]

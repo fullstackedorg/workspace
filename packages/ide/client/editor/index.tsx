@@ -5,11 +5,12 @@ import {javascript} from "@codemirror/lang-javascript";
 import {client} from "../client";
 import {autocompletion, Completion, CompletionContext} from "@codemirror/autocomplete";
 import {linter} from "@codemirror/lint";
+import {oneDark} from "@codemirror/theme-one-dark";
 
 export default async function (filename: string) {
-    document.querySelector("html").style.backgroundColor = "white";
+    document.querySelector("html").style.backgroundColor = "#282c34";
     document.body.innerHTML = "";
-    document.body.style.backgroundColor = "white";
+    document.body.style.backgroundColor = "#282c34";
 
     new EditorView({
         doc: await client.get().getFileContents(filename),
@@ -23,6 +24,7 @@ export default async function (filename: string) {
             linter(tsDiagnostics.bind(filename)),
             autocompletion({override: [tsCompletions.bind(filename)]}),
             hoverTooltip(tsTypeDefinition.bind(filename)),
+            oneDark
         ],
         parent: document.body,
     });
@@ -68,7 +70,7 @@ async function tsCompletions(context: CompletionContext){
 
     const options: Completion[] = tsCompletions.entries.map((completion) => ({
         label: completion.name,
-        apply: (view) => {
+        apply: async (view) => {
             view.dispatch({
                 changes: {
                     from,
