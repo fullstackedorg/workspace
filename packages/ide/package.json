@@ -4,6 +4,7 @@
   "version": "0.0.0-2",
   "author": "cplepage",
   "dependencies": {
+    "@codemirror/lang-css": "^6.2.0",
     "fullstacked": "file:../../fullstacked-0.10.0-4.tgz",
     "node-pty": "^0.10.1",
     "typescript": "^5.0.4"
@@ -17,7 +18,12 @@
   "type": "module",
   "devDependencies": {
     "@codemirror/autocomplete": "^6.4.2",
+    "@codemirror/lang-html": "^6.4.3",
     "@codemirror/lang-javascript": "^6.1.5",
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-markdown": "^6.1.1",
+    "@codemirror/lang-sass": "^6.0.1",
+    "@codemirror/legacy-modes": "^6.3.2",
     "@codemirror/lint": "^6.2.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.9.4",
@@ -30,6 +36,7 @@
     "@types/ws": "^8.5.4",
     "codemirror": "^6.0.1",
     "cookie": "^0.5.0",
+    "eslint-linter-browserify": "^8.39.0",
     "fast-querystring": "^1.1.1",
     "http-proxy": "^1.18.1",
     "rc-tree": "^5.7.3",

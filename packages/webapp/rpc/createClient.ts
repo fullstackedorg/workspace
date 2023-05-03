@@ -59,6 +59,7 @@ async function fetchCall(method, pathComponents, ...args) {
         case 'PUT': {
             const body = {};
             args.forEach((value, index) => body[index] = value);
+            headers.append('Content-Type', "application/json");
             requestInit.body = JSON.stringify(body);
             break;
         }

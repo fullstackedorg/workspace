@@ -11,12 +11,18 @@ import files from "../icons/files.svg";
 import logo from "../icons/fullstacked-logo.svg";
 //@ts-ignore
 import logout from "../icons/log-out.svg";
+//@ts-ignore
+import typescript from "../icons/typescript.svg";
+//@ts-ignore
+import docker from "../icons/docker.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
 import {createWinID, winStore} from "./WinStore";
 import cookie from "cookie";
 import {client} from "../client";
+import Typescript from "../typescript";
+import Docker from "../docker";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -57,6 +63,21 @@ const maybeAddToken = (url: URL) => {
     return url.toString();
 }
 
+const minWidth = 500;
+const getWidth = () => {
+    return window.innerWidth <= minWidth
+        ? window.innerWidth
+        : window.innerWidth > minWidth && window.innerWidth < (minWidth * 2)
+            ? minWidth
+            : window.innerWidth / 2;
+}
+
+const winOptions = {
+    x: "center",
+    y: "center",
+    width: getWidth()
+}
+
 export default function () {
     useEffect(initZoneSelect, [])
 
@@ -80,7 +101,10 @@ export default function () {
             title={"Terminal"}
             onClick={() => {
                 const id = createWinID();
-                const winBox = new WinBox("Terminal", {url: maybeAddToken(new URL(`${window.location.href}?terminal=1&winId=${id}`))});
+                const winBox = new WinBox("Terminal", {
+                    ...winOptions,
+                    url: maybeAddToken(new URL(`${window.location.href}?terminal=1&winId=${id}`)),
+                });
                 winStore.set(id, winBox);
             }}
         />
@@ -89,7 +113,7 @@ export default function () {
             title={"Explorer"}
             onClick={() => {
                 const div = document.createElement("div");
-                new WinBox("Files", { mount: div });
+                new WinBox("Files", { ...winOptions, mount: div });
                 createRoot(div).render(<Files />);
             }}
         />
@@ -98,9 +122,36 @@ export default function () {
             title={"Browser"}
             onClick={() => {
                 const id = createWinID();
-                const winBox = new WinBox("Browser", { url: maybeAddToken(new URL(`${window.location.href}?browser=1&winId=${id}`)) });
+                const winBox = new WinBox("Browser", {
+                    ...winOptions,
+                    url: maybeAddToken(new URL(`${window.location.href}?browser=1&winId=${id}`))
+                });
                 winStore.set(id, winBox);
             }}
         />
+        {/*<ButtonIcon*/}
+        {/*    icon={typescript}*/}
+        {/*    title={"TS Server"}*/}
+        {/*    onClick={() => {*/}
+        {/*        const div = document.createElement("div");*/}
+        {/*        new WinBox("TypeScript Server", {*/}
+        {/*            ...winOptions,*/}
+        {/*            mount: div*/}
+        {/*        });*/}
+        {/*        createRoot(div).render(<Typescript />);*/}
+        {/*    }}*/}
+        {/*/>*/}
+        {/*<ButtonIcon*/}
+        {/*    icon={docker}*/}
+        {/*    title={"Docker"}*/}
+        {/*    onClick={() => {*/}
+        {/*        const div = document.createElement("div");*/}
+        {/*        new WinBox("Docker", {*/}
+        {/*            ...winOptions,*/}
+        {/*            mount: div*/}
+        {/*        });*/}
+        {/*        createRoot(div).render(<Docker />);*/}
+        {/*    }}*/}
+        {/*/>*/}
     </div>
 }
