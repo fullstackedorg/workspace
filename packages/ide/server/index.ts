@@ -8,7 +8,6 @@ import pty, {IPty} from "node-pty";
 import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
-import CLIParser from "fullstacked/utils/CLIParser";
 import { randomUUID } from 'crypto';
 import HTML from "@fullstacked/webapp/server/HTML";
 import arrow from "./arrow";
@@ -351,10 +350,10 @@ server.addListener({
         if (cookies.port) {
             return new Promise<void>(resolve => {
                 const originalEnd = res.end.bind(res);
-                res.end = function(chunk, encoding?, callback?) {
+                res.end = function (chunk, encoding?, callback?) {
                     const mimeType = res.getHeader("Content-Type");
                     if (mimeType?.toString()?.startsWith('text/html')) {
-                        if(chunk) res.write(chunk, encoding);
+                        if (chunk) res.write(chunk, encoding);
                         res.write(`<script src="//cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init({useShadowDom: false});</script>`);
                         return originalEnd(undefined, undefined, callback);
@@ -377,10 +376,10 @@ server.addListener({
         if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
             return new Promise<void>(resolve => {
                 const originalEnd = res.end.bind(res);
-                res.end = function(chunk, encoding?, callback?) {
+                res.end = function (chunk, encoding?, callback?) {
                     const mimeType = res.getHeader("Content-Type");
                     if (mimeType?.toString()?.startsWith('text/html')) {
-                        if(chunk) res.write(chunk, encoding);
+                        if (chunk) res.write(chunk, encoding);
                         res.write(`<script src="//cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init({useShadowDom: false});</script>`);
                         return originalEnd(undefined, undefined, callback);
