@@ -5,7 +5,7 @@
   "author": "cplepage",
   "dependencies": {
     "@codemirror/lang-css": "^6.2.0",
-    "fullstacked": "file:../../fullstacked-0.10.0-4.tgz",
+    "fullstacked": "^0.10.0-4",
     "node-pty": "^0.10.1",
     "typescript": "^5.0.4"
   },

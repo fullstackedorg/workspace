@@ -4,7 +4,7 @@
   "description": "Build your Web App source code into a ready to run bundle",
   "dependencies": {
     "esbuild": "^0.14.27",
-    "fullstacked": "file:../../fullstacked-0.10.0-4.tgz",
+    "fullstacked": "^0.10.0-4",
     "glob": "^9.2.1",
     "js-yaml": "^4.1.0"
   },
