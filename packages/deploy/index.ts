@@ -762,6 +762,9 @@ export default class Deploy extends CommandInterface {
             if(clean)
                 await sftp.rmdir(`${webAppDir}/${dir.name}`, true);
         }
+
+        if(directories.length)
+            await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml restart -t 0`);
     }
 
     /**
@@ -792,7 +795,7 @@ export default class Deploy extends CommandInterface {
         await sftp.put(fileURLToPath(new URL("./nginx/root.conf", import.meta.url)), `${this.credentialsSSH.directory}/root.conf`);
         await sftp.put(Buffer.from(yaml.dump(nginxDockerCompose)), `${this.credentialsSSH.directory}/docker-compose.yml`);
         await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml up -d`);
-        await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml restart`);
+        await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml restart -t 0`);
     }
 
     /**
