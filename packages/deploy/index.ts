@@ -18,6 +18,7 @@ import {decryptDataWithPassword, encryptDataWithPassword} from "fullstacked/util
 import {fileURLToPath} from "url";
 import {execSync} from "child_process";
 
+
 export type CredentialsSSH = {
     host: string,
     port: number,
