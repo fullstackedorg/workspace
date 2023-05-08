@@ -761,12 +761,10 @@ export default class Deploy extends CommandInterface {
             const previousProjectName = `${Info.webAppName}-${dir.name}`;
             console.log(`Stopping previous running [${Info.webAppName}] with hash [${dir.name}]`);
             await this.execOnRemoteHost(`docker compose -p ${previousProjectName} -f ${webAppDir}/${dir.name}/docker-compose.yml down`);
+            await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml exec nginx nginx -s reload`);
             if(clean)
                 await sftp.rmdir(`${webAppDir}/${dir.name}`, true);
         }
-
-        if(directories.length)
-            await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml exec nginx nginx -s reload`);
     }
 
     /**
