@@ -116,6 +116,13 @@ export default class Deploy extends CommandInterface {
             default: true,
             defaultDescription: "true",
             description: "Cleanup previous version deployed after the deployment"
+        },
+        force: {
+            short: "f",
+            type: "boolean",
+            default: false,
+            defaultDescription: "false",
+            description: "Allow overwrite of same hash (not recommended)"
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Deploy.commandLineArguments);
@@ -687,7 +694,7 @@ export default class Deploy extends CommandInterface {
 
         const directory = `${this.credentialsSSH.directory}/${Info.webAppName}/${Info.hash}`;
 
-        if(await sftp.exists(directory))
+        if(!this.config.force && await sftp.exists(directory))
             throw Error(`Deployment for [${Info.webAppName}] with hash [${Info.hash}] is already deployed. Create a new commit and retry deploying.`)
 
         await sftp.mkdir(directory, true);
@@ -735,6 +742,26 @@ export default class Deploy extends CommandInterface {
         }
         await this.execOnRemoteHost(`docker compose -p ${uniqProjectName} -f ${directory}/docker-compose.yml up -d`);
         await this.execOnRemoteHost(`docker compose -p ${uniqProjectName} -f ${directory}/docker-compose.yml restart`);
+    }
+
+    /**
+     *
+     * Stop previous app and delete if clean
+     *
+     */
+    async stopPreviousAppOnRemoteServer(clean: boolean){
+        const sftp = await this.getSFTP();
+
+        const webAppDir = `${this.credentialsSSH.directory}/${Info.webAppName}`;
+        const directories = (await sftp.list(webAppDir)).filter(dir => dir.type === "d" && dir.name !== Info.hash);
+        for (let i = 0; i < directories.length; i++) {
+            const dir = directories[i];
+            const previousProjectName = `${Info.webAppName}-${dir.name}`;
+            console.log(`Stopping previous running [${Info.webAppName}] with hash [${dir.name}]`);
+            await this.execOnRemoteHost(`docker compose -p ${previousProjectName} -f ${webAppDir}/${dir.name}/docker-compose.yml down`);
+            if(clean)
+                await sftp.rmdir(`${webAppDir}/${dir.name}`, true);
+        }
     }
 
     /**
@@ -1002,6 +1029,7 @@ export default class Deploy extends CommandInterface {
 
         await this.startAppOnRemoteServer(this.config.pull);
         await this.startFullStackedNginxOnRemoteHost();
+        await this.stopPreviousAppOnRemoteServer(this.config.clean);
         console.log("Web App Deployed");
 
         console.log("Deployment Successful");
