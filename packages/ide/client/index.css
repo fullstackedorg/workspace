@@ -184,3 +184,9 @@ pre {
     display: inline-block;
     vertical-align: middle;
 }
+
+iframe {
+    background-repeat: no-repeat;
+    background-size: 30px;
+    background-position: center;
+}

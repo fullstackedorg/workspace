@@ -110,6 +110,12 @@ export default class Deploy extends CommandInterface {
             default: false,
             defaultDescription: "false",
             description: "Pull image on remote server"
+        },
+        clean: {
+            type: "boolean",
+            default: true,
+            defaultDescription: "true",
+            description: "Cleanup previous version deployed after the deployment"
         }
     } as const;
     config = CLIParser.getCommandLineArgumentsValues(Deploy.commandLineArguments);
@@ -128,7 +134,7 @@ export default class Deploy extends CommandInterface {
         const {client} = await this.getSFTP();
 
         return new Promise(resolve => {
-            const message = [];
+            let message = "";
 
             client.exec(cmd, (err, stream) => {
                 if (err) throw err;
@@ -136,14 +142,14 @@ export default class Deploy extends CommandInterface {
                 stream.on('data', chunk => {
                     if(print) this.write(chunk.toString());
 
-                    message.push(chunk);
+                    message += (chunk.toString());
                 });
                 stream.on('error', chunk => {
                     if(print) this.write(chunk.toString());
 
-                    message.push(chunk);
+                    message += (chunk.toString());
                 })
-                stream.on('close', () => resolve(message.toString()));
+                stream.on('close', () => resolve(message));
             });
         });
     }
@@ -679,22 +685,28 @@ export default class Deploy extends CommandInterface {
         if(!await sftp.exists(`${this.credentialsSSH.directory}/${Info.webAppName}`))
             await sftp.mkdir(`${this.credentialsSSH.directory}/${Info.webAppName}`, true);
 
+        const directory = `${this.credentialsSSH.directory}/${Info.webAppName}/${Info.hash}`;
+
+        if(await sftp.exists(directory))
+            throw Error(`Deployment for [${Info.webAppName}] with hash [${Info.hash}] is already deployed. Create a new commit and retry deploying.`)
+
+        await sftp.mkdir(directory, true);
+
         const files = globSync("**/*", {dot: true, cwd: this.config.outputDir})
             .map(file => file.split(path.sep).join("/")); // forward slash only here
 
         const localFiles = files.map((file) => resolve(this.config.outputDir, file));
-        const remotePath = `${this.credentialsSSH.directory}/${Info.webAppName}`;
 
         for (let i = 0; i < files.length; i++) {
             const fileInfo = fs.statSync(localFiles[i]);
             if(fileInfo.isDirectory())
-                await sftp.mkdir(remotePath + "/" + files[i]);
+                await sftp.mkdir(directory + "/" + files[i]);
             else
-                await this.uploadFileWithProgress(localFiles[i], remotePath + "/" + files[i], `[${i + 1}/${files.length}] `);
+                await this.uploadFileWithProgress(localFiles[i], directory + "/" + files[i], `[${i + 1}/${files.length}] `);
         }
 
         // nginx files
-        const nginxRemoteDir = `${this.credentialsSSH.directory}/${Info.webAppName}/nginx`;
+        const nginxRemoteDir = `${directory}/nginx`;
         if(!await sftp.exists(nginxRemoteDir))
             await sftp.mkdir(nginxRemoteDir, true);
 
@@ -703,7 +715,7 @@ export default class Deploy extends CommandInterface {
         }
 
         // docker compose file
-        await sftp.put(Buffer.from(dockerCompose), `${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml`);
+        await sftp.put(Buffer.from(dockerCompose), `${directory}/docker-compose.yml`);
 
         this.endLine();
     }
@@ -714,12 +726,15 @@ export default class Deploy extends CommandInterface {
      *
      */
     async startAppOnRemoteServer(pull: boolean){
-        console.log(`Starting ${Info.webAppName} v${Info.version} on remote server`);
+        const uniqProjectName = `${Info.webAppName}-${Info.hash}`;
+        const directory = `${this.credentialsSSH.directory}/${Info.webAppName}/${Info.hash}`;
+
+        console.log(`Starting ${Info.webAppName} v${Info.version}-${Info.hash} on remote server`);
         if(pull){
-            await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml pull`);
+            await this.execOnRemoteHost(`docker compose -p ${uniqProjectName} -f ${directory}/docker-compose.yml pull`);
         }
-        await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml up -d`);
-        await this.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${this.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml restart`);
+        await this.execOnRemoteHost(`docker compose -p ${uniqProjectName} -f ${directory}/docker-compose.yml up -d`);
+        await this.execOnRemoteHost(`docker compose -p ${uniqProjectName} -f ${directory}/docker-compose.yml restart`);
     }
 
     /**
@@ -895,7 +910,6 @@ export default class Deploy extends CommandInterface {
             console.log("Failed to load config");
             return false;
         }
-
     }
 
     /**
@@ -978,7 +992,6 @@ export default class Deploy extends CommandInterface {
 
         const { nginxFiles, dockerCompose } = await this.setupDockerComposeAndNginx();
         console.log("Docker Compose and Nginx are setup");
-
 
         this.progress++;
 

@@ -166,7 +166,15 @@ export function createHandler(api: any){
 
         const url = urlComponents.shift();
         const methodPath = url.split('/');
+        // remove empty element from forward slash
+        // /path/to/method => [ "", "path", "to", "method" ]
         methodPath.shift();
+
+        if(req.method === "GET" && methodPath.length === 1 && methodPath.at(0) === "types"){
+            res.setHeader("application/json");
+            res.end(JSON.stringify(api));
+            return;
+        }
 
         let method = methodPath.reduce((api, key) => api ? api[key] : undefined, api);
 

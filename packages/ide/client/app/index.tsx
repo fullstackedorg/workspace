@@ -2,6 +2,8 @@ import React, {useEffect} from "react";
 import WinBox from "winbox/src/js/winbox";
 import ButtonIcon from "../components/button-icon";
 //@ts-ignore
+import loading from "../icons/loading.gif";
+//@ts-ignore
 import browser from "../icons/browser.svg";
 //@ts-ignore
 import terminal from "../icons/terminal.svg";
@@ -12,16 +14,15 @@ import logo from "../icons/fullstacked-logo.svg";
 //@ts-ignore
 import logout from "../icons/log-out.svg";
 //@ts-ignore
-import typescript from "../icons/typescript.svg";
+import codeServer from "../icons/code-server.png";
 //@ts-ignore
 import docker from "../icons/docker.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
-import {createWinID, winStore} from "./WinStore";
+import {createWinID, getWidth, winStore} from "./WinStore";
 import cookie from "cookie";
 import {client} from "../client";
-import Typescript from "../typescript";
 import Docker from "../docker";
 
 function initZoneSelect(){
@@ -63,15 +64,6 @@ const maybeAddToken = (url: URL) => {
     return url.toString();
 }
 
-const minWidth = 500;
-const getWidth = () => {
-    return window.innerWidth <= minWidth
-        ? window.innerWidth
-        : window.innerWidth > minWidth && window.innerWidth < (minWidth * 2)
-            ? minWidth
-            : window.innerWidth / 2;
-}
-
 const winOptions = {
     x: "center",
     y: "center",
@@ -83,7 +75,7 @@ export default function () {
 
     return <div>
         <div className={"background"}>
-            <img src={logo} />
+            <img src={logo}/>
         </div>
         {cookie.parse(document.cookie).token && <ButtonIcon
             icon={logout}
@@ -113,8 +105,8 @@ export default function () {
             title={"Explorer"}
             onClick={() => {
                 const div = document.createElement("div");
-                new WinBox("Files", { ...winOptions, mount: div });
-                createRoot(div).render(<Files />);
+                new WinBox("Files", {...winOptions, mount: div});
+                createRoot(div).render(<Files/>);
             }}
         />
         <ButtonIcon
@@ -129,18 +121,21 @@ export default function () {
                 winStore.set(id, winBox);
             }}
         />
-        {/*<ButtonIcon*/}
-        {/*    icon={typescript}*/}
-        {/*    title={"TS Server"}*/}
-        {/*    onClick={() => {*/}
-        {/*        const div = document.createElement("div");*/}
-        {/*        new WinBox("TypeScript Server", {*/}
-        {/*            ...winOptions,*/}
-        {/*            mount: div*/}
-        {/*        });*/}
-        {/*        createRoot(div).render(<Typescript />);*/}
-        {/*    }}*/}
-        {/*/>*/}
+        <ButtonIcon
+            icon={codeServer}
+            title={"Code"}
+            onClick={() => {
+                const id = createWinID();
+                const iframe = document.createElement("iframe");
+                iframe.style.backgroundImage = `url(${loading})`;
+                const winBox = new WinBox("Code Server", {
+                    ...winOptions,
+                    mount: iframe
+                });
+                iframe.src = maybeAddToken(new URL(`${window.location.protocol}//8888.${window.location.host}?winId=${id}`));
+                winStore.set(id, winBox);
+            }}
+        />
         {/*<ButtonIcon*/}
         {/*    icon={docker}*/}
         {/*    title={"Docker"}*/}

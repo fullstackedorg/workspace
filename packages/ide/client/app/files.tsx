@@ -8,7 +8,7 @@ import fileIcons from "../icons/file-icons.svg";
 // @ts-ignore
 import fileIcons2 from "../icons/file-icons-2.svg";
 import type {tsAPI} from "../../server";
-import {createWinID, winStore} from "./WinStore";
+import {createWinID, getWidth, winStore} from "./WinStore";
 import {EventDataNode} from "rc-tree/es/interface";
 
 type FlatFileTree = {
@@ -73,14 +73,20 @@ export default function () {
         onSelect={(selectedKeys, data: {node: File, nativeEvent}) => {
             if(data.node.isDir || (data.nativeEvent as PointerEvent).pointerType === "mouse") return;
             const id = createWinID();
-            const winBox = new WinBox(data.node.key, {url: `${window.location.href}?edit=${data.node.key}&winId=${id}`});
+            const winBox = new WinBox(data.node.key, {
+                width: getWidth(),
+                url: `${window.location.href}?edit=${data.node.key}&winId=${id}`
+            });
             winStore.set(id, winBox);
             setTimeout(() => winBox.focus(true), 1);
         }}
         onDoubleClick={(_, file: EventDataNode<File>) => {
             if(file.isDir) return;
             const id = createWinID();
-            const winBox = new WinBox(file.key, {url: `${window.location.href}?edit=${file.key}&winId=${id}`});
+            const winBox = new WinBox(file.key, {
+                width: getWidth(),
+                url: `${window.location.href}?edit=${file.key}&winId=${id}`
+            });
             winStore.set(id, winBox);
         }}
         expandAction={"click"}

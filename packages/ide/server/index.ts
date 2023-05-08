@@ -17,7 +17,8 @@ export const server = new Server();
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
 <link rel="manifest" href="/pwa/manifest.json">
-<meta name="theme-color" content="#171f2e"/>`);
+<meta name="theme-color" content="#171f2e"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">`);
 
 let token = randomUUID();
 if(process.env.PASS){
@@ -349,17 +350,6 @@ server.addListener({
 
         if (cookies.port) {
             return new Promise<void>(resolve => {
-                const originalEnd = res.end.bind(res);
-                res.end = function (chunk, encoding?, callback?) {
-                    const mimeType = res.getHeader("Content-Type");
-                    if (mimeType?.toString()?.startsWith('text/html')) {
-                        if (chunk) res.write(chunk, encoding);
-                        res.write(`<script src="//cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init({useShadowDom: false});</script>`);
-                        return originalEnd(undefined, undefined, callback);
-                    }
-                    originalEnd(chunk, encoding, callback);
-                }
                 proxy.web(req, res, {target: `http://localhost:${cookies.port}`}, () => {
                     if (!res.headersSent) {
                         res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
@@ -375,17 +365,6 @@ server.addListener({
         const maybePort = parseInt(firstDomainPart);
         if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
             return new Promise<void>(resolve => {
-                const originalEnd = res.end.bind(res);
-                res.end = function (chunk, encoding?, callback?) {
-                    const mimeType = res.getHeader("Content-Type");
-                    if (mimeType?.toString()?.startsWith('text/html')) {
-                        if (chunk) res.write(chunk, encoding);
-                        res.write(`<script src="//cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init({useShadowDom: false});</script>`);
-                        return originalEnd(undefined, undefined, callback);
-                    }
-                    originalEnd(chunk, encoding, callback);
-                }
                 proxy.web(req, res, {target: `http://localhost:${firstDomainPart}`}, () => {
                     if (!res.headersSent) {
                         res.end(`Port ${firstDomainPart} is down.`);
@@ -396,3 +375,4 @@ server.addListener({
         }
     }
 })
+
