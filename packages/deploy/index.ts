@@ -622,7 +622,8 @@ export default class Deploy extends CommandInterface {
             .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
             .replace(/\{PORT\}/g, internalPort)
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "")
-            .replace(/\{APP_NAME\}/g, Info.webAppName);
+            .replace(/\{APP_NAME\}/g, Info.webAppName)
+            .replace(/\{HASH\}/g, Info.hash);
 
         this.nginxConfigs.forEach((nginxConfig, configIndex) => {
             const availablePort = availablePorts[configIndex];
