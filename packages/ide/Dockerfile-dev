@@ -1,7 +1,24 @@
 FROM docker:dind
 
-RUN apk add --update make g++ nodejs npm git python3
+RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
+RUN rm -rf /home/dockremap
+
+RUN apk add --update make g++ nodejs npm git python3 curl
+RUN npm config set prefix '/home/.npm/'
+
 RUN npm i -g typescript node-pty
+
+# installing code-server
+RUN FORCE_NODE_VERSION=18 npm i -g --ignore-engines --unsafe-perm code-server
+# https://github.com/coder/code-server/issues/5530#issuecomment-1235752382
+RUN cd /home/.npm/lib/node_modules/code-server/lib/vscode && npm i --legacy-peer-deps
+# https://github.com/coder/code-server/issues/5019#issuecomment-1080184626
+RUN cd /home/.npm/lib/node_modules/code-server/lib/vscode/extensions && npm i typescript
+COPY packages/ide/code-server-config.yaml /home/.config/code-server/config.yaml
+
+RUN echo "export PATH=\$PATH:/home/.npm/bin" > /home/.profile
+
+WORKDIR /home
 
 COPY . /fullstacked
 
@@ -9,14 +26,4 @@ COPY . /fullstacked
 RUN cd /fullstacked && npm ci
 RUN cd /fullstacked && node packages/ide/install
 
-# installing code-server
-RUN FORCE_NODE_VERSION=18 npm i -g --ignore-engines --unsafe-perm code-server
-# https://github.com/coder/code-server/issues/5530#issuecomment-1235752382
-RUN cd /usr/local/lib/node_modules/code-server/lib/vscode && npm i --legacy-peer-deps
-# https://github.com/coder/code-server/issues/5019#issuecomment-1080184626
-RUN cd /usr/local/lib/node_modules/code-server/lib/vscode/extensions && npm i typescript
-COPY packages/ide/code-server-config.yaml /root/.config/code-server/config.yaml
-
-WORKDIR /home
-
-CMD ["/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & code-server & DOCKER_HOST=\"\" fsc ide"]
+CMD ["/bin/sh", "-c", "source /home/.profile && (/usr/local/bin/dockerd-entrypoint.sh & code-server & DOCKER_HOST=\"\" fsc ide)"]

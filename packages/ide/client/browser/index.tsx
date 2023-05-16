@@ -1,39 +1,24 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef} from "react";
+import Console from "./console";
 
-function setCookie(cname, cvalue, seconds) {
-    const d = new Date();
-    d.setTime(d.getTime() + (seconds*1000));
-    let expires = "expires="+ d.toUTCString();
-    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+declare global {
+    interface Window {
+        hasCredentialless: boolean
+    }
 }
-
 export default function () {
-    const [hasCredentialless, setHasCredentialless] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>();
+    const consoleRef = useRef<Console>();
+    const eTabRef = useRef<HTMLAnchorElement>();
     const inputPortRef = useRef<HTMLInputElement>();
     const inputPathRef = useRef<HTMLInputElement>();
 
     useEffect(() => {
-        const analyzeIframeResponse = (e) => {
-            if(typeof e.data.credentialless !== 'boolean') return;
-            setHasCredentialless(e.data.credentialless);
-            window.removeEventListener('message', analyzeIframeResponse)
-        }
-
-        window.addEventListener('message', analyzeIframeResponse);
-
-        const url = new URL(window.location.href);
-
-        const winID = url.searchParams.get("winId");
-        const token = url.searchParams.get("token");
-
-        setCookie("test", "credentialless", 60);
-        url.searchParams.forEach((value, param) => url.searchParams.delete(param));
-        url.searchParams.set("test", "credentialless");
-        if(token) url.searchParams.set("token", token);
         // @ts-ignore
         iframeRef.current.credentialless = true;
-        iframeRef.current.src = url.toString();
+
+        const url = new URL(window.location.href);
+        const winID = url.searchParams.get("winId");
 
         let hasFocus = false;
         setInterval(() => {
@@ -55,7 +40,7 @@ export default function () {
 
         const port = inputPortRef.current.value;
 
-        if(hasCredentialless){
+        if(window.hasCredentialless){
             url.searchParams.set("port", port);
         }else{
             url.host = port + "." + url.host;
@@ -64,6 +49,7 @@ export default function () {
         url.pathname = inputPathRef.current.value;
         if(token) url.searchParams.set("token", token);
         iframeRef.current.src = url.toString();
+        eTabRef.current.href = url.toString();
     }
 
     return <div className={"browser"}>
@@ -77,10 +63,13 @@ export default function () {
                 Path : <input style={{width: 100}} ref={inputPathRef} />
                 <button>Go</button>
             </form>
+            {window.hasCredentialless && <button onClick={() => consoleRef.current.setState({show: !consoleRef.current.state.show})}>Console</button>}
+            <a ref={eTabRef} href={"#"} target={"_blank"}><button>External Tab</button></a>
             <small>
-                Credentialless <div className={"dot"} style={{backgroundColor: hasCredentialless ? "green" : "red"}} />
+                Credentialless <div className={"dot"} style={{backgroundColor: window.hasCredentialless ? "green" : "red"}} />
             </small>
         </div>
         <iframe ref={iframeRef} />
+        {window.hasCredentialless && <Console ref={consoleRef} iframeRef={iframeRef} />}
     </div>
 }

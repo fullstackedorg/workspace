@@ -3,6 +3,8 @@ import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
+const isSafariMobile = navigator.userAgent.includes("iPad") || navigator.userAgent.includes("iPhone");
+
 let pingThrottler;
 export default function () {
     useEffect(() => {
@@ -31,6 +33,11 @@ export default function () {
         ping();
 
         term.onKey(({key, domEvent}) => {
+            // issue with ctrl+c on safari mobile
+            if(key === '\x0d' && domEvent.ctrlKey && isSafariMobile){
+                commandsWS.send('\x03');
+                return ping();
+            }
             commandsWS.send(key);
             ping();
         });

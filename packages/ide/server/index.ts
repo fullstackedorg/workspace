@@ -11,6 +11,8 @@ import cookie from "cookie";
 import { randomUUID } from 'crypto';
 import HTML from "@fullstacked/webapp/server/HTML";
 import arrow from "./arrow";
+import {ServerResponse} from "http";
+import * as zlib from "zlib";
 
 export const server = new Server();
 
@@ -298,7 +300,9 @@ commandsWS.on('connection', (ws) => {
     ws.on('close', () => command.kill());
 });
 
-const proxy = httpProxy.createProxy({});
+const proxy = httpProxy.createProxy({
+
+});
 
 
 server.serverHTTP.on('upgrade', (req, socket, head) => {
@@ -318,7 +322,6 @@ server.serverHTTP.on('upgrade', (req, socket, head) => {
             proxy.ws(req, socket, head, {target: `http://localhost:${firstDomainPart}`}, resolve);
         })
     }
-
 
     if(req.url !== "/fullstacked-commands") return;
 

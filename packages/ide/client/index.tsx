@@ -8,6 +8,9 @@ import "./index.css";
 import Editor from "./editor";
 import Terminal from "./terminal";
 import Browser from "./browser";
+import Credentialless from "./credentialless";
+
+await Credentialless();
 
 const url = new URL(window.location.href);
 
@@ -41,4 +44,3 @@ if(winID){
         }
     });
 }
-
