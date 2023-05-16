@@ -24,6 +24,7 @@ import {createWinID, getWidth, winStore} from "./WinStore";
 import cookie from "cookie";
 import {client} from "../client";
 import Docker from "../docker";
+import {maybeAddToken} from "../maybeAddToken";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -55,13 +56,6 @@ function initZoneSelect(){
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
-}
-
-const maybeAddToken = (url: URL) => {
-    const token = cookie.parse(document.cookie).token;
-    if(token)
-        url.searchParams.set("token", token);
-    return url.toString();
 }
 
 const winOptions = {
@@ -128,11 +122,15 @@ export default function () {
                 const id = createWinID();
                 const iframe = document.createElement("iframe");
                 iframe.style.backgroundImage = `url(${loading})`;
+                // @ts-ignore
+                iframe.credentialless = true;
                 const winBox = new WinBox("Code Server", {
                     ...winOptions,
                     mount: iframe
                 });
-                iframe.src = maybeAddToken(new URL(`${window.location.protocol}//8888.${window.location.host}?winId=${id}`));
+                iframe.src = window.hasCredentialless
+                    ? maybeAddToken(new URL(`${window.location.protocol}//${window.location.host}?winId=${id}&port=8888`))
+                    : maybeAddToken(new URL(`${window.location.protocol}//8888.${window.location.host}?winId=${id}`));
                 winStore.set(id, winBox);
             }}
         />
