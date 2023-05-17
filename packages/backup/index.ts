@@ -62,17 +62,17 @@ export default class Backup extends CommandInterface {
 
     deploy = DeployModule ? new DeployModule() : null;
 
-    async restoreRemote(){
+    async restoreRemote(volumes: string[]){
         const sftp = await this.deploy.getSFTP();
 
-        const dockerComposeRemoteFile = `${this.deploy.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml`;
+        const webAppDir = `${this.deploy.credentialsSSH.directory}/${Info.webAppName}`;
+        const deployedVersions = await sftp.list(webAppDir);
+        if(deployedVersions.length > 1)
+            throw new Error("Multiple version directory in remote server. Aborting...");
 
-        if(!await sftp.exists(dockerComposeRemoteFile))
-            throw Error("Cannot find docker compose file in remote host");
-
-        const dockerComposeBuffer = await sftp.get(dockerComposeRemoteFile);
-
-        const volumes = this.filterVolumes(yaml.load(dockerComposeBuffer.toString()));
+        const currentWebAppHash = deployedVersions.at(0).name;
+        const dockerComposeRemoteFile = `${webAppDir}/${currentWebAppHash}/docker-compose.yml`;
+        const dockerComposeProjectName = `${Info.webAppName}-${currentWebAppHash}`
 
         await sftp.mkdir(`/tmp/backup`, true);
 
@@ -88,9 +88,9 @@ export default class Backup extends CommandInterface {
             await this.deploy.uploadFileWithProgress(backupFile, `/tmp/backup/${volume}.tar`, `[${volume}] `);
             this.endLine();
 
-            await this.deploy.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${dockerComposeRemoteFile} stop -t 0`);
-            await this.deploy.execOnRemoteHost(`docker run -v ${Info.webAppName + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
-            await this.deploy.execOnRemoteHost(`docker compose -p ${Info.webAppName} -f ${dockerComposeRemoteFile} start`);
+            await this.deploy.execOnRemoteHost(`docker compose -p ${dockerComposeProjectName} -f ${dockerComposeRemoteFile} stop -t 0`);
+            await this.deploy.execOnRemoteHost(`docker run -v ${dockerComposeProjectName + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
+            await this.deploy.execOnRemoteHost(`docker compose -p ${dockerComposeProjectName} -f ${dockerComposeRemoteFile} start`);
             await this.deploy.execOnRemoteHost(`docker rm fullstacked-restore -f -v`);
         }
 
@@ -98,16 +98,8 @@ export default class Backup extends CommandInterface {
         await sftp.end();
     }
 
-    async backupRemote() {
+    async backupRemote(volumes: string[]) {
         const sftp = await this.deploy.getSFTP();
-
-        const remoteDockerComposeFilePath = `${this.deploy.credentialsSSH.directory}/${Info.webAppName}/docker-compose.yml`;
-        if(!await sftp.exists(remoteDockerComposeFilePath))
-            throw new Error("Cannot find docker-compose file in remote host");
-
-        const dockerComposeBuffer = await sftp.get(remoteDockerComposeFilePath);
-
-        const volumes = this.filterVolumes(yaml.load(dockerComposeBuffer.toString()));
 
         if(!fs.existsSync(this.config.backupDir))
             fs.mkdirSync(this.config.backupDir, {recursive: true});
@@ -204,17 +196,17 @@ export default class Backup extends CommandInterface {
         if(this.config.remote && !this.deploy)
             throw Error("Install the Deploy command to backup and restore your remote server [npm i @fullstacked/deploy]");
 
+        const volumes = this.filterVolumes(yaml.load(fs.readFileSync(this.config.dockerCompose).toString()));
+        if(!volumes.length)
+            throw Error("No volumes defined in bundled docker compose or volumes not found");
+
         if(this.config.remote){
             if (this.config.restore)
-                return this.restoreRemote();
+                return this.restoreRemote(volumes);
             else
-                return this.backupRemote();
+                return this.backupRemote(volumes);
         }else{
             await maybePullDockerImage("busybox");
-
-            const volumes = this.filterVolumes(yaml.load(fs.readFileSync(this.config.dockerCompose).toString()));
-            if(!volumes.length)
-                throw Error("No volumes defined in bundled docker compose or volumes not found");
 
             if(this.config.restore)
                 return this.restoreLocally(volumes);

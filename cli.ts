@@ -3,12 +3,12 @@ import CLIParser from "./utils/CLIParser";
 import fs from "fs";
 import CommandInterface from "./CommandInterface";
 import Table, {HorizontalAlignment} from 'cli-table3';
-import {dirname, resolve, join} from "path";
+import {dirname, resolve} from "path";
 import Info from "./info";
 import FullStackedVersion from "./version";
 import Commands from "./Commands";
-import {fileURLToPath, pathToFileURL} from "url";
-import { createRequire } from "module";
+import {fileURLToPath} from "url";
+import getModuleDir from "./utils/getModuleDir";
 
 const {help, version, packageJson} = CLIParser.getCommandLineArgumentsValues({
     packageJson: {
@@ -34,29 +34,16 @@ Info.init(packageJson);
 
 const commandName = CLIParser.commandLinePositional;
 
-// source: https://stackoverflow.com/a/72942136/9777391
-const getModuleDir = (moduleEntry) => {
-    const packageName = moduleEntry.includes('/')
-        ? moduleEntry.startsWith('@')
-            ? moduleEntry.split('/').slice(0, 2).join('/')
-            : moduleEntry.split('/')[0]
-        : moduleEntry;
-    const require = createRequire(import.meta.url);
-    const lookupPaths =  require.resolve.paths(moduleEntry).map((p) => join(p, packageName));
-    const foundPath = lookupPaths.find(p => fs.existsSync(p));
-    return foundPath ? pathToFileURL(foundPath) : null;
-};
-
-function getCommandLocation(commandName: string){
+async function getCommandLocation(commandName: string){
     const currentDirectory  = dirname(import.meta.url);
     const devLocation       = new URL(`${currentDirectory}/packages/${commandName}`);
     return fs.existsSync(devLocation)
         ? devLocation
-        : getModuleDir(`@fullstacked/${commandName}`);
+        : await getModuleDir(`@fullstacked/${commandName}`);
 }
 
-function getCommandPackageInfos(commandName: string){
-    const location = getCommandLocation(commandName);
+async function getCommandPackageInfos(commandName: string){
+    const location = await getCommandLocation(commandName);
     if(!location) return null;
     const dir = fileURLToPath(location);
     const infos = JSON.parse(fs.readFileSync(resolve(dir, "package.json")).toString());
@@ -75,15 +62,17 @@ if(!commandName) {
                 head: ["blue"]
             }
         });
-        table.push(...(Commands.map(command => {
-            const infos = getCommandPackageInfos(command)
-            return [
+        for (let i = 0; i < Commands.length; i++) {
+            const command = Commands[i];
+            const infos = await getCommandPackageInfos(command);
+            table.push([
                 command,
                 {hAlign: "center" as HorizontalAlignment, content: infos?.location ? "✓" : "x"},
                 infos?.version ?? "-",
                 infos?.description
-            ]
-        })));
+            ])
+        }
+
         console.log("\n  Usage: npx fullstacked [COMMAND] [ARGS...]\n");
         console.log(table.toString());
         process.exit(0);
@@ -103,7 +92,7 @@ if(!Commands.find(command => command === commandName)){
     process.exit(0);
 }
 
-const commandLocation = getCommandLocation(commandName);
+const commandLocation = await getCommandLocation(commandName);
 
 if(!commandLocation)
     throw Error(`Could not locate command [${commandName}]. Maybe try to install it [ npm i @fullstacked/${commandName} ]`);
@@ -129,7 +118,7 @@ if(help){
             argSpec.description
         ])
     })
-    const packageInfo = getCommandPackageInfos(commandName);
+    const packageInfo = await getCommandPackageInfos(commandName);
     console.log(`\n  ${packageInfo.description}\n`)
     console.log(`  Usage: npx fullstacked ${commandName} [ARGS...]\n`)
     console.log(outputTable.toString());

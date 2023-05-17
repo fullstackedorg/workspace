@@ -74,6 +74,31 @@ export default function () {
                                           setNginxConfigs([...nginxConfigs]);
                                       }}></textarea>
                         </div>
+                        <div className="mb-3">
+                            <div className="form-label">Reverse Proxy Protocol</div>
+                            <div>
+                                <label className="form-check">
+                                    <input className="form-check-input" type="radio" name="radios" value={"http"}
+                                           defaultChecked={!nginxConfig?.proto || nginxConfig.proto === "http"}
+                                           onChange={() => {
+                                               nginxConfig.proto = "http";
+                                               setNginxConfigs([...nginxConfigs])
+                                           }}
+                                    />
+                                    <span className="form-check-label">http</span>
+                                </label>
+                                <label className="form-check">
+                                    <input className="form-check-input" type="radio" name="radios" value={"https"}
+                                           defaultChecked={nginxConfig.proto === "https"}
+                                           onChange={() => {
+                                               nginxConfig.proto = "https";
+                                               setNginxConfigs([...nginxConfigs])
+                                           }}
+                                    />
+                                    <span className="form-check-label">https</span>
+                                </label>
+                            </div>
+                        </div>
                         <div className={"card"}>
                             <div className={"card-body"}>
                                 <label className="form-check form-switch">

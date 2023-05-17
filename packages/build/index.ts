@@ -222,20 +222,26 @@ export default class Build extends CommandInterface {
     }
 
     async buildDockerCompose() {
-        const nodeDockerComposeSpec: any = structuredClone(Build.fullstackedNodeDockerComposeSpec);
-        if (!this.config.production) {
-            nodeDockerComposeSpec.services.node.command = [
-                "sh",
-                "-c",
-                "node --enable-source-maps server/index.mjs"
-            ];
-        }else{
-            nodeDockerComposeSpec.services.node.environment = [
-                "NODE_ENV=production"
-            ];
+        const dockerComposeSpecs = this.config.dockerCompose.map((dockerComposeFile) => yaml.load(fs.readFileSync(dockerComposeFile).toString()));
+
+        if(fs.existsSync(this.config.server)){
+            const nodeDockerComposeSpec: any = structuredClone(Build.fullstackedNodeDockerComposeSpec);
+            if (!this.config.production) {
+                nodeDockerComposeSpec.services.node.command = [
+                    "sh",
+                    "-c",
+                    "node --enable-source-maps server/index.mjs"
+                ];
+            }else{
+                nodeDockerComposeSpec.services.node.environment = [
+                    "NODE_ENV=production"
+                ];
+            }
+            dockerComposeSpecs.push(nodeDockerComposeSpec);
         }
 
-        const dockerComposeSpecs = [nodeDockerComposeSpec].concat(this.config.dockerCompose.map((dockerComposeFile) => yaml.load(fs.readFileSync(dockerComposeFile).toString())));
+        if(!dockerComposeSpecs.length) return;
+
         const mergedDockerCompose = this.mergeDockerComposeSpecs(dockerComposeSpecs);
 
         if(!fs.existsSync(this.config.outputDir))

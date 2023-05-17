@@ -1,30 +1,41 @@
-import Server from "@fullstacked/webapp/server"
-import createHandler from "typescript-rpc/createHandler";
+import Server from "@fullstacked/webapp/server";
+import createListener from "@fullstacked/webapp/rpc/createListener";
 import Commands from "fullstacked/Commands";
 import fs from "fs";
 import deploy from "./deploy";
-import CLIParser from "fullstacked/utils/CLIParser";
 import websocket from "./websocket";
+import getModuleDir from "../../../utils/getModuleDir";
+import {resolve} from "path";
+import {fileURLToPath} from "url";
 
-const server = new Server();
-
-const {port} = CLIParser.getCommandLineArgumentsValues({
-    port: {
-        type: "number",
-        default: 8001
-    }
-});
-
-server.port = port;
+export const server = new Server();
 
 server.pages["/"].addInHead(`<title>FullStacked GUI</title>`);
 
 export const api = {
     async installedCommand(){
-        return Commands.map(command => ({
-            ...command,
-            installed: fs.existsSync(`./node_modules/@fullstacked/${command.name}/index.js`)
-        }));
+
+        const commandsInfos: {
+            name: string,
+            version: string,
+            description: string,
+            installed: boolean
+        }[] = [];
+
+        for (let i = 0; i < Commands.length; i++) {
+            const command = Commands[i];
+            const location = await getModuleDir(`@fullstacked/${command}`);
+            const infos = location
+                ? JSON.parse(fs.readFileSync(resolve(fileURLToPath(location), "package.json")).toString())
+                : null;
+            commandsInfos.push({
+                name: command,
+                version: infos?.version,
+                description: infos?.description,
+                installed: Boolean(location)
+            })
+        }
+        return commandsInfos;
     },
     close(){
         process.exit(0);
@@ -33,13 +44,7 @@ export const api = {
     deploy
 }
 
-const handler = createHandler(api);
-
-server.addListener({
-    prefix: "/typescript-rpc",
-    name: "typescript-rpc",
-    handler
-});
+server.addListener(createListener(api));
 
 const lastListener = server.listeners.default.pop();
 server.listeners.default.push({
@@ -56,7 +61,9 @@ server.listeners.default.push({
     }
 }, lastListener);
 
-server.start();
+// called with [npx fullstacked gui]
+if(!process.argv.includes("gui"))
+    server.start();
 
 export default server.serverHTTP;
 

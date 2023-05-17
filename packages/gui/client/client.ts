@@ -1,4 +1,4 @@
-import createClient from "typescript-rpc/createClient";
+import createClient from "@fullstacked/webapp/rpc/createClient";
 import type {api} from "../server";
 
-export const Client = createClient<typeof api>(window.location.origin + "/typescript-rpc");
+export const Client = createClient<typeof api>();

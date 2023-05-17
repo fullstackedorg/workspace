@@ -1,6 +1,5 @@
 import CommandInterface from "fullstacked/CommandInterface";
 import CLIParser from "fullstacked/utils/CLIParser";
-import {fork} from "child_process";
 import {fileURLToPath} from "url";
 import getNextAvailablePort from "fullstacked/utils/getNextAvailablePort";
 
@@ -13,7 +12,7 @@ export default class Ide extends CommandInterface {
         const {server} = await import("./dist/server/index.mjs");
         const port = await getNextAvailablePort();
         server.port = port;
-        server.publicDir = fileURLToPath(new URL("./dist/client", import.meta.url));
+        server.clientDir = fileURLToPath(new URL("./dist/client", import.meta.url));
         server.logger = null;
         server.pages["/"].addStyle("/index.css");
         server.pages["/"].addScript("/index.js");

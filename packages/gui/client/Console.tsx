@@ -12,7 +12,7 @@ export default class Console extends Component {
         super(props);
         Console.instance = this;
 
-        const ws = new WebSocket(`ws://${window.location.host}/fullstacked-gui`);
+        const ws = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/fullstacked-gui`);
         ws.onmessage = event => {
             this.push(JSON.parse(event.data))
         }
