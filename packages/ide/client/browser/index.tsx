@@ -39,17 +39,19 @@ export default function () {
         url.searchParams.forEach((value, param) => url.searchParams.delete(param));
 
         const port = inputPortRef.current.value;
-
-        if(window.hasCredentialless){
-            url.searchParams.set("port", port);
-        }else{
-            url.host = port + "." + url.host;
-        }
-
         url.pathname = inputPathRef.current.value;
         if(token) url.searchParams.set("token", token);
-        iframeRef.current.src = url.toString();
-        eTabRef.current.href = url.toString();
+
+        const urlCredentialless = new URL(url);
+        urlCredentialless.searchParams.set("port", port);
+
+        const urlSubDomain = new URL(url);
+        urlSubDomain.host = port + "." + urlSubDomain.host;
+
+        iframeRef.current.src = window.hasCredentialless
+            ? urlCredentialless.toString()
+            : urlSubDomain.toString();
+        eTabRef.current.href = urlSubDomain.toString();
     }
 
     return <div className={"browser"}>

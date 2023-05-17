@@ -1,13 +1,12 @@
 import React, {useEffect, useState} from "react";
 import {Client} from "../client";
 import {useNavigate} from "react-router-dom";
-import type {api} from "../../server/index";
 import {closeConsole} from "../Console";
+import useAPI from "@fullstacked/webapp/client/react/useAPI";
 
 export default function () {
     const navigate = useNavigate();
-    const [commands, setCommands] = useState<Awaited<ReturnType<typeof api.installedCommand>>>()
-    useEffect(() => {Client.get().installedCommand().then(setCommands)}, []);
+    const [commands] = useAPI(Client.get().installedCommand);
 
     useEffect(closeConsole, []);
 
@@ -24,6 +23,7 @@ export default function () {
                     <tr>
                         <th>Command</th>
                         <th className={"text-center"}>Installed</th>
+                        <th>Version</th>
                         <th>Description</th>
                         <th>Links</th>
                     </tr>
@@ -51,6 +51,9 @@ export default function () {
                                     <path d="M6 6l12 12"></path>
                                 </svg>
                             }
+                        </td>
+                        <td className="text-muted">
+                            {command.version}
                         </td>
                         <td className="text-muted">
                             {command.description}

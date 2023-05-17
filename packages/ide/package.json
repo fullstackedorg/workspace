@@ -1,11 +1,11 @@
 {
   "name": "@fullstacked/ide",
   "description": "Launch the FullStacked IDE",
-  "version": "0.0.0-2",
+  "version": "0.0.0-3",
   "author": "cplepage",
   "dependencies": {
     "@codemirror/lang-css": "^6.2.0",
-    "fullstacked": "^0.10.0-4",
+    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz",
     "node-pty": "^0.10.1",
     "typescript": "^5.0.4"
   },
@@ -27,9 +27,9 @@
     "@codemirror/lint": "^6.2.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.9.4",
-    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-21.tgz",
-    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-26.tgz",
-    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-17.tgz",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-23.tgz",
+    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-27.tgz",
+    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-18.tgz",
     "@types/cookie": "^0.5.1",
     "@types/http-proxy": "^1.17.10",
     "@types/react": "^18.0.35",

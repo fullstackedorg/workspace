@@ -33,6 +33,7 @@ export type NginxConfig = {
     port: number,
     serverNames?: string[],
     nginxExtraConfigs?: string[],
+    proto?: string,
     customPublicPort?: {
         port: number,
         ssl: boolean
@@ -312,6 +313,19 @@ export default class Deploy extends CommandInterface {
                     .filter(config => Boolean(config.trim()))
                     .map(config => config.trim() + ";");
             }
+
+            const { proto } = await prompts({
+                type: 'select',
+                name: 'proto',
+                message: 'Reverse Proxy Protocol',
+                choices: [
+                    { title: 'http', value: 'http' },
+                    { title: 'https', value: 'https' }
+                ],
+                initial: 0
+            });
+
+            nginxConfig.proto = proto;
 
             const { customPort } = await prompts({
                 type: "confirm",
@@ -611,16 +625,18 @@ export default class Deploy extends CommandInterface {
         }
 
         const nginxTemplate = fs.readFileSync(new URL("./nginx/service.conf", import.meta.url), {encoding: "utf-8"});
-        const generateNginxFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxTemplate
+        const generateNginxFile = (publicPort , serverNames, proto, internalPort, extraConfigs) => nginxTemplate
             .replace(/\{PUBLIC_PORT\}/g, publicPort)
             .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
+            .replace(/\{PROTO\}/g, proto ?? "http")
             .replace(/\{PORT\}/g, internalPort)
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "");
 
         const nginxSSLTemplate = fs.readFileSync(new URL("./nginx/service-ssl.conf", import.meta.url), {encoding: "utf-8"});
-        const generateNginxSSLFile = (publicPort , serverNames, internalPort, extraConfigs) => nginxSSLTemplate
+        const generateNginxSSLFile = (publicPort , serverNames, proto, internalPort, extraConfigs) => nginxSSLTemplate
             .replace(/\{PUBLIC_PORT\}/g, publicPort)
             .replace(/\{SERVER_NAME\}/g, serverNames?.join(" ") ?? "localhost")
+            .replace(/\{PROTO\}/g, proto ?? "http")
             .replace(/\{PORT\}/g, internalPort)
             .replace(/\{EXTRA_CONFIGS\}/g, extraConfigs?.join("\n") ?? "")
             .replace(/\{APP_NAME\}/g, Info.webAppName)
@@ -632,8 +648,8 @@ export default class Deploy extends CommandInterface {
             if(nginxConfig.customPublicPort?.port){
 
                 const customNginxFile = nginxConfig.customPublicPort.ssl
-                    ? generateNginxSSLFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs)
-                    : generateNginxFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs);
+                    ? generateNginxSSLFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, nginxConfig.proto, availablePort, nginxConfig.nginxExtraConfigs)
+                    : generateNginxFile(nginxConfig.customPublicPort.port.toString(), nginxConfig.serverNames, nginxConfig.proto, availablePort, nginxConfig.nginxExtraConfigs);
 
                 nginxFiles.push({
                     fileName: `${nginxConfig.name}-${nginxConfig.port}.conf`,
@@ -642,13 +658,13 @@ export default class Deploy extends CommandInterface {
             } else {
                 nginxFiles.push({
                     fileName: `${nginxConfig.name}-${nginxConfig.port}.conf`,
-                    content: generateNginxFile("80", nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs)
+                    content: generateNginxFile("80", nginxConfig.serverNames, nginxConfig.proto, availablePort, nginxConfig.nginxExtraConfigs)
                 });
 
                 if(this.certificateSSL){
                     nginxFiles.push({
                         fileName: `${nginxConfig.name}-${nginxConfig.port}-ssl.conf`,
-                        content: generateNginxSSLFile("443", nginxConfig.serverNames, availablePort, nginxConfig.nginxExtraConfigs)
+                        content: generateNginxSSLFile("443", nginxConfig.serverNames, nginxConfig.proto, availablePort, nginxConfig.nginxExtraConfigs)
                     });
                 }
             }
