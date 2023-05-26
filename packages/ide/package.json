@@ -1,10 +1,9 @@
 {
   "name": "@fullstacked/ide",
   "description": "Launch the FullStacked IDE",
-  "version": "0.0.0-3",
+  "version": "0.0.0-7",
   "author": "cplepage",
   "dependencies": {
-    "@codemirror/lang-css": "^6.2.0",
     "fullstacked": "^0.10.0-5",
     "node-pty": "^0.10.1",
     "typescript": "^5.0.4"
@@ -18,6 +17,7 @@
   "type": "module",
   "devDependencies": {
     "@codemirror/autocomplete": "^6.4.2",
+    "@codemirror/lang-css": "^6.2.0",
     "@codemirror/lang-html": "^6.4.3",
     "@codemirror/lang-javascript": "^6.1.5",
     "@codemirror/lang-json": "^6.0.1",
@@ -29,9 +29,10 @@
     "@codemirror/view": "^6.9.4",
     "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-23.tgz",
     "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-27.tgz",
-    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-18.tgz",
+    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-23.tgz",
     "@types/cookie": "^0.5.1",
     "@types/http-proxy": "^1.17.10",
+    "@types/js-cookie": "^3.0.3",
     "@types/react": "^18.0.35",
     "@types/ws": "^8.5.4",
     "codemirror": "^6.0.1",
@@ -39,6 +40,7 @@
     "eslint-linter-browserify": "^8.39.0",
     "fast-querystring": "^1.1.1",
     "http-proxy": "^1.18.1",
+    "js-cookie": "^3.0.5",
     "rc-tree": "^5.7.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

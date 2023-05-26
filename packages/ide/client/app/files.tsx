@@ -7,12 +7,14 @@ import WinBox from "winbox/src/js/winbox";
 import fileIcons from "../icons/file-icons.svg";
 // @ts-ignore
 import fileIcons2 from "../icons/file-icons-2.svg";
-import type {tsAPI} from "../../server";
-import {createWinID, getWidth, winStore} from "./WinStore";
+import type {API} from "../../server";
+import {getWidth} from "./WinStore";
 import {EventDataNode} from "rc-tree/es/interface";
+import {createRoot} from "react-dom/client";
+import Editor from "../editor";
 
 type FlatFileTree = {
-    [filePath: string]: ReturnType<typeof tsAPI.readDir>
+    [filePath: string]: ReturnType<typeof API.readDir>
 }
 
 type PlaceholderFile = {
@@ -57,6 +59,15 @@ export default function () {
 
     useEffect(() => {client.get().readDir(".").then(root => setFiles({root}));}, [])
 
+    const openFileEditor = (filename) => {
+        const div = document.createElement("div");
+        new WinBox(filename, {
+            width: getWidth(),
+            mount: div
+        });
+        createRoot(div).render(<Editor filename={filename} />)
+    }
+
     return <Tree
         treeData={flatFileTreeToTreeData(files)}
         icon={item => <svg style={{fill: "white", width: 16, height: 16}}>
@@ -72,22 +83,11 @@ export default function () {
         }}
         onSelect={(selectedKeys, data: {node: File, nativeEvent}) => {
             if(data.node.isDir || (data.nativeEvent as PointerEvent).pointerType === "mouse") return;
-            const id = createWinID();
-            const winBox = new WinBox(data.node.key, {
-                width: getWidth(),
-                url: `${window.location.href}?edit=${data.node.key}&winId=${id}`
-            });
-            winStore.set(id, winBox);
-            setTimeout(() => winBox.focus(true), 1);
+            openFileEditor(data.node.key);
         }}
         onDoubleClick={(_, file: EventDataNode<File>) => {
             if(file.isDir) return;
-            const id = createWinID();
-            const winBox = new WinBox(file.key, {
-                width: getWidth(),
-                url: `${window.location.href}?edit=${file.key}&winId=${id}`
-            });
-            winStore.set(id, winBox);
+            openFileEditor(file.key);
         }}
         expandAction={"click"}
     />

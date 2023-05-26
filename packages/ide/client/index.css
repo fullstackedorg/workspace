@@ -16,6 +16,11 @@ html, body, .wb-body {
     background-color: #1e293c;
 }
 
+.wb-body > div {
+    height: 100%;
+    width: 100%;
+}
+
 pre {
     margin: 0;
 }
@@ -94,10 +99,11 @@ pre {
 }
 
 .button-icon {
+    position: absolute;
     height: 80px;
     width: 80px;
     padding: 10px;
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     text-align: center;
     color: white;
@@ -172,6 +178,7 @@ pre {
 }
 
 .browser > iframe {
+    position: relative;
     flex-grow: 1;
     border: 0;
     background-color: white;

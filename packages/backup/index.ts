@@ -89,7 +89,7 @@ export default class Backup extends CommandInterface {
             this.endLine();
 
             await this.deploy.execOnRemoteHost(`docker compose -p ${dockerComposeProjectName} -f ${dockerComposeRemoteFile} stop -t 0`);
-            await this.deploy.execOnRemoteHost(`docker run -v ${dockerComposeProjectName + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
+            await this.deploy.execOnRemoteHost(`docker run -v ${Info.webAppName + "_" + volume}:/data -v /tmp/backup:/backup --name=fullstacked-restore busybox sh -c "cd data && rm -rf ./* && tar xvf /backup/${volume}.tar --strip 1"`);
             await this.deploy.execOnRemoteHost(`docker compose -p ${dockerComposeProjectName} -f ${dockerComposeRemoteFile} start`);
             await this.deploy.execOnRemoteHost(`docker rm fullstacked-restore -f -v`);
         }

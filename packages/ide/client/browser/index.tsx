@@ -15,7 +15,7 @@ export default function () {
 
     useEffect(() => {
         // @ts-ignore
-        iframeRef.current.credentialless = true;
+        // iframeRef.current.credentialless = true;
 
         const url = new URL(window.location.href);
         const winID = url.searchParams.get("winId");
@@ -34,13 +34,11 @@ export default function () {
     });
 
     const load = () => {
-        const url = new URL(window.location.href);
-        const token = url.searchParams.get("token");
+        let url = new URL(window.location.href);
         url.searchParams.forEach((value, param) => url.searchParams.delete(param));
 
         const port = inputPortRef.current.value;
         url.pathname = inputPathRef.current.value;
-        if(token) url.searchParams.set("token", token);
 
         const urlCredentialless = new URL(url);
         urlCredentialless.searchParams.set("port", port);

@@ -1,4 +1,4 @@
 import createClient from "@fullstacked/webapp/rpc/createClient";
-import type {tsAPI} from "../server";
+import type {API} from "../server";
 
-export const client = createClient<typeof tsAPI>();
+export const client = createClient<typeof API>();
