@@ -1,5 +1,3 @@
-import {maybeAddToken} from "./maybeAddToken";
-
 declare global {
     interface Window {
         hasCredentialless: boolean
@@ -41,6 +39,6 @@ export default function () {
 
         // @ts-ignore
         iframe.credentialless = true;
-        iframe.src = maybeAddToken(url).toString();
+        iframe.src = url.toString();
     });
 }

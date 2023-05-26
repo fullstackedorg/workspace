@@ -3,8 +3,8 @@ import * as fastQueryString from "fast-querystring";
 import type {Listener} from "../server/index";
 
 function checkMethod(method: string){
-    if(this.method !== method)
-        throw Error(`Wrong Method. Allowed [${method}] Used [${this.method}]`);
+    if(this.req.method !== method)
+        throw Error(`Wrong Method. Allowed [${method}] Used [${this.req.method}]`);
 }
 
 function wrapFunction(originalFunction, wrappingFunction){
@@ -82,7 +82,7 @@ export function Json(): any {
     })
 }
 
-export function Middleware(wrappingFunction: (this: IncomingMessage, ...args: any[]) => any): any {
+export function Middleware(wrappingFunction: (this: {req: IncomingMessage, res: ServerResponse}, ...args: any[]) => any): any {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         if(!descriptor){
             const keys = Object.getOwnPropertyNames(Object.getPrototypeOf(new target));
@@ -99,7 +99,7 @@ function readBody(req: IncomingMessage) {
     return new Promise((resolve) => {
         let data = "";
         req.on('data', chunk => data += chunk.toString());
-        req.on('end', () => resolve(JSON.parse(data)));
+        req.on('end', () => resolve(JSON.parse(data || "{}")));
     });
 }
 
@@ -122,7 +122,7 @@ function JSONCircularRemover(){
 function callAPIMethod(req, res: ServerResponse, method, ...args) {
     let response, status = 200;
     try{
-        response = method.bind(req)(...args);
+        response = method.bind({req, res})(...args);
     }catch (e){
         status = 500;
         response = {error: e.message};

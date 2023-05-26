@@ -1,5 +1,4 @@
 import Server from '@fullstacked/webapp/server';
-import ts from "typescript";
 import fs from "fs";
 import {extname} from "path";
 import createListener from "@fullstacked/webapp/rpc/createListener";
@@ -8,128 +7,33 @@ import pty, {IPty} from "node-pty";
 import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
-import { randomUUID } from 'crypto';
-import HTML from "@fullstacked/webapp/server/HTML";
-import arrow from "./arrow";
-import {ServerResponse} from "http";
-import * as zlib from "zlib";
+import Auth from "./auth";
+import {IncomingMessage, ServerResponse} from "http";
 
 export const server = new Server();
 
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
-<link rel="manifest" href="/pwa/manifest.json">
+<link rel="manifest" href="/pwa/manifest.json" crossorigin="use-credentials">
 <meta name="theme-color" content="#171f2e"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">`);
 
-let token = randomUUID();
-if(process.env.PASS){
+let auth: Auth;
+if(process.env.PASS || process.env.AUTH_URL){
+    auth = new Auth();
+
     const publicFiles = [
         "/pwa/manifest.json",
         "/pwa/app-icons/favicon.png",
         "/pwa/app-icons/app-icon.png",
         "/pwa/app-icons/maskable.png"
-    ]
-    const loginPage = new HTML();
-    loginPage.addInHead(`<meta property="og:image" content="https://files.cplepage.com/fullstacked/sharing-image.jpg">`);
-    loginPage.addInHead(`<title>FullStacked IDE</title>`);
-    loginPage.addInHead(`<link id="favicon" rel="shortcut icon" type="image/png" href="/pwa/app-icons/favicon.png">`);
-    loginPage.addInHead(`<style>
-        *{
-            box-sizing: border-box;
-        }
-        html, body{
-            background-color: #1e293c;
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        img {
-            height: 70px;
-            margin: 20px;
-        }
-        form {
-            display: flex;
-            align-items: center;
-            border-radius: 5px;
-            box-shadow: 0 0 15px 2px #a5afc240;
-            background-color: #2b3952;
-            transition: 0.2s background-color;
-        }
-        form:hover {
-            background-color: #374662;
-        }
-        input, button {
-            background-color: transparent;
-            color: #e9edf4;
-            border: 1px solid #777f8c;
-            font-size: large;
-            margin: 0;
-        }
-        button {
-            height: 100%;
-            border-left: 0;
-            border-radius: 0 5px 5px 0;
-            padding: 0 10px;
-            cursor: pointer;
-        }
-        input {
-            padding: 6px 10px;
-            border-radius: 5px 0 0 5px;
-            outline: 0;
-        }
-        svg{
-            vertical-align: middle;
-        }
-    </style>`)
-    loginPage.addInBody(`
-    <img src="/pwa/app-icons/app-icon.png" />
-    <form action="/" method="post">
-        <input type="password" name="password" />
-        <button>${arrow}</button>
-    </form>
-    <script>
-        document.querySelector("input").focus();
-    </script>`);
+    ];
 
     server.addListener({
         prefix: "global",
-        async handler(req, res) {
-            const cookies = cookie.parse(req.headers.cookie ?? "");
-            if(cookies.token === token) return;
+        handler(req, res){
             if(publicFiles.includes(req.url)) return;
-
-            const queryParams = fastQueryString.parse(req.url.split("?").pop());
-            if(queryParams.token === token) {
-                res.setHeader("Set-Cookie", cookie.serialize("token", token));
-                return;
-            }
-
-            if(req.method === "POST"){
-                let data = ""
-                await new Promise((resolve) => {
-                    req.on('data', chunk => data += chunk.toString());
-                    req.on('end', resolve);
-                });
-                const body = cookie.parse(data);
-                const pass = body?.password ?? "";
-                if(pass === process.env.PASS){
-                    res.setHeader("Set-Cookie", cookie.serialize("token", token));
-                    res.writeHead(302, {location: "/"});
-                    res.end();
-                    return;
-                }
-            }
-
-            res.setHeader("Content-Type", "text/html");
-            res.end(loginPage.toString());
+            return auth.handler(req, res);
         }
     })
 }
@@ -149,66 +53,22 @@ if(!process.argv.includes("ide"))
 
 export default server.serverHTTP;
 
-const files: ts.MapLike<{ version: number }> = {};
-
-const servicesHost: ts.LanguageServiceHost = {
-    getScriptFileNames: () => Object.keys(files),
-    getScriptVersion: fileName => files[fileName] && files[fileName].version.toString(),
-    getScriptSnapshot: fileName => {
-        if (!fs.existsSync(fileName)) return undefined
-        return ts.ScriptSnapshot.fromString(fs.readFileSync(fileName).toString());
+export const API = {
+    papercupsURL(){
+        return process.env.PAPERCUPS_URL;
     },
-    getCurrentDirectory: ts.sys.getCurrentDirectory,
-    getCompilationSettings: () => ({
-        module: ts.ModuleKind.ES2022,
-        target: ts.ScriptTarget.ES2022,
-        esModuleInterop: true,
-        moduleResolution: ts.ModuleResolutionKind.NodeJs,
-        jsx: ts.JsxEmit.React,
-        experimentalDecorators: true
-    }),
-    getDefaultLibFileName: ts.getDefaultLibFilePath,
-    fileExists: ts.sys.fileExists,
-    readFile: ts.sys.readFile,
-    readDirectory: ts.sys.readDirectory,
-    directoryExists: ts.sys.directoryExists,
-    getDirectories: ts.sys.getDirectories
-};
-
-const languageService = ts.createLanguageService(servicesHost, ts.createDocumentRegistry());
-
-function isTokenKind(kind: ts.SyntaxKind) {
-    return kind >= ts.SyntaxKind.FirstToken && kind <= ts.SyntaxKind.LastToken;
-}
-
-function getTokenAtPosition(parent: ts.Node, pos: number, sourceFile?: ts.SourceFile) {
-    if (pos < parent.pos || pos >= parent.end)
-        return;
-    if (isTokenKind(parent.kind))
-        return parent;
-    if (sourceFile === undefined)
-        sourceFile = parent.getSourceFile();
-    return getTokenAtPositionWorker(parent, pos, sourceFile);
-}
-
-function getTokenAtPositionWorker(node: ts.Node, pos: number, sourceFile: ts.SourceFile) {
-    outer: while (true) {
-        for (const child of node.getChildren(sourceFile)) {
-            if (child.end > pos && child.kind !== ts.SyntaxKind.JSDocComment) {
-                if (isTokenKind(child.kind))
-                    return child;
-                // next token is nested in another node
-                node = child;
-                continue outer;
-            }
+    logout(this: {req: IncomingMessage, res: ServerResponse}, refreshToken){
+        if(auth){
+            auth.invalidateRefreshToken(refreshToken);
         }
-        return;
-    }
-}
 
-export const tsAPI = {
-    logout(){
-        token = randomUUID();
+        const reqHost = (this.req.headers.origin || this.req.headers.host).replace(/https?:\/\//g, "");
+        const reqHostname = reqHost.split(":").shift();
+        this.res.setHeader("Set-Cookie", cookie.serialize("fullstackedAccessToken", "", {
+            path: "/",
+            domain: reqHostname,
+            expires: new Date(0)
+        }));
     },
     readDir(dirPath: string){
         return fs.readdirSync(dirPath).map(name => {
@@ -226,45 +86,10 @@ export const tsAPI = {
     },
     updateFile(filename: string, contents: string){
         fs.writeFileSync(filename, contents);
-        if(!files[filename]) files[filename] = {version: 0};
-        else files[filename].version++;
-    },
-    diagnostics(filename: string){
-        const diagnostics = languageService.getSemanticDiagnostics(filename)
-            .concat(languageService.getSyntacticDiagnostics(filename));
-        return diagnostics.map(diagnostic => {
-            delete diagnostic.file;
-            delete diagnostic.relatedInformation;
-            return diagnostic;
-        });
-    },
-    completions(filename: string, pos: number){
-        return languageService.getCompletionsAtPosition(filename, pos, {
-            allowIncompleteCompletions: true,
-            allowRenameOfImportPath: true,
-            allowTextChangesInNewFiles: true,
-            includeAutomaticOptionalChainCompletions: true,
-            includeCompletionsForImportStatements: true,
-            includeCompletionsForModuleExports: true,
-            includeCompletionsWithClassMemberSnippets: true,
-            includeCompletionsWithObjectLiteralMethodSnippets: true,
-            includeCompletionsWithInsertText: true,
-            includeCompletionsWithSnippetText: true,
-            jsxAttributeCompletionStyle: "auto",
-            providePrefixAndSuffixTextForRename: true,
-            provideRefactorNotApplicableReason: true,
-        });
-    },
-    typeDefinition(filename: string, pos: number){
-        const program = languageService.getProgram();
-        const typeChecker = program.getTypeChecker();
-        const token = getTokenAtPosition(program.getSourceFile(filename), pos);
-        const type = typeChecker.getTypeAtLocation(token);
-        return typeChecker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.InTypeAlias);
     }
 }
 
-server.addListener(createListener(tsAPI));
+server.addListener(createListener(API));
 
 server.pages["/"].addInHead(`<title>FullStacked IDE</title>`);
 server.pages["/"].addInHead(`<link rel="apple-touch-icon" href="/pwa/app-icons/maskable.png">`);

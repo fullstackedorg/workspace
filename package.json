@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "cli-table3": "^0.6.3",
-    "dockerode": "^3.3.4"
+    "dockerode": "^3.3.5"
   },
   "exports": {
     "./commands/info": "./commands/info/index.js",

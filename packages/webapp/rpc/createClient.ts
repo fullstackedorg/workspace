@@ -32,6 +32,7 @@ class Client<ApiDefinition> {
         })
     }
     headers: {[key: string]: string} = {};
+    requestOptions: RequestInit = {}
 
     constructor(origin) {
         this.origin = origin;
@@ -49,6 +50,7 @@ async function fetchCall(method, pathComponents, ...args) {
     url.pathname += (url.pathname.endsWith("/") ? "" : "/") + pathComponents.join('/');
 
     const requestInit: RequestInit = {
+        ...this.requestOptions,
         method
     };
 
@@ -108,6 +110,7 @@ type AwaitAll<T> = {
 
 export default function createClient<ApiDefinition>(origin = "") {
     return new Client<ApiDefinition>(origin) as {
+        requestOptions: Client<ApiDefinition>['requestOptions'],
         headers: Client<ApiDefinition>['headers'],
         get(useCache?: boolean): AwaitAll<ApiDefinition>,
         post(): AwaitAll<ApiDefinition>,

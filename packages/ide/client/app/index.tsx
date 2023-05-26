@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, {createRef, useEffect} from "react";
 import WinBox from "winbox/src/js/winbox";
 import ButtonIcon from "../components/button-icon";
 //@ts-ignore
@@ -20,11 +20,11 @@ import docker from "../icons/docker.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
-import {createWinID, getWidth, winStore} from "./WinStore";
+import {getWidth} from "./WinStore";
 import cookie from "cookie";
 import {client} from "../client";
 import Docker from "../docker";
-import {maybeAddToken} from "../maybeAddToken";
+import Terminal from "../terminal";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -53,7 +53,7 @@ function initZoneSelect(){
         mouseStart = null;
         square = null;
     }
-    window.addEventListener('mousedown', onMouseDown);
+    document.querySelector(".background").addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
 }
@@ -64,39 +64,83 @@ const winOptions = {
     width: getWidth()
 }
 
-export default function () {
-    useEffect(initZoneSelect, [])
+async function checkForPapercups(){
+    const papercupsEndpoint = await client.get().papercupsURL();
+    if(!papercupsEndpoint) return;
+    //@ts-ignore
+    window.Papercups = {
+        config: {
+            accountId: "53fcfc2e-6010-408d-8bc0-d6144ff10b13",
+            publicKey: "xyz",
+            token: "53fcfc2e-6010-408d-8bc0-d6144ff10b13",
+            inbox: "c36e4568-39b2-4c21-9d02-b8c05e59418e",
+            title: 'FullStacked Cloud Support',
+            subtitle: 'Ask us anything 😊',
+            newMessagePlaceholder: 'Start typing...',
+            primaryColor: '#3eb0de',
+            greeting: 'Hi there! How can I help you?',
+            customer: {},
+            iconVariant: "filled",
+            baseUrl: papercupsEndpoint,
+            showAgentAvailability: true,
+        },
+    };
+    const scriptTag = document.createElement("script");
+    scriptTag.src = `${papercupsEndpoint}/widget.js`;
+    document.body.append(scriptTag);
+    const scriptTag2 = document.createElement("script");
+    scriptTag2.src = `${papercupsEndpoint}/storytime.js`;
+    document.body.append(scriptTag2);
+}
 
-    return <div>
+export default function () {
+    useEffect(initZoneSelect, []);
+    useEffect(() => {checkForPapercups()}, []);
+
+    return <>
         <div className={"background"}>
             <img src={logo}/>
         </div>
-        {cookie.parse(document.cookie).token && <ButtonIcon
+        {window.localStorage.getItem("fullstackedRefreshToken") && <ButtonIcon
             icon={logout}
             title={"Logout"}
+            top={320}
+            left={0}
             onClick={async () => {
-                await client.get().logout();
-                document.cookie = cookie.serialize("token", "", {
-                    expires: new Date(0)
-                });
-                window.location.reload();
+                await client.get().logout(window.localStorage.getItem("fullstackedRefreshToken"));
+                window.location.href = "/?logout=1";
             }}
         />}
         <ButtonIcon
             icon={terminal}
             title={"Terminal"}
+            top={0}
+            left={0}
             onClick={() => {
-                const id = createWinID();
-                const winBox = new WinBox("Terminal", {
+                const div = document.createElement("div");
+                const terminalRef = createRef<Terminal>();
+                new WinBox("Files", {
                     ...winOptions,
-                    url: maybeAddToken(new URL(`${window.location.href}?terminal=1&winId=${id}`)),
+                    mount: div,
+                    onresize: () => {
+                        setTimeout(() => {
+                            terminalRef?.current?.onResize()
+                        }, 500)
+                    },
+                    onfullscreen: () => {
+                        setTimeout(() => {
+                            terminalRef?.current?.onResize()
+                        }, 500)
+                    },
                 });
-                winStore.set(id, winBox);
+                createRoot(div).render(<Terminal ref={terminalRef} />);
             }}
         />
         <ButtonIcon
             icon={files}
             title={"Explorer"}
+            top={80}
+            left={0}
             onClick={() => {
                 const div = document.createElement("div");
                 new WinBox("Files", {...winOptions, mount: div});
@@ -106,32 +150,31 @@ export default function () {
         <ButtonIcon
             icon={browser}
             title={"Browser"}
+            top={160}
+            left={0}
             onClick={() => {
-                const id = createWinID();
-                const winBox = new WinBox("Browser", {
-                    ...winOptions,
-                    url: maybeAddToken(new URL(`${window.location.href}?browser=1&winId=${id}`))
-                });
-                winStore.set(id, winBox);
+                const div = document.createElement("div");
+                new WinBox("Files", {...winOptions, mount: div});
+                createRoot(div).render(<Browser />);
             }}
         />
         <ButtonIcon
             icon={codeServer}
             title={"Code"}
+            top={240}
+            left={0}
             onClick={() => {
-                const id = createWinID();
                 const iframe = document.createElement("iframe");
                 iframe.style.backgroundImage = `url(${loading})`;
                 // @ts-ignore
-                iframe.credentialless = true;
-                const winBox = new WinBox("Code Server", {
+                // iframe.credentialless = true;
+                new WinBox("Code Server", {
                     ...winOptions,
                     mount: iframe
                 });
-                iframe.src = window.hasCredentialless
-                    ? maybeAddToken(new URL(`${window.location.protocol}//${window.location.host}?winId=${id}&port=8888`))
-                    : maybeAddToken(new URL(`${window.location.protocol}//8888.${window.location.host}?winId=${id}`));
-                winStore.set(id, winBox);
+                iframe.src = (window.hasCredentialless
+                    ? new URL(`${window.location.protocol}//${window.location.host}?port=8888`)
+                    : new URL(`${window.location.protocol}//8888.${window.location.host}`)).toString();
             }}
         />
         {/*<ButtonIcon*/}
@@ -146,5 +189,5 @@ export default function () {
         {/*        createRoot(div).render(<Docker />);*/}
         {/*    }}*/}
         {/*/>*/}
-    </div>
+    </>
 }

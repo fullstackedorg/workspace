@@ -1,66 +1,67 @@
-import React, {useEffect} from "react";
-import { Terminal } from "xterm";
+import React, {Component, useEffect} from "react";
+import { Terminal as Xterm } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
 const isSafariMobile = navigator.userAgent.includes("iPad") || navigator.userAgent.includes("iPhone");
 
-let pingThrottler;
-export default function () {
-    useEffect(() => {
-        const commandsWS = new WebSocket("ws" +
-            (window.location.protocol === "https:" ? "s" : "") +
-            "://" + window.location.host + "/fullstacked-commands");
+export default class Terminal extends Component {
+    pingThrottler;
+    commandsWS = new WebSocket("ws" +
+        (window.location.protocol === "https:" ? "s" : "") +
+        "://" + window.location.host + "/fullstacked-commands");
+    xterm = new Xterm();
+    fitAddon = new FitAddon();
 
-        const term = new Terminal();
-        let fitAddon = new FitAddon();
-        term.loadAddon(fitAddon);
-        term.open(document.querySelector('.terminal'));
+    onResize(){
+        this.fitAddon.fit();
+        this.commandsWS.send(`SIZE#${this.xterm.cols}#${this.xterm.rows}`);
+    }
 
-        const resize = () => {
-            fitAddon.fit();
-            commandsWS.send(`SIZE#${term.cols}#${term.rows}`);
-        }
+    componentDidMount() {
+        this.xterm.loadAddon(this.fitAddon);
+        this.xterm.open(document.querySelector('.terminal'));
 
         const ping = () => {
-            if(pingThrottler) clearTimeout(pingThrottler);
-            pingThrottler = setTimeout(() => {
-                commandsWS.send("##PING##");
-                pingThrottler = null;
+            if(this.pingThrottler) clearTimeout(this.pingThrottler);
+            this.pingThrottler = setTimeout(() => {
+                this.commandsWS.send("##PING##");
+                this.pingThrottler = null;
                 ping();
             }, 30 * 1000);
         }
         ping();
 
-        term.onKey(({key, domEvent}) => {
+        this.xterm.onKey(({key, domEvent}) => {
             // issue with ctrl+c on safari mobile
             if(key === '\x0d' && domEvent.ctrlKey && isSafariMobile){
-                commandsWS.send('\x03');
+                this.commandsWS.send('\x03');
                 return ping();
             }
-            commandsWS.send(key);
+            this.commandsWS.send(key);
             ping();
         });
 
-        term.attachCustomKeyEventHandler((arg) => {
+        this.xterm.attachCustomKeyEventHandler((arg) => {
             if ((arg.metaKey || arg.ctrlKey) && arg.code === "KeyV" && arg.type === "keydown") {
                 navigator.clipboard.readText().then(text => {
-                    commandsWS.send(text)
+                    this.commandsWS.send(text)
                 });
             }
             return true;
         });
 
-        commandsWS.onopen = () => {
-            resize();
+        this.commandsWS.onopen = () => {
+            this.onResize();
         }
 
-        commandsWS.onmessage = e => {
-            term.write(e.data);
+        this.commandsWS.onmessage = e => {
+            this.xterm.write(e.data);
         }
+    }
 
-        window.addEventListener("resize", () => resize());
-    }, [])
+    render(){
+        return <div className={"terminal"}/>
+    }
 
-    return <div className={"terminal"}/>
 }

@@ -204,7 +204,7 @@ export default class Build extends CommandInterface {
     }
 
     mergeDockerComposeSpecs(dockerComposeSpecs) {
-        const dockerCompose = {};
+        const dockerCompose: any = {};
         const dockerComposeRootAttributes = [
             "services",
             "volumes",
@@ -224,7 +224,7 @@ export default class Build extends CommandInterface {
     async buildDockerCompose() {
         const dockerComposeSpecs = this.config.dockerCompose.map((dockerComposeFile) => yaml.load(fs.readFileSync(dockerComposeFile).toString()));
 
-        if(fs.existsSync(this.config.server)){
+        if(fs.existsSync(this.config.server) && Build.fullstackedNodeDockerComposeSpec){
             const nodeDockerComposeSpec: any = structuredClone(Build.fullstackedNodeDockerComposeSpec);
             if (!this.config.production) {
                 nodeDockerComposeSpec.services.node.command = [
@@ -243,6 +243,16 @@ export default class Build extends CommandInterface {
         if(!dockerComposeSpecs.length) return;
 
         const mergedDockerCompose = this.mergeDockerComposeSpecs(dockerComposeSpecs);
+
+        Object.keys(mergedDockerCompose.volumes).forEach(volume => {
+            if(mergedDockerCompose.volumes[volume] === null)
+                mergedDockerCompose.volumes[volume] = {};
+
+            mergedDockerCompose.volumes[volume] = {
+                ...mergedDockerCompose.volumes[volume],
+                name: Info.webAppName + "_" + volume
+            }
+        })
 
         if(!fs.existsSync(this.config.outputDir))
             fs.mkdirSync(this.config.outputDir, {recursive: true});

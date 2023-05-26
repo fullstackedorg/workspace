@@ -1,13 +1,13 @@
 {
   "name": "@fullstacked/gui",
-  "version": "0.10.0-9",
+  "version": "0.10.0-10",
   "description": "Launch the GUI to execute the different FullStacked commands",
   "author": "cplepage",
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "npx fullstacked watch",
-    "prepack": "npx fullstacked build --production"
+    "dev": "fsc watch",
+    "prepack": "fsc build --production"
   },
   "externalModules": [
     "@fullstacked/build",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-23.tgz",
-    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-8.tgz",
+    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-9.tgz",
     "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-27.tgz",
     "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-18.tgz",
     "@tabler/core": "^1.0.0-beta17",
