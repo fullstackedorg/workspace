@@ -1,36 +1,32 @@
 <p align="center">
 <a href="https://fullstacked.org/">
-<img src="https://fullstacked.org/favicon.png" alt="FullStacked Logo" width="50px" />
+<img src="https://files.cplepage.com/fullstacked/favicon.png" alt="FullStacked Logo" width="50px" />
 </a>
 </p>
 <h1 align="center">FullStacked</h1>
-<h3 align="center">A TypeScript Web Apps Tool</h3>
-<p align="center" ><small>The only tool you need from creation to deployment</small></p>
+<h3 align="center">Web development at its finest</h3>
 <p align="center">
 <a href="https://www.npmjs.com/package/fullstacked"><img src="https://badgen.net/npm/v/fullstacked" alt="version"/>
-<a href="https://www.npmjs.com/package/fullstacked?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-18-782175" alt="dependencies"/></a>
-<a href="https://npmgraph.js.org/?q=fullstacked"><img src="https://img.shields.io/badge/module%20deps-328-ff761a" alt="module dependencies"/></a>
-<a href="https://cplepage.github.io/fullstacked-code-coverage/"><img src="https://img.shields.io/badge/coverage-66.75%25-yellow" alt="code coverage"/></a>
 </p>
 
 > **Warning** <br />
-> FullStacked is still in early development. Commands and syntax are likely to change.
+> While FullStacked is probably the most efficient tool you'll ever use, bear in mind that it might not be production ready. 
 
-FullStacked provides a complete setup for a TypeScript full stack web application.
-It has all the Server(Backend) setup and the WebApp(Frontend) setup with features like :
-* Create 
-  * w/ `npm init fullstacked@latest` ([`create-fullstacked`](https://github.com/cplepage/create-fullstacked))
-* Run
-* Build
-  * w/ Code Splitting
-* Watch
-  * w/ WebApp hot reload & Server auto restart
-* Test
-  * w/ Code Coverage
-* Deploy
-  * w/ a [GUI](#gui)
-* Backup & Restore
+FullStacked provides a whole set of commands and utilities useful for the whole web app lifecycle :
+ 
+**Commands**
+ * [create](https://www.npmjs.com/package/@fullstacked/create)
+ * [build](https://www.npmjs.com/package/@fullstacked/build)
+ * [run](https://www.npmjs.com/package/@fullstacked/run)
+ * [watch](https://www.npmjs.com/package/@fullstacked/watch)
+ * [deploy](https://www.npmjs.com/package/@fullstacked/deploy)
+ * [backup (& restore)](https://www.npmjs.com/package/@fullstacked/backup)
 
+**Utilities**
+ * [gui](https://www.npmjs.com/package/@fullstacked/gui)
+ * [ide](https://www.npmjs.com/package/@fullstacked/ide)
+ * [webapp](https://www.npmjs.com/package/@fullstacked/webapp)
+ 
 ## Usage
 #### Requirements
 * NodeJS `>= 16.x` [https://nodejs.org/](https://nodejs.org/)
