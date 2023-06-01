@@ -49,42 +49,6 @@ npm start
 ```
 Open [http://localhost:8000](http://localhost:8000/) and start developing!
 
-#### Commands
-
-| command                     | uses                                                                                                                         |
-|-----------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| npm init fullstacked@latest | Generate the default starter files. *View more in [create-fullstacked](https://github.com/cplepage/create-fullstacked) repo. |
-| npx fullstacked run         | Run your web app.                                                                                                            |
-| npx fullstacked build       | Build your web app.                                                                                                          |
-| npx fullstacked watch       | Rebuilds your web app and hot reloads on changes.                                                                            |
-| npx fullstacked test        | Run tests throughout your web app.                                                                                           |
-| npx fullstacked deploy      | Ship a production build to a remote host to deploy your web app to the internet.                                             |
-| npx fullstacked backup      | Backup your data volumes from your web app.                                                                                  |
-| npx fullstacked restore     | Restore your data volumes from your web app.                                                                                 |
-
-see flags in the [docs](https://docs.fullstacked.org/commands)
-
-### <a name="gui"></a>GUI
-
-> **Note** <br />
-> The GUI is fairly new and is only working with the `deploy` command.
-
-* Run a command using the `--gui` arg to pop up the FullStacked GUI.
-* It helps a lot with setting up a couple of stuff and seeing the progress. 
-* Finally, save and load your configs to a password encrypted file. 
-This way, even if you commit the `.fullstacked` file in your repo (**<u>strongly not recommend in public repositories</u>**),
-it is not revealing anything.
-Only password holders, like you and your CI, can decrypt the info and run the command.
-
-<img src=https://files.cplepage.com/fullstacked/fullstacked-gui.jpg />
-
-### Use FullStacked Remotely
-
-> 🚧 WIP
-
-If you are looking to simply and quickly develop a web app, I strongly suggest to try [FullStacked IDE](https://ide.fullstacked.org).
-It is a web based IDE that wraps FullStacked usage with clean and efficient interfaces.
-
 ## Motivation
 As many web developer, I have changed my toolset very often. We waste
 so much time on configs and figuring out how to build and deploy web apps. FullStacked aims to skip
