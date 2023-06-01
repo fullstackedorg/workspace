@@ -29,7 +29,7 @@ FullStacked provides a whole set of commands and utilities useful for the whole 
  
 ## Usage
 #### Requirements
-* NodeJS `>= 16.x` [https://nodejs.org/](https://nodejs.org/)
+* NodeJS `>= 18.x` [https://nodejs.org/](https://nodejs.org/)
 * Docker and Docker-Compose [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
  
 #### Getting Started
@@ -41,7 +41,7 @@ cd my-awesome-project
 ```
 2. Init fullstacked with npm
 ```shell
-npm init fullstacked@latest
+npm init @fullstacked@latest
 ```
 3. Startup you project locally!
 ```shell
