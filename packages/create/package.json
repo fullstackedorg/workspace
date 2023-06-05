@@ -9,7 +9,7 @@
     "@fullstacked/create": "cli.js"
   },
   "dependencies": {
-    "fullstacked": "^0.10.0-5",
+    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz",
     "glob": "^9.2.1"
   },
   "exports": {

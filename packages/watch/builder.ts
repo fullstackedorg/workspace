@@ -338,7 +338,7 @@ export async function bundleExternalModules(modulesList, outdir, bundleName) {
 }
 
 export async function bundleCSSFiles(modulesList, outdir, bundleName) {
-    const intermediateJSFile = `./${randStr()}.js`;
+    const intermediateJSFile = `${randStr()}.js`;
     const intermediateOutJSFile = resolve(process.cwd(), outdir, intermediateJSFile);
     const intermediateOutCSSFile = intermediateOutJSFile.slice(0, -3) + ".css";
     const outCssFile = resolve(process.cwd(), outdir, bundleName);
@@ -350,6 +350,18 @@ export async function bundleCSSFiles(modulesList, outdir, bundleName) {
         bundle: true,
         outfile: intermediateOutJSFile,
         plugins: [{
+            name: "everything-external",
+            setup(build) {
+                build.onLoad({ filter: /.*/ }, ({path}) => {
+                    if (path.endsWith(intermediateJSFile) || path.endsWith(".css"))
+                        return null;
+                    return {
+                        contents: fs.readFileSync(path),
+                        loader: "file"
+                    }
+                });
+            }
+        },{
             name: "copy-files",
             setup(build) {
                 build.onEnd(() => {

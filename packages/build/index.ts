@@ -244,16 +244,6 @@ export default class Build extends CommandInterface {
 
         const mergedDockerCompose = this.mergeDockerComposeSpecs(dockerComposeSpecs);
 
-        Object.keys(mergedDockerCompose.volumes).forEach(volume => {
-            if(mergedDockerCompose.volumes[volume] === null)
-                mergedDockerCompose.volumes[volume] = {};
-
-            mergedDockerCompose.volumes[volume] = {
-                ...mergedDockerCompose.volumes[volume],
-                name: Info.webAppName + "_" + volume
-            }
-        })
-
         if(!fs.existsSync(this.config.outputDir))
             fs.mkdirSync(this.config.outputDir, {recursive: true});
 

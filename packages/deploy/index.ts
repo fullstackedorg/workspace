@@ -607,6 +607,27 @@ export default class Deploy extends CommandInterface {
      */
     private async setupDockerComposeAndNginx(): Promise<{ nginxFiles: NginxFile[], dockerCompose: string }>{
         const dockerCompose = yaml.load(fs.readFileSync(resolve(this.config.outputDir, "docker-compose.yml")).toString());
+
+        Object.keys(dockerCompose.volumes).forEach(volume => {
+            if(dockerCompose.volumes[volume] === null)
+                dockerCompose.volumes[volume] = {};
+
+            dockerCompose.volumes[volume] = {
+                ...dockerCompose.volumes[volume],
+                name: Info.webAppName + "_" + volume
+            }
+        });
+
+        Object.keys(dockerCompose.networks).forEach(network => {
+            if(dockerCompose.networks[network] === null)
+                dockerCompose.networks[network] = {};
+
+            dockerCompose.networks[network] = {
+                ...dockerCompose.networks[network],
+                name: Info.webAppName + "_" + network
+            }
+        });
+
         // set default to node if no nginx configs
         const availablePorts = await this.getAvailablePorts(this.nginxConfigs.length);
 
@@ -777,7 +798,10 @@ export default class Deploy extends CommandInterface {
             const previousProjectName = `${Info.webAppName}-${dir.name}`;
             console.log(`Stopping previous running [${Info.webAppName}] with hash [${dir.name}]`);
             await this.execOnRemoteHost(`docker compose -p ${previousProjectName} -f ${webAppDir}/${dir.name}/docker-compose.yml down`);
-            await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml exec nginx nginx -s reload`);
+            if(await sftp.exists(`${webAppDir}/${dir.name}/nginx`)) {
+                await sftp.rmdir(`${webAppDir}/${dir.name}/nginx`, true);
+                await this.execOnRemoteHost(`docker compose -p fullstacked-nginx -f ${this.credentialsSSH.directory}/docker-compose.yml exec nginx nginx -s reload`);
+            }
             if(clean)
                 await sftp.rmdir(`${webAppDir}/${dir.name}`, true);
         }

@@ -4,7 +4,7 @@
   "version": "0.0.0-7",
   "author": "cplepage",
   "dependencies": {
-    "fullstacked": "^0.10.0-5",
+    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz",
     "node-pty": "^0.10.1",
     "typescript": "^5.0.4"
   },
