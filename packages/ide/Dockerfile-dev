@@ -1,11 +1,14 @@
 FROM docker:dind
 
+# make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
 RUN rm -rf /home/dockremap
 
+# install basic tools
 RUN apk add --update make g++ nodejs npm git python3 curl
 
-RUN npm i -g typescript node-pty
+# install node-pty globally
+RUN npm i -g node-pty
 
 # installing code-server
 RUN FORCE_NODE_VERSION=18 npm i -g --ignore-engines --unsafe-perm code-server
@@ -18,8 +21,7 @@ COPY packages/ide/code-server-config.yaml /home/.config/code-server/config.yaml
 COPY . /fullstacked
 
 # installing latest FullStacked Tools
-RUN cd /fullstacked && npm ci
-RUN cd /fullstacked && node packages/ide/install
+RUN cd /fullstacked && npm ci && node packages/ide/install
 
 WORKDIR /home
 

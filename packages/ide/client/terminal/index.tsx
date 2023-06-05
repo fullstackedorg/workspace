@@ -1,9 +1,18 @@
-import React, {Component, useEffect} from "react";
+import React, {Component} from "react";
+import WinBox from "winbox/src/js/winbox";
 import { Terminal as Xterm } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
+import { WebLinksAddon } from 'xterm-addon-web-links';
+import Browser from "../browser";
+import {createRoot} from "react-dom/client";
+import {getWidth} from "../app/WinStore";
 
-const isSafariMobile = navigator.userAgent.includes("iPad") || navigator.userAgent.includes("iPhone");
+const winOptions = {
+    x: "center",
+    y: "center",
+    width: getWidth()
+}
 
 export default class Terminal extends Component {
     pingThrottler;
@@ -12,6 +21,20 @@ export default class Terminal extends Component {
         "://" + window.location.host + "/fullstacked-commands");
     xterm = new Xterm();
     fitAddon = new FitAddon();
+    webLinks = new WebLinksAddon((e, uri) => {
+        if(uri.match(/http:\/\/localhost:\d+/g)){
+
+            const url = new URL(uri);
+
+            const div = document.createElement("div");
+            new WinBox("Files", {...winOptions, mount: div});
+            createRoot(div).render(<Browser port={url.port} path={url.pathname} />);
+
+            return;
+        }
+
+        window.open(uri, '_blank').focus();
+    });
 
     onResize(){
         this.fitAddon.fit();
@@ -20,6 +43,7 @@ export default class Terminal extends Component {
 
     componentDidMount() {
         this.xterm.loadAddon(this.fitAddon);
+        this.xterm.loadAddon(this.webLinks);
         this.xterm.open(document.querySelector('.terminal'));
 
         const ping = () => {
@@ -34,7 +58,7 @@ export default class Terminal extends Component {
 
         this.xterm.onKey(({key, domEvent}) => {
             // issue with ctrl+c on safari mobile
-            if(key === '\x0d' && domEvent.ctrlKey && isSafariMobile){
+            if(key === '\x0d' && domEvent.ctrlKey){
                 this.commandsWS.send('\x03');
                 return ping();
             }

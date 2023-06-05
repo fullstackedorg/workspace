@@ -1,4 +1,4 @@
-import React, {createRef, useEffect} from "react";
+import React, {createRef, useEffect, useState} from "react";
 import WinBox from "winbox/src/js/winbox";
 import ButtonIcon from "../components/button-icon";
 //@ts-ignore
@@ -21,10 +21,9 @@ import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
 import {getWidth} from "./WinStore";
-import cookie from "cookie";
 import {client} from "../client";
-import Docker from "../docker";
 import Terminal from "../terminal";
+import useAPI from "@fullstacked/webapp/client/react/useAPI";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -94,32 +93,23 @@ async function checkForPapercups(){
 }
 
 export default function () {
+    const [hasCodeServer] = useAPI(client.get().hasCodeServer);
     useEffect(initZoneSelect, []);
     useEffect(() => {checkForPapercups()}, []);
 
-    return <>
-        <div className={"background"}>
-            <img src={logo}/>
-        </div>
-        {window.localStorage.getItem("fullstackedRefreshToken") && <ButtonIcon
-            icon={logout}
-            title={"Logout"}
-            top={320}
-            left={0}
-            onClick={async () => {
-                await client.get().logout(window.localStorage.getItem("fullstackedRefreshToken"));
-                window.location.href = "/?logout=1";
-            }}
-        />}
-        <ButtonIcon
-            icon={terminal}
-            title={"Terminal"}
-            top={0}
-            left={0}
-            onClick={() => {
+
+    const apps: {
+        icon: string,
+        title: string,
+        onClick(): void,
+    }[] = [
+        {
+            icon: terminal,
+            title: "Terminal",
+            onClick() {
                 const div = document.createElement("div");
                 const terminalRef = createRef<Terminal>();
-                new WinBox("Files", {
+                new WinBox("Terminal", {
                     ...winOptions,
                     mount: div,
                     onresize: () => {
@@ -134,36 +124,45 @@ export default function () {
                     },
                 });
                 createRoot(div).render(<Terminal ref={terminalRef} />);
-            }}
-        />
-        <ButtonIcon
-            icon={files}
-            title={"Explorer"}
-            top={80}
-            left={0}
-            onClick={() => {
+            }
+        },
+        {
+            icon: files,
+            title: "Explorer",
+            onClick() {
                 const div = document.createElement("div");
                 new WinBox("Files", {...winOptions, mount: div});
-                createRoot(div).render(<Files/>);
-            }}
-        />
-        <ButtonIcon
-            icon={browser}
-            title={"Browser"}
-            top={160}
-            left={0}
-            onClick={() => {
+                createRoot(div).render(<Files />);
+            }
+        },
+        {
+            icon: browser,
+            title: "Browser",
+            onClick() {
                 const div = document.createElement("div");
-                new WinBox("Files", {...winOptions, mount: div});
+                new WinBox("Browser", {...winOptions, mount: div});
                 createRoot(div).render(<Browser />);
-            }}
-        />
-        <ButtonIcon
-            icon={codeServer}
-            title={"Code"}
-            top={240}
-            left={0}
-            onClick={() => {
+            }
+        }
+    ]
+
+    if(window.localStorage.getItem("fullstackedRefreshToken")){
+        apps.unshift({
+            title: "Logout",
+            icon: logout,
+            async onClick() {
+                await client.get().logout(window.localStorage.getItem("fullstackedRefreshToken"));
+                window.localStorage.removeItem("fullstackedRefreshToken")
+                window.location.href = "/?logout=1";
+            }
+        })
+    }
+
+    if(hasCodeServer){
+        apps.push({
+            icon: codeServer,
+            title: "Code",
+            onClick() {
                 const iframe = document.createElement("iframe");
                 iframe.style.backgroundImage = `url(${loading})`;
                 // @ts-ignore
@@ -175,19 +174,20 @@ export default function () {
                 iframe.src = (window.hasCredentialless
                     ? new URL(`${window.location.protocol}//${window.location.host}?port=8888`)
                     : new URL(`${window.location.protocol}//8888.${window.location.host}`)).toString();
-            }}
-        />
-        {/*<ButtonIcon*/}
-        {/*    icon={docker}*/}
-        {/*    title={"Docker"}*/}
-        {/*    onClick={() => {*/}
-        {/*        const div = document.createElement("div");*/}
-        {/*        new WinBox("Docker", {*/}
-        {/*            ...winOptions,*/}
-        {/*            mount: div*/}
-        {/*        });*/}
-        {/*        createRoot(div).render(<Docker />);*/}
-        {/*    }}*/}
-        {/*/>*/}
+            }
+        })
+    }
+
+    return <>
+        <div className={"background"}>
+            <img src={logo}/>
+        </div>
+        {apps.map((app, i) => <ButtonIcon
+            icon={app.icon}
+            title={app.title}
+            top={i * 80}
+            left={0}
+            onClick={app.onClick}
+        />)}
     </>
 }

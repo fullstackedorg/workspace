@@ -40,12 +40,12 @@
     "@types/glob": "^8.1.0",
     "@types/node": "^18.14.2",
     "esbuild": "^0.17.10",
-    "glob": "^9.1.2",
     "typescript": "^4.9.5"
   },
   "dependencies": {
     "cli-table3": "^0.6.3",
-    "dockerode": "^3.3.5"
+    "dockerode": "^3.3.5",
+    "glob": "9.2.1"
   },
   "exports": {
     "./commands/info": "./commands/info/index.js",

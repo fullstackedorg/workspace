@@ -5,7 +5,7 @@ import {execSync} from "child_process";
 import {argsSpecs} from "./args";
 
 export default function() {
-    const {dir, tag, ts} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
+    const {dir, tag, js} = CLIParser.getCommandLineArgumentsValues(argsSpecs);
 
     const packageJSONFile = resolve(dir, "package.json");
     if(fs.existsSync(packageJSONFile))
@@ -13,7 +13,12 @@ export default function() {
 
     if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
 
-    execSync("npm init --y", {stdio: "ignore", cwd: dir});
+    // stackblitz fix
+    try{
+        execSync("npm init --y", {stdio: "ignore", cwd: dir});
+    }catch (e) {
+        execSync("npm init", {stdio: "ignore", cwd: dir});
+    }
 
     const packageJSONData = JSON.parse(fs.readFileSync(packageJSONFile).toString());
     packageJSONData.type = "module";
@@ -34,7 +39,7 @@ export default function() {
         fullstackedPackage,
         packageVersion("@fullstacked/watch"),
         packageVersion("@fullstacked/webapp"),
-        ...(ts
+        ...(!js
             ? [packageVersion("@fullstacked/build")]
             : [])
     ].join(" "), {stdio: "inherit", cwd: dir});
@@ -49,14 +54,14 @@ export default function() {
         }
     };
 
-    if(ts){
+    if(!js){
         fs.writeFileSync(resolve(dir, "tsconfig.json"), JSON.stringify(tsConfig, null, 2));
     }
 
     const clientDir = resolve(dir, "client");
     if(!fs.existsSync(clientDir))
         fs.mkdirSync(clientDir)
-    fs.writeFileSync(resolve(clientDir, ts ? "index.ts" : "index.js"), `// Client Entrypoint
+    fs.writeFileSync(resolve(clientDir, js ? "index.js" : "index.ts"), `// Client Entrypoint
 let div = document.querySelector("div");
 if(!div){
     div = document.createElement("div");
@@ -68,7 +73,7 @@ div.innerText = "Welcome to FullStacked";`);
     const serverDir = resolve(dir, "server");
     if(!fs.existsSync(serverDir))
         fs.mkdirSync(serverDir)
-    fs.writeFileSync(resolve(serverDir, ts ? "index.ts" : "index.js"), `// Server Entrypoint
+    fs.writeFileSync(resolve(serverDir, js ? "index.js" : "index.ts"), `// Server Entrypoint
 import Server from "@fullstacked/webapp/server";
 
 const server = new Server();

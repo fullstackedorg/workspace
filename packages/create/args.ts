@@ -1,9 +1,4 @@
 export const argsSpecs = {
-    templates: {
-        short: "t",
-        type: "string[]",
-        description: "Templates to install. View available here\nhttps://github.com/cplepage/create-fullstacked/tree/main/templates"
-    },
     dir: {
         type: "string",
         default: process.cwd(),
@@ -14,9 +9,10 @@ export const argsSpecs = {
         default: "latest",
         defaultDescription: "latest"
     },
-    ts: {
+    js: {
         type: "boolean",
         default: false,
-        defaultDescription: "false"
+        defaultDescription: "false",
+        description: "Create project with JS files\n(Instead of TS)"
     }
 } as const;

@@ -1,12 +1,11 @@
 {
   "name": "@fullstacked/ide",
   "description": "Launch the FullStacked IDE",
-  "version": "0.0.0-7",
+  "version": "0.0.0-10",
   "author": "cplepage",
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz",
-    "node-pty": "^0.10.1",
-    "typescript": "^5.0.4"
+    "fullstacked": "^0.10.0-5",
+    "node-pty": "^0.10.1"
   },
   "scripts": {
     "build": "fullstacked build --production && cp -R pwa dist/client",
@@ -47,10 +46,10 @@
     "winbox": "^0.2.6",
     "ws": "^8.13.0",
     "xterm": "^5.1.0",
-    "xterm-addon-fit": "^0.7.0"
+    "xterm-addon-fit": "^0.7.0",
+    "xterm-addon-web-links": "^0.8.0"
   },
   "externalModules": [
-    "typescript",
     "node-pty"
   ]
 }

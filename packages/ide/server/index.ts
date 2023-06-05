@@ -57,6 +57,14 @@ export const API = {
     papercupsURL(){
         return process.env.PAPERCUPS_URL;
     },
+    async hasCodeServer(){
+        try{
+           await fetch("http://localhost:8888");
+        }catch (e){
+            return false
+        }
+        return true;
+    },
     logout(this: {req: IncomingMessage, res: ServerResponse}, refreshToken){
         if(auth){
             auth.invalidateRefreshToken(refreshToken);

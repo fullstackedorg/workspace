@@ -1,14 +1,13 @@
 {
   "name": "@fullstacked/deploy",
-  "version": "0.10.0-11",
+  "version": "0.10.0-12",
   "description": "Send your bundled Web App to a remote host",
   "main": "index.js",
   "author": "cplepage",
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz",
-    "glob": "^9.2.1",
+    "fullstacked": "^0.10.0-5",
     "js-yaml": "^4.1.0",
     "progress-stream": "^2.0.0",
     "prompts": "^2.4.2",

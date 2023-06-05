@@ -8,8 +8,7 @@
   "type": "module",
   "dependencies": {
     "esbuild": "^0.17.15",
-    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz",
-    "glob": "^9.2.1",
+    "fullstacked": "^0.10.0-5",
     "js-yaml": "^4.1.0",
     "ws": "^8.12.1"
   },
