@@ -13,7 +13,7 @@ export default function() {
 
     if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
 
-    // stackblitz fix
+    // web container fix
     try{
         execSync("npm init --y", {stdio: "ignore", cwd: dir});
     }catch (e) {

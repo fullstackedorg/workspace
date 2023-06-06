@@ -159,6 +159,7 @@ export default function () {
             icon: codeServer,
             title: "Code",
             onClick() {
+
                 const iframe = document.createElement("iframe");
                 iframe.style.backgroundImage = `url(${loading})`;
                 // @ts-ignore
