@@ -54,8 +54,14 @@ if(!process.argv.includes("ide"))
 export default server.serverHTTP;
 
 export const API = {
-    papercupsURL(){
-        return process.env.PAPERCUPS_URL;
+    papercups(){
+        return {
+            accountId: process.env.PAPERCUPS_ACCOUNT_ID,
+            publicKey: process.env.PAPERCUPS_PUBLIC_KEY,
+            token: process.env.PAPERCUPS_TOKEN,
+            inbox: process.env.PAPERCUPS_INBOX,
+            baseUrl: process.env.PAPERCUPS_BASE_URL
+        };
     },
     async hasCodeServer(){
         try{

@@ -64,15 +64,12 @@ const winOptions = {
 }
 
 async function checkForPapercups(){
-    const papercupsEndpoint = await client.get().papercupsURL();
-    if(!papercupsEndpoint) return;
+    const papercups = await client.get().papercups();
+    if(!papercups.baseUrl) return;
     //@ts-ignore
     window.Papercups = {
         config: {
-            accountId: "53fcfc2e-6010-408d-8bc0-d6144ff10b13",
-            publicKey: "xyz",
-            token: "53fcfc2e-6010-408d-8bc0-d6144ff10b13",
-            inbox: "c36e4568-39b2-4c21-9d02-b8c05e59418e",
+            ...papercups,
             title: 'FullStacked Cloud Support',
             subtitle: 'Ask us anything 😊',
             newMessagePlaceholder: 'Start typing...',
@@ -80,15 +77,14 @@ async function checkForPapercups(){
             greeting: 'Hi there! How can I help you?',
             customer: {},
             iconVariant: "filled",
-            baseUrl: papercupsEndpoint,
             showAgentAvailability: true,
         },
     };
     const scriptTag = document.createElement("script");
-    scriptTag.src = `${papercupsEndpoint}/widget.js`;
+    scriptTag.src = `${papercups.baseUrl}/widget.js`;
     document.body.append(scriptTag);
     const scriptTag2 = document.createElement("script");
-    scriptTag2.src = `${papercupsEndpoint}/storytime.js`;
+    scriptTag2.src = `${papercups.baseUrl}/storytime.js`;
     document.body.append(scriptTag2);
 }
 
