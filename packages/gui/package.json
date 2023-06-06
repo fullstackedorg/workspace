@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/gui",
-  "version": "0.10.0-10",
+  "version": "0.10.0",
   "description": "Launch the GUI to execute the different FullStacked commands",
   "author": "cplepage",
   "license": "MIT",
@@ -16,7 +16,7 @@
     "@fullstacked/watch"
   ],
   "dependencies": {
-    "fullstacked": "^0.10.0-5"
+    "fullstacked": "^0.10.0"
   },
   "devDependencies": {
     "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-23.tgz",

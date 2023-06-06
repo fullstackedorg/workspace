@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/create",
-  "version": "0.10.0-10",
+  "version": "0.10.0",
   "description": "Create a new FullStacked project or install a template to an existing one",
   "author": "cplepage",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "@fullstacked/create": "cli.js"
   },
   "dependencies": {
-    "fullstacked": "^0.10.0-5"
+    "fullstacked": "^0.10.0"
   },
   "exports": {
     ".": "./index.js"
