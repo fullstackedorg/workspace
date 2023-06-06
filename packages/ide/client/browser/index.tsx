@@ -29,7 +29,6 @@ export default function (props: {port?: string, path?: string}) {
         const port = inputPortRef.current.value;
         url.pathname = inputPathRef.current.value;
 
-
         const urlSubDomain = new URL(url);
 
         // webcontainer setup
