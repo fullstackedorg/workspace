@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/gui",
-  "version": "0.10.0-10",
+  "version": "0.10.0",
   "description": "Launch the GUI to execute the different FullStacked commands",
   "author": "cplepage",
   "license": "MIT",
@@ -16,13 +16,13 @@
     "@fullstacked/watch"
   ],
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz"
+    "fullstacked": "^0.10.0"
   },
   "devDependencies": {
-    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0-23.tgz",
-    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0-9.tgz",
-    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0-27.tgz",
-    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0-18.tgz",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0.tgz",
+    "@fullstacked/deploy": "file:../deploy/fullstacked-deploy-0.10.0.tgz",
+    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0.tgz",
+    "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0.tgz",
     "@tabler/core": "^1.0.0-beta17",
     "@types/react": "^18.0.28",
     "@types/ws": "^8.5.4",
