@@ -1,0 +1,27 @@
+{
+    "name": "FullStacked IDE",
+<<<<<<< HEAD
+    "short_name": "FullStacked IDE",
+=======
+    "short_name": "fullstacked-ide",
+>>>>>>> f9f376b40e7fb16ed7aaaf0255a3b8eed58abb1e
+    "display": "standalone",
+    "start_url": "/",
+    "description": "",
+    "background_color": "#2c2f33",
+    "theme_color": "#2c2f33",
+    "icons": [
+        {
+            "src": "/pwa/app-icons/app-icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/pwa/app-icons/maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

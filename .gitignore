@@ -2,9 +2,6 @@
 .idea
 node_modules
 dist
-coverage
-.test*
-.env
 **/*.js
 **/*.js.map
 **/*.mjs
@@ -12,8 +9,9 @@ coverage
 **/*.tjs
 **/*.tjs.map
 **/*.d.ts
-/version.ts
-/backup
+version.ts
 .fullstacked
-.c8
-.nyc
+*.tgz
+test
+package-lock.json
+!packages/ide/service-worker.js

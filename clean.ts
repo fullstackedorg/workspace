@@ -1,9 +1,5 @@
-import glob from "glob";
-import {dirname, resolve} from "path";
-import {fileURLToPath} from "url";
+import {globSync} from "glob";
 import fs from "fs";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const filesToRm = new Set<string>();
 
@@ -17,7 +13,9 @@ const options = {
 const globs = [
     ".fullstacked",
     "*.js",
+    "*.mjs",
     "*.js.map",
+    "*.mjs.map",
     "*.d.ts",
     "dist",
     ".c8",
@@ -28,12 +26,11 @@ const globs = [
     "*.tgz",
 ];
 
-globs.map(pattern => glob.sync(resolve(__dirname, "**", pattern), options)).flat()
-    .concat(glob.sync(resolve(__dirname, "**") + "/", options).filter(dir => !fs.readdirSync(dir).length))
+globs.map(pattern => globSync(`./**/${pattern}`, {...options})).flat()
     .forEach(file => filesToRm.add(file));
 
-filesToRm.forEach(file => {
-    if(fs.existsSync(file)) fs.rmSync(file, {recursive: true})
+filesToRm.forEach(filePath => {
+    fs.rmSync(filePath, {recursive: true});
 });
 
 

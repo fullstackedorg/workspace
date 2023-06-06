@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "module": "ES2022",
+        "target": "ES2022",
+        "jsx": "react",
+        "esModuleInterop": true,
+        "moduleResolution": "Node"
+    }
+}

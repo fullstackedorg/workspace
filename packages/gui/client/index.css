@@ -1,0 +1,31 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+.theme-dark pre {
+    background-color: #0f141f
+}
+
+.main-view > div {
+    transition: 0.3s all;
+}
+
+.main-view > div:first-child {
+    width: 100%;
+}
+.main-view > div:last-child {
+    width: 0;
+}
+.main-view > div:last-child pre {
+    transition: 0.3s padding;
+}
+.main-view:not(.open-console) > div:last-child pre {
+    padding-right: 0;
+    padding-left: 0;
+}
+.main-view.open-console > div {
+    width: 50%;
+}

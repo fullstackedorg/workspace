@@ -1,6 +1,0 @@
-[submodule "create-fullstacked"]
-	path = create-fullstacked
-	url = https://github.com/cplepage/create-fullstacked
-[submodule "fullstacked-code-coverage"]
-	path = fullstacked-code-coverage
-	url = https://github.com/cplepage/fullstacked-code-coverage

@@ -1,0 +1,18 @@
+{
+  "name": "@fullstacked/backup",
+  "version": "0.10.0-10",
+  "description": "Extract and put back archives of your Web App data",
+  "author": "cplepage",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.5"
+  },
+  "exports": {
+    ".": "./index.js"
+  }
+}

@@ -1,32 +1,28 @@
 {
     "compilerOptions": {
-        "baseUrl": "./",
-        "module": "es2022",
-        "target": "es2022",
+        "baseUrl": ".",
+        "module": "ES2022",
+        "target": "ES2022",
         "esModuleInterop": true,
         "moduleResolution": "node",
+        "jsx": "react",
+        "skipLibCheck": true,
         "declaration": true,
         "emitDeclarationOnly": true,
-        "experimentalDecorators": true,
-        "lib": [
-            "es2021",
-            "dom"
-        ],
-        "typeRoots": [
-            "node_modules/@types"
-        ],
-        "jsx": "react"
+        "paths": {
+            "fullstacked/*": ["./*"],
+            "@fullstacked/deploy/*": ["./packages/deploy/*"]
+        }
     },
     "include": [
-        "index.ts",
-        "server.ts",
-        "utils/fetch.ts",
-        "utils/randStr.ts",
-        "utils/sleep.ts",
-        "utils/testE2E.ts",
-        "utils/testIntegration.ts",
-        "utils/uploadFileWithProgress.ts",
-        "utils/waitForServer.ts",
-        "version.ts"
+        "info.ts",
+        "version.ts",
+        "utils",
+        "packages"
+    ],
+    "exclude": [
+        "packages/create/templates",
+        "packages/gui",
+        "packages/ide"
     ]
 }

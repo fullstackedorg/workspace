@@ -1,0 +1,236 @@
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+html, body, .wb-body {
+    background-color: #1e293c;
+}
+
+.wb-body > div {
+    height: 100%;
+    width: 100%;
+}
+
+pre {
+    margin: 0;
+}
+
+#root {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+}
+
+.select-zone {
+    position: fixed;
+    border: 1px solid #9dd1ec;
+    background-color: #9dd1ec30;
+    z-index: 100;
+}
+
+.winbox {
+    background-color: #0a85b5;
+    border-radius: 6px 6px 0 0;
+}
+
+.rc-tree-list {
+    color: #ced9ec;
+}
+
+.rc-tree-switcher {
+    display: none!important;
+}
+
+.rc-tree-treenode {
+    display: flex;
+}
+
+.rc-tree-node-content-wrapper{
+    padding: 0 5px!important;
+    flex-grow: 1;
+}
+
+.rc-tree-node-selected {
+    background-color: transparent!important;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode-selected {
+    background-color: #0a85b5 !important;
+    color: white;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode:nth-child(even){
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+
+.background {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+.background > img {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    max-width: 300px;
+}
+
+.button-icon {
+    position: absolute;
+    height: 80px;
+    width: 80px;
+    padding: 10px;
+    display: inline-flex;
+    flex-direction: column;
+    text-align: center;
+    color: white;
+    font-size: smaller;
+}
+
+.button-icon > div:first-child {
+    flex-grow: 1;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.button-icon > div:last-child {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.terminal {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+.terminal form {
+    display: flex;
+    font-family: monospace;
+    white-space: pre;
+}
+.terminal form > div {
+    margin-right: 5px;
+}
+
+.terminal input {
+    font-family: monospace;
+    white-space: pre;
+    width: 100%;
+    font-size: inherit;
+    background: none;
+    outline: none;
+    border: 0;
+    color: white;
+    padding: 0;
+    margin: 0;
+}
+
+.browser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.browser > .url-bar {
+    width: 100%;
+    background-color: gray;
+    padding: 5px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.browser > .url-bar  input {
+    outline: 0;
+    border: 0;
+    border-radius: 15px;
+    height: 25px;
+    margin: 0 10px 0 0;
+    padding: 0 10px;
+}
+
+.browser > iframe {
+    position: relative;
+    flex-grow: 1;
+    border: 0;
+    background-color: white;
+}
+
+.dot {
+    height: 8px;
+    width: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+iframe {
+    background-repeat: no-repeat;
+    background-size: 30px;
+    background-position: center;
+}
+
+.console {
+    width: 100%;
+    height: 0;
+    background-color: lightgray;
+    border-top: 1px solid gray;
+    box-shadow: 0 0 30px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+}
+
+.console.open {
+    height: 200px;
+}
+
+.console > .top-bar {
+    background-color: darkgray;
+    cursor: row-resize;
+}
+
+.console > pre {
+    overflow: auto;
+    flex-grow: 1;
+}
+
+.console > .top-bar,
+.console > pre > div {
+    padding: 5px;
+    border-bottom: 1px solid gray;
+}
+
+.console > pre > div.error {
+    background-color: #5c0000;
+    color: #ff9393;
+}
