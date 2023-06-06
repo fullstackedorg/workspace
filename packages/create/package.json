@@ -1,0 +1,17 @@
+{
+  "name": "@fullstacked/create",
+  "version": "0.10.0-10",
+  "description": "Create a new FullStacked project or install a template to an existing one",
+  "author": "cplepage",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "@fullstacked/create": "cli.js"
+  },
+  "dependencies": {
+    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz"
+  },
+  "exports": {
+    ".": "./index.js"
+  }
+}

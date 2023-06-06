@@ -41,11 +41,11 @@ async function recurse(filePath: string, filesToBuild: Set<string>){
                         return fs.existsSync(maybeFile) && fs.statSync(maybeFile).isFile();
                     });
 
-                    const absoluteFilePathToBuild = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), relativeFilePathToBuild);
-
                     if(!relativeFilePathToBuild){
-                        throw Error(`Cannot find file at [${absoluteFilePathToBuild}]`);
+                        return {external: true};
                     }
+
+                    const absoluteFilePathToBuild = resolve(dirname(currentBuild.initialOptions.entryPoints[0]), relativeFilePathToBuild);
 
                     if(!filesToBuild.has(absoluteFilePathToBuild)) {
                         filesToBuild.add(absoluteFilePathToBuild);
