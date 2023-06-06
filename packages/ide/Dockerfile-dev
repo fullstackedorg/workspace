@@ -16,7 +16,7 @@ RUN FORCE_NODE_VERSION=18 npm i -g --ignore-engines --unsafe-perm code-server
 RUN cd /usr/local/lib/node_modules/code-server/lib/vscode && npm i --legacy-peer-deps
 # https://github.com/coder/code-server/issues/5019#issuecomment-1080184626
 RUN cd /usr/local/lib/node_modules/code-server/lib/vscode/extensions && npm i typescript
-COPY packages/ide/code-server-config.yaml /home/.config/code-server/config.yaml
+COPY packages/ide/code-server-config.yml /home/.config/code-server/config.yaml
 
 COPY . /fullstacked
 

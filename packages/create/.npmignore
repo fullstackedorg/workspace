@@ -2,6 +2,5 @@
 *.ts
 *.tsx
 !*.d.ts
-!templates/**/*.ts
-!templates/**/*.tsx
 cli.d.ts
+*.tgz
