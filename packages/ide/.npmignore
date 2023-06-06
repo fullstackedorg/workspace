@@ -5,12 +5,14 @@
 
 /client
 /server
-
-WS.ts
-WS.d.ts
+/pwa
 
 dist/docker-compose.yml
 dist/server/index.mjs.map
 
 *.tgz
-tsconfig.json
+code-server-config.yml
+Dockerfile
+Dockerfile-dev
+
+install.js

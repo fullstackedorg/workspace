@@ -2,5 +2,4 @@
 *.ts
 *.tsx
 !*.d.ts
-
-start.d.ts
+*.tgz
