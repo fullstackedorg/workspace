@@ -11,7 +11,9 @@
     "build": "fullstacked build --production && cp -R pwa dist/client",
     "prepack": "npm run build",
     "predocker:dev": "npm run build",
-    "docker:dev": "docker build ../../ -f Dockerfile-dev -t cplepage/fullstacked-ide:dev"
+    "docker:dev": "docker build ../../ -f Dockerfile-dev -t cplepage/fullstacked-ide:dev",
+    "predocker": "npm run build",
+    "docker": "docker build . -t cplepage/fullstacked-ide:latest"
   },
   "type": "module",
   "devDependencies": {

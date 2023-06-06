@@ -1,8 +1,35 @@
 FROM docker:dind
 
-RUN apk add --update nodejs npm git
-RUN npm i -g node-pty fullstacked@alpha @fullstacked/ide@alpha
+# make /home the user root folder
+RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
+RUN rm -rf /home/dockremap
+
+# install basic tools
+RUN apk add --update make g++ nodejs npm git python3 curl
+
+# install node-pty and fullstacked globally
+RUN npm i -g node-pty fullstacked \
+    @fullstacked/backup \
+    @fullstacked/build \
+    @fullstacked/create \
+    @fullstacked/deploy \
+    @fullstacked/gui \
+    @fullstacked/ide \
+    @fullstacked/run \
+    @fullstacked/webapp \
+    @fullstacked/watch
+
+# installing code-server
+RUN FORCE_NODE_VERSION=18 npm i -g --ignore-engines --unsafe-perm code-server
+# https://github.com/coder/code-server/issues/5530#issuecomment-1235752382
+RUN cd /usr/local/lib/node_modules/code-server/lib/vscode && npm i --legacy-peer-deps
+# https://github.com/coder/code-server/issues/5019#issuecomment-1080184626
+RUN cd /usr/local/lib/node_modules/code-server/lib/vscode/extensions && npm i typescript
+COPY code-server-config.yml /home/.config/code-server/config.yaml
 
 WORKDIR /home
 
-CMD ["/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & DOCKER_HOST=\"\" fullstacked ide"]
+RUN npm config set prefix '/home/.npm/'
+RUN echo "export PATH=\$PATH:/home/.npm/bin" > /home/.profile
+
+CMD ["/bin/sh", "-c", "source /home/.profile && (/usr/local/bin/dockerd-entrypoint.sh & code-server & DOCKER_HOST=\"\" fsc ide)"]
