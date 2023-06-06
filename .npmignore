@@ -22,5 +22,7 @@ tsconfig.json
 
 Commands.d.ts
 
+prepare.js
+pack.js
 
 

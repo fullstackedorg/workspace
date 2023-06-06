@@ -1,6 +1,7 @@
 *.js.map
 *.ts
 *.tsx
-!*.d.ts
+*.d.ts
+!index.d.ts
 
-clientWatcher.d.ts
+*.tgz

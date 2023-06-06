@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/run",
-  "version": "0.10.0-6",
+  "version": "0.10.0",
   "description": "Run your Web App",
   "main": "index.js",
   "author": "cplepage",
@@ -8,7 +8,7 @@
   "type": "module",
   "dependencies": {
     "dockerode-compose": "^1.3.3",
-    "fullstacked": "file:../../fullstacked-0.10.0-5.tgz"
+    "fullstacked": "^0.10.0"
   },
   "exports": {
     ".": "./index.js"

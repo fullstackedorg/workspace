@@ -78,7 +78,7 @@ export default function () {
                             <div className="form-label">Reverse Proxy Protocol</div>
                             <div>
                                 <label className="form-check">
-                                    <input className="form-check-input" type="radio" name="radios" value={"http"}
+                                    <input className="form-check-input" type="radio" name={`proto-${index}`} value={"http"}
                                            defaultChecked={!nginxConfig?.proto || nginxConfig.proto === "http"}
                                            onChange={() => {
                                                nginxConfig.proto = "http";
@@ -88,7 +88,7 @@ export default function () {
                                     <span className="form-check-label">http</span>
                                 </label>
                                 <label className="form-check">
-                                    <input className="form-check-input" type="radio" name="radios" value={"https"}
+                                    <input className="form-check-input" type="radio" name={`proto-${index}`} value={"https"}
                                            defaultChecked={nginxConfig.proto === "https"}
                                            onChange={() => {
                                                nginxConfig.proto = "https";

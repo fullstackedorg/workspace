@@ -2,4 +2,4 @@
 *.ts
 *.tsx
 !*.d.ts
-entrypoint.d.ts
+*.tgz

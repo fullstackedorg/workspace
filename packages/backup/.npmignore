@@ -2,3 +2,4 @@
 *.ts
 *.tsx
 !*.d.ts
+*.tgz
