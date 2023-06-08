@@ -1,6 +1,6 @@
 {
   "name": "@fullstacked/watch",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Automatically reBuild and reRun your Web App on file changes",
   "main": "index.js",
   "author": "cplepage",
@@ -8,7 +8,8 @@
   "type": "module",
   "dependencies": {
     "esbuild": "^0.17.15",
-    "fullstacked": "^0.10.0",
+    "fast-glob": "^3.2.12",
+    "fullstacked": "^0.10.1",
     "js-yaml": "^4.1.0",
     "ws": "^8.12.1"
   },

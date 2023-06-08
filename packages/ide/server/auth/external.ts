@@ -69,11 +69,7 @@ authPage.addInHead(`<style>
 authPage.addInBody(`
     <img src="/pwa/app-icons/app-icon.png" />
     <script type="module">
-        const url = new URL(window.location.href);
-        if(url.searchParams.get("logout")){
-            url.searchParams.delete("logout");
-            window.history.replaceState(null, null, url.toString());
-            
+        function logout(){
             "${process.env.SESSION_COOKIES}".split(",").forEach(cookieName => {
                 document.cookie = cookieName + "=" +
                   ";path=/" + 
@@ -93,17 +89,27 @@ authPage.addInBody(`
             button.classList.add("login-btn");
             button.innerHTML = \`${arrow}\`;
             document.body.append(button);
+        }
+        
+        const url = new URL(window.location.href);
+        if(url.searchParams.get("logout")){
+            url.searchParams.delete("logout");
+            window.history.replaceState(null, null, url.toString());
+            
+            logout();
         }else{
             const savedResfreshToken = window.localStorage.getItem("fullstackedRefreshToken");
             try{
-                const {refreshToken} = await (await fetch("/", {
+                const response = await (await fetch("/", {
                     method: "POST",
                     body: JSON.stringify({
                         refreshToken: savedResfreshToken
                     })
                 })).json();
-                if(refreshToken){
-                    window.localStorage.setItem("fullstackedRefreshToken", refreshToken);
+                if(response.error){
+                    logout();
+                }else if(response.refreshToken){
+                    window.localStorage.setItem("fullstackedRefreshToken", response.refreshToken);
                     window.location.reload(); 
                 }
             }catch (e) {
@@ -117,12 +123,13 @@ export default {
     validator: async req => {
         let response;
         try{
-            response = await fetch(process.env.AUTH_URL, {
+            response = await (await fetch(process.env.AUTH_URL, {
                 method: "POST",
                 headers: {
+                    authorization: process.env.AUTH_SECRET,
                     cookie: req.headers.cookie
                 }
-            })
+            })).text();
         }catch (e){
             return e;
         }

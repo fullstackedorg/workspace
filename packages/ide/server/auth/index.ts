@@ -48,11 +48,19 @@ export default class {
             }
 
             if (!newAccessToken) {
-                const validation = await this.authenticator.validator(req, body);
+                let validation
+                try{
+                    validation = await this.authenticator.validator(req, body);
+                }catch (e){
+                    validation = e;
+                }
 
-                if(validation instanceof Error){
+                if(!validation || validation instanceof Error){
                     res.writeHead(500);
-                    res.write(validation.message);
+                    res.write(JSON.stringify({
+                        error: "Unauthorized",
+                        message: validation.toString()
+                    }));
                     res.end()
                     return;
                 }

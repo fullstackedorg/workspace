@@ -1,6 +1,6 @@
 import CommandInterface from "fullstacked/CommandInterface";
 import CLIParser from "fullstacked/utils/CLIParser";
-import {globSync} from "glob";
+import glob from "fast-glob";
 import fs from "fs";
 import watcher from "./watcher";
 import yaml from "js-yaml";
@@ -53,7 +53,7 @@ export default class Watch extends CommandInterface {
             short: "d",
             default: [
                 "./docker/compose.yml",
-                ...globSync("./docker/**/*.compose.yml")
+                ...glob.sync("./docker/**/*.compose.yml")
             ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Docker Compose files to be bundled",
             defaultDescription: "./docker/compose.yml, ./docker/*.compose.yml"

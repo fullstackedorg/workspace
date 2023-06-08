@@ -1,5 +1,5 @@
 import {buildSync, Platform} from "esbuild";
-import {globSync} from "glob";
+import glob from "fast-glob";
 import fs from "fs";
 
 buildSync({
@@ -12,7 +12,7 @@ buildSync({
 
 const buildRecursively = await import("./utils/buildRecursively.js");
 
-const utils = globSync("./utils/**/*.ts");
+const utils = glob.sync("./utils/**/*.ts");
 
 const toBuild = [
     ...utils,
