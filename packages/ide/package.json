@@ -4,11 +4,12 @@
   "version": "0.10.3",
   "author": "cplepage",
   "dependencies": {
-    "fullstacked": "^0.10.1",
+    "fullstacked": "file:../../fullstacked-0.10.1.tgz",
     "node-pty": "^0.10.1"
   },
   "scripts": {
-    "build": "fullstacked build --production && cp -R pwa dist/client",
+    "cp": "esbuild cp.ts --outfile=cp.js --format=esm && node cp",
+    "build": "fsc build --production && npm run cp",
     "prepack": "npm run build",
     "predocker:dev": "npm run build",
     "docker:dev": "docker build ../../ -f Dockerfile-dev -t cplepage/fullstacked-ide:dev",
@@ -28,8 +29,8 @@
     "@codemirror/lint": "^6.2.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.9.4",
-    "@fullstacked/build": "file:../build/fullstacked-build-0.10.0.tgz",
-    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.0.tgz",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.1.tgz",
+    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.1.tgz",
     "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0.tgz",
     "@types/cookie": "^0.5.1",
     "@types/http-proxy": "^1.17.10",

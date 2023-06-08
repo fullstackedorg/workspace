@@ -76,7 +76,10 @@ export default class Run extends CommandInterface {
         const workdir = dirname(this.config.dockerCompose);
         const port = await getNextAvailablePort(8000);
         console.log(`${Info.webAppName} v${Info.version} is running at http://localhost:${port}`);
-        execSync(`PORT=${port} node --enable-source-maps server/index.mjs`, {cwd: workdir, stdio: "inherit"})
+        if(process.platform === "win32")
+            execSync(`set PORT=${port} && node --enable-source-maps server/index.mjs`, { cwd: workdir, stdio: "inherit" });
+        else
+            execSync(`PORT=${port} node --enable-source-maps server/index.mjs`, { cwd: workdir, stdio: "inherit" });
     }
 
     async start(){
