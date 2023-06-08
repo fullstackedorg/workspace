@@ -5,6 +5,7 @@ import WebSocket, {WebSocketServer} from "ws";
 import fs, {FSWatcher} from "fs";
 import {getModulePathWithT, invalidateModule, moduleExtensions} from "./utils";
 import {Socket} from "net";
+import {pathToFileURL} from "url";
 
 if(process.env.DOCKER)
     execSync("npm i esbuild-linux-64 --no-save", {stdio: "inherit"});
@@ -96,7 +97,8 @@ export default async function(clientEntrypoint: string, serverEntrypoint: string
         }
 
         try{
-            server = (await import(resolve(outdir, modulePathToSafeJS(serverEntrypoint)) + `?t=${Date.now()}`)).default;
+            const fileURL = pathToFileURL(resolve(outdir, modulePathToSafeJS(serverEntrypoint)));
+            server = (await import(fileURL.toString() + `?t=${Date.now()}`)).default;
         }catch (e) {
             console.error(e);
             await closeServer();

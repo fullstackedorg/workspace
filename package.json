@@ -4,7 +4,7 @@
   "version": "0.10.1",
   "description": "A CLI that takes care of all the redundant tasks in TypeScript web app development.",
   "scripts": {
-    "clean": "npx esbuild clean.ts --outfile=clean.js --format=esm && node clean",
+    "clean": "esbuild clean.ts --outfile=clean.js --format=esm && node clean",
     "build": "npm run clean && npx esbuild build.ts --outfile=build.js --format=esm && node build && npx tsc",
     "prepack": "npm run build",
     "pretest": "npm run build",
