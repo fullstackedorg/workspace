@@ -9,7 +9,7 @@
     "@fullstacked/create": "cli.js"
   },
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.1.tgz"
+    "fullstacked": "^0.10.2"
   },
   "exports": {
     ".": "./index.js"
