@@ -1,4 +1,4 @@
-import {globSync} from "glob";
+import glob from "fast-glob";
 import fs from "fs";
 
 const filesToRm = new Set<string>();
@@ -26,7 +26,7 @@ const globs = [
     "*.tgz",
 ];
 
-globs.map(pattern => globSync(`./**/${pattern}`, {...options})).flat()
+globs.map(pattern => glob.sync(`./**/${pattern}`, {...options})).flat()
     .forEach(file => filesToRm.add(file));
 
 filesToRm.forEach(filePath => {

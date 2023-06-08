@@ -8,7 +8,7 @@ import SFTP from "ssh2-sftp-client";
 import {Client} from "ssh2";
 import yaml from "js-yaml";
 import Info from "fullstacked/info";
-import {globSync} from "glob";
+import glob from "fast-glob";
 import progress from "progress-stream";
 import DockerInstallScripts from "./dockerInstallScripts";
 import {Writable} from "stream";
@@ -142,7 +142,7 @@ export default class Deploy extends CommandInterface {
     async execOnRemoteHost(cmd: string, print = false): Promise<string>{
         const {client} = await this.getSFTP();
 
-        return new Promise(resolve => {
+        return new Promise<string>(resolve => {
             let message = "";
 
             client.exec(cmd, (err, stream) => {
@@ -435,7 +435,7 @@ export default class Deploy extends CommandInterface {
 
         this.sftp = new SFTP() as WrappedSFTP;
 
-        return new Promise(async (resolve, reject) => {
+        return new Promise<WrappedSFTP>(async (resolve, reject) => {
             let rejected = false;
             const hangTime = setTimeout(() => {
                 // try to clean up a bit
@@ -738,7 +738,7 @@ export default class Deploy extends CommandInterface {
 
         await sftp.mkdir(directory, true);
 
-        const files = globSync("**/*", {dot: true, cwd: this.config.outputDir})
+        const files = glob.sync("**/*", {dot: true, cwd: this.config.outputDir})
             .map(file => file.split(path.sep).join("/")); // forward slash only here
 
         const localFiles = files.map((file) => resolve(this.config.outputDir, file));

@@ -3,7 +3,7 @@ import esbuild, {Format, Platform} from "esbuild";
 import fs from "fs";
 import yaml from "js-yaml";
 import CommandInterface from "fullstacked/CommandInterface";
-import {globSync} from "glob";
+import glob from "fast-glob";
 import CLIParser from "fullstacked/utils/CLIParser";
 import Info from "fullstacked/info";
 
@@ -93,7 +93,7 @@ export default class Build extends CommandInterface {
             short: "d",
             default: [
                 "./docker/compose.yml",
-                ...globSync("./docker/**/*.compose.yml")
+                ...glob.sync("./docker/**/*.compose.yml")
             ].filter((defaultFiles) => fs.existsSync(defaultFiles)),
             description: "Docker Compose files to be bundled",
             defaultDescription: "./docker/compose.yml, ./docker/*.compose.yml"
