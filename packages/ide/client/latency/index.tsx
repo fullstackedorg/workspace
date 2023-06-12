@@ -1,10 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {client} from "../client";
 
-async function latencyTest(cb: (responsesTime: string[]) => void){
-
-}
-
 export default function () {
     const [tests, setTests] = useState([]);
     const [avg, setAvg] = useState(null);
