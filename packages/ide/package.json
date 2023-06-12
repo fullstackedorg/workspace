@@ -1,7 +1,7 @@
 {
   "name": "@fullstacked/ide",
   "description": "Launch the FullStacked IDE",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "author": "cplepage",
   "dependencies": {
     "fullstacked": "^0.10.2",
