@@ -54,6 +54,9 @@ if(!process.argv.includes("ide"))
 export default server.serverHTTP;
 
 export const API = {
+    ping(){
+        return (Math.random() * 100000).toFixed(0);
+    },
     papercups(){
         return {
             accountId: process.env.PAPERCUPS_ACCOUNT_ID,

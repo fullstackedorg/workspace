@@ -738,7 +738,7 @@ export default class Deploy extends CommandInterface {
 
         await sftp.mkdir(directory, true);
 
-        const files = glob.sync("**/*", {dot: true, cwd: this.config.outputDir})
+        const files = glob.sync("**/*", {onlyFiles: false, dot: true, cwd: this.config.outputDir})
             .map(file => file.split(path.sep).join("/")); // forward slash only here
 
         const localFiles = files.map((file) => resolve(this.config.outputDir, file));

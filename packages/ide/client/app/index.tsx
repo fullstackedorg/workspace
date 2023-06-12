@@ -17,6 +17,8 @@ import logout from "../icons/log-out.svg";
 import codeServer from "../icons/code-server.png";
 //@ts-ignore
 import docker from "../icons/docker.svg";
+//@ts-ignore
+import stopwatch from "../icons/stopwatch.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
@@ -24,6 +26,7 @@ import {getWidth} from "./WinStore";
 import {client} from "../client";
 import Terminal from "../terminal";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
+import Latency from "../latency";
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -109,14 +112,10 @@ export default function () {
                     ...winOptions,
                     mount: div,
                     onresize: () => {
-                        setTimeout(() => {
-                            terminalRef?.current?.onResize()
-                        }, 500)
+                        setTimeout(() => {terminalRef?.current?.onResize()}, 500)
                     },
                     onfullscreen: () => {
-                        setTimeout(() => {
-                            terminalRef?.current?.onResize()
-                        }, 500)
+                        setTimeout(() => {terminalRef?.current?.onResize()}, 500)
                     },
                 });
                 createRoot(div).render(<Terminal ref={terminalRef} />);
@@ -138,6 +137,15 @@ export default function () {
                 const div = document.createElement("div");
                 new WinBox("Browser", {...winOptions, mount: div});
                 createRoot(div).render(<Browser />);
+            }
+        },
+        {
+            icon: stopwatch,
+            title: "Latency",
+            onClick() {
+                const div = document.createElement("div");
+                new WinBox("Latency Test", {...winOptions, mount: div});
+                createRoot(div).render(<Latency />);
             }
         }
     ]
