@@ -7,7 +7,7 @@ RUN apk add --update make g++ nodejs npm git python3 curl gcompat tini
 RUN curl -L https://github.com/git-ecosystem/git-credential-manager/releases/download/v2.1.2/gcm-linux_amd64.2.1.2.tar.gz -o /tmp/gcm.tar.gz && \
     tar -xvf /tmp/gcm.tar.gz -C /usr/bin && \
     rm /tmp/gcm.tar.gz && \
-    echo "export GCM_CREDENTIAL_STORE=plaintext" > /home/.profile
+    echo "export GCM_CREDENTIAL_STORE=plaintext" > /root/.profile
 
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
@@ -30,8 +30,8 @@ RUN cd /fullstacked && npm ci && node packages/ide/install
 WORKDIR /home
 
 RUN npm config set prefix '/home/.npm/'
-RUN echo "export PATH=\$PATH:/home/.npm/bin" >> /home/.profile
+RUN echo "export PATH=\$PATH:/home/.npm/bin" >> /root/.profile
 
 RUN git-credential-manager configure
 
-CMD ["tini", "--", "/bin/sh", "-c", "source /home/.profile && (/usr/local/bin/dockerd-entrypoint.sh & code-server & DOCKER_HOST=\"\" fsc ide)"]
+CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & code-server & DOCKER_HOST=\"\" fsc ide)"]
