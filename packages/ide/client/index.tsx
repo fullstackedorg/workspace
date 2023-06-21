@@ -24,7 +24,6 @@ if(!rootDiv){
 
 createRoot(rootDiv).render(<App />);
 
-
 async function keepAccessTokenValid(){
     const accessToken = Cookies.get("fullstackedAccessToken");
     const accessTokenComponents = accessToken.split(":");
@@ -35,27 +34,18 @@ async function keepAccessTokenValid(){
 
     if(!shouldRevalidate) return;
 
-    const savedResfreshToken = window.localStorage.getItem("fullstackedRefreshToken");
     let response;
-    if(savedResfreshToken){
-        try{
-            response = await (await fetch("/", {
-                method: "POST",
-                body: JSON.stringify({
-                    refreshToken: savedResfreshToken
-                })
-            })).text();
-        }catch(e){ }
+    try{
+        response = await (await fetch("/", {method: "POST"})).text();
+    }catch(e){
+        console.log(e);
     }
 
     if(response) return;
 
-    window.localStorage.removeItem("fullstackedRefreshToken");
     window.location.reload();
 }
 
 
-if(window.localStorage.getItem("fullstackedRefreshToken")){
-    keepAccessTokenValid();
-    setInterval(keepAccessTokenValid, 1000);
-}
+keepAccessTokenValid();
+setInterval(keepAccessTokenValid, 1000);

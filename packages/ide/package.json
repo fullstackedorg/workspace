@@ -4,7 +4,7 @@
   "version": "0.10.4",
   "author": "cplepage",
   "dependencies": {
-    "fullstacked": "^0.10.2",
+    "fullstacked": "file:../../fullstacked-0.10.2.tgz",
     "node-pty": "^0.10.1"
   },
   "scripts": {
@@ -29,8 +29,8 @@
     "@codemirror/lint": "^6.2.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.9.4",
-    "@fullstacked/build": "file:../build/fullstacked-build-0.10.2-1.tgz",
-    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.2-1.tgz",
+    "@fullstacked/build": "file:../build/fullstacked-build-0.10.2.tgz",
+    "@fullstacked/watch": "file:../watch/fullstacked-watch-0.10.2.tgz",
     "@fullstacked/webapp": "file:../webapp/fullstacked-webapp-0.10.0.tgz",
     "@types/cookie": "^0.5.1",
     "@types/http-proxy": "^1.17.10",

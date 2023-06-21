@@ -2,8 +2,7 @@ import {randomUUID} from "crypto";
 import cookie from "cookie";
 import password from "./password";
 import external from "./external";
-
-
+import type {ServerResponse} from "http";
 
 export default class {
     private readonly authenticator = process.env.PASS
@@ -16,32 +15,40 @@ export default class {
     // RefreshToken => Set<AccessToken>
     private tokenIssued: Map<string, Set<string>> = new Map();
 
-    async handler(req, res) {
+    async handler(req, res: ServerResponse) {
         const cookies = cookie.parse(req.headers.cookie ?? "");
         if (this.isAccessTokenValid(cookies.fullstackedAccessToken)) return;
 
-        if (req.method === "POST") {
+        if (req.method === "POST" && req.url === "/") {
             let data = ""
             await new Promise((resolve) => {
                 req.on('data', chunk => data += chunk.toString());
                 req.on('end', resolve);
             });
-            const body = JSON.parse(data);
+            let body;
+            try{
+                body = data.trim() ? JSON.parse(data) : {};
+            }catch (e) {
+                console.log(data);
+                throw e;
+            }
+
+            const cookiesToSend = [];
+            const reqHost = (req.headers.origin || req.headers.host).replace(/https?:\/\//g, "");
+            const reqHostname = reqHost.split(":").shift();
 
             const sendAccessToken = (accessToken) => {
-                const reqHost = (req.headers.origin || req.headers.host).replace(/https?:\/\//g, "");
-                const reqHostname = reqHost.split(":").shift();
-                res.setHeader("Set-Cookie", cookie.serialize("fullstackedAccessToken", accessToken, {
+                cookiesToSend.push(cookie.serialize("fullstackedAccessToken", accessToken, {
                     path: "/",
                     domain: reqHostname,
                     secure: true
                 }));
             }
 
-            let refreshToken = body?.refreshToken,
-            newAccessToken;
+            let refreshToken = cookies.fullstackedRefreshToken,
+                newAccessToken;
             if(refreshToken){
-                newAccessToken = this.issueAccessToken(body.refreshToken, cookies.fullstackedAccessToken);
+                newAccessToken = this.issueAccessToken(refreshToken, cookies.fullstackedAccessToken);
                 if(newAccessToken){
                     sendAccessToken(newAccessToken);
                 }
@@ -73,13 +80,20 @@ export default class {
                 }
             }
 
-            res.setHeader("Content-Type", "application/json");
-            res.write(JSON.stringify({
-                refreshToken: this.isRefreshTokenValid(refreshToken)
-                    ? refreshToken
-                    : ""
-            }));
-            res.end();
+            if(this.isRefreshTokenValid(refreshToken)){
+                cookiesToSend.push(cookie.serialize("fullstackedRefreshToken", refreshToken, {
+                    path: "/",
+                    domain: reqHostname,
+                    secure: true,
+                    httpOnly: true
+                }));
+            }
+
+            if(cookiesToSend.length){
+                res.setHeader("Set-Cookie", cookiesToSend);
+            }
+
+            res.end("Bonjour");
             return;
         }
 

@@ -91,6 +91,18 @@ authPage.addInBody(`
             document.body.append(button);
         }
         
+        async function tryRefreshingToken(){
+            let response;
+            try{
+                response = await (await fetch("/", {method: "POST"})).text();
+            }catch (e) {
+                throw e;
+            }
+            
+            if(response === "Bonjour")
+                window.location.reload();
+        }
+        
         const url = new URL(window.location.href);
         if(url.searchParams.get("logout")){
             url.searchParams.delete("logout");
@@ -98,41 +110,27 @@ authPage.addInBody(`
             
             logout();
         }else{
-            const savedResfreshToken = window.localStorage.getItem("fullstackedRefreshToken");
-            try{
-                const response = await (await fetch("/", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        refreshToken: savedResfreshToken
-                    })
-                })).json();
-                if(response.error){
-                    logout();
-                }else if(response.refreshToken){
-                    window.localStorage.setItem("fullstackedRefreshToken", response.refreshToken);
-                    window.location.reload(); 
-                }
-            }catch (e) {
-                alert(e)
-            }
+            tryRefreshingToken();
         }
     </script>`);
 
 export default {
     html: authPage,
     validator: async req => {
-        let response;
+        let response, payload;
         try{
-            response = await (await fetch(process.env.AUTH_URL, {
+            response = await fetch(process.env.AUTH_URL, {
                 method: "POST",
                 headers: {
                     authorization: process.env.AUTH_SECRET,
                     cookie: req.headers.cookie
                 }
-            })).text();
+            });
+            payload = await response.text();
         }catch (e){
+            console.log(e);
             return e;
         }
-        return !!response;
+        return !!payload;
     }
 }
