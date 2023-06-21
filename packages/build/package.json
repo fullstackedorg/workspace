@@ -5,7 +5,7 @@
   "dependencies": {
     "esbuild": "^0.14.27",
     "fast-glob": "^3.2.12",
-    "fullstacked": "^0.10.2",
+    "fullstacked": "file:../../fullstacked-0.10.2.tgz",
     "js-yaml": "^4.1.0"
   },
   "author": "cplepage",

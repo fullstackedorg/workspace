@@ -27,6 +27,8 @@ import {client} from "../client";
 import Terminal from "../terminal";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import Latency from "../latency";
+import Cookies from "js-cookie";
+
 
 function initZoneSelect(){
     let mouseStart = null, square = null;
@@ -150,13 +152,12 @@ export default function () {
         }
     ]
 
-    if(window.localStorage.getItem("fullstackedRefreshToken")){
+    if(Cookies.get("fullstackedAccessToken")){
         apps.unshift({
             title: "Logout",
             icon: logout,
             async onClick() {
-                await client.get().logout(window.localStorage.getItem("fullstackedRefreshToken"));
-                window.localStorage.removeItem("fullstackedRefreshToken")
+                await client.get().logout();
                 window.location.href = "/?logout=1";
             }
         })

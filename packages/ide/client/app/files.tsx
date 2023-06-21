@@ -33,7 +33,7 @@ function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFil
     if(!flatFileTree[fileName])
         return [{ key: Math.floor(Math.random() * 100000).toString(), title: "Loading..." }];
 
-    return flatFileTree[fileName].map((file, i) => ({
+    return flatFileTree[fileName].filter(file => !file.name.startsWith(".")).map((file, i) => ({
         key: file.path,
         title: file.name,
         children: file.isDirectory
@@ -44,7 +44,7 @@ function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFil
 }
 
 function flatFileTreeToTreeData(files: FlatFileTree): File[] {
-    return files?.root?.map((file, i) => ({
+    return files?.root?.filter(file => !file.name.startsWith(".")).map((file, i) => ({
         key: file.path,
         title: file.name,
         children: file.isDirectory

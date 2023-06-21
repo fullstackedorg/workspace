@@ -74,18 +74,28 @@ export const API = {
         }
         return true;
     },
-    logout(this: {req: IncomingMessage, res: ServerResponse}, refreshToken){
+    logout(this: {req: IncomingMessage, res: ServerResponse}){
+        const cookies = cookie.parse(this.req.headers.cookie ?? "");
+
         if(auth){
-            auth.invalidateRefreshToken(refreshToken);
+            auth.invalidateRefreshToken(cookies.fullstackedRefreshToken);
         }
 
         const reqHost = (this.req.headers.origin || this.req.headers.host).replace(/https?:\/\//g, "");
         const reqHostname = reqHost.split(":").shift();
-        this.res.setHeader("Set-Cookie", cookie.serialize("fullstackedAccessToken", "", {
-            path: "/",
-            domain: reqHostname,
-            expires: new Date(0)
-        }));
+        this.res.setHeader("Set-Cookie", [
+            cookie.serialize("fullstackedAccessToken", "", {
+                path: "/",
+                domain: reqHostname,
+                expires: new Date(0)
+            }),
+            cookie.serialize("fullstackedRefreshToken", "", {
+                path: "/",
+                domain: reqHostname,
+                httpOnly: true,
+                expires: new Date(0)
+            })
+        ]);
     },
     readDir(dirPath: string){
         return fs.readdirSync(dirPath).map(name => {

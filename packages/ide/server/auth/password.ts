@@ -68,33 +68,18 @@ loginPage.addInBody(`
     </form>
     <script type="module">
         document.querySelector("input").focus();
-    
-        const savedResfreshToken = window.localStorage.getItem("fullstackedRefreshToken");
-        if(savedResfreshToken){
-            try{
-                const {refreshToken} = await (await fetch("/", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        refreshToken: savedResfreshToken
-                    })
-                })).json();
-                if(refreshToken){
-                    window.localStorage.setItem("fullstackedRefreshToken", refreshToken);
-                    window.location.reload();
-                }
-            }catch(e){ }
-        }
         
         async function submit(e){
             e.preventDefault();
-            const {refreshToken} = await (await fetch("/", {
+            const response = await (await fetch("/", {
                 method: "POST",
                 body: JSON.stringify({
                     pass: document.querySelector("input").value
                 })
-            })).json();
-            window.localStorage.setItem("fullstackedRefreshToken", refreshToken);
-            window.location.reload();
+            })).text();
+            
+            if(response === "Bonjour")
+                window.location.reload();
         }
         document.querySelector("form").addEventListener("submit", submit)
     </script>`);
@@ -104,7 +89,7 @@ loginPage.addInBody(`
 export default {
     html: loginPage,
     validator: async (req, body) => {
-        const pass = body?.pass ?? "";
+        const { pass } = body;
         return pass === process.env.PASS;
     }
 }
