@@ -1,10 +1,10 @@
 {
   "name": "@fullstacked/ide",
   "description": "Launch the FullStacked IDE",
-  "version": "0.10.4",
+  "version": "0.10.5",
   "author": "cplepage",
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.2.tgz",
+    "fullstacked": "^0.10.2",
     "node-pty": "^0.10.1"
   },
   "scripts": {

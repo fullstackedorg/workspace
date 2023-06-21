@@ -8,7 +8,7 @@
   "type": "module",
   "dependencies": {
     "fast-glob": "^3.2.12",
-    "fullstacked": "file:../../fullstacked-0.10.2.tgz",
+    "fullstacked": "^0.10.2",
     "js-yaml": "^4.1.0",
     "progress-stream": "^2.0.0",
     "prompts": "^2.4.2",

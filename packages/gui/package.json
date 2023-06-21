@@ -16,7 +16,7 @@
     "@fullstacked/watch"
   ],
   "dependencies": {
-    "fullstacked": "file:../../fullstacked-0.10.2.tgz"
+    "fullstacked": "^0.10.2"
   },
   "devDependencies": {
     "@fullstacked/build": "file:../build/fullstacked-build-0.10.2.tgz",
