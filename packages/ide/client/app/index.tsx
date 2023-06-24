@@ -1,4 +1,4 @@
-import React, {createRef, useEffect, useState} from "react";
+import React, {createRef, useEffect} from "react";
 import WinBox from "winbox/src/js/winbox";
 import ButtonIcon from "../components/button-icon";
 //@ts-ignore
@@ -22,7 +22,7 @@ import stopwatch from "../icons/stopwatch.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
-import {getWidth} from "./WinStore";
+import {getWidth, iframeWinBoxes, makeid} from "./WinStore";
 import {client} from "../client";
 import Terminal from "../terminal";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
@@ -136,9 +136,10 @@ export default function () {
             icon: browser,
             title: "Browser",
             onClick() {
+                const id = makeid(6);
                 const div = document.createElement("div");
-                new WinBox("Browser", {...winOptions, mount: div});
-                createRoot(div).render(<Browser />);
+                iframeWinBoxes.set(id, new WinBox("Browser", {...winOptions, mount: div}))
+                createRoot(div).render(<Browser id={id} />);
             }
         },
         {
@@ -168,15 +169,16 @@ export default function () {
             icon: codeServer,
             title: "Code",
             onClick() {
-
+                const id = makeid(6);
                 const iframe = document.createElement("iframe");
                 iframe.style.backgroundImage = `url(${loading})`;
+                iframe.setAttribute("id", id);
                 // @ts-ignore
                 // iframe.credentialless = true;
-                new WinBox("Code Server", {
+                iframeWinBoxes.set(id, new WinBox("Code Server", {
                     ...winOptions,
                     mount: iframe
-                });
+                }));
                 iframe.src = (window.hasCredentialless
                     ? new URL(`${window.location.protocol}//${window.location.host}?port=8888`)
                     : new URL(`${window.location.protocol}//8888.${window.location.host}`)).toString();
