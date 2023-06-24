@@ -6,7 +6,7 @@ import "xterm/css/xterm.css";
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import Browser from "../browser";
 import {createRoot} from "react-dom/client";
-import {getWidth} from "../app/WinStore";
+import {getWidth, iframeWinBoxes, makeid} from "../app/WinStore";
 
 const winOptions = {
     x: "center",
@@ -23,12 +23,11 @@ export default class Terminal extends Component {
     fitAddon = new FitAddon();
     webLinks = new WebLinksAddon((e, uri) => {
         if(uri.match(/http:\/\/localhost:\d+/g)){
-
+            const id = makeid(6);
             const url = new URL(uri);
-
             const div = document.createElement("div");
-            new WinBox("Files", {...winOptions, mount: div});
-            createRoot(div).render(<Browser port={url.port} path={url.pathname} />);
+            iframeWinBoxes.set(id, new WinBox("Browser", {...winOptions, mount: div}));
+            createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
 
             return;
         }

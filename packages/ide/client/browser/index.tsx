@@ -6,7 +6,7 @@ declare global {
         hasCredentialless: boolean
     }
 }
-export default function (props: {port?: string, path?: string}) {
+export default function (props: {id: string, port?: string, path?: string}) {
     const iframeRef = useRef<HTMLIFrameElement>();
     const consoleRef = useRef<Console>();
     const eTabRef = useRef<HTMLAnchorElement>();
@@ -59,7 +59,7 @@ export default function (props: {port?: string, path?: string}) {
                 Credentialless <div className={"dot"} style={{backgroundColor: window.hasCredentialless ? "green" : "red"}} />
             </small>
         </div>
-        <iframe ref={iframeRef} />
+        <iframe ref={iframeRef} id={props.id} />
         {window.hasCredentialless && <Console ref={consoleRef} iframeRef={iframeRef} />}
     </div>
 }

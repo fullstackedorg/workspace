@@ -26,6 +26,7 @@ createRoot(rootDiv).render(<App />);
 
 async function keepAccessTokenValid(){
     const accessToken = Cookies.get("fullstackedAccessToken");
+    if(!accessToken) return;
     const accessTokenComponents = accessToken.split(":");
     const expiration = parseInt(accessTokenComponents.pop());
 
