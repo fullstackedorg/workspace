@@ -152,10 +152,12 @@ commandsWS.on('connection', (ws) => {
     ws.on('close', () => command.kill());
 });
 
-const proxy = httpProxy.createProxy({
+const proxy = httpProxy.createProxy();
 
+proxy.on('proxyRes', function (proxyRes, req, res) {
+    delete proxyRes.headers["content-security-policy"];
+    delete proxyRes.headers["x-frame-options"];
 });
-
 
 server.serverHTTP.on('upgrade', (req, socket, head) => {
     const cookies = cookie.parse(req.headers.cookie ?? "");
@@ -172,7 +174,7 @@ server.serverHTTP.on('upgrade', (req, socket, head) => {
     if(maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535){
         return new Promise(resolve => {
             proxy.ws(req, socket, head, {target: `http://localhost:${firstDomainPart}`}, resolve);
-        })
+        });
     }
 
     if(req.url !== "/fullstacked-commands") return;
