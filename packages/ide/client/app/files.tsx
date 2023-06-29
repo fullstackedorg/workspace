@@ -8,10 +8,10 @@ import fileIcons from "../icons/file-icons.svg";
 // @ts-ignore
 import fileIcons2 from "../icons/file-icons-2.svg";
 import type {API} from "../../server";
-import {getWidth} from "./WinStore";
 import {EventDataNode} from "rc-tree/es/interface";
 import {createRoot} from "react-dom/client";
 import Editor from "../editor";
+import {createWindow} from "./WinStore";
 
 type FlatFileTree = {
     [filePath: string]: ReturnType<typeof API.readDir>
@@ -61,10 +61,7 @@ export default function () {
 
     const openFileEditor = (filename) => {
         const div = document.createElement("div");
-        new WinBox(filename, {
-            width: getWidth(),
-            mount: div
-        });
+        createWindow(filename, {mount: div});
         createRoot(div).render(<Editor filename={filename} />)
     }
 
