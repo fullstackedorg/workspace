@@ -46,8 +46,7 @@ export default class {
             const sendAccessToken = (accessToken) => {
                 cookiesToSend.push(cookie.serialize("fullstackedAccessToken", accessToken, {
                     path: "/",
-                    domain: reqHostname,
-                    httpOnly: true
+                    domain: reqHostname
                 }));
             }
 
