@@ -49,6 +49,7 @@ export default function() {
             "module": "es2022",
             "target": "es2022",
             "moduleResolution": "node",
+            "downlevelIteration": true,
             "esModuleInterop": true,
             "jsx": "react"
         }
