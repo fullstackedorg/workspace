@@ -9,6 +9,7 @@ import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
 import Auth from "./auth";
 import {IncomingMessage, ServerResponse} from "http";
+import {Socket} from "net";
 
 export const server = new Server();
 
@@ -125,31 +126,34 @@ server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/ap
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
 
-const commandsWS = new WebSocketServer({noServer: true});
-let command: IPty;
-commandsWS.on('connection', (ws) => {
-    command = pty.spawn("/bin/sh", [], {
+const terminalWSS = new WebSocketServer({noServer: true});
+const terminalSessions: Set<IPty> = new Set();
+terminalWSS.on('connection', (ws) => {
+    const session = pty.spawn("/bin/sh", [], {
         name: '',
         cols: 80,
         rows: 30,
         cwd: process.cwd()
     });
 
-    command.onData((data) => ws.send(data))
+    session.onData((data) => ws.send(data))
 
     ws.on('message', data => {
         const dataStr = data.toString();
         if(dataStr.startsWith("SIZE#")){
             const [_, cols, rows] = dataStr.split("#");
-            command.resize(parseInt(cols), parseInt(rows));
+            session.resize(parseInt(cols), parseInt(rows));
             return;
         }else if(dataStr === "##PING##"){
             return;
         }
-        command.write(data.toString());
+        session.write(data.toString());
     });
 
-    ws.on('close', () => command.kill());
+    ws.on('close', () => {
+        terminalSessions.delete(session);
+        session.kill();
+    });
 });
 
 const proxy = httpProxy.createProxy();
@@ -159,7 +163,12 @@ proxy.on('proxyRes', function (proxyRes, req, res) {
     delete proxyRes.headers["x-frame-options"];
 });
 
-server.serverHTTP.on('upgrade', (req, socket, head) => {
+server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => {
+    if(auth && !auth.isRequestAuthenticated(req)){
+        socket.end();
+        return;
+    }
+
     const cookies = cookie.parse(req.headers.cookie ?? "");
 
     if(cookies.port){
@@ -179,8 +188,8 @@ server.serverHTTP.on('upgrade', (req, socket, head) => {
 
     if(req.url !== "/fullstacked-commands") return;
 
-    commandsWS.handleUpgrade(req, socket, head, (ws) => {
-        commandsWS.emit('connection', ws, req);
+    terminalWSS.handleUpgrade(req, socket, head, (ws) => {
+        terminalWSS.emit('connection', ws, req);
     });
 });
 

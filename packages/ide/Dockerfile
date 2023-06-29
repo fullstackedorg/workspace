@@ -11,7 +11,6 @@ RUN curl -L https://github.com/git-ecosystem/git-credential-manager/releases/dow
 
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
-RUN rm -rf /home/dockremap
 
 # install node-pty and fullstacked globally
 RUN npm i -g node-pty fullstacked \
@@ -33,9 +32,10 @@ COPY code-server-config.yml /home/.config/code-server/config.yaml
 
 WORKDIR /home
 
-RUN npm config set prefix '/home/.npm/'
-RUN echo "export PATH=\$PATH:/home/.npm/bin" >> /root/.profile
-
-RUN git-credential-manager configure
+RUN rm -rf /home/dockremap && \
+    npm config set prefix '/home/.npm/' && \
+    echo "export PATH=\$PATH:/home/.npm/bin" >> /root/.profile && \
+    mkdir -p /home/.npm/lib && \
+    git-credential-manager configure
 
 CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & code-server & DOCKER_HOST=\"\" fsc ide)"]

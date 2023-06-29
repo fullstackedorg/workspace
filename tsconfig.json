@@ -9,6 +9,7 @@
         "skipLibCheck": true,
         "declaration": true,
         "emitDeclarationOnly": true,
+        "downlevelIteration": true,
         "paths": {
             "fullstacked/*": ["./*"],
             "@fullstacked/deploy/*": ["./packages/deploy/*"]

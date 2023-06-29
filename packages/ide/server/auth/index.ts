@@ -3,6 +3,7 @@ import cookie from "cookie";
 import password from "./password";
 import external from "./external";
 import type {ServerResponse} from "http";
+import {IncomingMessage} from "http";
 
 export default class {
     private readonly authenticator = process.env.PASS
@@ -15,11 +16,16 @@ export default class {
     // RefreshToken => Set<AccessToken>
     private tokenIssued: Map<string, Set<string>> = new Map();
 
-    async handler(req, res: ServerResponse) {
+    isRequestAuthenticated(req: IncomingMessage) {
         const cookies = cookie.parse(req.headers.cookie ?? "");
-        if (this.isAccessTokenValid(cookies.fullstackedAccessToken)) return;
+        return this.isAccessTokenValid(cookies.fullstackedAccessToken);
+    }
+
+    async handler(req, res: ServerResponse) {
+        if(this.isRequestAuthenticated(req)) return;
 
         if (req.method === "POST" && req.url === "/") {
+            const cookies = cookie.parse(req.headers.cookie ?? "");
             let data = ""
             await new Promise((resolve) => {
                 req.on('data', chunk => data += chunk.toString());
@@ -41,7 +47,7 @@ export default class {
                 cookiesToSend.push(cookie.serialize("fullstackedAccessToken", accessToken, {
                     path: "/",
                     domain: reqHostname,
-                    secure: true
+                    httpOnly: true
                 }));
             }
 
@@ -84,7 +90,6 @@ export default class {
                 cookiesToSend.push(cookie.serialize("fullstackedRefreshToken", refreshToken, {
                     path: "/",
                     domain: reqHostname,
-                    secure: true,
                     httpOnly: true
                 }));
             }

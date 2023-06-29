@@ -22,7 +22,7 @@ import stopwatch from "../icons/stopwatch.svg";
 import {createRoot} from "react-dom/client";
 import Files from "./files";
 import Browser from "../browser";
-import {getWidth, iframeWinBoxes, makeid} from "./WinStore";
+import {createWindow, focusWindow} from "./WinStore";
 import {client} from "../client";
 import Terminal from "../terminal";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
@@ -60,12 +60,6 @@ function initZoneSelect(){
     document.querySelector(".background").addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
-}
-
-const winOptions = {
-    x: "center",
-    y: "center",
-    width: getWidth()
 }
 
 async function checkForPapercups(){
@@ -110,9 +104,11 @@ export default function () {
             onClick() {
                 const div = document.createElement("div");
                 const terminalRef = createRef<Terminal>();
-                new WinBox("Terminal", {
-                    ...winOptions,
+                const {id} = createWindow("Terminal",  {
                     mount: div,
+                    onclose: () => {
+                        terminalRef.current.ws.close();
+                    },
                     onresize: () => {
                         setTimeout(() => {terminalRef?.current?.onResize()}, 500)
                     },
@@ -120,7 +116,7 @@ export default function () {
                         setTimeout(() => {terminalRef?.current?.onResize()}, 500)
                     },
                 });
-                createRoot(div).render(<Terminal ref={terminalRef} />);
+                createRoot(div).render(<Terminal ref={terminalRef} onFocus={() => focusWindow(id)} />);
             }
         },
         {
@@ -128,7 +124,7 @@ export default function () {
             title: "Explorer",
             onClick() {
                 const div = document.createElement("div");
-                new WinBox("Files", {...winOptions, mount: div});
+                createWindow("Files", {mount: div});
                 createRoot(div).render(<Files />);
             }
         },
@@ -136,9 +132,8 @@ export default function () {
             icon: browser,
             title: "Browser",
             onClick() {
-                const id = makeid(6);
                 const div = document.createElement("div");
-                iframeWinBoxes.set(id, new WinBox("Browser", {...winOptions, mount: div}))
+                const { id } = createWindow("Browser", {mount: div})
                 createRoot(div).render(<Browser id={id} />);
             }
         },
@@ -147,7 +142,7 @@ export default function () {
             title: "Latency",
             onClick() {
                 const div = document.createElement("div");
-                new WinBox("Latency Test", {...winOptions, mount: div});
+                createWindow("Latency Test", {mount: div});
                 createRoot(div).render(<Latency />);
             }
         }
@@ -169,16 +164,12 @@ export default function () {
             icon: codeServer,
             title: "Code",
             onClick() {
-                const id = makeid(6);
                 const iframe = document.createElement("iframe");
                 iframe.style.backgroundImage = `url(${loading})`;
-                iframe.setAttribute("id", id);
                 // @ts-ignore
                 // iframe.credentialless = true;
-                iframeWinBoxes.set(id, new WinBox("Code Server", {
-                    ...winOptions,
-                    mount: iframe
-                }));
+                const {id} = createWindow("Code Server", {mount: iframe});
+                iframe.setAttribute("id", id);
                 iframe.src = (window.hasCredentialless
                     ? new URL(`${window.location.protocol}//${window.location.host}?port=8888`)
                     : new URL(`${window.location.protocol}//8888.${window.location.host}`)).toString();
