@@ -2,16 +2,5 @@
 .idea
 node_modules
 dist
-**/*.js
-**/*.js.map
-**/*.mjs
-**/*.mjs.map
-**/*.tjs
-**/*.tjs.map
-**/*.d.ts
-version.ts
 .fullstacked
 *.tgz
-test
-package-lock.json
-!packages/ide/service-worker.js

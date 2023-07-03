@@ -1,5 +1,0 @@
-*.js.map
-*.ts
-*.tsx
-!*.d.ts
-*.tgz

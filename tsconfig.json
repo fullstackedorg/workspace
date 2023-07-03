@@ -1,29 +1,10 @@
 {
     "compilerOptions": {
-        "baseUrl": ".",
-        "module": "ES2022",
-        "target": "ES2022",
-        "esModuleInterop": true,
+        "module": "es2022",
+        "target": "es2022",
         "moduleResolution": "node",
-        "jsx": "react",
-        "skipLibCheck": true,
-        "declaration": true,
-        "emitDeclarationOnly": true,
         "downlevelIteration": true,
-        "paths": {
-            "fullstacked/*": ["./*"],
-            "@fullstacked/deploy/*": ["./packages/deploy/*"]
-        }
-    },
-    "include": [
-        "info.ts",
-        "version.ts",
-        "utils",
-        "packages"
-    ],
-    "exclude": [
-        "packages/create/templates",
-        "packages/gui",
-        "packages/ide"
-    ]
+        "esModuleInterop": true,
+        "jsx": "react"
+    }
 }
