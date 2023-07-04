@@ -20,7 +20,7 @@ import docker from "../icons/docker.svg";
 //@ts-ignore
 import stopwatch from "../icons/stopwatch.svg";
 import {createRoot} from "react-dom/client";
-import Files from "./files";
+import {openExplorer} from "./files";
 import Browser from "../browser";
 import {createWindow, focusWindow} from "./WinStore";
 import {client} from "../client";
@@ -28,6 +28,7 @@ import Terminal from "../terminal";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import Latency from "../latency";
 import Cookies from "js-cookie";
+import {openCodeOSS} from "../codeOSS";
 
 
 function initZoneSelect(){
@@ -122,11 +123,7 @@ export default function () {
         {
             icon: files,
             title: "Explorer",
-            onClick() {
-                const div = document.createElement("div");
-                createWindow("Files", {mount: div});
-                createRoot(div).render(<Files />);
-            }
+            onClick: openExplorer
         },
         {
             icon: browser,
@@ -159,21 +156,11 @@ export default function () {
         })
     }
 
-    if(true){
+    if(hasCodeOSS){
         apps.push({
             icon: codeOSS,
             title: "Code",
-            onClick() {
-                const iframe = document.createElement("iframe");
-                iframe.style.backgroundImage = `url(${loading})`;
-                // @ts-ignore
-                // iframe.credentialless = true;
-                const {id} = createWindow("Code OSS", {mount: iframe});
-                iframe.setAttribute("id", id);
-                iframe.src = (window.hasCredentialless
-                    ? new URL(`${window.location.protocol}//${window.location.host}?port=8888`)
-                    : new URL(`${window.location.protocol}//8888.${window.location.host}`)).toString();
-            }
+            onClick: openCodeOSS
         })
     }
 

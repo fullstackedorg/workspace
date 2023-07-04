@@ -6,6 +6,8 @@ import { WebLinksAddon } from 'xterm-addon-web-links';
 import Browser from "../browser";
 import {createRoot} from "react-dom/client";
 import {createWindow} from "../app/WinStore";
+import {openCodeOSS} from "../codeOSS";
+import {openExplorer} from "../app/files";
 
 export default class Terminal extends Component<{ onFocus(): void }> {
     pingThrottler;
@@ -75,6 +77,14 @@ export default class Terminal extends Component<{ onFocus(): void }> {
         }
 
         this.ws.onmessage = e => {
+            if(e.data.startsWith("CODE#")){
+                openCodeOSS(e.data.split("#").pop());
+                return;
+            }else if(e.data.startsWith("OPEN#")){
+                openExplorer(e.data.split("#").pop());
+                return;
+            }
+
             this.xterm.write(e.data);
         }
     }

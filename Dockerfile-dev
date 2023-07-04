@@ -24,7 +24,13 @@ WORKDIR /home
 RUN rm -rf /home/dockremap && \
     npm config set prefix '/home/.npm/' && \
     echo "export PATH=\$PATH:/home/.npm/bin" >> /root/.profile && \
+    echo "#!/bin/sh" >> /bin/code && \
+    echo "echo CODE#\`pwd\`" >> /bin/code && \
+    chmod +x /bin/code && \
+    echo "#!/bin/sh" >> /bin/open && \
+    echo "echo OPEN#\`pwd\`" >> /bin/open && \
+    chmod +x /bin/open && \
     mkdir -p /home/.npm/lib && \
     git-credential-manager configure
 
-CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & (cd /fullstacked && DOCKER_HOST=\"\" node server/index.mjs))"]
+CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" CLIENT_DIR=/fullstacked/client node /fullstacked/server/index.mjs)"]
