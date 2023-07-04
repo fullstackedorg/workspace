@@ -54,10 +54,19 @@ function flatFileTreeToTreeData(files: FlatFileTree): File[] {
     }))
 }
 
-export default function () {
+export function Explorer(props: {dir: string}) {
     const [files, setFiles] = useState<FlatFileTree>();
 
-    useEffect(() => {client.get().readDir(".").then(root => setFiles({root}));}, [])
+    useEffect(() => {
+        client.get().readDir(".")
+            .then(root => {
+                setFiles({root});
+
+                if(!props.dir) return;
+
+                console.log(props.dir);
+            });
+        }, [])
 
     const openFileEditor = (filename) => {
         const div = document.createElement("div");
@@ -116,4 +125,10 @@ function iconForFilename(filename: string){
         default:
             return "file";
     }
+}
+
+export function openExplorer(dir?: string){
+    const div = document.createElement("div");
+    createWindow("Files", {mount: div});
+    createRoot(div).render(<Explorer dir={dir} />);
 }

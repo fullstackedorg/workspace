@@ -44,4 +44,5 @@ fs.writeFileSync("vscode-reh-web-linux-x64/package.json", JSON.stringify({
     dependencies: remotePackageJSON.dependencies
 }, null, 2));
 
-// --without-connection-token --port 8888
+fs.rmSync("vscode.zip");
+fs.rmSync("vscode", {recursive: true});
