@@ -13,20 +13,11 @@ RUN curl -L https://github.com/git-ecosystem/git-credential-manager/releases/dow
 COPY code-oss/vscode-reh-web-linux-x64 /code-oss
 RUN cd /code-oss && npm i --legacy-peer-deps
 
+COPY dist /fullstacked
+RUN cd /fullstacked && npm i node-pty
+
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
-
-# install fullstacked globally
-RUN npm i -g fullstacked \
-    @fullstacked/backup \
-    @fullstacked/build \
-    @fullstacked/create \
-    @fullstacked/deploy \
-    @fullstacked/gui \
-    @fullstacked/ide \
-    @fullstacked/run \
-    @fullstacked/webapp \
-    @fullstacked/watch
 
 WORKDIR /home
 
@@ -36,4 +27,4 @@ RUN rm -rf /home/dockremap && \
     mkdir -p /home/.npm/lib && \
     git-credential-manager configure
 
-CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" fsc ide)"]
+CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & (cd /fullstacked && DOCKER_HOST=\"\" node server/index.mjs))"]

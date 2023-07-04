@@ -67,7 +67,7 @@ export const API = {
             baseUrl: process.env.PAPERCUPS_BASE_URL
         };
     },
-    async hasCodeServer(){
+    async hasCodeOSS(){
         try{
            await fetch("http://0.0.0.0:8888");
         }catch (e){

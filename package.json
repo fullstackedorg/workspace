@@ -11,8 +11,9 @@
     "cp": "node cp",
     "build": "fsc build --production && npm run cp",
     "prepack": "npm run build",
-    "predocker": "npm run build",
-    "docker": "docker build . -t cplepage/fullstacked-ide:latest"
+    "docker": "docker build . -t cplepage/fullstacked-ide:latest",
+    "predocker:dev": "npm run build",
+    "docker:dev": "docker build . -f Dockerfile-dev -t cplepage/fullstacked-ide:dev"
   },
   "type": "module",
   "devDependencies": {
