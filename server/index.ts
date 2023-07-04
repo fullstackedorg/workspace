@@ -69,8 +69,9 @@ export const API = {
     },
     async hasCodeServer(){
         try{
-           await fetch("http://localhost:8888");
+           await fetch("http://0.0.0.0:8888");
         }catch (e){
+            console.log(e);
             return false
         }
         return true;
@@ -173,7 +174,7 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
 
     if(cookies.port){
         return new Promise(resolve => {
-            proxy.ws(req, socket, head, {target: `http://localhost:${cookies.port}`}, resolve);
+            proxy.ws(req, socket, head, {target: `http://0.0.0.0:${cookies.port}`}, resolve);
         })
     }
 
@@ -182,7 +183,7 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
     const maybePort = parseInt(firstDomainPart);
     if(maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535){
         return new Promise(resolve => {
-            proxy.ws(req, socket, head, {target: `http://localhost:${firstDomainPart}`}, resolve);
+            proxy.ws(req, socket, head, {target: `http://0.0.0.0:${firstDomainPart}`}, resolve);
         });
     }
 
@@ -216,7 +217,7 @@ server.addListener({
 
         if (cookies.port) {
             return new Promise<void>(resolve => {
-                proxy.web(req, res, {target: `http://localhost:${cookies.port}`}, () => {
+                proxy.web(req, res, {target: `http://0.0.0.0:${cookies.port}`}, () => {
                     if (!res.headersSent) {
                         res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
                         res.end(`Port ${cookies.port} is down.`);
@@ -231,7 +232,7 @@ server.addListener({
         const maybePort = parseInt(firstDomainPart);
         if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
             return new Promise<void>(resolve => {
-                proxy.web(req, res, {target: `http://localhost:${firstDomainPart}`}, () => {
+                proxy.web(req, res, {target: `http://0.0.0.0:${firstDomainPart}`}, () => {
                     if (!res.headersSent) {
                         res.end(`Port ${firstDomainPart} is down.`);
                     }
