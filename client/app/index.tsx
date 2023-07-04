@@ -14,7 +14,7 @@ import logo from "../icons/fullstacked-logo.svg";
 //@ts-ignore
 import logout from "../icons/log-out.svg";
 //@ts-ignore
-import codeServer from "../icons/code-server.png";
+import codeOSS from "../icons/code-oss.svg";
 //@ts-ignore
 import docker from "../icons/docker.svg";
 //@ts-ignore
@@ -88,7 +88,7 @@ async function checkForPapercups(){
 }
 
 export default function () {
-    const [hasCodeServer] = useAPI(client.get().hasCodeServer);
+    const [hasCodeOSS] = useAPI(client.get().hasCodeOSS);
     useEffect(initZoneSelect, []);
     useEffect(() => {checkForPapercups()}, []);
 
@@ -159,16 +159,16 @@ export default function () {
         })
     }
 
-    if(hasCodeServer){
+    if(true){
         apps.push({
-            icon: codeServer,
+            icon: codeOSS,
             title: "Code",
             onClick() {
                 const iframe = document.createElement("iframe");
                 iframe.style.backgroundImage = `url(${loading})`;
                 // @ts-ignore
                 // iframe.credentialless = true;
-                const {id} = createWindow("Code Server", {mount: iframe});
+                const {id} = createWindow("Code OSS", {mount: iframe});
                 iframe.setAttribute("id", id);
                 iframe.src = (window.hasCredentialless
                     ? new URL(`${window.location.protocol}//${window.location.host}?port=8888`)

@@ -32,4 +32,16 @@ productJSON.extensionsGallery = {
 }
 fs.writeFileSync("vscode/product.json", JSON.stringify(productJSON, null, 2));
 
-execSync("cd vscode && yarn && yarn compile && yarn gulp node", {stdio: "inherit"});
+execSync("cd vscode && yarn && yarn gulp vscode-reh-web-linux-x64-min", {stdio: "inherit"});
+
+fs.rmSync("vscode-reh-web-linux-x64/node");
+fs.rmSync("vscode-reh-web-linux-x64/node_modules", {recursive: true});
+
+const remotePackageJSON = JSON.parse(fs.readFileSync("vscode/remote/package.json").toString());
+const outPackageJSON = JSON.parse(fs.readFileSync("vscode-reh-web-linux-x64/package.json").toString());
+fs.writeFileSync("vscode-reh-web-linux-x64/package.json", JSON.stringify({
+    ...outPackageJSON,
+    dependencies: remotePackageJSON.dependencies
+}, null, 2));
+
+// --without-connection-token --port 8888
