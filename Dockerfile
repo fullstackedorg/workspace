@@ -36,4 +36,4 @@ RUN rm -rf /home/dockremap && \
     mkdir -p /home/.npm/lib && \
     git-credential-manager configure
 
-CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" fsc ide)"]
+CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" fsc workspace)"]
