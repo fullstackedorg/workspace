@@ -1,3 +1,6 @@
+.idea
+.github
+
 *.js.map
 *.ts
 *.tsx
@@ -6,6 +9,9 @@
 /client
 /server
 /pwa
+/code-oss
+
+cp.js
 
 dist/docker-compose.yml
 dist/server/index.mjs.map
@@ -16,3 +22,4 @@ Dockerfile
 Dockerfile-dev
 
 install.js
+tsconfig.json
