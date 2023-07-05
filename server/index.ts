@@ -120,7 +120,7 @@ export const API = {
 
 server.addListener(createListener(API));
 
-server.pages["/"].addInHead(`<title>FullStacked IDE</title>`);
+server.pages["/"].addInHead(`<title>FullStacked</title>`);
 server.pages["/"].addInHead(`<link rel="apple-touch-icon" href="/pwa/app-icons/maskable.png">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="FullStacked IDE">`);
 server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
