@@ -1,7 +1,7 @@
 {
   "name": "@fullstacked/workspace",
   "description": "A Cloud Workspace for Web Developer",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "author": "cplepage",
   "dependencies": {
     "node-pty": "^0.10.1"
