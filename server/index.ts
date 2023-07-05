@@ -71,7 +71,6 @@ export const API = {
         try{
            await fetch("http://0.0.0.0:8888");
         }catch (e){
-            console.log(e);
             return false
         }
         return true;
