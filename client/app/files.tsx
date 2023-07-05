@@ -94,7 +94,13 @@ export function Explorer(props: {dir: string}) {
                 : fileIcons + "#" + iconForFilename(item.data.title as string)}>
             </use>
         </svg>}
-        defaultExpandAll
+        defaultExpandedKeys={(() => {
+            if(!props.dir) return [];
+
+            const pathComponents = props.dir.split("/").map(c => c.trim()).filter(Boolean);
+            pathComponents.shift();
+            return pathComponents.map((_, i) => pathComponents.slice(0, i + 1).join("/"))
+        })()}
         defaultSelectedKeys={(() => {
             if(!props.dir) return [];
 
