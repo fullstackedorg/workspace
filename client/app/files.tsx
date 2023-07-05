@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import Tree from "rc-tree";
 import "rc-tree/assets/index.css"
 import {client} from "../client";
-import WinBox from "winbox/src/js/winbox";
 // @ts-ignore
 import fileIcons from "../icons/file-icons.svg";
 // @ts-ignore
@@ -59,12 +58,23 @@ export function Explorer(props: {dir: string}) {
 
     useEffect(() => {
         client.get().readDir(".")
-            .then(root => {
-                setFiles({root});
+            .then(async root => {
+                let files = {root}
+                if(!props.dir){
+                    setFiles(files);
+                    return;
+                }
 
-                if(!props.dir) return;
+                const pathComponents = props.dir.split("/").map(c => c.trim()).filter(Boolean);
 
-                console.log(props.dir);
+                // shift /home
+                pathComponents.shift();
+
+                for (let i = 0; i < pathComponents.length; i++) {
+                    const path = pathComponents.slice(0, i + 1).join("/");
+                    files[path] = await client.get().readDir(path);
+                }
+                setFiles({...files});
             });
         }, [])
 
@@ -74,6 +84,8 @@ export function Explorer(props: {dir: string}) {
         createRoot(div).render(<Editor filename={filename} />)
     }
 
+    if(!files) return <></>;
+
     return <Tree
         treeData={flatFileTreeToTreeData(files)}
         icon={item => <svg style={{fill: "white", width: 16, height: 16}}>
@@ -82,6 +94,14 @@ export function Explorer(props: {dir: string}) {
                 : fileIcons + "#" + iconForFilename(item.data.title as string)}>
             </use>
         </svg>}
+        defaultExpandAll
+        defaultSelectedKeys={(() => {
+            if(!props.dir) return [];
+
+            const pathComponents = props.dir.split("/").map(c => c.trim()).filter(Boolean);
+            pathComponents.shift();
+            return [pathComponents.join("/")]
+        })()}
         onExpand={async (keys: string[], {node, expanded}) => {
             if(!keys?.length || !expanded || !node.isDir) return;
             files[node.key] = await client.get().readDir(node.key);

@@ -123,7 +123,7 @@ export default function () {
         {
             icon: files,
             title: "Explorer",
-            onClick: openExplorer
+            onClick(){ openExplorer() }
         },
         {
             icon: browser,
@@ -160,7 +160,7 @@ export default function () {
         apps.push({
             icon: codeOSS,
             title: "Code",
-            onClick: openCodeOSS
+            onClick(){ openCodeOSS() }
         })
     }
 
