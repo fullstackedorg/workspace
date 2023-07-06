@@ -1,7 +1,7 @@
 {
   "name": "@fullstacked/workspace",
   "description": "A Cloud Workspace for Web Developer",
-  "version": "0.10.9",
+  "version": "0.10.16",
   "author": "cplepage",
   "dependencies": {
     "node-pty": "^0.10.1"
@@ -11,8 +11,9 @@
     "cp": "node cp",
     "build": "fsc build --production && npm run cp",
     "prepack": "npm run build",
-    "predocker": "npm run build",
-    "docker": "docker build . -t cplepage/fullstacked-ide:latest"
+    "docker": "docker build . -t fullstackedorg/workspace:latest",
+    "predocker:dev": "npm run build",
+    "docker:dev": "docker build . -f Dockerfile-dev -t fullstackedorg/workspace:dev"
   },
   "type": "module",
   "devDependencies": {
@@ -29,7 +30,7 @@
     "@codemirror/view": "^6.9.4",
     "@fullstacked/build": "^0.10.2",
     "@fullstacked/watch": "^0.10.2",
-    "@fullstacked/webapp": "^0.10.0",
+    "@fullstacked/webapp": "^0.10.2",
     "@types/cookie": "^0.5.1",
     "@types/http-proxy": "^1.17.10",
     "@types/js-cookie": "^3.0.3",
@@ -37,6 +38,8 @@
     "@types/ws": "^8.5.4",
     "codemirror": "^6.0.1",
     "cookie": "^0.5.0",
+    "decompress": "^4.2.1",
+    "eslint-linter-browserify": "^8.44.0",
     "fast-querystring": "^1.1.1",
     "http-proxy": "^1.18.1",
     "js-cookie": "^3.0.5",

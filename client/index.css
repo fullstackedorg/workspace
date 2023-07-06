@@ -21,6 +21,12 @@ html, body, .wb-body {
     width: 100%;
 }
 
+.button-icon,
+.background {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 pre {
     margin: 0;
 }

@@ -13,17 +13,15 @@ RUN curl -L https://github.com/git-ecosystem/git-credential-manager/releases/dow
 COPY code-oss/vscode-reh-web-linux-x64 /code-oss
 RUN cd /code-oss && npm i --legacy-peer-deps
 
+COPY dist /fullstacked/dist
+COPY index.js /fullstacked/index.mjs
+RUN cd /fullstacked && npm i node-pty
+
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
 WORKDIR /home
 
-# install fullstacked globally
-RUN npm i -g fullstacked && \
-    ln -s /usr/local/lib/node_modules/fullstacked/node_modules/@fullstacked/cli/cli.js /usr/local/bin/fsc && \
-    ln -s /usr/local/lib/node_modules/fullstacked/node_modules/@fullstacked/cli/cli.js /usr/local/bin/fullstacked
-
-
-# custom commands
+# add custom commands
 COPY bin /fbin
 RUN chmod +x -R /fbin && \
     mv /fbin/* /bin && \
@@ -35,4 +33,4 @@ RUN rm -rf /home/dockremap && \
     mkdir -p /home/.npm/lib && \
     git-credential-manager configure
 
-CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" fsc workspace)"]
+CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" node /fullstacked/index.mjs)"]
