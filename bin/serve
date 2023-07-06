@@ -1,0 +1,9 @@
+#!/bin/sh
+CHECK="lookup"
+PORT=8000
+while [[ ! -z "$CHECK" ]]; do
+        PORT=$(( PORT + 1 ))
+        CHECK=$(netstat -ap | grep $PORT)
+done
+
+python -m http.server $PORT

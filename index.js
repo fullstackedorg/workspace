@@ -6,6 +6,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 
 fork(`${currentDir}/dist/server/index.mjs`, {
     env: {
+        ...process.env,
         NODE_ENV: "production",
         CLIENT_DIR: `${currentDir}/dist/client`
     }
