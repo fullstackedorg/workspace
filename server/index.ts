@@ -11,7 +11,10 @@ import Auth from "./auth";
 import {IncomingMessage, ServerResponse} from "http";
 import {Socket} from "net";
 
-export const server = new Server();
+const server = new Server();
+
+if(process.env.FULLSTACKED_ENV === "production")
+    server.logger = null;
 
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
