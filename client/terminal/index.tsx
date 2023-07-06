@@ -18,12 +18,12 @@ export default class Terminal extends Component<{ onFocus(): void }> {
     xterm = new Xterm();
     fitAddon = new FitAddon();
     webLinks = new WebLinksAddon((e, uri) => {
-        if(uri.match(/http:\/\/localhost:\d+/g)){
+        if(uri.match(/http:\/\/(localhost|0\.0\.0\.0|127\.0\.0\.1):\d+/g)){
             const url = new URL(uri);
             const div = document.createElement("div");
             const { id } = createWindow("Browser", {mount: div});
             createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
-
+            this.xterm.blur();
             return;
         }
 
@@ -79,9 +79,11 @@ export default class Terminal extends Component<{ onFocus(): void }> {
         this.ws.onmessage = e => {
             if(e.data.startsWith("CODE#")){
                 openCodeOSS(e.data.split("#").pop());
+                this.xterm.blur();
                 return;
             }else if(e.data.startsWith("OPEN#")){
                 openExplorer(e.data.split("#").pop());
+                this.xterm.blur();
                 return;
             }
 

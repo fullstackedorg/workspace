@@ -1,7 +1,7 @@
 {
   "name": "@fullstacked/workspace",
   "description": "A Cloud Workspace for Web Developer",
-  "version": "0.10.11",
+  "version": "0.10.12",
   "author": "cplepage",
   "dependencies": {
     "node-pty": "^0.10.1"
@@ -11,9 +11,9 @@
     "cp": "node cp",
     "build": "fsc build --production && npm run cp",
     "prepack": "npm run build",
-    "docker": "docker build . -t cplepage/fullstacked-ide:latest",
+    "docker": "docker build . -t fullstackedorg/workspace:latest",
     "predocker:dev": "npm run build",
-    "docker:dev": "docker build . -f Dockerfile-dev -t cplepage/fullstacked-ide:dev"
+    "docker:dev": "docker build . -f Dockerfile-dev -t fullstackedorg/workspace:dev"
   },
   "type": "module",
   "devDependencies": {

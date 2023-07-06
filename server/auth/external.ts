@@ -3,7 +3,7 @@ import arrow from "../arrow";
 
 const authPage = new HTML();
 authPage.addInHead(`<meta property="og:image" content="https://files.cplepage.com/fullstacked/sharing-image.jpg">`);
-authPage.addInHead(`<title>FullStacked IDE</title>`);
+authPage.addInHead(`<title>FullStacked</title>`);
 authPage.addInHead(`<link id="favicon" rel="shortcut icon" type="image/png" href="/pwa/app-icons/favicon.png">`);
 authPage.addInHead(`<style>
         *{
