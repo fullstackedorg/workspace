@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import Tree from "rc-tree";
 import "rc-tree/assets/index.css"
 import {client} from "../client";
-import WinBox from "winbox/src/js/winbox";
 // @ts-ignore
 import fileIcons from "../icons/file-icons.svg";
 // @ts-ignore
@@ -54,16 +53,38 @@ function flatFileTreeToTreeData(files: FlatFileTree): File[] {
     }))
 }
 
-export default function () {
+export function Explorer(props: {dir: string}) {
     const [files, setFiles] = useState<FlatFileTree>();
 
-    useEffect(() => {client.get().readDir(".").then(root => setFiles({root}));}, [])
+    useEffect(() => {
+        client.get().readDir(".")
+            .then(async root => {
+                let files = {root}
+                if(!props.dir){
+                    setFiles(files);
+                    return;
+                }
+
+                const pathComponents = props.dir.split("/").map(c => c.trim()).filter(Boolean);
+
+                // shift /home
+                pathComponents.shift();
+
+                for (let i = 0; i < pathComponents.length; i++) {
+                    const path = pathComponents.slice(0, i + 1).join("/");
+                    files[path] = await client.get().readDir(path);
+                }
+                setFiles({...files});
+            });
+        }, [])
 
     const openFileEditor = (filename) => {
         const div = document.createElement("div");
         createWindow(filename, {mount: div});
         createRoot(div).render(<Editor filename={filename} />)
     }
+
+    if(!files) return <></>;
 
     return <Tree
         treeData={flatFileTreeToTreeData(files)}
@@ -73,6 +94,20 @@ export default function () {
                 : fileIcons + "#" + iconForFilename(item.data.title as string)}>
             </use>
         </svg>}
+        defaultExpandedKeys={(() => {
+            if(!props.dir) return [];
+
+            const pathComponents = props.dir.split("/").map(c => c.trim()).filter(Boolean);
+            pathComponents.shift();
+            return pathComponents.map((_, i) => pathComponents.slice(0, i + 1).join("/"))
+        })()}
+        defaultSelectedKeys={(() => {
+            if(!props.dir) return [];
+
+            const pathComponents = props.dir.split("/").map(c => c.trim()).filter(Boolean);
+            pathComponents.shift();
+            return [pathComponents.join("/")]
+        })()}
         onExpand={async (keys: string[], {node, expanded}) => {
             if(!keys?.length || !expanded || !node.isDir) return;
             files[node.key] = await client.get().readDir(node.key);
@@ -116,4 +151,10 @@ function iconForFilename(filename: string){
         default:
             return "file";
     }
+}
+
+export function openExplorer(dir?: string){
+    const div = document.createElement("div");
+    createWindow("Files", {mount: div});
+    createRoot(div).render(<Explorer dir={dir} />);
 }
