@@ -3,7 +3,7 @@ import https from "https";
 import decompress from "decompress";
 import {execSync} from "child_process";
 
-const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.79.2";
+const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.80.0";
 
 const file = fs.createWriteStream("vscode.zip");
 await new Promise(resolve => {
