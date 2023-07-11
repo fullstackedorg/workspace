@@ -102,11 +102,18 @@ export default function (props: {port, close}) {
                         <input value={password}
                                onChange={e => setPassword(e.currentTarget.value)}
                                readOnly={shareState !== ShareState.NONE} />
+                        <span id={"pass-msg"} style={{fontSize: 11, color: "#9ca3a9", textAlign: "left"}}></span>
 
                         {shareState === ShareState.NONE && <small>Leave blank for no password</small>}
                     </div>
                 </form>
-                {shareState === ShareState.SHARING && <button className={"icon-btn"} style={{padding: 3}} onClick={() => copyToClipboard(password)}>
+                {shareState === ShareState.SHARING && <button className={"icon-btn"} style={{padding: 3}} onClick={() => {
+                    copyToClipboard(password);
+                    document.querySelector<HTMLElement>("#pass-msg").innerText = "Copied to clipboard";
+                    setTimeout(() => {
+                        document.querySelector<HTMLElement>("#pass-msg").innerText = "";
+                    }, 3000);
+                }}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
                          stroke="currentColor" className="w-6 h-6">
                         <path strokeLinecap="round" strokeLinejoin="round"
@@ -142,10 +149,15 @@ export default function (props: {port, close}) {
             <div style={{
                 display: "flex",
                 alignItems: "center",
-                marginBottom: 5
             }}>
-                <input value={shareURL} readOnly/>
-                <button className={"icon-btn"} style={{padding: 3}} onClick={() => copyToClipboard(shareURL)}>
+                <input value={shareURL} readOnly />
+                <button className={"icon-btn"} style={{padding: 3}} onClick={() => {
+                    copyToClipboard(shareURL);
+                    document.querySelector<HTMLElement>("#url-msg").innerText = "Copied to clipboard";
+                    setTimeout(() => {
+                        document.querySelector<HTMLElement>("#url-msg").innerText = "";
+                    }, 3000);
+                }}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
                          stroke="currentColor" className="w-6 h-6">
                         <path strokeLinecap="round" strokeLinejoin="round"
@@ -153,7 +165,8 @@ export default function (props: {port, close}) {
                     </svg>
                 </button>
             </div>
-            <button className={"danger"} onClick={stopShare}>Stop Sharing</button>
+            <div id={"url-msg"} style={{fontSize: 11, color: "#9ca3a9", textAlign: "left"}}></div>
+            <button style={{marginTop: 5}} className={"danger"} onClick={stopShare}>Stop Sharing</button>
         </div>
 
     </div>
