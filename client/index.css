@@ -166,21 +166,75 @@ pre {
 
 .browser > .url-bar {
     width: 100%;
-    background-color: gray;
+    background-color: #1e293c;
     padding: 5px;
     color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-bottom: 1px solid #444e5e;
 }
 
-.browser > .url-bar  input {
-    outline: 0;
-    border: 0;
-    border-radius: 15px;
-    height: 25px;
-    margin: 0 10px 0 0;
-    padding: 0 10px;
+
+.browser > .url-bar .icon-btn {
+    background: none;
+    border: none;
+    line-height: 0;
+    cursor: pointer;
+    border-radius: 3px;
+    margin: 0 0 0 5px;
+    padding: 0;
+    height: 24px;
+    width: 24px;
+}
+
+.browser > .url-bar .icon-btn.disabled {
+    opacity: 0.4;
+}
+
+.browser > .url-bar .icon-btn:hover {
+    background-color: #444e5e;
+}
+
+.browser > .url-bar .icon-btn.disabled:hover {
+    background: none!important;
+    cursor: default!important;
+}
+
+.browser > .url-bar form {
+    display: flex;
+}
+
+.browser > .url-bar form > div {
+    display: flex;
+    background-color: #444e5e;
+    border-radius: 30px;
+    padding: 2px 5px 3px 12px;
+    align-items: center;
+    color: #9ca3a9;
+    font-size: 14px;
+}
+
+.browser > .url-bar form input {
+    border: none;
+    color: white;
+    outline: none;
+    margin: 1px 2px 0 3px;
+    background-color: #646e81;
+    border-radius: 3px;
+    padding: 1px 2px 1px 3px;
+}
+
+.browser > .url-bar form .icon-btn {
+    margin: 0 2px -2px 6px;
+    padding: 0;
+}
+
+
+.browser > .url-bar .icon-btn svg {
+    height: 100%;
+    width: 100%;
+    color: white;
 }
 
 .browser > iframe {
@@ -239,4 +293,74 @@ iframe {
 .console > pre > div.error {
     background-color: #5c0000;
     color: #ff9393;
+}
+
+.tooltip {
+    position: absolute;
+    top: 100%;
+    z-index: 10;
+    background-color: #1e293d;
+    border: 1px solid #454e5f;
+    border-radius: 5px;
+    right: 0;
+    padding: 6px;
+    backdrop-filter: blur(6px);
+}
+
+button {
+    background-color: #0a85b5;
+    border: 1px solid #70aac1;
+    padding: 10px 15px;
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1;
+}
+
+button:hover {
+    background-color: #0f688a;
+    border-color: #20718f;
+}
+
+button:active {
+    background-color: #70aac1;
+}
+
+button.danger {
+    background-color: #b22a2a;
+    border: 1px solid #c04b4b;
+}
+
+button.danger:hover {
+    background-color: #8c2020;
+    border: 1px solid #6e2626;
+}
+
+button.danger:active {
+    background-color: #d35d5d;
+}
+
+.url-bar .tooltip form div {
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 3px;
+    text-align: left;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+.url-bar .tooltip form div span {
+    color: white;
+}
+.url-bar .tooltip form div input {
+    margin: 2px 0;
+    padding: 4px;
+}
+
+.share img {
+    height: 25px;
+    padding: 2px;
 }

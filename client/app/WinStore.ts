@@ -88,7 +88,7 @@ export function makeid(length) {
 function checkIfInIframe(){
     window.requestAnimationFrame(checkIfInIframe);
     if(document.activeElement.tagName === "IFRAME")
-        focusWindow(document.activeElement.id)
+        focusWindow(document.activeElement.id);
 }
 
 checkIfInIframe();
