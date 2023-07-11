@@ -10,6 +10,8 @@ import cookie from "cookie";
 import Auth from "./auth";
 import {IncomingMessage, ServerResponse} from "http";
 import {Socket} from "net";
+import Share from "@fullstacked/share";
+import randStr from "@fullstacked/cli/utils/randStr"
 
 const server = new Server();
 
@@ -117,6 +119,20 @@ export const API = {
     },
     updateFile(filename: string, contents: string){
         fs.writeFileSync(filename, contents);
+    },
+    share(port: string, password: string){
+        const share = new Share();
+        share.config = {
+            ...share.config,
+            port: parseInt(port),
+            password
+        }
+        activeShare.add(share);
+    },
+    stopShare(port: string){
+        const share = Array.from(activeShare).find(share => share.config.port.toString() === port);
+        share.stop();
+        activeShare.delete(share);
     }
 }
 
@@ -128,6 +144,48 @@ server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="Fu
 server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
+
+const shareWSS = new WebSocketServer({noServer: true});
+const activeShare = new Set<Share>();
+shareWSS.on('connection', (ws, req) => {
+    const {port} = fastQueryString.parse(req.url.split("?").pop());
+    const share = Array.from(activeShare).find(share => share.config.port.toString() === port);
+    if(!share) {
+        ws.close();
+        return;
+    }
+
+    ws.on("message", (message) => {
+        const data = JSON.parse(message.toString());
+        const awaitingPass = awaitingPasswords.get(data.id);
+        awaitingPass(data.password);
+        awaitingPasswords.delete(data.id);
+    });
+
+    const awaitingPasswords = new Map();
+    share.listeners.add(shareEvent => {
+        switch (shareEvent.type) {
+            case "url":
+                ws.send(JSON.stringify({url: shareEvent.url}));
+                return;
+            case "password":
+                const id = randStr();
+                awaitingPasswords.set(id, shareEvent.callback)
+                ws.send(JSON.stringify({id, password: true}));
+                return;
+            case "login":
+                ws.send(JSON.stringify({login: shareEvent.url}));
+                return;
+            case "end":
+                activeShare.delete(share);
+                ws.send(JSON.stringify({end: true}));
+                return;
+        }
+    });
+
+    share.run();
+});
+
 
 const terminalWSS = new WebSocketServer({noServer: true});
 const terminalSessions: Set<IPty> = new Set();
@@ -189,11 +247,17 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
         });
     }
 
-    if(req.url !== "/fullstacked-commands") return;
+    if(req.url === "/fullstacked-commands"){
+        terminalWSS.handleUpgrade(req, socket, head, (ws) => {
+            terminalWSS.emit('connection', ws, req);
+        });
+    }else if(req.url.split("?").shift() === "/fullstacked-share"){
+        shareWSS.handleUpgrade(req, socket, head, (ws) => {
+            shareWSS.emit('connection', ws, req);
+        });
+    }
 
-    terminalWSS.handleUpgrade(req, socket, head, (ws) => {
-        terminalWSS.emit('connection', ws, req);
-    });
+
 });
 
 
