@@ -1,5 +1,6 @@
-import React, {useEffect, useRef} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Console from "./console";
+import Share from "./share";
 
 declare global {
     interface Window {
@@ -7,11 +8,14 @@ declare global {
     }
 }
 export default function (props: {id: string, port?: string, path?: string}) {
+    const [openShare, setOpenShare] = useState(false);
+
+    const [path, setPath] = useState(props.path?.startsWith("/") ? props.path.slice(1) : props.path);
+    const [port, setPort] = useState(props.port);
+
     const iframeRef = useRef<HTMLIFrameElement>();
     const consoleRef = useRef<Console>();
     const eTabRef = useRef<HTMLAnchorElement>();
-    const inputPortRef = useRef<HTMLInputElement>();
-    const inputPathRef = useRef<HTMLInputElement>();
 
     useEffect(() => {
         // @ts-ignore
@@ -19,15 +23,14 @@ export default function (props: {id: string, port?: string, path?: string}) {
         if(!props.port) return;
 
         load();
-    });
+    }, []);
 
     const load = () => {
         let url = new URL(window.location.href);
         url.searchParams.forEach((value, param) =>
             url.searchParams.delete(param));
 
-        const port = inputPortRef.current.value;
-        url.pathname = inputPathRef.current.value;
+        url.pathname = path;
 
         const urlSubDomain = new URL(url);
 
@@ -47,17 +50,51 @@ export default function (props: {id: string, port?: string, path?: string}) {
             <form onSubmit={e => {
                 e.preventDefault();
                 load();
-                inputPortRef.current.blur();
             }}>
-                Port : <input style={{width: 70}} ref={inputPortRef} defaultValue={props.port} />
-                Path : <input style={{width: 100}} ref={inputPathRef} defaultValue={props.path} />
-                <button>Go</button>
+                <div>
+                    http://localhost:
+                    <input style={{width: 36}} value={port} onChange={(e) => setPort(e.currentTarget.value)}/>/
+                    <input style={{width: 100}} value={path} onChange={(e) => setPath(e.currentTarget.value)}/>
+                </div>
+                <button className={"icon-btn"} style={{padding: 2}}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
+                         stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"/>
+                    </svg>
+                </button>
             </form>
             {window.hasCredentialless && <button onClick={() => consoleRef.current.setState({show: !consoleRef.current.state.show})}>Console</button>}
-            <a ref={eTabRef} href={"#"} target={"_blank"}><button>External Tab</button></a>
-            <small>
-                Credentialless <div className={"dot"} style={{backgroundColor: window.hasCredentialless ? "green" : "red"}} />
-            </small>
+            <div>
+                <a ref={eTabRef} href={"#"} target={"_blank"} onClick={e => {
+                    if(!port) e.preventDefault();
+                }}>
+                    <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 3}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
+                             stroke="currentColor" >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                        </svg>
+                    </button>
+                </a>
+                <span style={{position: "relative"}}>
+                    <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 2}} onClick={() => {
+                        if(!port) return;
+                        setOpenShare(true)
+                    }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
+                             stroke="currentColor" >
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                                  d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15"/>
+                        </svg>
+                    </button>
+                    <div className={"tooltip"} style={{display: openShare ? "block" : "none"}}>
+                        <Share port={port} close={() => setOpenShare(false)} />
+                    </div>
+                </span>
+
+            </div>
+            {/*<small>*/}
+            {/*    Credentialless <div className={"dot"} style={{backgroundColor: window.hasCredentialless ? "green" : "red"}} />*/}
+            {/*</small>*/}
         </div>
         <iframe ref={iframeRef} id={props.id} />
         {window.hasCredentialless && <Console ref={consoleRef} iframeRef={iframeRef} />}
