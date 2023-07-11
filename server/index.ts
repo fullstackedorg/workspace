@@ -125,7 +125,8 @@ export const API = {
         share.config = {
             ...share.config,
             port: parseInt(port),
-            password
+            password,
+            server: process.env.SHARE_SERVER ?? "https://share.fullstacked.cloud"
         }
         activeShare.add(share);
     },

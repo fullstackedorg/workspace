@@ -201,28 +201,36 @@ pre {
     cursor: default!important;
 }
 
-.browser > .url-bar form {
+.browser > .url-bar > form {
     display: flex;
 }
 
+.browser > .url-bar > form > div {
+    padding: 2px 5px 3px 12px;
+    border-radius: 30px;
+}
+
+.browser > .url-bar > form > div {
+    align-items: center;
+}
 .browser > .url-bar form > div {
     display: flex;
     background-color: #444e5e;
-    border-radius: 30px;
-    padding: 2px 5px 3px 12px;
-    align-items: center;
     color: #9ca3a9;
     font-size: 14px;
 }
 
-.browser > .url-bar form input {
+.browser > .url-bar > form input {
+    padding: 1px 2px 1px 3px;
+    margin: 1px 2px 0 3px;
+}
+
+.browser > .url-bar input {
     border: none;
     color: white;
     outline: none;
-    margin: 1px 2px 0 3px;
     background-color: #646e81;
     border-radius: 3px;
-    padding: 1px 2px 1px 3px;
 }
 
 .browser > .url-bar form .icon-btn {
@@ -344,23 +352,37 @@ button.danger:active {
     background-color: #d35d5d;
 }
 
-.url-bar .tooltip form div {
+.share form div {
     flex-direction: column;
     padding: 6px;
     border-radius: 3px;
     text-align: left;
     align-items: flex-start;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
-.url-bar .tooltip form div span {
+.share form div span {
     color: white;
 }
-.url-bar .tooltip form div input {
+.share input{
     margin: 2px 0;
     padding: 4px;
+}
+
+.share {
+    min-width: 265px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .share img {
     height: 25px;
     padding: 2px;
+}
+
+.share form,
+.share input {
+    width: 100%
 }
