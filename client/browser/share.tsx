@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {RefObject, useEffect, useRef, useState} from "react";
 import {client} from "../client";
 //@ts-ignore
 import loading from "../icons/loading.gif";
@@ -25,36 +25,11 @@ function copyToClipboard(str: string) {
 export default function (props: {port, close}) {
     const wrap = useRef<HTMLDivElement>();
     const [password, setPassword] = useState("");
-
     const [shareState, setShareState] = useState<ShareState>(ShareState.NONE);
-
     const [shareURL, setShareURL] = useState("");
-
     const [loginURL, setLoginURL] = useState("");
-
     const [passwordCallback, setPasswordCallback] = useState(null);
     const [serverPassword, setServerPassword] = useState("");
-
-    useEffect(() => {
-        const close = (e) => {
-            if(wrap.current.parentElement.parentElement.contains(e.target))
-                return;
-
-            props.close();
-            window.removeEventListener("click", close);
-        }
-        window.addEventListener("click", close);
-
-        function checkIfInIframe(){
-            window.requestAnimationFrame(checkIfInIframe);
-            if(document.activeElement.tagName === "IFRAME") {
-                props.close();
-                window.removeEventListener("click", close);
-            }
-        }
-
-        checkIfInIframe();
-    }, []);
 
     const share = async (e) => {
         e.preventDefault();
