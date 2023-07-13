@@ -4,7 +4,7 @@ FROM docker:dind
 RUN apk add --update make g++ nodejs npm git python3 curl vim gcompat tini
 
 # install git-credential-manager
-RUN curl -L https://github.com/git-ecosystem/git-credential-manager/releases/download/v2.1.2/gcm-linux_amd64.2.1.2.tar.gz -o /tmp/gcm.tar.gz && \
+RUN curl -L https://github.com/git-ecosystem/git-credential-manager/releases/download/v2.2.2/gcm-linux_amd64.2.2.2.tar.gz -o /tmp/gcm.tar.gz && \
     tar -xvf /tmp/gcm.tar.gz -C /usr/bin && \
     rm /tmp/gcm.tar.gz && \
     echo "export GCM_CREDENTIAL_STORE=plaintext" > /root/.profile
