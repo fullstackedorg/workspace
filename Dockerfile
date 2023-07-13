@@ -22,7 +22,6 @@ RUN npm i -g fullstacked && \
     ln -s /usr/local/lib/node_modules/fullstacked/node_modules/@fullstacked/cli/cli.js /usr/local/bin/fsc && \
     ln -s /usr/local/lib/node_modules/fullstacked/node_modules/@fullstacked/cli/cli.js /usr/local/bin/fullstacked
 
-
 # custom commands
 COPY bin /fbin
 RUN chmod +x -R /fbin && \
