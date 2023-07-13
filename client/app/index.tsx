@@ -130,7 +130,7 @@ export default function () {
             title: "Browser",
             onClick() {
                 const div = document.createElement("div");
-                const { id } = createWindow("Browser", {mount: div})
+                const { id } = createWindow("Browser", {mount: div});
                 createRoot(div).render(<Browser id={id} />);
             }
         },

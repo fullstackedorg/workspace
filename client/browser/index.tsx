@@ -9,23 +9,54 @@ declare global {
 }
 export default function (props: {id: string, port?: string, path?: string}) {
     const [openShare, setOpenShare] = useState(false);
+    const openShareRef = useRef<boolean>();
 
-    const [path, setPath] = useState(props.path?.startsWith("/") ? props.path.slice(1) : props.path);
+    const [path, setPath] = useState(props.path?.startsWith("/") ? props.path.slice(1) : "");
     const [port, setPort] = useState(props.port);
 
     const iframeRef = useRef<HTMLIFrameElement>();
     const consoleRef = useRef<Console>();
     const eTabRef = useRef<HTMLAnchorElement>();
+    const shareTooltipRef = useRef<HTMLSpanElement>();
+
+    let closeShareTooltip = (e) => {
+        const bb = shareTooltipRef.current.getBoundingClientRect();
+        if(bb.width === 0)
+            window.removeEventListener("click", closeShareTooltip);
+
+        if(!openShareRef.current || shareTooltipRef.current.contains(e.target))
+            return;
+
+        setOpenShare(false);
+    };
+
+    const checkIfInIframe = () =>{
+        if(!openShareRef.current) return;
+
+        window.requestAnimationFrame(checkIfInIframe);
+        if(document.activeElement.tagName === "IFRAME") {
+            setOpenShare(false);
+        }
+    }
+
+    useEffect(() => {
+        openShareRef.current = openShare;
+        if(openShare)
+            checkIfInIframe();
+    }, [openShare]);
 
     useEffect(() => {
         // @ts-ignore
         // iframeRef.current.credentialless = true;
-        if(!props.port) return;
+        if(props.port) {
+            load();
+        }
 
-        load();
+        window.addEventListener("click", closeShareTooltip);
     }, []);
 
     const load = () => {
+        console.log(path)
         let url = new URL(window.location.href);
         url.searchParams.forEach((value, param) =>
             url.searchParams.delete(param));
@@ -75,7 +106,7 @@ export default function (props: {id: string, port?: string, path?: string}) {
                         </svg>
                     </button>
                 </a>
-                <span style={{position: "relative"}}>
+                <span ref={shareTooltipRef} style={{position: "relative"}}>
                     <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 2}} onClick={() => {
                         if(!port) return;
                         setOpenShare(true)
