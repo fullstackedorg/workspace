@@ -23,7 +23,6 @@ function copyToClipboard(str: string) {
 }
 
 export default function (props: {port, close}) {
-    const wrap = useRef<HTMLDivElement>();
     const [password, setPassword] = useState("");
     const [shareState, setShareState] = useState<ShareState>(ShareState.NONE);
     const [shareURL, setShareURL] = useState("");
@@ -68,7 +67,7 @@ export default function (props: {port, close}) {
         passwordCallback(serverPassword);
     }
 
-    return <div ref={wrap} className={"share"}>
+    return <div className={"share"}>
         {shareState === ShareState.NONE || password
             ? <div style={{width: "100%", display: "flex", alignItems: "center"}}>
                 <form style={{flexDirection: "column"}} onSubmit={share}>
