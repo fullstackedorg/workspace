@@ -30,7 +30,7 @@
     "@codemirror/view": "^6.9.4",
     "@fullstacked/build": "^0.10.2",
     "@fullstacked/cli": "^0.10.4",
-    "@fullstacked/share": "^0.10.4",
+    "@fullstacked/share": "^0.10.5",
     "@fullstacked/watch": "^0.10.2",
     "@fullstacked/webapp": "^0.10.2",
     "@types/cookie": "^0.5.1",
