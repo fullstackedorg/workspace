@@ -6,4 +6,4 @@
 <h1 align="center">FullStacked</h1>
 <h3 align="center">A Cloud Workspace for Web Developers</h3>
 
-![FullStacked](https://files.cplepage.com/fullstacked/fullstacked-ide-sharing.jpg)
+![FullStacked](https://files.cplepage.com/fullstacked/fullstacked-sharing.jpg)
