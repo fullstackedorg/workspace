@@ -92,15 +92,18 @@ authPage.addInBody(`
         }
         
         async function tryRefreshingToken(){
-            let response;
+            let response, payload;
             try{
-                response = await (await fetch("/", {method: "POST"})).text();
+                response = await fetch("/", {method: "POST"});
+                payload = await response.text();
             }catch (e) {
                 throw e;
             }
             
-            if(response === "Bonjour")
+            if(payload === "Bonjour")
                 window.location.reload();
+            else
+                logout();
         }
         
         const url = new URL(window.location.href);
