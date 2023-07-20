@@ -30,6 +30,7 @@ RUN chmod +x -R /fbin && \
 RUN rm -rf /home/dockremap && \
     npm config set prefix '/home/.npm/' && \
     echo "export PATH=\$PATH:/home/.npm/bin" >> /root/.profile && \
+    echo "export DOCKER_HOST=\"\"" >> /root/.profile && \
     mkdir -p /home/.npm/lib && \
     git-credential-manager configure
 
