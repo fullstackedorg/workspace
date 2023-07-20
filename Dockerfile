@@ -31,7 +31,8 @@ RUN chmod +x -R /fbin && \
 RUN rm -rf /home/dockremap && \
     npm config set prefix '/home/.npm/' && \
     echo "export PATH=\$PATH:/home/.npm/bin" >> /root/.profile && \
+    echo "export DOCKER_HOST=\"\"" >> /root/.profile && \
     mkdir -p /home/.npm/lib && \
     git-credential-manager configure
 
-CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" fsc workspace)"]
+CMD ["tini", "--", "/bin/sh", "-c", "source /root/.profile && (/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & fsc workspace)"]
