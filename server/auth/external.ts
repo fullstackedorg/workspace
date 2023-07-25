@@ -71,10 +71,7 @@ authPage.addInBody(`
     <script type="module">
         function logout(){
             "${process.env.SESSION_COOKIES}".split(",").forEach(cookieName => {
-                document.cookie = cookieName + "=" +
-                  ";path=/" + 
-                  ";domain=" + window.location.hostname +
-                  ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+                document.cookie = cookieName + "=; Max-Age=0";
             });
             
             if("${process.env.REVOKE_URL ?? ""}") {
