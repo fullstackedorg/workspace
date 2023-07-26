@@ -8,9 +8,13 @@ authPage.addInHead(`<link id="favicon" rel="shortcut icon" type="image/png" href
 authPage.addInHead(`<style>
         *{
             box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         html, body{
             background-color: #1e293c;
+            font-family: sans-serif;
+            color: white;
             height: 100%;
             width: 100%;
             margin: 0;
@@ -21,6 +25,9 @@ authPage.addInHead(`<style>
             flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+        a {
+            color: inherit;
         }
         img {
             height: 70px;
@@ -69,9 +76,12 @@ authPage.addInHead(`<style>
 authPage.addInBody(`
     <img src="/pwa/app-icons/app-icon.png" />
     <script type="module">
-        function logout(){
+        function logout(message){
             "${process.env.SESSION_COOKIES}".split(",").forEach(cookieName => {
-                document.cookie = cookieName + "=; Max-Age=0";
+                document.cookie = cookieName + "=" +
+                    ";path=/" + 
+                    ";domain=" + window.location.hostname +
+                    ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
             });
             
             if("${process.env.REVOKE_URL ?? ""}") {
@@ -81,11 +91,18 @@ authPage.addInBody(`
                 });
             }
             
-            const button = document.createElement("button");
-            button.addEventListener("click", () => window.location.reload());
-            button.classList.add("login-btn");
-            button.innerHTML = \`${arrow}\`;
-            document.body.append(button);
+            if(message){
+                const msg = document.createElement("div");
+                msg.innerHTML = message;
+                msg.style.marginBottom = "10px";
+                document.body.append(msg);
+            }else{
+                const button = document.createElement("button");
+                button.addEventListener("click", () => window.location.reload());
+                button.classList.add("login-btn");
+                button.innerHTML = \`${arrow}\`;
+                document.body.append(button);
+            }
         }
         
         async function tryRefreshingToken(){
@@ -100,7 +117,7 @@ authPage.addInBody(`
             if(payload === "Bonjour")
                 window.location.reload();
             else
-                logout();
+                logout(payload);
         }
         
         const url = new URL(window.location.href);
@@ -117,7 +134,7 @@ authPage.addInBody(`
 export default {
     html: authPage,
     validator: async req => {
-        let response, payload;
+        let response;
         try{
             response = await fetch(process.env.AUTH_URL, {
                 method: "POST",
@@ -126,11 +143,14 @@ export default {
                     cookie: req.headers.cookie
                 }
             });
-            payload = await response.text();
+
+            if(response.status >= 400)
+                return new Error(await response.text());
         }catch (e){
             console.log(e);
             return e;
         }
-        return !!payload;
+
+        return true;
     }
 }

@@ -69,11 +69,8 @@ export default class {
 
                 if(!validation || validation instanceof Error){
                     res.writeHead(500);
-                    res.write(JSON.stringify({
-                        error: "Unauthorized",
-                        message: validation.toString()
-                    }));
-                    res.end()
+                    res.write(validation.toString());
+                    res.end();
                     return;
                 }
 
