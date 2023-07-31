@@ -79,10 +79,7 @@ export default class {
 
                 if(validation){
                     refreshToken = this.issueRefreshToken();
-                    console.log(refreshToken)
                     const accessToken = this.issueAccessTokenWithoutOldAccessToken(refreshToken);
-
-                    console.log(accessToken)
                     sendAccessToken(accessToken);
                 }
             }
@@ -97,7 +94,6 @@ export default class {
             }
 
             if(cookiesToSend.length){
-                console.log(cookiesToSend)
                 res.setHeader("Set-Cookie", cookiesToSend);
             }
 
