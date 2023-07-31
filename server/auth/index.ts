@@ -12,6 +12,7 @@ export default class {
 
     private readonly accessTokenDuration = 1000 * 60 * 15; // 15 minutes
     private readonly refreshTokenDuration = 1000 * 60 * 60 * 24 * 7; // 1 week
+    private readonly cookieExpirationDuration = 1000 * 60 * 60 * 24 * 7 * 2 // 2 week
 
     // RefreshToken => Set<AccessToken>
     private tokenIssued: Map<string, Set<string>> = new Map();
@@ -43,11 +44,11 @@ export default class {
             const reqHost = (req.headers.origin || req.headers.host).replace(/https?:\/\//g, "");
             const reqHostname = reqHost.split(":").shift();
 
-            const sendAccessToken = ({accessToken, expires}) => {
+            const sendAccessToken = accessToken => {
                 cookiesToSend.push(cookie.serialize("fullstackedAccessToken", accessToken, {
                     path: "/",
                     domain: reqHostname,
-                    expires: new Date(expires)
+                    expires: new Date(Date.now() + this.cookieExpirationDuration)
                 }));
             }
 
@@ -77,7 +78,7 @@ export default class {
                 }
 
                 if(validation){
-                    refreshToken = this.issueRefreshToken().refreshToken;
+                    refreshToken = this.issueRefreshToken();
                     const accessToken = this.issueAccessTokenWithoutOldAccessToken(refreshToken);
 
                     sendAccessToken(accessToken);
@@ -90,7 +91,7 @@ export default class {
                     path: "/",
                     domain: reqHostname,
                     httpOnly: true,
-                    expires: new Date(refreshTokenExpirationValidation)
+                    expires: new Date(Date.now() + this.cookieExpirationDuration)
                 }));
             }
 
@@ -127,14 +128,14 @@ export default class {
             this.tokenIssued.delete(refreshToken)
         }
 
-        return isExpired ? false : expiration;
+        return isExpired;
     }
 
     private issueRefreshToken(){
         const expires = Date.now() + this.refreshTokenDuration;
         const refreshToken = randomUUID() + ":" + expires;
         this.tokenIssued.set(refreshToken, new Set());
-        return {refreshToken, expires};
+        return refreshToken;
     }
 
     private validateAccessToken(accessToken: string){
@@ -170,7 +171,7 @@ export default class {
         const accessToken = randomUUID() + ":" + expires;
         issuedAccessTokens.add(accessToken);
 
-        return {accessToken, expires};
+        return accessToken;
     }
 
     issueAccessToken (refreshToken: string, oldAccessToken: string) {
@@ -187,7 +188,7 @@ export default class {
         const accessToken = randomUUID() + ":" + expires;
         issuedAccessTokens.add(accessToken);
 
-        return {accessToken, expires};
+        return accessToken;
     }
 
     invalidateRefreshToken(refreshToken: string){

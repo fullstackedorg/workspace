@@ -53,6 +53,8 @@ server.addListener({
     }
 }, true);
 
+server.start();
+
 export default server.serverHTTP;
 
 export const API = {
