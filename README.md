@@ -7,3 +7,8 @@
 <h3 align="center">A Cloud Workspace for Web Developers</h3>
 
 ![FullStacked](https://files.cplepage.com/fullstacked/fullstacked-sharing.jpg)
+
+## Run with Docker
+```
+docker run --privileged -p 8000:8000 -v workspace-data:/home fullstackedorg/workspace
+```
