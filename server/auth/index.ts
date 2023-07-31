@@ -79,14 +79,15 @@ export default class {
 
                 if(validation){
                     refreshToken = this.issueRefreshToken();
+                    console.log(refreshToken)
                     const accessToken = this.issueAccessTokenWithoutOldAccessToken(refreshToken);
 
+                    console.log(accessToken)
                     sendAccessToken(accessToken);
                 }
             }
 
-            const refreshTokenExpirationValidation = this.isRefreshTokenValid(refreshToken);
-            if(refreshTokenExpirationValidation){
+            if(this.isRefreshTokenValid(refreshToken)){
                 cookiesToSend.push(cookie.serialize("fullstackedRefreshToken", refreshToken, {
                     path: "/",
                     domain: reqHostname,
@@ -96,6 +97,7 @@ export default class {
             }
 
             if(cookiesToSend.length){
+                console.log(cookiesToSend)
                 res.setHeader("Set-Cookie", cookiesToSend);
             }
 
@@ -128,7 +130,7 @@ export default class {
             this.tokenIssued.delete(refreshToken)
         }
 
-        return isExpired;
+        return !isExpired;
     }
 
     private issueRefreshToken(){
