@@ -8,12 +8,11 @@ import {createRoot} from "react-dom/client";
 import {createWindow} from "../app/WinStore";
 import {openCodeOSS} from "../codeOSS";
 import {openExplorer} from "../app/files";
+import {client} from "../client";
 
 export default class Terminal extends Component<{ onFocus(): void }> {
-    pingThrottler;
-    ws = new WebSocket("ws" +
-        (window.location.protocol === "https:" ? "s" : "") +
-        "://" + window.location.host + "/fullstacked-commands");
+    pid: string;
+    ws: WebSocket;
     xtermRef = createRef<HTMLDivElement>();
     xterm = new Xterm();
     fitAddon = new FitAddon();
@@ -30,9 +29,59 @@ export default class Terminal extends Component<{ onFocus(): void }> {
         window.open(uri, '_blank').focus();
     });
 
+    reconnect = () => {
+        if(document.hidden) return;
+
+        setTimeout(() => {
+            if(this.ws.readyState === WebSocket.CLOSED)
+                this.connect();
+        }, 1000);
+    }
+
+    constructor(props) {
+        super(props);
+        this.connect();
+    }
+
+    connect() {
+        const wsURL = "ws" +
+            (window.location.protocol === "https:" ? "s" : "") +
+            "://" + window.location.host + "/fullstacked-terminal" +
+            (this.pid ? `/${this.pid}` : "");
+
+        this.ws = new WebSocket(wsURL);
+
+        this.ws.onopen = () => this.onResize();
+
+        this.ws.onmessage = e => {
+            if(e.data.startsWith("PID#")){
+                this.pid = e.data.split("#").pop();
+                return;
+            } else if(e.data.startsWith("CODE#")){
+                openCodeOSS(e.data.split("#").pop());
+                this.xterm.blur();
+                return;
+            } else if(e.data.startsWith("OPEN#")){
+                openExplorer(e.data.split("#").pop());
+                this.xterm.blur();
+                return;
+            }
+
+            this.xterm.write(e.data);
+        }
+    }
+
     onResize(){
         this.fitAddon.fit();
         this.ws.send(`SIZE#${this.xterm.cols}#${this.xterm.rows}`);
+    }
+
+    onFocus() {
+        this.props.onFocus();
+
+        if(this.ws.readyState === WebSocket.CLOSED){
+            this.connect();
+        }
     }
 
     componentDidMount() {
@@ -41,24 +90,13 @@ export default class Terminal extends Component<{ onFocus(): void }> {
         this.xterm.open(this.xtermRef.current);
         this.xterm.focus();
 
-        const ping = () => {
-            if(this.pingThrottler) clearTimeout(this.pingThrottler);
-            this.pingThrottler = setTimeout(() => {
-                this.ws.send("##PING##");
-                this.pingThrottler = null;
-                ping();
-            }, 30 * 1000);
-        }
-        ping();
-
         this.xterm.onKey(({key, domEvent}) => {
             // issue with ctrl+c on safari mobile
             if(key === '\x0d' && domEvent.ctrlKey){
                 this.ws.send('\x03');
-                return ping();
+                return;
             }
             this.ws.send(key);
-            ping();
         });
 
         this.xterm.attachCustomKeyEventHandler((arg) => {
@@ -70,25 +108,14 @@ export default class Terminal extends Component<{ onFocus(): void }> {
             return true;
         });
 
-        this.xterm.textarea.addEventListener("focus", this.props.onFocus);
+        this.xterm.textarea.addEventListener("focus", () => this.onFocus());
 
-        this.ws.onopen = () => {
-            this.onResize();
-        }
+        document.addEventListener("visibilitychange", this.reconnect);
+    }
 
-        this.ws.onmessage = e => {
-            if(e.data.startsWith("CODE#")){
-                openCodeOSS(e.data.split("#").pop());
-                this.xterm.blur();
-                return;
-            }else if(e.data.startsWith("OPEN#")){
-                openExplorer(e.data.split("#").pop());
-                this.xterm.blur();
-                return;
-            }
-
-            this.xterm.write(e.data);
-        }
+    async terminate(){
+        await client.post().killTerminalSession(this.pid);
+        document.removeEventListener("visibilitychange", this.reconnect);
     }
 
     render(){
