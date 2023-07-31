@@ -1,6 +1,6 @@
 {
-    "name": "FullStacked IDE",
-    "short_name": "FullStacked IDE",
+    "name": "FullStacked",
+    "short_name": "FullStacked",
     "display": "standalone",
     "start_url": "/",
     "description": "",
