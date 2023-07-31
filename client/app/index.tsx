@@ -108,7 +108,7 @@ export default function () {
                 const {id} = createWindow("Terminal",  {
                     mount: div,
                     onclose: () => {
-                        terminalRef.current.ws.close();
+                        terminalRef.current.terminate();
                     },
                     onresize: () => {
                         setTimeout(() => {terminalRef?.current?.onResize()}, 500)
