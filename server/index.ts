@@ -53,10 +53,6 @@ server.addListener({
     }
 }, true);
 
-// called with [npx fullstacked ide]
-if(!process.argv.includes("ide"))
-    server.start();
-
 export default server.serverHTTP;
 
 export const API = {
@@ -141,7 +137,7 @@ server.addListener(createListener(API));
 
 server.pages["/"].addInHead(`<title>FullStacked</title>`);
 server.pages["/"].addInHead(`<link rel="apple-touch-icon" href="/pwa/app-icons/maskable.png">`);
-server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="FullStacked IDE">`);
+server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="FullStacked">`);
 server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
