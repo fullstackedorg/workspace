@@ -14,11 +14,12 @@ RUN curl -L https://github.com/git-ecosystem/git-credential-manager/releases/dow
 COPY code-oss/vscode-reh-web-linux-x64 /code-oss
 RUN cd /code-oss && npm i --legacy-peer-deps
 
+# add current fullstacked build
 COPY dist /fullstacked/dist
 COPY index.js /fullstacked/index.mjs
 RUN cd /fullstacked && npm i node-pty
 
-# Bun and Deno glibc dependency
+# Bun and Deno (probably other binaries) glibc dependency
 # source https://github.com/oven-sh/bun/issues/3075#issuecomment-1565069263
 RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
     wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r1/glibc-2.35-r1.apk && \
@@ -26,16 +27,6 @@ RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/s
     apk --no-cache --force-overwrite add glibc-2.35-r1.apk glibc-bin-2.35-r1.apk && \
     /usr/glibc-compat/bin/ldd /lib/ld-linux-x86-64.so.2 && \
     rm -rf glibc-2.35-r1.apk glibc-bin-2.35-r1.apk
-
-# Bun
-RUN curl https://bun.sh/install | bash && \
-    echo "export BUN_INSTALL=\"/root/.bun\"" >> /etc/profile && \
-    echo "export PATH=\"\$BUN_INSTALL/bin:\$PATH\"" >> /etc/profile
-
-# Deno
-RUN curl -fsSL https://deno.land/x/install/install.sh | sh && \
-    echo "export DENO_INSTALL=\"/root/.deno\"" >> /etc/profile && \
-    echo "export PATH=\"\$DENO_INSTALL/bin:\$PATH\"" >> /etc/profile
 
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
