@@ -218,7 +218,7 @@ setInterval(() => {
 }, 1000 * 60) // every minute
 
 terminalWSS.on('connection', (ws, req) => {
-    let session;
+    let session: IPty;
 
     const reqComponents = req.url.split("/").filter(Boolean);
     if(reqComponents.length > 1){
@@ -237,11 +237,11 @@ terminalWSS.on('connection', (ws, req) => {
     }
 
     if(!session) {
-        session = pty.spawn("/bin/sh", [], {
+        session = pty.spawn("/bin/sh", ["-l"], {
             name: '',
             cols: 80,
             rows: 30,
-            cwd: process.cwd()
+            cwd: process.cwd(),
         });
 
         session.onData((data) => {
@@ -269,7 +269,7 @@ terminalWSS.on('connection', (ws, req) => {
             session.resize(parseInt(cols), parseInt(rows));
             return;
         }
-        session.write(data.toString());
+        session.write(dataStr);
     });
 });
 

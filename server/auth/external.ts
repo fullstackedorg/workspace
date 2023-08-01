@@ -92,7 +92,7 @@ authPage.addInBody(`
             }
             return "";
         }
-        function logout(message){
+        async function logout(message){
             "${process.env.SESSION_COOKIES}".split(",").forEach(cookieName => {
                 window.sessionStorage.setItem(cookieName, getCookie(cookieName));
                 document.cookie = cookieName + "=" +
@@ -102,7 +102,7 @@ authPage.addInBody(`
             });
             
             if("${process.env.REVOKE_URL ?? ""}") {
-                fetch("${process.env.REVOKE_URL}", {
+                await fetch("${process.env.REVOKE_URL}", {
                     method: "POST",
                     credentials: "include"
                 });
