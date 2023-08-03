@@ -2,6 +2,7 @@ import React, {RefObject, useEffect, useRef, useState} from "react";
 import {client} from "../client";
 //@ts-ignore
 import loading from "../icons/loading.gif";
+import {copyToClipboard} from "../utils";
 
 
 enum ShareState {
@@ -10,16 +11,6 @@ enum ShareState {
     PASSWORD,
     LOGIN,
     SHARING
-}
-
-function copyToClipboard(str: string) {
-    const input = document.createElement('textarea');
-    input.innerHTML = str;
-    document.body.appendChild(input);
-    input.select();
-    const result = document.execCommand('copy');
-    document.body.removeChild(input);
-    return result;
 }
 
 export default function (props: {port, close}) {
