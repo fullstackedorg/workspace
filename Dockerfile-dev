@@ -17,8 +17,8 @@ COPY code-oss/vscode-reh-web-linux-x64 /code-oss
 RUN cd /code-oss && npm i --legacy-peer-deps
 
 # github device flow setup
-COPY github-credentials.js /root/github-credentials
-RUN chmod +x /root/github-credentials
+COPY github-credential.js /root/github-credential
+RUN chmod +x /root/github-credential
 COPY gitconfig-base /home/.gitconfig
 
 # add current fullstacked build
