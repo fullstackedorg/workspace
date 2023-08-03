@@ -58,7 +58,6 @@ export default class Terminal extends Component<{ onFocus(): void }> {
         this.ws.onmessage = e => {
             if(e.data.startsWith("SESSION_ID#")){
                 this.SESSION_ID = e.data.split("#").pop();
-                setTimeout(() => this.ws.close(), 3000);
                 return;
             } else if(e.data.startsWith("CODE#")){
                 openCodeOSS(e.data.split("#").pop());
