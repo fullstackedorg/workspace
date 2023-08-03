@@ -38,9 +38,11 @@ export class Terminal {
 
         // find existing
         const reqComponents = req.url.split("/").filter(Boolean);
-        let session: Session = reqComponents.length > 1
-            ? this.sessions.get(reqComponents.pop())
-            : null;
+        let session: Session;
+        if(reqComponents.length > 1) {
+            SESSION_ID = reqComponents.pop();
+            session = this.sessions.get(SESSION_ID);
+        }
 
         // create new
         if(!session) {
@@ -58,7 +60,7 @@ export class Terminal {
 
             pty.onData((data) => {
                 const terminalSession = this.sessions.get(SESSION_ID);
-                if(terminalSession.ws.readyState === ws.CLOSED) {
+                if(terminalSession.ws.readyState === terminalSession.ws.CLOSED) {
                     terminalSession.data.push(data);
                 }else{
                     terminalSession.ws.send(data);
@@ -72,6 +74,8 @@ export class Terminal {
                 lastActivity: Date.now(),
                 data: []
             }
+        }else{
+            session.ws = ws;
         }
 
         // send accumulated data

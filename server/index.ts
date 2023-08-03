@@ -289,4 +289,5 @@ server.addListener({
     }
 })
 
-initInternalRPC(terminal);
+if(process.env.DOCKER_HOST !== undefined)
+    initInternalRPC(terminal);

@@ -5,6 +5,10 @@ import sleep from "@fullstacked/cli/utils/sleep";
 import fs from "fs";
 import * as os from "os";
 
+const client_id = process.env.FULLSTACKED_ENV === "production"
+    ? "eb999bfaaa05b2118843"
+    : "8e4c6413c4f5a14e828f";
+
 export function initInternalRPC(terminal: Terminal){
     const server = new Server();
     server.port = 14014;
@@ -26,7 +30,7 @@ export function initInternalRPC(terminal: Terminal){
                     "accept": "application/json"
                 },
                 body: JSON.stringify({
-                    client_id: "8e4c6413c4f5a14e828f",
+                    client_id,
                     scope: "repo,user:email"
                 })
             })).json();
@@ -93,7 +97,7 @@ async function waitForAccessToken(device_code){
                 "accept": "application/json"
             },
             body: JSON.stringify({
-                client_id: "8e4c6413c4f5a14e828f",
+                client_id,
                 device_code,
                 grant_type: "urn:ietf:params:oauth:grant-type:device_code"
             })

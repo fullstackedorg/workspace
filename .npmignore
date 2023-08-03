@@ -6,6 +6,7 @@
 *.tsx
 !*.d.ts
 
+/bin
 /client
 /server
 /pwa
@@ -23,3 +24,6 @@ Dockerfile-dev
 
 install.js
 tsconfig.json
+
+gitconfig-base
+github-credential.js
