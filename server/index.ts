@@ -12,8 +12,12 @@ import {IncomingMessage, ServerResponse} from "http";
 import {Socket} from "net";
 import Share from "@fullstacked/share";
 import randStr from "@fullstacked/cli/utils/randStr"
+import {Terminal} from "./terminal";
+import {initInternalRPC} from "./internal";
 
 const server = new Server();
+
+const terminal = new Terminal();
 
 if(process.env.FULLSTACKED_ENV === "production")
     server.logger = null;
@@ -133,14 +137,12 @@ export const API = {
         share.stop();
         activeShare.delete(share);
     },
-    killTerminalSession(pid: string){
-        for(const [session, {ws}] of terminalSessions){
-            const PID = parseInt(pid);
-            if(session.pid === PID){
-                ws.close();
-                session.kill();
-                terminalSessions.delete(session);
-            }
+    killTerminalSession(SESSION_ID: string){
+        const session = terminal.sessions.get(SESSION_ID);
+        if(session){
+            session.pty.kill()
+            session.ws.close();
+            terminal.sessions.delete(SESSION_ID);
         }
     }
 }
@@ -195,84 +197,6 @@ shareWSS.on('connection', (ws, req) => {
     share.run();
 });
 
-
-
-const terminalWSS = new WebSocketServer({noServer: true});
-// session => lastActivity
-const terminalSessions: Map<IPty, {
-    ws: WebSocket,
-    lastActivity: number,
-    data: string[]
-}> = new Map();
-
-// cleanup interval
-const killTimeout = 1000 * 60 * 15 // 15 minutes
-setInterval(() => {
-    for(const [session, {ws, lastActivity}] of terminalSessions.entries()){
-        if(lastActivity - Date.now() > killTimeout){
-            session.kill();
-            ws.close()
-            terminalSessions.delete(session);
-        }
-    }
-}, 1000 * 60) // every minute
-
-terminalWSS.on('connection', (ws, req) => {
-    let session: IPty;
-
-    const reqComponents = req.url.split("/").filter(Boolean);
-    if(reqComponents.length > 1){
-        const pid = parseInt(reqComponents.pop());
-        const activeSessions = Array.from(terminalSessions.keys())
-        for (let i = 0; i < activeSessions.length; i++) {
-            const activeSession = activeSessions[i]
-            if(activeSession.pid !== pid) continue;
-
-            session = activeSession
-
-            terminalSessions.get(session).data.forEach(message => {
-                ws.send(message);
-            });
-        }
-    }
-
-    if(!session) {
-        session = pty.spawn("/bin/sh", ["-l"], {
-            name: '',
-            cols: 80,
-            rows: 30,
-            cwd: process.cwd(),
-        });
-
-        session.onData((data) => {
-            const terminalSession = terminalSessions.get(session);
-            if(terminalSession.ws.readyState === ws.CLOSED) {
-                terminalSession.data.push(data);
-            }else{
-                terminalSession.ws.send(data);
-                terminalSession.lastActivity = Date.now();
-            }
-        });
-    }
-
-    terminalSessions.set(session, {
-        ws,
-        lastActivity: Date.now(),
-        data: [],
-    })
-    ws.send(`PID#${session.pid}`);
-
-    ws.on('message', data => {
-        const dataStr = data.toString();
-        if(dataStr.startsWith("SIZE#")){
-            const [_, cols, rows] = dataStr.split("#");
-            session.resize(parseInt(cols), parseInt(rows));
-            return;
-        }
-        session.write(dataStr);
-    });
-});
-
 const proxy = httpProxy.createProxy();
 
 proxy.on('proxyRes', function (proxyRes, req, res) {
@@ -304,8 +228,8 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
     }
 
     if(req.url.startsWith("/fullstacked-terminal")){
-        terminalWSS.handleUpgrade(req, socket, head, (ws) => {
-            terminalWSS.emit('connection', ws, req);
+        terminal.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
+            terminal.webSocketServer.emit('connection', ws, req);
         });
     }else if(req.url.split("?").shift() === "/fullstacked-share"){
         shareWSS.handleUpgrade(req, socket, head, (ws) => {
@@ -365,3 +289,4 @@ server.addListener({
     }
 })
 
+initInternalRPC(terminal);

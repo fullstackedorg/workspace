@@ -1,0 +1,4 @@
+[credential "https://github.com"]
+    helper = "/root/github-credentials"
+[credential]
+    helper = store

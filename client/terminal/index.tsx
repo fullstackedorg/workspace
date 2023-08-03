@@ -5,13 +5,15 @@ import "xterm/css/xterm.css";
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import Browser from "../browser";
 import {createRoot} from "react-dom/client";
-import {createWindow} from "../app/WinStore";
+import {createWindow, focusWindow} from "../app/WinStore";
 import {openCodeOSS} from "../codeOSS";
 import {openExplorer} from "../app/files";
 import {client} from "../client";
+import GithubDeviceFlow from "./github-device-flow";
 
 export default class Terminal extends Component<{ onFocus(): void }> {
-    pid: string;
+    SESSION_ID: string;
+    githubDeviceFlow;
     ws: WebSocket;
     xtermRef = createRef<HTMLDivElement>();
     xterm = new Xterm();
@@ -47,15 +49,15 @@ export default class Terminal extends Component<{ onFocus(): void }> {
         const wsURL = "ws" +
             (window.location.protocol === "https:" ? "s" : "") +
             "://" + window.location.host + "/fullstacked-terminal" +
-            (this.pid ? `/${this.pid}` : "");
+            (this.SESSION_ID ? `/${this.SESSION_ID}` : "");
 
         this.ws = new WebSocket(wsURL);
 
         this.ws.onopen = () => this.onResize();
 
         this.ws.onmessage = e => {
-            if(e.data.startsWith("PID#")){
-                this.pid = e.data.split("#").pop();
+            if(e.data.startsWith("SESSION_ID#")){
+                this.SESSION_ID = e.data.split("#").pop();
                 return;
             } else if(e.data.startsWith("CODE#")){
                 openCodeOSS(e.data.split("#").pop());
@@ -64,6 +66,22 @@ export default class Terminal extends Component<{ onFocus(): void }> {
             } else if(e.data.startsWith("OPEN#")){
                 openExplorer(e.data.split("#").pop());
                 this.xterm.blur();
+                return;
+            }else if(e.data.startsWith("GITHUB_DEVICE_FLOW#")){
+                const [_, verification_uri, device_code] = e.data.split("#");
+
+                const mount = document.createElement("div");
+                this.githubDeviceFlow = createWindow("GitHub Auth", {mount});
+                createRoot(mount).render(<GithubDeviceFlow
+                    verificationUri={verification_uri}
+                    deviceCode={device_code}
+                />)
+                focusWindow(this.githubDeviceFlow.id);
+
+                return;
+            }else if(this.githubDeviceFlow && e.data === "GITHUB_DEVICE_FLOW_DONE"){
+                this.githubDeviceFlow.winBox.close();
+                this.githubDeviceFlow = null;
                 return;
             }
 
@@ -114,7 +132,7 @@ export default class Terminal extends Component<{ onFocus(): void }> {
     }
 
     async terminate(){
-        await client.post().killTerminalSession(this.pid);
+        await client.post().killTerminalSession(this.SESSION_ID);
         document.removeEventListener("visibilitychange", this.reconnect);
     }
 
