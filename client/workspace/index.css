@@ -7,13 +7,20 @@
     padding: 10px 0 0 0;
     border: 1px solid #ccc;
     border-radius: 5px;
-    background-color: red;
     overflow: hidden;
 }
-
-.window > div {
+.window > div:first-child {
+    background-color: #0a85b5;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.window > div:nth-child(2) {
     overflow: auto;
     height: 100%;
+    border-radius: 5px;
 }
 
 .window > .options {

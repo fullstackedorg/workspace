@@ -8,6 +8,7 @@ import "./index.css";
 import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
 import Editor from "./editor";
+import CommandPalette from "./commandPalette";
 
 let rootDiv = document.querySelector("#root") as HTMLDivElement;
 if(!rootDiv){
@@ -16,7 +17,10 @@ if(!rootDiv){
     document.body.append(rootDiv);
 }
 
-createRoot(rootDiv).render(<Workspace />);
+createRoot(rootDiv).render(<>
+    <CommandPalette />
+    <Workspace />
+</>);
 
 async function keepAccessTokenValid(){
     const accessToken = Cookies.get("fullstackedAccessToken");

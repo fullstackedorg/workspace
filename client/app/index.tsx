@@ -29,7 +29,6 @@ import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import Latency from "../latency";
 import Cookies from "js-cookie";
 import {openCodeOSS} from "../codeOSS";
-import CommandPalette from "../commandPalette";
 
 
 function initZoneSelect(){
@@ -178,7 +177,6 @@ export default function () {
         <div className={"background"}>
             <img src={logo}/>
         </div>
-        {showCmdPalette && <CommandPalette close={() => setShowCmdPalette(false)} />}
         {apps.map((app, i) => <ButtonIcon
             icon={app.icon}
             title={app.title}
