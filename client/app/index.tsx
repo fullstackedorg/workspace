@@ -1,4 +1,4 @@
-import React, {createRef, useEffect} from "react";
+import React, {createRef, useEffect, useState} from "react";
 import WinBox from "winbox/src/js/winbox";
 import ButtonIcon from "../components/button-icon";
 //@ts-ignore
@@ -29,6 +29,7 @@ import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import Latency from "../latency";
 import Cookies from "js-cookie";
 import {openCodeOSS} from "../codeOSS";
+import CommandPalette from "../commandPalette";
 
 
 function initZoneSelect(){
@@ -90,8 +91,17 @@ async function checkForPapercups(){
 
 export default function () {
     const [hasCodeOSS] = useAPI(client.get().hasCodeOSS);
+    const [showCmdPalette, setShowCmdPalette] = useState(false);
     useEffect(initZoneSelect, []);
-    useEffect(() => {checkForPapercups()}, []);
+    useEffect(() => {
+        checkForPapercups();
+        window.addEventListener("keydown", e => {
+            if(e.key === "k" && (e.metaKey || e.ctrlKey))
+                setShowCmdPalette(true);
+            if(e.key === "Escape" && document.querySelector("#command-palette"))
+                setShowCmdPalette(false);
+        })
+    }, []);
 
 
     const apps: {
@@ -168,6 +178,7 @@ export default function () {
         <div className={"background"}>
             <img src={logo}/>
         </div>
+        {showCmdPalette && <CommandPalette close={() => setShowCmdPalette(false)} />}
         {apps.map((app, i) => <ButtonIcon
             icon={app.icon}
             title={app.title}
