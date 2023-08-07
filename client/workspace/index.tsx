@@ -1,10 +1,9 @@
 import React, {Component, ReactNode} from "react";
 import WindowElement from "./Window";
 import "./index.css";
-import Editor from "../editor";
 
 export class Workspace extends Component {
-    static instance;
+    static instance: Workspace;
 
     state: {
         windows: {
@@ -12,16 +11,25 @@ export class Workspace extends Component {
             element: ReactNode
         }[]
     } = {
-        windows: [{
-            id: Math.floor(Math.random() * 10000).toString(),
-            element: <Editor filename={"./index.js"} />
-        }]
+        windows: []
     }
 
     constructor(props?) {
         super(props);
 
         Workspace.instance = this;
+    }
+
+    addWindow(element: ReactNode){
+        this.setState({
+            windows: [
+                ...this.state.windows,
+                {
+                    id: Math.floor(Math.random() * 100000).toString(),
+                    element
+                }
+            ]
+        })
     }
 
     render(){
