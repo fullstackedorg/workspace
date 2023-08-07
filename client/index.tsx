@@ -5,15 +5,9 @@ import App from "./app";
 import "winbox/dist/css/winbox.min.css";
 import "winbox/dist/css/themes/modern.min.css";
 import "./index.css";
-import Credentialless from "./credentialless";
-import {inIframe} from "./utils";
 import Cookies from "js-cookie";
-import {client} from "./client";
-
-// Will need a nonce protocol to use this
-// Too unsafe to put session_token in query params
-// if(!inIframe())
-//     await Credentialless();
+import {Workspace} from "./workspace";
+import Editor from "./editor";
 
 let rootDiv = document.querySelector("#root") as HTMLDivElement;
 if(!rootDiv){
@@ -22,7 +16,7 @@ if(!rootDiv){
     document.body.append(rootDiv);
 }
 
-createRoot(rootDiv).render(<App />);
+createRoot(rootDiv).render(<Workspace />);
 
 async function keepAccessTokenValid(){
     const accessToken = Cookies.get("fullstackedAccessToken");

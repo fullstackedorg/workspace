@@ -399,3 +399,7 @@ button.danger:active {
     color: white;
     gap: 20px;
 }
+
+.cm-editor {
+    min-height: 100%;
+}

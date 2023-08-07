@@ -9,7 +9,7 @@ import React, {useEffect, useRef} from "react";
 
 
 async function initEditor(filename: string, container: HTMLDivElement) {
-    container.parentElement.style.backgroundColor = "#282c34";
+    // container.parentElement.style.backgroundColor = "#282c34";
 
     const extensions = [
         basicSetup,
@@ -77,7 +77,11 @@ async function initEditor(filename: string, container: HTMLDivElement) {
 export default function (props: {filename: string}) {
     const containerRef = useRef<HTMLDivElement>();
 
-    useEffect(() => {initEditor(props.filename, containerRef.current)}, []);
+    useEffect(() => {
+        initEditor(props.filename, containerRef.current)
+        console.log("Mouting");
+        return () => console.log("Unmounting")
+    }, []);
 
-    return <div ref={containerRef} />
+    return <div ref={containerRef} style={{height: "100%"}} />
 }

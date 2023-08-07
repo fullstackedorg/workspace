@@ -1,0 +1,54 @@
+.window {
+    height: 400px;
+    width: 400px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 10px 0 0 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: red;
+    overflow: hidden;
+}
+
+.window > div {
+    overflow: auto;
+    height: 100%;
+}
+
+.window > .options {
+    height: 10px;
+    position: absolute;
+    top: 0;
+    right: 5px;
+    width: 30px;
+    padding: 1px 0;
+    overflow: visible;
+}
+
+.window > .options > svg {
+    height: calc(100% - 4px);
+    width: 100%;
+    object-fit: contain;
+    position: absolute;
+    top: 2px;
+    left: 0;
+    fill: orange;
+}
+
+.options > .button-group {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 30px;
+    display: flex;
+}
+
+.options > .button-group > button {
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
