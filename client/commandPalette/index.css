@@ -1,0 +1,30 @@
+#command-palette {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#command-palette > div:first-child{
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+
+#command-palette > div:last-child {
+    height: 100px;
+    width: 100%;
+    max-width: 400px;
+    background-color: #161B2230;
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+}
