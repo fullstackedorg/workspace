@@ -9,6 +9,10 @@ import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
 import Editor from "./editor";
 import CommandPalette from "./commandPalette";
+//@ts-ignore
+import logo from "./icons/fullstacked-logo.svg";
+
+document.body.style.backgroundImage = `url(${logo})`;
 
 let rootDiv = document.querySelector("#root") as HTMLDivElement;
 if(!rootDiv){

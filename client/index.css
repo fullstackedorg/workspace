@@ -11,6 +11,11 @@ html, body {
     padding: 0;
     font-family: sans-serif;
 }
+body{
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 250px;
+}
 
 html, body, .wb-body {
     background-color: #1e293c;
