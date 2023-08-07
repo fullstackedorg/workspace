@@ -13,9 +13,8 @@ export default function ({children, close}) {
         const mousemove = (e) => {
             const x = e.clientX - startMouse.x + initialPos.x;
             const y = e.clientY - startMouse.y + initialPos.y;
-            windowRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`
-            // windowRef.current.style.left = x + "px";
-            // windowRef.current.style.top = y + "px";
+            windowRef.current.style.left = x + "px";
+            windowRef.current.style.top = y + "px";
         }
         window.addEventListener("mousemove", mousemove);
         const mouseup = () => {
@@ -30,7 +29,10 @@ export default function ({children, close}) {
         <div onMouseDown={mousedown} />
         <div>{children}</div>
         <div className={"options"}>
-            <svg onClick={() => setShowOptions(true)} onMouseOver={() => setShowOptions(true)} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64">
+            <svg onClick={() => setShowOptions(true)}
+                 onMouseOver={() => setShowOptions(true)}
+                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64"
+            >
                 <circle cx="32" cy="32" r="32"/>
                 <circle cx="130" cy="32" r="32"/>
                 <circle cx="228" cy="32" r="32"/>

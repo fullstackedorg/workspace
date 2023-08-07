@@ -33,7 +33,7 @@ export class Workspace extends Component {
     }
 
     render(){
-        return this.state.windows.map((win) =>
+        return this.state.windows.map((win, i) =>
             <WindowElement key={win.id} close={() => {
                 this.state.windows.splice(this.state.windows.indexOf(win), 1);
                 this.setState({windows: [...this.state.windows]});
