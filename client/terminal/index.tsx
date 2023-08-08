@@ -21,11 +21,19 @@ export default class Terminal extends Component<{ onFocus(): void }> {
     webLinks = new WebLinksAddon((e, uri) => {
         if(uri.match(/http:\/\/(localhost|0\.0\.0\.0|127\.0\.0\.1):\d+/g)){
             const url = new URL(uri);
-            const div = document.createElement("div");
-            const { id } = createWindow("Browser", {mount: div});
-            createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
-            this.xterm.blur();
-            return;
+
+            if(e.ctrlKey || e.metaKey){
+                const div = document.createElement("div");
+                const { id } = createWindow("Browser", {mount: div});
+                createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
+                this.xterm.blur();
+                return;
+            }
+
+            url.hostname = url.port + "." + window.location.hostname;
+            url.port = window.location.port;
+            url.protocol = window.location.protocol;
+            uri = url.toString();
         }
 
         window.open(uri, '_blank').focus();
