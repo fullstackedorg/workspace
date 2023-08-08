@@ -2,8 +2,7 @@ import Server from '@fullstacked/webapp/server';
 import fs from "fs";
 import {extname} from "path";
 import createListener from "@fullstacked/webapp/rpc/createListener";
-import {WebSocket, WebSocketServer} from "ws";
-import pty, {IPty} from "node-pty";
+import {WebSocketServer} from "ws";
 import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
@@ -17,36 +16,17 @@ import {initInternalRPC} from "./internal";
 
 const server = new Server();
 
-const terminal = new Terminal();
-
-if(process.env.FULLSTACKED_ENV === "production")
-    server.logger = null;
-
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
 <link rel="manifest" href="/pwa/manifest.json" crossorigin="use-credentials">
 <meta name="theme-color" content="#171f2e"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">`);
-
-let auth: Auth;
-if(process.env.PASS || process.env.AUTH_URL){
-    auth = new Auth();
-
-    const publicFiles = [
-        "/pwa/manifest.json",
-        "/pwa/app-icons/favicon.png",
-        "/pwa/app-icons/app-icon.png",
-        "/pwa/app-icons/maskable.png"
-    ];
-
-    server.addListener({
-        prefix: "global",
-        handler(req, res){
-            if(publicFiles.includes(req.url)) return;
-            return auth.handler(req, res);
-        }
-    })
-}
+server.pages["/"].addInHead(`<title>FullStacked</title>`);
+server.pages["/"].addInHead(`<link rel="apple-touch-icon" href="/pwa/app-icons/maskable.png">`);
+server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="FullStacked">`);
+server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
+server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
+server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
 
 server.addListener({
     prefix: "global",
@@ -56,6 +36,23 @@ server.addListener({
         res.end(`self.addEventListener('fetch', (event) => {});`);
     }
 }, true);
+
+const WATCH_MODE = process.argv.includes("watch");
+
+if(process.env.FULLSTACKED_ENV === "production" && !WATCH_MODE)
+    server.logger = null;
+
+let auth: Auth;
+if((process.env.PASS || process.env.AUTH_URL) && !WATCH_MODE)
+    auth = initAuth(server);
+
+if(!WATCH_MODE)
+    initPortProxy(server);
+
+const terminal = new Terminal();
+
+if(process.env.DOCKER_HOST !== undefined && !WATCH_MODE)
+    initInternalRPC(terminal);
 
 server.start();
 
@@ -149,13 +146,6 @@ export const API = {
 
 server.addListener(createListener(API));
 
-server.pages["/"].addInHead(`<title>FullStacked</title>`);
-server.pages["/"].addInHead(`<link rel="apple-touch-icon" href="/pwa/app-icons/maskable.png">`);
-server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="FullStacked">`);
-server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
-server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
-server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
-
 const shareWSS = new WebSocketServer({noServer: true});
 const activeShare = new Set<Share>();
 shareWSS.on('connection', (ws, req) => {
@@ -210,21 +200,23 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
         return;
     }
 
-    const cookies = cookie.parse(req.headers.cookie ?? "");
+    if(!WATCH_MODE) {
+        const cookies = cookie.parse(req.headers.cookie ?? "");
 
-    if(cookies.port){
-        return new Promise(resolve => {
-            proxy.ws(req, socket, head, {target: `http://0.0.0.0:${cookies.port}`}, resolve);
-        })
-    }
-
-    const domainParts = req.headers.host.split(".");
-    const firstDomainPart = domainParts.shift();
-    const maybePort = parseInt(firstDomainPart);
-    if(maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535){
-        return new Promise(resolve => {
-            proxy.ws(req, socket, head, {target: `http://0.0.0.0:${firstDomainPart}`}, resolve);
-        });
+        if(cookies.port){
+            return new Promise(resolve => {
+                proxy.ws(req, socket, head, {target: `http://0.0.0.0:${cookies.port}`}, resolve);
+            })
+        }
+    
+        const domainParts = req.headers.host.split(".");
+        const firstDomainPart = domainParts.shift();
+        const maybePort = parseInt(firstDomainPart);
+        if(maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535){
+            return new Promise(resolve => {
+                proxy.ws(req, socket, head, {target: `http://0.0.0.0:${firstDomainPart}`}, resolve);
+            });
+        }
     }
 
     if(req.url.startsWith("/fullstacked-terminal")){
@@ -236,58 +228,77 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
             shareWSS.emit('connection', ws, req);
         });
     }
-
-
 });
 
 
-server.addListener({
-    prefix: "global",
-    handler(req, res) {
-        const queryString = fastQueryString.parse(req.url.split("?").pop());
-        const cookies = cookie.parse(req.headers.cookie ?? "");
-        if (queryString.test === "credentialless") {
-            res.end(`<script>window.parent.postMessage({credentialless: ${cookies.test !== "credentialless"}}); </script>`)
-            return;
-        }
+function initAuth(server: Server){
+    const auth = new Auth();
 
-        if (queryString.port) {
-            res.setHeader("Set-Cookie", cookie.serialize("port", queryString.port));
-            res.end(`<script>
-                const url = new URL(window.location.href); 
-                url.searchParams.delete("port"); 
-                window.location.href = url.toString();
-            </script>`);
-            return;
-        }
+    const publicFiles = [
+        "/pwa/manifest.json",
+        "/pwa/app-icons/favicon.png",
+        "/pwa/app-icons/app-icon.png",
+        "/pwa/app-icons/maskable.png"
+    ];
 
-        if (cookies.port) {
-            return new Promise<void>(resolve => {
-                proxy.web(req, res, {target: `http://0.0.0.0:${cookies.port}`}, () => {
-                    if (!res.headersSent) {
-                        res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
-                        res.end(`Port ${cookies.port} is down.`);
-                    }
-                    resolve();
-                });
-            })
+    server.addListener({
+        prefix: "global",
+        handler(req, res){
+            if(publicFiles.includes(req.url)) return;
+            return auth.handler(req, res);
         }
+    });
 
-        const domainParts = req.headers.host.split(".");
-        const firstDomainPart = domainParts.shift();
-        const maybePort = parseInt(firstDomainPart);
-        if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
-            return new Promise<void>(resolve => {
-                proxy.web(req, res, {target: `http://0.0.0.0:${firstDomainPart}`}, () => {
-                    if (!res.headersSent) {
-                        res.end(`Port ${firstDomainPart} is down.`);
-                    }
-                    resolve();
-                });
-            })
+    return auth;
+}
+
+
+function initPortProxy(server: Server){
+    server.addListener({
+        prefix: "global",
+        handler(req, res) {
+            const queryString = fastQueryString.parse(req.url.split("?").pop());
+            const cookies = cookie.parse(req.headers.cookie ?? "");
+            if (queryString.test === "credentialless") {
+                res.end(`<script>window.parent.postMessage({credentialless: ${cookies.test !== "credentialless"}}); </script>`)
+                return;
+            }
+    
+            if (queryString.port) {
+                res.setHeader("Set-Cookie", cookie.serialize("port", queryString.port));
+                res.end(`<script>
+                    const url = new URL(window.location.href); 
+                    url.searchParams.delete("port"); 
+                    window.location.href = url.toString();
+                </script>`);
+                return;
+            }
+    
+            if (cookies.port) {
+                return new Promise<void>(resolve => {
+                    proxy.web(req, res, {target: `http://0.0.0.0:${cookies.port}`}, () => {
+                        if (!res.headersSent) {
+                            res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
+                            res.end(`Port ${cookies.port} is down.`);
+                        }
+                        resolve();
+                    });
+                })
+            }
+    
+            const domainParts = req.headers.host.split(".");
+            const firstDomainPart = domainParts.shift();
+            const maybePort = parseInt(firstDomainPart);
+            if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
+                return new Promise<void>(resolve => {
+                    proxy.web(req, res, {target: `http://0.0.0.0:${firstDomainPart}`}, () => {
+                        if (!res.headersSent) {
+                            res.end(`Port ${firstDomainPart} is down.`);
+                        }
+                        resolve();
+                    });
+                })
+            }
         }
-    }
-})
-
-if(process.env.DOCKER_HOST !== undefined)
-    initInternalRPC(terminal);
+    });
+}
