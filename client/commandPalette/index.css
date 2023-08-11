@@ -5,8 +5,6 @@
     top: 0;
     left: 0;
     z-index: 100;
-    align-items: center;
-    justify-content: center;
 }
 
 #command-palette > div:first-child{
@@ -18,14 +16,28 @@
 }
 
 #command-palette > div:last-child {
-    height: 100px;
+    height: max-content;
     width: 100%;
     max-width: 400px;
     background-color: #161B2230;
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 20px;
-    padding: 20px;
+    padding: 10px;
     border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+#command-palette form {
+    height: 70px;
+    width: 100%;
 }
 
 #command-palette input {
@@ -34,4 +46,29 @@
     outline: none;
     border: 0;
     font-size: 40px;
+    height: 100%;
+    width: 100%;
+    display: block;
+}
+
+#command-palette .apps {
+    text-align: center;
+    color: white;
+}
+#command-palette .apps > div {
+    display: inline-block;
+    width: 80px;
+    margin: 0 5px;
+    border-radius: 10px;
+    padding: 0 5px 10px;
+}
+#command-palette .apps > div.focus,
+#command-palette .apps > div:hover {
+    background-color: #cccccc50;
+}
+#command-palette .apps > div img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: contain;
+    padding: 5px 5px 0;
 }

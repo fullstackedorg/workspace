@@ -11,9 +11,10 @@ export default function () {
 
     useEffect(() => {
         window.addEventListener("keydown", e => {
-            if(e.key === "k" && (e.metaKey || e.ctrlKey))
+            if(e.key === "k" && (e.metaKey || e.ctrlKey)){
+                e.preventDefault();
                 setShow(true);
-            else if(e.key === "Escape" && document.querySelector("#command-palette"))
+            }else if(e.key === "Escape" && document.querySelector("#command-palette"))
                 setShow(false);
         })
     }, []);
@@ -37,9 +38,18 @@ export default function () {
     return <div id={"command-palette"} style={{display: show ? "flex" : "none"}}>
         <div onClick={() => setShow(false)} />
         <div>
-            <form onSubmit={submit}>
+            <form onSubmit={submit} 
+                style={!inputValue ? {opacity: 0, height: 0} : {}}>
                 <input ref={inputRef} value={inputValue} onChange={e => setInputValue(e.currentTarget.value)} />
             </form>
+            <div className="apps">{Workspace.instance.state.apps
+                .filter(app => inputValue ? app.title.toLowerCase().startsWith(inputValue) : true)
+                .map(app => 
+                    <div>
+                        <img src={app.icon} />
+                        <div>{app.title}</div>
+                    </div>)}
+            </div>
         </div>
     </div>
 }

@@ -1,6 +1,7 @@
 import React, {Component, ReactNode} from "react";
 import WindowElement from "./Window";
 import "./index.css";
+import { App, defaultApps } from "./apps";
 
 export class Workspace extends Component {
     static instance: Workspace;
@@ -9,9 +10,11 @@ export class Workspace extends Component {
         windows: {
             id: string,
             element: ReactNode
-        }[]
+        }[],
+        apps: App[]
     } = {
-        windows: []
+        windows: [],
+        apps: defaultApps
     }
 
     constructor(props?) {
@@ -37,6 +40,11 @@ export class Workspace extends Component {
             <WindowElement key={win.id} close={() => {
                 this.state.windows.splice(this.state.windows.indexOf(win), 1);
                 this.setState({windows: [...this.state.windows]});
+            }} initPos={{
+                top: 10,
+                left: 10,
+                width: 400,
+                height: 400
             }}>{win.element}</WindowElement>);
     }
 }
