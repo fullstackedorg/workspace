@@ -7,7 +7,21 @@
     padding: 10px 0 0 0;
     border: 1px solid #ccc;
     border-radius: 5px;
-    overflow: hidden;
+    transition: 0.1s all;
+}
+.window.moving {
+    transition: none!important;
+}
+.window.full {
+    height: 100%!important;
+    width: 100%!important;
+    top: 0!important;
+    left: 0!important;
+    border: 0;
+    border-radius: 0;
+}
+.window.full > div:first-child {
+  border-radius: 0;
 }
 .window > div:first-child {
     background-color: #0a85b5;
@@ -16,6 +30,7 @@
     position: absolute;
     top: 0;
     left: 0;
+    border-radius: 4px;
 }
 .window > div:nth-child(2) {
     overflow: auto;
@@ -28,12 +43,45 @@
     position: absolute;
     top: 0;
     right: 5px;
-    width: 30px;
-    padding: 1px 0;
     overflow: visible;
+    transition: 0.1s all;
 }
 
-.window > .options > svg {
+.window > .options > div {
+    height: 100%;
+}
+
+.window > .options > div > button {
+    vertical-align: top;
+    background-color: #1e293c;
+    height: calc(100% - 2px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 0;
+    overflow: hidden;
+    padding: 2px;
+    margin-top: 1px;
+    margin-left: 3px;
+}
+
+.window > .options > div > button:hover {
+    background-color: #0f1724;
+}
+
+.window > .options > div > button svg {
+    height: 100%;
+    width: 100%;
+    max-width: 25px
+}
+
+.window > .options.open {
+    height: 150px;
+    padding: 50px;
+    top: -50px;
+    right: -50px;
+}
+
+/* .window > .options > svg {
     height: calc(100% - 4px);
     width: 100%;
     object-fit: contain;
@@ -58,4 +106,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-left: 5px;
 }
+
+.options button > svg {
+    height: 100%;
+    width: 100%;
+} */
