@@ -24,13 +24,16 @@ export default function () {
             inputRef.current.focus();
     }, [show]);
 
+    const filteredApps = Workspace.instance.state.apps
+        .filter(app => inputValue ? app.title.toLowerCase().startsWith(inputValue) : true)
+    
     const submit = e => {
         e.preventDefault();
-        if(inputValue.startsWith("term"))
-            Workspace.instance.addWindow(<Terminal onFocus={() => {}} />);
-        else
-            Workspace.instance.addWindow(<Editor filename={"./index.js"} />);
 
+        const app = filteredApps.at(0);
+        if(!app) return;
+
+        Workspace.instance.addWindow(app);
         setInputValue("");
         setShow(false);
     }
@@ -42,10 +45,12 @@ export default function () {
                 style={!inputValue ? {opacity: 0, height: 0} : {}}>
                 <input ref={inputRef} value={inputValue} onChange={e => setInputValue(e.currentTarget.value)} />
             </form>
-            <div className="apps">{Workspace.instance.state.apps
-                .filter(app => inputValue ? app.title.toLowerCase().startsWith(inputValue) : true)
-                .map(app => 
-                    <div>
+            <div className="apps">{filteredApps.map(app => 
+                    <div onClick={() => {
+                        setShow(false);
+                        setInputValue("")
+                        Workspace.instance.addWindow(app);
+                    }}>
                         <img src={app.icon} />
                         <div>{app.title}</div>
                     </div>)}

@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { Component, ReactElement, ReactNode } from "react";
 //@ts-ignore
 import browser from "../icons/browser.svg";
 //@ts-ignore
@@ -14,28 +14,37 @@ import codeOSS from "../icons/code-oss.svg";
 //@ts-ignore
 import stopwatch from "../icons/stopwatch.svg";
 import React from "react";
+import Terminal from "../terminal";
+import { Explorer } from "../app/files";
+import Browser from "../browser";
+import Latency from "../latency";
 
 export type App = {
     title: string,
-    icon: string
+    icon: string,
+    element: ((any) => ReactElement) | typeof Component
 }
 
 export const defaultApps: App[] = [
     {
         title: "Terminal",
-        icon: terminal
+        icon: terminal,
+        element: Terminal
     },
     {
         title: "Explorer",
-        icon: files
+        icon: files,
+        element: Explorer
     },
     {
         title: "Browser",
-        icon: browser
+        icon: browser,
+        element: Browser
     },
     {
         title: "Latency",
-        icon: stopwatch
+        icon: stopwatch,
+        element: Latency
     }
 ]
 

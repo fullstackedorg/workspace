@@ -9,8 +9,6 @@ import fileIcons2 from "../icons/file-icons-2.svg";
 import type {API} from "../../server";
 import {EventDataNode} from "rc-tree/es/interface";
 import {createRoot} from "react-dom/client";
-import Editor from "../editor";
-import {createWindow} from "./WinStore";
 
 type FlatFileTree = {
     [filePath: string]: ReturnType<typeof API.readDir>
@@ -53,7 +51,7 @@ function flatFileTreeToTreeData(files: FlatFileTree): File[] {
     }))
 }
 
-export function Explorer(props: {dir: string}) {
+export function Explorer(props: {dir?: string, openFile(flename: string): void}) {
     const [files, setFiles] = useState<FlatFileTree>();
 
     useEffect(() => {
@@ -79,9 +77,7 @@ export function Explorer(props: {dir: string}) {
         }, [])
 
     const openFileEditor = (filename) => {
-        const div = document.createElement("div");
-        createWindow(filename, {mount: div});
-        createRoot(div).render(<Editor filename={filename} />)
+        props.openFile(filename)
     }
 
     if(!files) return <></>;
@@ -151,10 +147,4 @@ function iconForFilename(filename: string){
         default:
             return "file";
     }
-}
-
-export function openExplorer(dir?: string){
-    const div = document.createElement("div");
-    createWindow("Files", {mount: div});
-    createRoot(div).render(<Explorer dir={dir} />);
 }

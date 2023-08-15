@@ -16,6 +16,10 @@ import {initInternalRPC} from "./internal";
 
 const server = new Server();
 
+server.pages["/"].addInHead(`<script>window.addEventListener("keydown", (e) => {
+    if(e.key === "k" && (e.metaKey || e.ctrlKey))
+        e.preventDefault();
+})</script>`)
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
 <link rel="manifest" href="/pwa/manifest.json" crossorigin="use-credentials">

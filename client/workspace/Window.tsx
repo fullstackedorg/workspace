@@ -14,52 +14,59 @@ export default function (props: {
     const [showOptions, setShowOptions] = useState(false);
     const [fullscreen, setFullscreen] = useState(false);
 
-    const mousedown = e => {
-        const {x, y} = windowRef.current.getBoundingClientRect();
+    const getClientPos = (e: MouseEvent | TouchEvent) => {
+        if(e instanceof MouseEvent)
+            return {x: e.clientX, y: e.clientY}
+        else if(e instanceof TouchEvent)
+            return {x: e.touches[0].clientX, y : e.touches[0].clientY}
+        else
+            throw Error("Unknown event");
+    }
+
+    const movestart = (e: MouseEvent | TouchEvent) => {
+        const {x, y, height, width} = windowRef.current.getBoundingClientRect();
         const initialPos = {x, y}
-        const startMouse = {x: e.clientX, y: e.clientY};
+        const start = getClientPos(e);
         windowRef.current.classList.add("moving");
-        const mousemove = (e: MouseEvent) => {
-            const x = e.clientX - startMouse.x + initialPos.x;
-            const y = e.clientY - startMouse.y + initialPos.y;
+        const move = (e: MouseEvent | TouchEvent) => {
+            const clientPos = getClientPos(e);
+            let x = clientPos.x - start.x + initialPos.x;
+            let y = clientPos.y - start.y + initialPos.y;
+
+            if(x <= 0)
+                x = 0;
+            else if(x >= window.innerWidth - width)
+                x = window.innerWidth - width;
+
+            if(y <= 0)
+                y = 0;
+            else if(y >= window.innerHeight - height)
+                y = window.innerHeight - height;
+
             windowRef.current.style.left = x + "px";
             windowRef.current.style.top = y + "px";
         }
-        window.addEventListener("mousemove", mousemove);
-        const mouseup = () => {
+        window.addEventListener("mousemove", move);
+        window.addEventListener("touchmove", move);
+        const moveend = () => {
             windowRef.current.classList.remove("moving");
-            window.removeEventListener("mousemove", mousemove);
-            window.removeEventListener("mouseup", mouseup);
-        }
-        window.addEventListener("mouseup", mouseup);
-    }
+            window.removeEventListener("mousemove", move);
+            window.removeEventListener("touchmove", move);
 
-    const touchstart = (e: TouchEvent) => {
-        const {x, y} = windowRef.current.getBoundingClientRect();
-        const initialPos = {x, y}
-        const startMouse = {x: e.touches[0].clientX, y: e.touches[0].clientY};
-        windowRef.current.classList.add("moving");
-        const touchmove = (e: TouchEvent) => {
-            e.preventDefault();
-            const x = e.touches[0].clientX - startMouse.x + initialPos.x;
-            const y = e.touches[0].clientY - startMouse.y + initialPos.y;
-            windowRef.current.style.left = x + "px";
-            windowRef.current.style.top = y + "px";
+            window.removeEventListener("mouseup", moveend);
+            window.removeEventListener("touchend", moveend);
         }
-        window.addEventListener("touchmove", touchmove);
-        const touchend = () => {
-            windowRef.current.classList.remove("moving");
-            window.removeEventListener("touchmove", touchmove);
-            window.removeEventListener("touchend", touchend);
-        }
-        window.addEventListener("touchend", touchend);
+        window.addEventListener("mouseup", moveend);
+        window.addEventListener("touchend", moveend);
     }
-
 
     return <div ref={windowRef} style={props.initPos} className={"window" + (fullscreen ? " full" : "")}>
+        <div className="resizer">
+            {new Array(8).fill(null).map((_) => <div><div /></div>)}    
+        </div>
         <div 
-            onMouseDown={e => mousedown(e.nativeEvent)} 
-            onTouchStart={e => touchstart(e.nativeEvent)} 
+            onMouseDown={e => movestart(e.nativeEvent)} 
+            onTouchStart={e => movestart(e.nativeEvent)} 
         />
         <div>{props.children}</div>
         <div 
@@ -99,33 +106,6 @@ export default function (props: {
                     </svg>
                 </button>
             </div>
-            {/* <svg onClick={() => setShowOptions(true)}
-                 onMouseOver={() => setShowOptions(true)}
-                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64"
-            >
-                <circle cx="32" cy="32" r="32"/>
-                <circle cx="130" cy="32" r="32"/>
-                <circle cx="228" cy="32" r="32"/>
-            </svg>
-            {showOptions && <div className={"button-group"}>
-                <button onClick={() => {}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                    </svg>
-                </button>
-                <button>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
-                         stroke="currentColor" >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
-                    </svg>
-                </button>
-                <button onClick={close}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
-                         stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>} */}
         </div>
     </div>
 }
