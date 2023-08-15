@@ -7,11 +7,10 @@ import Browser from "../browser";
 import {createRoot} from "react-dom/client";
 import {createWindow, focusWindow} from "../app/WinStore";
 import {openCodeOSS} from "../codeOSS";
-import {openExplorer} from "../app/files";
 import {client} from "../client";
 import GithubDeviceFlow from "./github-device-flow";
 
-export default class Terminal extends Component<{ onFocus(): void }> {
+export default class Terminal extends Component {
     SESSION_ID: string;
     githubDeviceFlow;
     ws: WebSocket;
@@ -71,11 +70,13 @@ export default class Terminal extends Component<{ onFocus(): void }> {
                 openCodeOSS(e.data.split("#").pop());
                 this.xterm.blur();
                 return;
-            } else if(e.data.startsWith("OPEN#")){
-                openExplorer(e.data.split("#").pop());
-                this.xterm.blur();
-                return;
-            }else if(e.data.startsWith("GITHUB_DEVICE_FLOW#")){
+            } 
+            // else if(e.data.startsWith("OPEN#")){
+            //     openExplorer(e.data.split("#").pop());
+            //     this.xterm.blur();
+            //     return;
+            // }
+            else if(e.data.startsWith("GITHUB_DEVICE_FLOW#")){
                 const [_, verification_uri, device_code] = e.data.split("#");
 
                 const mount = document.createElement("div");
@@ -103,8 +104,6 @@ export default class Terminal extends Component<{ onFocus(): void }> {
     }
 
     onFocus() {
-        this.props.onFocus();
-
         if(this.ws.readyState === WebSocket.CLOSED){
             this.connect();
         }
@@ -121,7 +120,17 @@ export default class Terminal extends Component<{ onFocus(): void }> {
             if(key === '\x0d' && domEvent.ctrlKey){
                 this.ws.send('\x03');
                 return;
+            }else if(key === '\x0b'){
+                window.dispatchEvent(domEvent);
+                return;
             }
+            
+            // let debugBinaryValues = [];
+            // for (var i = 0; i < key.length; i++) {
+            //     debugBinaryValues.push(key[i].charCodeAt(0).toString(16));
+            // }
+            // console.log(debugBinaryValues)
+
             this.ws.send(key);
         });
 

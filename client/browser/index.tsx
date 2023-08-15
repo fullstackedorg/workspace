@@ -7,7 +7,7 @@ declare global {
         hasCredentialless: boolean
     }
 }
-export default function (props: {id: string, port?: string, path?: string}) {
+export default function (props: {id?: string, port?: string, path?: string}) {
     const [openShare, setOpenShare] = useState(false);
     const openShareRef = useRef<boolean>();
 
