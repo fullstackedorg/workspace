@@ -1,13 +1,9 @@
 import "./sw";
 import {createRoot} from "react-dom/client";
 import React from "react";
-import App from "./app";
-import "winbox/dist/css/winbox.min.css";
-import "winbox/dist/css/themes/modern.min.css";
 import "./index.css";
 import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
-import Editor from "./editor";
 import CommandPalette from "./commandPalette";
 //@ts-ignore
 import logo from "./icons/fullstacked-logo.svg";
@@ -52,3 +48,9 @@ async function keepAccessTokenValid(){
 
 keepAccessTokenValid();
 setInterval(keepAccessTokenValid, 1000);
+
+
+await import("./terminal");
+await import("./explorer");
+await import("./browser");
+await import("./latency");

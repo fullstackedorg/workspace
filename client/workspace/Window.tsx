@@ -60,9 +60,100 @@ export default function (props: {
         window.addEventListener("touchend", moveend);
     }
 
+
+    const resizestart = (e: MouseEvent | TouchEvent, resizeX: -1 | 0 | 1, resizeY: -1 | 0 | 1) => {
+        const {x, y, height, width} = windowRef.current.getBoundingClientRect();
+        const initialSize = {height, width}
+        const start = getClientPos(e);
+        windowRef.current.classList.add("resizing");
+        const resizeWidth = (width: number) => {
+            if(resizeX === -1){
+                const left = x - (width - initialSize.width);
+                if(left < 0)
+                    return;
+                windowRef.current.style.left = left + "px";
+            }else if(x + width > window.innerWidth)
+                return;
+            windowRef.current.style.width = width + "px";
+        }
+        const resizeHeight = (height: number) => {
+            if(resizeY == -1){
+                const top = y - (height - initialSize.height);
+                if(top < 0)
+                    return;
+                windowRef.current.style.top = top + "px";
+            }else if(y + height > window.innerHeight)
+                return;
+            windowRef.current.style.height = height + "px";
+            
+        }
+        const resize = (e: MouseEvent | TouchEvent) => {
+            const clientPos = getClientPos(e);
+            let width = (clientPos.x - start.x) * resizeX + initialSize.width;
+            let height = (clientPos.y - start.y) * resizeY + initialSize.height;
+
+            if(resizeX)
+                resizeWidth(width);
+
+            if(resizeY)
+                resizeHeight(height);
+        }
+        window.addEventListener("mousemove", resize);
+        window.addEventListener("touchmove", resize);
+        const resizeend = () => {
+            windowRef.current.classList.remove("resizing");
+            window.removeEventListener("mousemove", resize);
+            window.removeEventListener("touchmove", resize);
+
+            window.removeEventListener("mouseup", resizeend);
+            window.removeEventListener("touchend", resizeend);
+        }
+        window.addEventListener("mouseup", resizeend);
+        window.addEventListener("touchend", resizeend);
+    }
+
+
     return <div ref={windowRef} style={props.initPos} className={"window" + (fullscreen ? " full" : "")}>
         <div className="resizer">
-            {new Array(8).fill(null).map((_) => <div><div /></div>)}    
+            {new Array(8).fill(null).map((_, index) => {
+                let x: -1 | 0 | 1 = 0, y: -1 | 0 | 1 = 0;
+                switch(index){
+                    case 0:
+                        x = -1;
+                        y = -1;
+                        break;
+                    case 1:
+                        x = 0;
+                        y = -1;
+                        break;
+                    case 2:
+                        x = 1;
+                        y = -1;
+                        break;
+                    case 3:
+                        x = 1;
+                        y = 0;
+                        break;
+                    case 4:
+                        x = 1;
+                        y = 1;
+                        break;
+                    case 5:
+                        x = 0;
+                        y = 1;
+                        break;
+                    case 6:
+                        x = -1;
+                        y = 1;
+                        break;
+                    case 7:
+                        x = -1;
+                        y = 0;
+                        break;
+                }
+                let resizeBinding = e => resizestart(e.nativeEvent, x, y);
+                return <div onMouseDown={resizeBinding} onTouchStart={resizeBinding} ><div /></div>})
+            }    
         </div>
         <div 
             onMouseDown={e => movestart(e.nativeEvent)} 

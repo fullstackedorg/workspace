@@ -1,13 +1,22 @@
 import React, {useEffect, useRef, useState} from "react";
 import Console from "./console";
 import Share from "./share";
+import { addApp } from "../workspace";
+//@ts-ignore
+import browserIcon from "../icons/browser.svg";
+
+addApp({
+    title: "Browser",
+    icon: browserIcon,
+    element: <Browser />
+});
 
 declare global {
     interface Window {
         hasCredentialless: boolean
     }
 }
-export default function (props: {id?: string, port?: string, path?: string}) {
+function Browser(props: {id?: string, port?: string, path?: string}) {
     const [openShare, setOpenShare] = useState(false);
     const openShareRef = useRef<boolean>();
 
