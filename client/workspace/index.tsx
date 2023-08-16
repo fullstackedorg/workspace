@@ -1,7 +1,20 @@
 import React, {Component, ReactNode} from "react";
 import WindowElement from "./Window";
 import "./index.css";
-import { App, defaultApps } from "./apps";
+
+type App = {
+    title: string,
+    icon: string,
+    element: ReactNode
+}
+
+const appQueue: App[] = [];
+export function addApp(app: App){
+    if(Workspace.instance)
+        Workspace.instance.addApp(app);
+    else
+        appQueue.push(app);
+}
 
 export class Workspace extends Component {
     static instance: Workspace;
@@ -23,13 +36,22 @@ export class Workspace extends Component {
         apps: App[],
     } = {
         windows: [],
-        apps: defaultApps
+        apps: appQueue
     }
 
     constructor(props?) {
         super(props);
 
         Workspace.instance = this;
+    }
+
+    addApp(app: App){
+        this.setState({
+            apps: [
+                ...this.state.apps,
+                app
+            ]
+        })
     }
 
     addWindow(app: App){
@@ -49,7 +71,7 @@ export class Workspace extends Component {
             <WindowElement key={win.id} close={() => {
                 this.state.windows.splice(this.state.windows.indexOf(win), 1);
                 this.setState({windows: [...this.state.windows]});
-            }} initPos={Workspace.calcInitPos()}><win.element /></WindowElement>);
+            }} initPos={Workspace.calcInitPos()}>{win.element}</WindowElement>);
     }
 }
 

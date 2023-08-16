@@ -3,14 +3,14 @@ import { Terminal as Xterm } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { WebLinksAddon } from 'xterm-addon-web-links';
-import Browser from "../browser";
-import {createRoot} from "react-dom/client";
-import {createWindow, focusWindow} from "../app/WinStore";
 import {openCodeOSS} from "../codeOSS";
 import {client} from "../client";
 import GithubDeviceFlow from "./github-device-flow";
+import { addApp } from "../workspace";
+//@ts-ignore
+import terminalIcon from "../icons/terminal.svg";
 
-export default class Terminal extends Component {
+class Terminal extends Component {
     SESSION_ID: string;
     githubDeviceFlow;
     ws: WebSocket;
@@ -23,8 +23,8 @@ export default class Terminal extends Component {
 
             if(e.ctrlKey || e.metaKey){
                 const div = document.createElement("div");
-                const { id } = createWindow("Browser", {mount: div});
-                createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
+                // const { id } = createWindow("Browser", {mount: div});
+                // createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
                 this.xterm.blur();
                 return;
             }
@@ -79,13 +79,13 @@ export default class Terminal extends Component {
             else if(e.data.startsWith("GITHUB_DEVICE_FLOW#")){
                 const [_, verification_uri, device_code] = e.data.split("#");
 
-                const mount = document.createElement("div");
-                this.githubDeviceFlow = createWindow("GitHub Auth", {mount});
-                createRoot(mount).render(<GithubDeviceFlow
-                    verificationUri={verification_uri}
-                    deviceCode={device_code}
-                />)
-                focusWindow(this.githubDeviceFlow.id);
+                // const mount = document.createElement("div");
+                // this.githubDeviceFlow = createWindow("GitHub Auth", {mount});
+                // createRoot(mount).render(<GithubDeviceFlow
+                //     verificationUri={verification_uri}
+                //     deviceCode={device_code}
+                // />)
+                // focusWindow(this.githubDeviceFlow.id);
 
                 return;
             }else if(this.githubDeviceFlow && e.data === "GITHUB_DEVICE_FLOW_DONE"){
@@ -156,5 +156,10 @@ export default class Terminal extends Component {
     render(){
         return <div ref={this.xtermRef} className={"terminal"} />
     }
-
 }
+
+addApp({
+    title: "Terminal",
+    icon: terminalIcon,
+    element: <Terminal />
+})

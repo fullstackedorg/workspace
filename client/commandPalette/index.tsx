@@ -1,8 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import "./index.css"
 import {Workspace} from "../workspace";
-import Editor from "../editor";
-import Terminal from "../terminal";
 
 export default function () {
     const inputRef = useRef<HTMLInputElement>();
