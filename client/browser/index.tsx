@@ -8,7 +8,7 @@ import browserIcon from "../icons/browser.svg";
 addApp({
     title: "Browser",
     icon: browserIcon,
-    element: <Browser />
+    element: () => <Browser />
 });
 
 declare global {

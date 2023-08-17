@@ -1,4 +1,4 @@
-import React, {ReactNode, useRef, useState} from "react";
+import React, {ReactNode, useEffect, useRef, useState} from "react";
 
 export default function (props: {
     children: ReactNode, 
@@ -8,7 +8,8 @@ export default function (props: {
         left: number,
         height: number,
         width: number
-    }
+    },
+    didResize(): void
 }) {
     const windowRef = useRef<HTMLDivElement>();
     const [showOptions, setShowOptions] = useState(false);
@@ -60,6 +61,8 @@ export default function (props: {
         window.addEventListener("touchend", moveend);
     }
 
+    useEffect(() => {setTimeout(props.didResize, 350)}, [fullscreen])
+
 
     const resizestart = (e: MouseEvent | TouchEvent, resizeX: -1 | 0 | 1, resizeY: -1 | 0 | 1) => {
         const {x, y, height, width} = windowRef.current.getBoundingClientRect();
@@ -107,6 +110,8 @@ export default function (props: {
 
             window.removeEventListener("mouseup", resizeend);
             window.removeEventListener("touchend", resizeend);
+
+            props.didResize();
         }
         window.addEventListener("mouseup", resizeend);
         window.addEventListener("touchend", resizeend);
