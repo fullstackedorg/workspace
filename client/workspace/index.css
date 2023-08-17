@@ -84,6 +84,10 @@
     right: -50px;
 }
 
+.window > .options.open button {
+    box-shadow: 0 2px 10px 2px #050a1170;
+}
+
 .window > .resizer {
     position: absolute;
     z-index: -1;

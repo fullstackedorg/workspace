@@ -22,8 +22,10 @@ export default function () {
             inputRef.current.focus();
     }, [show]);
 
-    const filteredApps = Workspace.instance.state.apps
-        .filter(app => inputValue ? app.title.toLowerCase().startsWith(inputValue) : true)
+    const filteredApps = (Workspace.instance.state.windows.length && !inputValue
+        ? Workspace.instance.state.windows
+        : Workspace.instance.state.apps)
+            .filter(app => inputValue ? app.title.toLowerCase().startsWith(inputValue) : true)
     
     const submit = e => {
         e.preventDefault();

@@ -37,5 +37,5 @@ function Latency() {
 addApp({
     title: "Latency",
     icon: latencyIcon,
-    element: <Latency />
+    element: () => <Latency />
 })

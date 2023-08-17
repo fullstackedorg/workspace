@@ -83,7 +83,7 @@ function Explorer(props: {dir?: string}) {
         Workspace.instance.addWindow({
             title: filename,
             icon: "",
-            element: <Editor filename={filename} />
+            element: () => <Editor filename={filename} />
         })
     }
 
@@ -159,5 +159,5 @@ function iconForFilename(filename: string){
 addApp({
     title: "Explorer",
     icon: explorerIcon,
-    element: <Explorer />
+    element: () => <Explorer />
 })

@@ -161,5 +161,11 @@ class Terminal extends Component {
 addApp({
     title: "Terminal",
     icon: terminalIcon,
-    element: <Terminal />
+    element: (win) => {
+        const terminalRef = createRef<Terminal>();
+        win.callbacks = {
+            onWindowResize: () => terminalRef.current.onResize()
+        }
+        return <Terminal ref={terminalRef} />
+    }
 })

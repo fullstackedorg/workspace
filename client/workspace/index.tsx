@@ -5,7 +5,10 @@ import "./index.css";
 type App = {
     title: string,
     icon: string,
-    element: ReactNode
+    element: (app: App) => ReactNode,
+    callbacks?: {
+        onWindowResize?(): void
+    }
 }
 
 const appQueue: App[] = [];
@@ -71,7 +74,7 @@ export class Workspace extends Component {
             <WindowElement key={win.id} close={() => {
                 this.state.windows.splice(this.state.windows.indexOf(win), 1);
                 this.setState({windows: [...this.state.windows]});
-            }} initPos={Workspace.calcInitPos()}>{win.element}</WindowElement>);
+            }} initPos={Workspace.calcInitPos()} didResize={() => win.callbacks?.onWindowResize && win.callbacks.onWindowResize()}>{win.element(win)}</WindowElement>);
     }
 }
 
