@@ -20,8 +20,8 @@
     width: 100%;
     max-width: 400px;
     background-color: #161B2230;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: 20px;
     padding: 10px;
     border: 1px solid #ccc;
