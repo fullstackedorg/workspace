@@ -26,7 +26,7 @@ export default function (props: {
 
     const movestart = (e: MouseEvent | TouchEvent) => {
         const {x, y, height, width} = windowRef.current.getBoundingClientRect();
-        const initialPos = {x, y}
+        const initialPos = {x, y};
         const start = getClientPos(e);
         windowRef.current.classList.add("moving");
         const move = (e: MouseEvent | TouchEvent) => {
@@ -34,9 +34,10 @@ export default function (props: {
             let x = clientPos.x - start.x + initialPos.x;
             let y = clientPos.y - start.y + initialPos.y;
 
-            if(x <= 0)
+            if(x <= 0){
+                console.log(x)
                 x = 0;
-            else if(x >= window.innerWidth - width)
+            }else if(x >= window.innerWidth - width)
                 x = window.innerWidth - width;
 
             if(y <= 0)
@@ -72,21 +73,27 @@ export default function (props: {
         const resizeWidth = (width: number) => {
             if(resizeX === -1){
                 const left = x - (width - initialSize.width);
-                if(left < 0)
+                if(left < 0){
+                    windowRef.current.style.left = "0px";
                     return;
+                }
                 windowRef.current.style.left = left + "px";
-            }else if(x + width > window.innerWidth)
-                return;
+            }else if(x + width > window.innerWidth){
+                width = window.innerWidth - x;
+            }
             windowRef.current.style.width = width + "px";
         }
         const resizeHeight = (height: number) => {
             if(resizeY == -1){
                 const top = y - (height - initialSize.height);
-                if(top < 0)
+                if(top < 0){
+                    windowRef.current.style.top = "0px";
                     return;
+                }
                 windowRef.current.style.top = top + "px";
-            }else if(y + height > window.innerHeight)
-                return;
+            }else if(y + height > window.innerHeight){
+                height = window.innerHeight - y;
+            }
             windowRef.current.style.height = height + "px";
             
         }
