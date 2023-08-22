@@ -3,7 +3,7 @@ import https from "https";
 import decompress from "decompress";
 import {execSync} from "child_process";
 
-const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.81.0";
+const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.81.1";
 
 const file = fs.createWriteStream("vscode.zip");
 await new Promise(resolve => {
@@ -31,6 +31,8 @@ productJSON.extensionsGallery = {
     recommendationsUrl: ""
 }
 fs.writeFileSync("vscode/product.json", JSON.stringify(productJSON, null, 2));
+
+fs.appendFileSync("vscode/src/vs/workbench/browser/actions/windowActions.ts", fs.readFileSync("blurFocus.js").toString());
 
 execSync("cd vscode && yarn && yarn gulp vscode-reh-web-linux-x64-min", {stdio: "inherit"});
 

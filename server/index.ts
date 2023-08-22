@@ -16,10 +16,6 @@ import {initInternalRPC} from "./internal";
 
 const server = new Server();
 
-server.pages["/"].addInHead(`<script>window.addEventListener("keydown", (e) => {
-    if(e.key === "k" && (e.metaKey || e.ctrlKey))
-        e.preventDefault();
-})</script>`)
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
 <link rel="manifest" href="/pwa/manifest.json" crossorigin="use-credentials">
@@ -212,7 +208,7 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
                 proxy.ws(req, socket, head, {target: `http://0.0.0.0:${cookies.port}`}, resolve);
             })
         }
-    
+
         const domainParts = req.headers.host.split(".");
         const firstDomainPart = domainParts.shift();
         const maybePort = parseInt(firstDomainPart);
@@ -267,7 +263,7 @@ function initPortProxy(server: Server){
                 res.end(`<script>window.parent.postMessage({credentialless: ${cookies.test !== "credentialless"}}); </script>`)
                 return;
             }
-    
+
             if (queryString.port) {
                 res.setHeader("Set-Cookie", cookie.serialize("port", queryString.port));
                 res.end(`<script>
@@ -277,7 +273,7 @@ function initPortProxy(server: Server){
                 </script>`);
                 return;
             }
-    
+
             if (cookies.port) {
                 return new Promise<void>(resolve => {
                     proxy.web(req, res, {target: `http://0.0.0.0:${cookies.port}`}, () => {
@@ -289,7 +285,7 @@ function initPortProxy(server: Server){
                     });
                 })
             }
-    
+
             const domainParts = req.headers.host.split(".");
             const firstDomainPart = domainParts.shift();
             const maybePort = parseInt(firstDomainPart);
