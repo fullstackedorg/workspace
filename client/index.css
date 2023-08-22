@@ -37,6 +37,12 @@ pre {
     margin: 0;
 }
 
+iframe {
+    border: 0;
+    height: 100%;
+    width: 100%;
+}
+
 #root {
     position: relative;
     z-index: 1;

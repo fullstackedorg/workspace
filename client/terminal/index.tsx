@@ -3,11 +3,9 @@ import { Terminal as Xterm } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { WebLinksAddon } from 'xterm-addon-web-links';
-import {openCodeOSS} from "../codeOSS";
 import {client} from "../client";
 import GithubDeviceFlow from "./github-device-flow";
 import { addApp } from "../workspace";
-//@ts-ignore
 import terminalIcon from "../icons/terminal.svg";
 
 class Terminal extends Component {
@@ -66,11 +64,12 @@ class Terminal extends Component {
             if(e.data.startsWith("SESSION_ID#")){
                 this.SESSION_ID = e.data.split("#").pop();
                 return;
-            } else if(e.data.startsWith("CODE#")){
-                openCodeOSS(e.data.split("#").pop());
-                this.xterm.blur();
-                return;
-            } 
+            }
+            // else if(e.data.startsWith("CODE#")){
+            //     openCodeOSS(e.data.split("#").pop());
+            //     this.xterm.blur();
+            //     return;
+            // }
             // else if(e.data.startsWith("OPEN#")){
             //     openExplorer(e.data.split("#").pop());
             //     this.xterm.blur();
@@ -115,16 +114,15 @@ class Terminal extends Component {
         this.xterm.open(this.xtermRef.current);
         this.xterm.focus();
 
+        this.xterm.textarea.addEventListener("keypress", console.log)
+
         this.xterm.onKey(({key, domEvent}) => {
             // issue with ctrl+c on safari mobile
             if(key === '\x0d' && domEvent.ctrlKey){
                 this.ws.send('\x03');
                 return;
-            }else if(key === '\x0b'){
-                window.dispatchEvent(domEvent);
-                return;
             }
-            
+
             // let debugBinaryValues = [];
             // for (var i = 0; i < key.length; i++) {
             //     debugBinaryValues.push(key[i].charCodeAt(0).toString(16));
