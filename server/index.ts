@@ -253,7 +253,7 @@ function initAuth(server: Server){
 }
 
 
-function initPortProxy(server: Server){
+function initPortProxy(server: Server) {
     server.addListener({
         prefix: "global",
         handler(req, res) {
