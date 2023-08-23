@@ -1,3 +1,17 @@
+#move-overlay {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 100000;
+    display: none;
+}
+body.moving #move-overlay,
+body.resizing #move-overlay {
+    display: block;
+}
+
 .window {
     height: 400px;
     width: 400px;

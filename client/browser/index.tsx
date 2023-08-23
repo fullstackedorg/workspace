@@ -1,11 +1,10 @@
 import React, {useEffect, useRef, useState} from "react";
 import Console from "./console";
 import Share from "./share";
-import { addApp } from "../workspace";
-//@ts-ignore
 import browserIcon from "../icons/browser.svg";
+import {Workspace} from "../workspace";
 
-addApp({
+Workspace.apps.push({
     title: "Browser",
     icon: browserIcon,
     element: () => <Browser />

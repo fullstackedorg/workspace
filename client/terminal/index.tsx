@@ -5,7 +5,7 @@ import "xterm/css/xterm.css";
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import {client} from "../client";
 import GithubDeviceFlow from "./github-device-flow";
-import { addApp } from "../workspace";
+import { Workspace } from "../workspace";
 import terminalIcon from "../icons/terminal.svg";
 
 class Terminal extends Component {
@@ -156,7 +156,7 @@ class Terminal extends Component {
     }
 }
 
-addApp({
+Workspace.apps.push({
     title: "Terminal",
     icon: terminalIcon,
     element: (win) => {

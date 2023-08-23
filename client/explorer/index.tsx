@@ -2,14 +2,11 @@ import React, {useEffect, useState} from "react";
 import Tree from "rc-tree";
 import "rc-tree/assets/index.css"
 import {client} from "../client";
-// @ts-ignore
 import fileIcons from "../icons/file-icons.svg";
-// @ts-ignore
 import fileIcons2 from "../icons/file-icons-2.svg";
 import type {API} from "../../server";
 import {EventDataNode} from "rc-tree/es/interface";
-import { Workspace, addApp } from "../workspace";
-// @ts-ignore
+import { Workspace } from "../workspace";
 import explorerIcon from "../icons/explorer.svg";
 import Editor from "../editor";
 
@@ -156,7 +153,7 @@ function iconForFilename(filename: string){
     }
 }
 
-addApp({
+Workspace.apps.push({
     title: "Explorer",
     icon: explorerIcon,
     element: () => <Explorer />

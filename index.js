@@ -11,5 +11,3 @@ fork(`${currentDir}/dist/server/index.mjs`, {
     }
 });
 
-console.log("FullStacked running at http://localhost:8000");
-
