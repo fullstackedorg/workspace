@@ -1,7 +1,7 @@
 import React, {ReactNode, useEffect, useRef, useState} from "react";
 
 export default function (props: {
-    children: ReactNode, 
+    children: ReactNode,
     close(): void,
     initPos: {
         top: number,
@@ -9,7 +9,10 @@ export default function (props: {
         height: number,
         width: number
     },
-    didResize(): void
+    zIndex: number,
+    didResize(): void,
+    didFocus(): void,
+    hasIFrames(iframesIDs: string[]): void
 }) {
     const windowRef = useRef<HTMLDivElement>();
     const [showOptions, setShowOptions] = useState(false);
@@ -29,13 +32,13 @@ export default function (props: {
         const initialPos = {x, y};
         const start = getClientPos(e);
         windowRef.current.classList.add("moving");
+        document.body.classList.add("moving");
         const move = (e: MouseEvent | TouchEvent) => {
             const clientPos = getClientPos(e);
             let x = clientPos.x - start.x + initialPos.x;
             let y = clientPos.y - start.y + initialPos.y;
 
             if(x <= 0){
-                console.log(x)
                 x = 0;
             }else if(x >= window.innerWidth - width)
                 x = window.innerWidth - width;
@@ -52,6 +55,7 @@ export default function (props: {
         window.addEventListener("touchmove", move);
         const moveend = () => {
             windowRef.current.classList.remove("moving");
+            document.body.classList.remove("moving");
             window.removeEventListener("mousemove", move);
             window.removeEventListener("touchmove", move);
 
@@ -70,6 +74,7 @@ export default function (props: {
         const initialSize = {height, width}
         const start = getClientPos(e);
         windowRef.current.classList.add("resizing");
+        document.body.classList.add("resizing");
         const resizeWidth = (width: number) => {
             if(resizeX === -1){
                 const left = x - (width - initialSize.width);
@@ -95,7 +100,7 @@ export default function (props: {
                 height = window.innerHeight - y;
             }
             windowRef.current.style.height = height + "px";
-            
+
         }
         const resize = (e: MouseEvent | TouchEvent) => {
             const clientPos = getClientPos(e);
@@ -112,6 +117,7 @@ export default function (props: {
         window.addEventListener("touchmove", resize);
         const resizeend = () => {
             windowRef.current.classList.remove("resizing");
+            document.body.classList.remove("resizing");
             window.removeEventListener("mousemove", resize);
             window.removeEventListener("touchmove", resize);
 
@@ -124,8 +130,29 @@ export default function (props: {
         window.addEventListener("touchend", resizeend);
     }
 
+    useEffect(() => {
+        const iframes = windowRef.current.querySelectorAll<HTMLIFrameElement>("iframe");
+        if(!iframes.length) return;
+        const iframesIDs = Array.from(iframes).map(iframe => {
+            const id = makeid(6);
+            iframe.setAttribute("id", id);
+            return id;
+        });
+        props.hasIFrames(iframesIDs);
+    }, []);
 
-    return <div ref={windowRef} style={props.initPos} className={"window" + (fullscreen ? " full" : "")}>
+
+
+    return <div
+        ref={windowRef}
+        style={{
+            ...props.initPos,
+            zIndex: props.zIndex
+        }}
+        className={"window" + (fullscreen ? " full" : "")}
+        onMouseDown={props.didFocus}
+        onTouchStart={props.didFocus}
+    >
         <div className="resizer">
             {new Array(8).fill(null).map((_, index) => {
                 let x: -1 | 0 | 1 = 0, y: -1 | 0 | 1 = 0;
@@ -165,14 +192,14 @@ export default function (props: {
                 }
                 let resizeBinding = e => resizestart(e.nativeEvent, x, y);
                 return <div onMouseDown={resizeBinding} onTouchStart={resizeBinding} ><div /></div>})
-            }    
+            }
         </div>
-        <div 
-            onMouseDown={e => movestart(e.nativeEvent)} 
-            onTouchStart={e => movestart(e.nativeEvent)} 
+        <div
+            onMouseDown={e => movestart(e.nativeEvent)}
+            onTouchStart={e => movestart(e.nativeEvent)}
         />
         <div>{props.children}</div>
-        <div 
+        <div
             className={"options" + (showOptions ? " open" : "")}
             onMouseEnter={() => setShowOptions(true)}
             onClick={() => setShowOptions(true)}
@@ -211,4 +238,17 @@ export default function (props: {
             </div>
         </div>
     </div>
+}
+
+
+function makeid(length) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
+    }
+    return result;
 }

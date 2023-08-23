@@ -1,10 +1,10 @@
 import {client} from "../client";
-import {addApp} from "../workspace";
+import {Workspace} from "../workspace";
 import CodeOSSIcon from "../icons/code-oss.svg";
 import React from "react";
 
 if(await client.get(true).hasCodeOSS()){
-    addApp({
+    Workspace.apps.push({
         title: "Code",
         icon: CodeOSSIcon,
         element: () => {
