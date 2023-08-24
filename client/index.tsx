@@ -1,6 +1,6 @@
 import "./sw";
 import {createRoot} from "react-dom/client";
-import React from "react";
+import React, { createRef } from "react";
 import "./index.css";
 import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
@@ -17,8 +17,9 @@ if(!rootDiv){
     document.body.append(rootDiv);
 }
 
+const commandPaletteRef = createRef<CommandPalette>();
 createRoot(rootDiv).render(<>
-    <CommandPalette />
+    <CommandPalette ref={commandPaletteRef} />
     <Workspace />
 </>);
 
@@ -55,3 +56,5 @@ await import("./explorer");
 await import("./browser");
 await import("./latency");
 await import("./codeOSS");
+
+commandPaletteRef.current.setState({show: true});

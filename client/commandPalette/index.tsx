@@ -12,7 +12,8 @@ export default class extends Component {
 
     componentDidMount() {
         window.addEventListener("keydown", e => {
-            if(e.key === "k" && (e.metaKey || e.ctrlKey) && e.shiftKey){
+            console.log(e)
+            if(e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey) && e.shiftKey){
                 e.preventDefault();
                 if(!this.state.show)
                     this.setState({show: true})
