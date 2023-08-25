@@ -9,3 +9,4 @@ fork(`${currentDir}/dist/server/index.mjs`, {
         ...process.env,
         FULLSTACKED_ENV: "production"
     }
+})
