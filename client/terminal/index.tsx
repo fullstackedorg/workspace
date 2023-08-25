@@ -162,7 +162,8 @@ Workspace.apps.push({
     element: (win) => {
         const terminalRef = createRef<Terminal>();
         win.callbacks = {
-            onWindowResize: () => terminalRef.current.onResize()
+            onWindowResize: () => terminalRef.current.onResize(),
+            onFocus: () => terminalRef.current.xterm.focus()
         }
         return <Terminal ref={terminalRef} />
     }

@@ -12,7 +12,6 @@ export default class extends Component {
 
     componentDidMount() {
         window.addEventListener("keydown", e => {
-            console.log(e)
             if(e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey) && e.shiftKey){
                 e.preventDefault();
                 if(!this.state.show)
@@ -26,9 +25,10 @@ export default class extends Component {
                     if(nextFocusIndex >= activeApps.length)
                         nextFocusIndex = 0;
 
-                    this.setState({focus: activeApps.at(nextFocusIndex).id})
+                    const nextActiveApp = activeApps.at(nextFocusIndex);
+                    this.setState({focus: nextActiveApp.id});
                 }
-            }else if(e.key === "Escape" && document.querySelector("#command-palette")) {
+            }else if(e.key === "Escape" && this.state.show) {
                 this.setState({show: false})
             }
         })
@@ -38,9 +38,11 @@ export default class extends Component {
             const activeApps = Workspace.instance.getActiveApp();
             if(!activeApps?.length || activeApps.length < 2) return;
             const appIndex = activeApps.map(({id}) => id).indexOf(this.state.focus);
-            console.log(appIndex);
             if(appIndex === 0) return;
-            Workspace.instance.focusWindow(activeApps.find(({id}) => this.state.focus === id));
+            const nextActiveApp = activeApps.find(({id}) => this.state.focus === id);
+            Workspace.instance.focusWindow(nextActiveApp);
+            if(nextActiveApp.callbacks?.onFocus)
+                nextActiveApp.callbacks.onFocus();
             this.setState({show: false})
         })
     }
@@ -96,7 +98,10 @@ export default class extends Component {
                                 show: false,
                                 inputValue: ""
                             });
-                            Workspace.instance.addWindow(app);
+                            if(app.id)
+                                Workspace.instance.focusWindow({...app, order: 0})
+                            else
+                                Workspace.instance.addWindow(app);
                         }}
                     >
                         <img src={app.icon} />

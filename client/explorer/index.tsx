@@ -9,6 +9,7 @@ import {EventDataNode} from "rc-tree/es/interface";
 import { Workspace } from "../workspace";
 import explorerIcon from "../icons/explorer.svg";
 import Editor from "../editor";
+import editorIcon from "../icons/editor.svg";
 
 type FlatFileTree = {
     [filePath: string]: ReturnType<typeof API.readDir>
@@ -79,7 +80,7 @@ function Explorer(props: {dir?: string}) {
     const openFileEditor = (filename) => {
         Workspace.instance.addWindow({
             title: filename,
-            icon: "",
+            icon: editorIcon,
             element: () => <Editor filename={filename} />
         })
     }
