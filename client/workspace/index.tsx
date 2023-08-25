@@ -7,7 +7,8 @@ type App = {
     icon: string,
     element: (app: App) => ReactNode,
     callbacks?: {
-        onWindowResize?(): void
+        onWindowResize?(): void,
+        onFocus?(): void
     }
 }
 
