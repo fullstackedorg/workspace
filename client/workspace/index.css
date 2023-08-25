@@ -80,9 +80,14 @@ body.resizing #move-overlay {
     margin-top: 1px;
     margin-left: 3px;
 }
-
 .window > .options > div > button:hover {
     background-color: #0f1724;
+}
+.window > .options > div > button:last-child {
+    background-color: #b22a2a;
+}
+.window > .options > div > button:last-child:hover {
+    background-color: #8c2020;
 }
 
 .window > .options > div > button svg {
