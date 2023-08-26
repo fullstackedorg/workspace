@@ -72,3 +72,11 @@
     object-fit: contain;
     padding: 5px 5px 0;
 }
+
+#command-palette .subtitle {
+    width: 100%;
+    color: lightgray;
+    text-align: left;
+    font-weight: bold;
+    font-size: smaller;
+}
