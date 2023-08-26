@@ -7,6 +7,7 @@ import {client} from "../client";
 import GithubDeviceFlow from "./github-device-flow";
 import { Workspace } from "../workspace";
 import terminalIcon from "../icons/terminal.svg";
+import {Browser} from "../browser";
 
 class Terminal extends Component {
     SESSION_ID: string;
@@ -21,9 +22,11 @@ class Terminal extends Component {
 
             if(e.ctrlKey || e.metaKey){
                 const div = document.createElement("div");
-                // const { id } = createWindow("Browser", {mount: div});
-                // createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
-                this.xterm.blur();
+                const browserApp = Workspace.apps.find(({title}) => title === "Browser");
+                Workspace.instance.addWindow({
+                    ...browserApp,
+                    element: () => <Browser port={url.port} path={url.pathname} />
+                })
                 return;
             }
 
@@ -165,6 +168,7 @@ class Terminal extends Component {
 Workspace.apps.push({
     title: "Terminal",
     icon: terminalIcon,
+    order: 0,
     element: (win) => {
         const terminalRef = createRef<Terminal>();
         win.callbacks = {

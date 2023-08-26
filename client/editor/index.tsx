@@ -77,11 +77,7 @@ async function initEditor(filename: string, container: HTMLDivElement) {
 export default function (props: {filename: string}) {
     const containerRef = useRef<HTMLDivElement>();
 
-    useEffect(() => {
-        initEditor(props.filename, containerRef.current)
-        console.log("Mouting");
-        return () => console.log("Unmounting")
-    }, []);
+    useEffect(() => {initEditor(props.filename, containerRef.current)}, []);
 
     return <div ref={containerRef} style={{height: "100%"}} />
 }

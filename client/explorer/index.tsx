@@ -157,5 +157,6 @@ function iconForFilename(filename: string){
 Workspace.apps.push({
     title: "Explorer",
     icon: explorerIcon,
+    order: 1,
     element: () => <Explorer />
 })

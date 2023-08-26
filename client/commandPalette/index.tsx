@@ -63,22 +63,76 @@ export default class CommandPalette extends Component {
             this.setState({focus: null});
     }
 
+    triggerRef = createRef<HTMLDivElement>();
+    triggerBB;
+    initCursor;
+    deltaMovement;
+    getPos = (e: TouchEvent | MouseEvent) => {
+        if(e instanceof TouchEvent)
+            return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+        else
+            return {x: e.clientX, y: e.clientY};
+    }
+    start = (e: TouchEvent | MouseEvent) => {
+        this.triggerBB = this.triggerRef.current.getBoundingClientRect();
+        this.initCursor = this.getPos(e);
+        window.addEventListener("touchmove", this.move);
+        window.addEventListener("mousemove", this.move);
+        window.addEventListener("touchend", this.end);
+        window.addEventListener("mouseup", this.end);
+        document.querySelector<HTMLDivElement>("#command-palette-trigger-move").style.display = "block";
+    }
+    move = (e: TouchEvent | MouseEvent) => {
+        const currentPos = this.getPos(e);
+        const deltaX = currentPos.x - this.initCursor.x;
+        const deltaY = currentPos.y - this.initCursor.y;
+
+        this.deltaMovement = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+
+        let posX = this.triggerBB.x + deltaX;
+        if(posX + this.triggerBB.width >= window.innerWidth)
+            posX = window.innerWidth - this.triggerBB.width;
+        else if(posX <= 0)
+            posX = 0;
+
+        let posY = this.triggerBB.y + deltaY;
+        if(posY + this.triggerBB.height >= window.innerHeight)
+            posY = window.innerHeight - this.triggerBB.height;
+        else if(posY <= 0)
+            posY = 0;
+
+        this.triggerRef.current.style.left = posX + "px";
+        this.triggerRef.current.style.top = posY + "px";
+    }
+    end = () => {
+        window.removeEventListener("touchmove", this.move);
+        window.removeEventListener("mousemove", this.move);
+        window.removeEventListener("touchend", this.end);
+        window.removeEventListener("mouseup", this.end);
+        document.querySelector<HTMLDivElement>("#command-palette-trigger-move").style.display = "none";
+        if(this.deltaMovement < 1){
+            this.setState({show: true});
+        }
+        this.deltaMovement = 0;
+    }
+
+
     render(){
         const filter = app => this.state.inputValue
             ? app.title.toLowerCase().startsWith(this.state.inputValue)
             : true
 
         const activeApps = (Workspace.instance ? Workspace.instance.getActiveApp() : []).filter(filter);
-        const filteredApps = Workspace.apps.filter(filter);
+        const filteredApps = Workspace.apps.filter(filter).sort((appA, appB) => appA.order - appB.order);
 
         const submit = e => {
             e.preventDefault();
 
-            if(this.state.focus && !this.state.inputValue){
+            if (this.state.focus && !this.state.inputValue) {
                 Workspace.instance.focusWindow(Workspace.instance.getActiveApp().find(({id}) => id === this.state.focus));
-            }else{
+            } else {
                 const app = filteredApps.at(0);
-                if(!app) return;
+                if (!app) return;
                 Workspace.instance.addWindow(app);
             }
 
@@ -88,49 +142,63 @@ export default class CommandPalette extends Component {
             });
         }
 
-        return <div id={"command-palette"} style={{display: this.state.show ? "flex" : "none"}}>
-            <div onClick={() => this.setState({show: false})} />
-            <div>
-                <form onSubmit={submit}
-                      style={!this.state.inputValue ? {opacity: 0, height: 0} : {}}>
-                    <input ref={this.inputRef} value={this.state.inputValue}
-                           onChange={e => this.setState({inputValue: e.currentTarget.value})} />
-                </form>
-                {!!activeApps.length && <>
-                    <div className={"subtitle"}>Opened</div>
-                    <div className={"apps"}>
-                        {activeApps.map(app => <div
-                            className={app.id === this.state.focus ? "focus" : ""}
+        return <>
+            <div id={"command-palette-trigger"}
+                 ref={this.triggerRef}
+                 style={{display: this.state.show ? "none" : "block"}}
+                 onMouseDown={e => this.start(e.nativeEvent)}
+                 onTouchStart={e => this.start(e.nativeEvent)}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 6a3 3 0 013-3h2.25a3 3 0 013 3v2.25a3 3 0 01-3 3H6a3 3 0 01-3-3V6zm9.75 0a3 3 0 013-3H18a3 3 0 013 3v2.25a3 3 0 01-3 3h-2.25a3 3 0 01-3-3V6zM3 15.75a3 3 0 013-3h2.25a3 3 0 013 3V18a3 3 0 01-3 3H6a3 3 0 01-3-3v-2.25zm9.75 0a3 3 0 013-3H18a3 3 0 013 3V18a3 3 0 01-3 3h-2.25a3 3 0 01-3-3v-2.25z" clipRule="evenodd" />
+                </svg>
+            </div>
+            <div id={"command-palette-trigger-move"} style={{display: "none"}} />
+
+            <div id={"command-palette"} style={{display: this.state.show ? "flex" : "none"}}>
+                <div onClick={() => this.setState({show: false})} />
+                <div>
+                    <form onSubmit={submit}
+                          style={!this.state.inputValue ? {opacity: 0, height: 0} : {}}>
+                        <input ref={this.inputRef} value={this.state.inputValue}
+                               onChange={e => this.setState({inputValue: e.currentTarget.value})} />
+                    </form>
+                    {!!activeApps.length && <>
+                        <div className={"subtitle"}>Opened</div>
+                        <div className={"apps"}>
+                            {activeApps.map(app => <div
+                                className={app.id === this.state.focus ? "focus" : ""}
+                                onClick={() => {
+                                    this.setState({
+                                        show: false,
+                                        inputValue: ""
+                                    });
+                                    Workspace.instance.focusWindow(app)
+                                }}
+                            >
+                                <img src={app.icon} />
+                                <div>{app.title}</div>
+                            </div>)}
+                        </div>
+                    </>}
+                    {!!activeApps.length && <div className={"subtitle"}>All</div>}
+                    <div className="apps">
+                        {filteredApps.map((app, i) => <div
                             onClick={() => {
                                 this.setState({
                                     show: false,
                                     inputValue: ""
                                 });
-                                Workspace.instance.focusWindow({...app, order: 0})
+                                Workspace.instance.addWindow(app);
                             }}
                         >
                             <img src={app.icon} />
                             <div>{app.title}</div>
                         </div>)}
                     </div>
-                </>}
-                {!!activeApps.length && <div className={"subtitle"}>All</div>}
-                <div className="apps">
-                    {filteredApps.map((app, i) => <div
-                        onClick={() => {
-                            this.setState({
-                                show: false,
-                                inputValue: ""
-                            });
-                            Workspace.instance.addWindow(app);
-                        }}
-                    >
-                        <img src={app.icon} />
-                        <div>{app.title}</div>
-                    </div>)}
                 </div>
             </div>
-        </div>
+        </>
     }
 
 }

@@ -36,5 +36,6 @@ function Latency() {
 Workspace.apps.push({
     title: "Latency",
     icon: latencyIcon,
+    order: 10,
     element: () => <Latency />
 })
