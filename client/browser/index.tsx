@@ -7,6 +7,7 @@ import {Workspace} from "../workspace";
 Workspace.apps.push({
     title: "Browser",
     icon: browserIcon,
+    order: 2,
     element: () => <Browser />
 });
 
@@ -15,7 +16,7 @@ declare global {
         hasCredentialless: boolean
     }
 }
-function Browser(props: {id?: string, port?: string, path?: string}) {
+export function Browser(props: {port?: string, path?: string}) {
     const [openShare, setOpenShare] = useState(false);
     const openShareRef = useRef<boolean>();
 
@@ -28,8 +29,8 @@ function Browser(props: {id?: string, port?: string, path?: string}) {
     const shareTooltipRef = useRef<HTMLSpanElement>();
 
     let closeShareTooltip = (e) => {
-        const bb = shareTooltipRef.current.getBoundingClientRect();
-        if(bb.width === 0)
+        const bb = shareTooltipRef.current?.getBoundingClientRect();
+        if(!bb || bb.width === 0)
             window.removeEventListener("click", closeShareTooltip);
 
         if(!openShareRef.current || shareTooltipRef.current.contains(e.target))
@@ -38,7 +39,7 @@ function Browser(props: {id?: string, port?: string, path?: string}) {
         setOpenShare(false);
     };
 
-    const checkIfInIframe = () =>{
+    const checkIfInIframe = () => {
         if(!openShareRef.current) return;
 
         window.requestAnimationFrame(checkIfInIframe);
@@ -135,7 +136,7 @@ function Browser(props: {id?: string, port?: string, path?: string}) {
             {/*    Credentialless <div className={"dot"} style={{backgroundColor: window.hasCredentialless ? "green" : "red"}} />*/}
             {/*</small>*/}
         </div>
-        <iframe ref={iframeRef} id={props.id} />
+        <iframe ref={iframeRef} />
         {window.hasCredentialless && <Console ref={consoleRef} iframeRef={iframeRef} />}
     </div>
 }

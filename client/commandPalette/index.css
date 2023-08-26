@@ -80,3 +80,26 @@
     font-weight: bold;
     font-size: smaller;
 }
+
+
+#command-palette-trigger {
+    background-color: #040911;
+    color: white;
+    height: 50px;
+    width: 50px;
+    position: fixed;
+    top: 10px;
+    left: calc(100% - 60px);
+    padding: 9px;
+    border-radius: 10px;
+    opacity: 0.7;
+    z-index: 9999999;
+}
+#command-palette-trigger-move {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 9999998;
+}

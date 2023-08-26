@@ -13,12 +13,11 @@ type App = {
 }
 
 type ActiveApp = ({
-    id: string,
-    order: number
+    id: string
 } & App)
 
 export class Workspace extends Component {
-    static apps: App[] = [];
+    static apps: (App & {order: number})[] = [];
     static instance: Workspace;
 
     private topActiveApp: ActiveApp;
@@ -33,10 +32,14 @@ export class Workspace extends Component {
         }
     }
 
+    activeApps = new Map<string, ActiveApp>();
     iframeIDsToWindow = new Map<string, ActiveApp>();
 
     state: {
-        windows: ActiveApp[],
+        windows: {
+            id: string,
+            order: number
+        }[],
     } = {
         windows: []
     }
@@ -49,32 +52,46 @@ export class Workspace extends Component {
     }
 
     addWindow(app: App){
+        const id = Math.floor(Math.random() * 100000).toString();
+
+        (app as ActiveApp).id = id;
+        this.activeApps.set(id, (app as ActiveApp));
+
+        const order = this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1;
+
         this.setState({
             windows: [
                 ...this.state.windows,
                 {
-                    ...app,
-                    id: Math.floor(Math.random() * 100000).toString(),
-                    order: this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1,
+                    id,
+                    order,
                 }
             ]
-        })
+        }, () => {this.focusWindow((app as ActiveApp))});
+
     }
 
+    lastActiveElement;
     checkIfInIFrames(){
         window.requestAnimationFrame(this.checkIfInIFrames.bind(this));
-        if(document.activeElement.tagName === "IFRAME"){
+        if(document.activeElement.tagName === "IFRAME" && document.activeElement !== this.lastActiveElement){
+            console.log("ICICIIC")
             const iframeID = document.activeElement.getAttribute("id");
             if(!iframeID) return;
             const window = this.iframeIDsToWindow.get(iframeID);
-            if(!window || window.id === this.topActiveApp?.id) return;
-            this.focusWindow(window);
+            if(!window) return;
+            if(window.id !== this.topActiveApp?.id)
+                this.focusWindow(window);
+            else if(window.callbacks?.onFocus)
+                window.callbacks.onFocus();
         }
+        this.lastActiveElement = document.activeElement;
     }
 
     focusWindow(window: ActiveApp){
+        if(window.id === this.topActiveApp?.id) return;
+
         const i = this.state.windows.map(({id}) => id).indexOf(window.id);
-        if(i === this.state.windows.length) return;
         this.state.windows[i].order = this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1;
         const idOrder = new Map<string, number>();
         [...this.state.windows]
@@ -87,36 +104,42 @@ export class Workspace extends Component {
                 order: idOrder.get(win.id)
             }))
         }, () => {
-            if(this.state.windows[i].callbacks?.onFocus)
-                this.state.windows[i].callbacks.onFocus();
+            const activeApp = this.activeApps.get(window.id);
+            if(activeApp?.callbacks?.onFocus)
+                activeApp.callbacks.onFocus();
         });
     }
 
     getActiveApp(){
         return [...this.state.windows]
-            .sort((winA, winB) => winB.order - winA.order);
+            .sort((winA, winB) => winB.order - winA.order)
+            .map(({id}) => this.activeApps.get(id));
     }
 
     render(){
         return <>
-            {this.state.windows.map((win, i) =>
+            {this.state.windows.map(({id, order}, i) =>
                 <WindowElement
-                    key={win.id}
+                    key={id}
                     close={() => {
-                        this.state.windows.splice(this.state.windows.indexOf(win), 1);
+                        this.state.windows.splice(i, 1);
                         this.setState({windows: [...this.state.windows]});
                     }}
                     initPos={Workspace.calcInitPos()}
-                    zIndex={win.order}
-                    didResize={() => win.callbacks?.onWindowResize && win.callbacks.onWindowResize()}
-                    didFocus={() => this.focusWindow(win)}
+                    zIndex={order}
+                    didResize={() => {
+                        const activeApp = this.activeApps.get(id);
+                        if(activeApp?.callbacks?.onWindowResize)
+                            activeApp.callbacks.onWindowResize();
+                    }}
+                    didFocus={() => this.focusWindow(this.activeApps.get(id))}
                     hasIFrames={iframesIDs => {
                         iframesIDs.forEach(iframeID => {
-                            this.iframeIDsToWindow.set(iframeID, win);
+                            this.iframeIDsToWindow.set(iframeID, this.activeApps.get(id));
                         })
                     }}
                 >
-                    {win.element(win)}
+                    {this.activeApps.get(id).element(this.activeApps.get(id))}
                 </WindowElement>)}
             <div id={"move-overlay"} />
         </>;
