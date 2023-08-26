@@ -1,5 +1,6 @@
 import React, {ReactNode, useEffect, useRef, useState} from "react";
 
+let doubleClick = 0;
 export default function (props: {
     children: ReactNode,
     close(): void,
@@ -28,6 +29,11 @@ export default function (props: {
     }
 
     const movestart = (e: MouseEvent | TouchEvent) => {
+        if(Date.now() - doubleClick < 200){
+            setFullscreen(!fullscreen);
+            return;
+        }
+        doubleClick = Date.now();
         const {x, y, height, width} = windowRef.current.getBoundingClientRect();
         const initialPos = {x, y};
         const start = getClientPos(e);
@@ -67,7 +73,6 @@ export default function (props: {
     }
 
     useEffect(() => {setTimeout(props.didResize, 350)}, [fullscreen])
-
 
     const resizestart = (e: MouseEvent | TouchEvent, resizeX: -1 | 0 | 1, resizeY: -1 | 0 | 1) => {
         const {x, y, height, width} = windowRef.current.getBoundingClientRect();
@@ -140,8 +145,6 @@ export default function (props: {
         });
         props.hasIFrames(iframesIDs);
     }, []);
-
-
 
     return <div
         ref={windowRef}

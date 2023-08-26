@@ -20,6 +20,8 @@ type ActiveApp = ({
 export class Workspace extends Component {
     static apps: App[] = [];
     static instance: Workspace;
+
+    private topActiveApp: ActiveApp;
     private static calcInitPos = () => {
         const width = getDefaultWidth();
         const height = getDefaultHeight(width);
@@ -65,7 +67,7 @@ export class Workspace extends Component {
             const iframeID = document.activeElement.getAttribute("id");
             if(!iframeID) return;
             const window = this.iframeIDsToWindow.get(iframeID);
-            if(!window) return;
+            if(!window || window.id === this.topActiveApp?.id) return;
             this.focusWindow(window);
         }
     }
@@ -78,11 +80,15 @@ export class Workspace extends Component {
         [...this.state.windows]
             .sort((winA, winB) => winA.order - winB.order)
             .forEach(({id}, i) => idOrder.set(id, i + 1));
+        this.topActiveApp = window;
         this.setState({
             windows: this.state.windows.map(win => ({
                 ...win,
                 order: idOrder.get(win.id)
             }))
+        }, () => {
+            if(this.state.windows[i].callbacks?.onFocus)
+                this.state.windows[i].callbacks.onFocus();
         });
     }
 

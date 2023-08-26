@@ -2,7 +2,8 @@ import React, {Component, createRef} from "react";
 import "./index.css"
 import {Workspace} from "../workspace";
 
-export default class extends Component {
+export default class CommandPalette extends Component {
+    static instance: CommandPalette;
     inputRef = createRef<HTMLInputElement>();
     state = {
         inputValue: "",
@@ -10,24 +11,34 @@ export default class extends Component {
         focus: null
     }
 
+    constructor(props) {
+        super(props);
+
+        CommandPalette.instance = this;
+    }
+
+    open(){
+        if(!this.state.show)
+            this.setState({show: true})
+
+        const activeApps = Workspace.instance?.getActiveApp();
+        if(activeApps && activeApps.length){
+            let nextFocusIndex = this.state.focus === null
+                ? 0
+                : activeApps.map(({id}) => id).indexOf(this.state.focus) + 1;
+            if(nextFocusIndex >= activeApps.length)
+                nextFocusIndex = 0;
+
+            const nextActiveApp = activeApps.at(nextFocusIndex);
+            this.setState({focus: nextActiveApp.id});
+        }
+    }
+
     componentDidMount() {
         window.addEventListener("keydown", e => {
             if(e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey) && e.shiftKey){
                 e.preventDefault();
-                if(!this.state.show)
-                    this.setState({show: true})
-
-                const activeApps = Workspace.instance?.getActiveApp();
-                if(activeApps && activeApps.length){
-                    let nextFocusIndex = this.state.focus === null
-                        ? 0
-                        : activeApps.map(({id}) => id).indexOf(this.state.focus) + 1;
-                    if(nextFocusIndex >= activeApps.length)
-                        nextFocusIndex = 0;
-
-                    const nextActiveApp = activeApps.at(nextFocusIndex);
-                    this.setState({focus: nextActiveApp.id});
-                }
+                this.open();
             }else if(e.key === "Escape" && this.state.show) {
                 this.setState({show: false})
             }
@@ -41,8 +52,6 @@ export default class extends Component {
             if(appIndex === 0) return;
             const nextActiveApp = activeApps.find(({id}) => this.state.focus === id);
             Workspace.instance.focusWindow(nextActiveApp);
-            if(nextActiveApp.callbacks?.onFocus)
-                nextActiveApp.callbacks.onFocus();
             this.setState({show: false})
         })
     }
@@ -55,15 +64,12 @@ export default class extends Component {
     }
 
     render(){
-        const activeApps = Workspace.instance ? Workspace.instance.getActiveApp() : [];
-        const filteredApps = Workspace.instance
-            ? (activeApps.length && !this.state.inputValue)
-                ? activeApps
-                : Workspace.apps.filter(app =>
-                    this.state.inputValue
-                        ? app.title.toLowerCase().startsWith(this.state.inputValue)
-                        : true).map(app => ({...app, id: undefined}))
-            : [];
+        const filter = app => this.state.inputValue
+            ? app.title.toLowerCase().startsWith(this.state.inputValue)
+            : true
+
+        const activeApps = (Workspace.instance ? Workspace.instance.getActiveApp() : []).filter(filter);
+        const filteredApps = Workspace.apps.filter(filter);
 
         const submit = e => {
             e.preventDefault();
@@ -90,18 +96,33 @@ export default class extends Component {
                     <input ref={this.inputRef} value={this.state.inputValue}
                            onChange={e => this.setState({inputValue: e.currentTarget.value})} />
                 </form>
-                <div className="apps">{filteredApps.map((app, i) =>
-                    <div
-                        className={app.id === this.state.focus ? "focus" : ""}
+                {!!activeApps.length && <>
+                    <div className={"subtitle"}>Opened</div>
+                    <div className={"apps"}>
+                        {activeApps.map(app => <div
+                            className={app.id === this.state.focus ? "focus" : ""}
+                            onClick={() => {
+                                this.setState({
+                                    show: false,
+                                    inputValue: ""
+                                });
+                                Workspace.instance.focusWindow({...app, order: 0})
+                            }}
+                        >
+                            <img src={app.icon} />
+                            <div>{app.title}</div>
+                        </div>)}
+                    </div>
+                </>}
+                {!!activeApps.length && <div className={"subtitle"}>All</div>}
+                <div className="apps">
+                    {filteredApps.map((app, i) => <div
                         onClick={() => {
                             this.setState({
                                 show: false,
                                 inputValue: ""
                             });
-                            if(app.id)
-                                Workspace.instance.focusWindow({...app, order: 0})
-                            else
-                                Workspace.instance.addWindow(app);
+                            Workspace.instance.addWindow(app);
                         }}
                     >
                         <img src={app.icon} />

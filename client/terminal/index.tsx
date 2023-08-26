@@ -65,11 +65,17 @@ class Terminal extends Component {
                 this.SESSION_ID = e.data.split("#").pop();
                 return;
             }
-            // else if(e.data.startsWith("CODE#")){
-            //     openCodeOSS(e.data.split("#").pop());
-            //     this.xterm.blur();
-            //     return;
-            // }
+            else if(e.data.startsWith("CODE#")){
+                const codeOSS = Workspace.apps.find(app => app.title === "Code");
+                Workspace.instance.addWindow({
+                    ...codeOSS,
+                    element: () => {
+                        const url = new URL(`${window.location.protocol}//8888.${window.location.host}`);
+                        return <iframe src={url.toString() + `?folder=${e.data.split("#").pop()}`} />
+                    }
+                });
+                return;
+            }
             // else if(e.data.startsWith("OPEN#")){
             //     openExplorer(e.data.split("#").pop());
             //     this.xterm.blur();
