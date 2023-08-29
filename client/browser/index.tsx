@@ -77,6 +77,8 @@ export function Browser(props: {port?: string, path?: string}) {
         // webcontainer setup
         if(url.host.includes("-8000-")){
             urlSubDomain.host = urlSubDomain.host.replace(/-8000-/, `-${port}-`);
+        }else if(url.host.match(/localhost:\d\d\d\d/)){
+            urlSubDomain.host = "localhost:" + port;
         }else{
             urlSubDomain.host = port + "." + urlSubDomain.host;
         }

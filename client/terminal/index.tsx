@@ -73,7 +73,11 @@ class Terminal extends Component {
                 Workspace.instance.addWindow({
                     ...codeOSS,
                     element: () => {
-                        const url = new URL(`${window.location.protocol}//8888.${window.location.host}`);
+                        const host = window.location.host.match(/localhost:\d\d\d\d/g)
+                            ? `localhost:8888`
+                            : `8888.${window.location.host}`;
+
+                        const url = new URL(`${window.location.protocol}//${host}`);
                         return <iframe src={url.toString() + `?folder=${e.data.split("#").pop()}`} />
                     }
                 });
