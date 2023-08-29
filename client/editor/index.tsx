@@ -11,6 +11,9 @@ import React, {useEffect, useRef} from "react";
 async function initEditor(filename: string, container: HTMLDivElement) {
     // container.parentElement.style.backgroundColor = "#282c34";
 
+    // switch delete line keybinding Shift-Mod-k for Shift-Mod-d
+    (basicSetup as any).at(17).value.at(14).key = "Shift-Mod-d";
+
     const extensions = [
         basicSetup,
         keymap.of([indentWithTab]),

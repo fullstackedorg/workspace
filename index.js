@@ -9,4 +9,10 @@ fork(`${currentDir}/dist/server/index.mjs`, {
         ...process.env,
         FULLSTACKED_ENV: "production"
     }
-})
+});
+
+fork(`${currentDir}/code-oss/out/server-main.js`, [
+    "--without-connection-token",
+    "--host", "0.0.0.0",
+    "--port", "8888"
+]);

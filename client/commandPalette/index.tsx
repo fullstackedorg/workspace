@@ -101,8 +101,8 @@ export default class CommandPalette extends Component {
         else if(posY <= 0)
             posY = 0;
 
-        this.triggerRef.current.style.left = posX + "px";
-        this.triggerRef.current.style.top = posY + "px";
+        this.triggerRef.current.style.left = posX / window.innerWidth * 100 + "%";
+        this.triggerRef.current.style.top = posY / window.innerHeight * 100 + "%";
     }
     end = () => {
         window.removeEventListener("touchmove", this.move);

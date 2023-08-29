@@ -5,3 +5,4 @@ dist
 .fullstacked
 *.tgz
 vscode*
+code-oss

@@ -25,10 +25,10 @@ export class Workspace extends Component {
         const width = getDefaultWidth();
         const height = getDefaultHeight(width);
         return {
-            width,
-            height,
-            left: window.innerWidth / 2 - width / 2,
-            top: window.innerHeight / 2 - height / 2
+            width: width / window.innerWidth * 100 + "%",
+            height: height / window.innerHeight * 100 + "%",
+            left: (window.innerWidth / 2 - width / 2) / window.innerWidth * 100 + "%",
+            top: (window.innerHeight / 2 - height / 2) / window.innerHeight * 100 + "%"
         }
     }
 

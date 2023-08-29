@@ -5,10 +5,10 @@ export default function (props: {
     children: ReactNode,
     close(): void,
     initPos: {
-        top: number,
-        left: number,
-        height: number,
-        width: number
+        top: string,
+        left: string,
+        height: string,
+        width: string
     },
     zIndex: number,
     didResize(): void,
@@ -54,8 +54,8 @@ export default function (props: {
             else if(y >= window.innerHeight - height)
                 y = window.innerHeight - height;
 
-            windowRef.current.style.left = x + "px";
-            windowRef.current.style.top = y + "px";
+            windowRef.current.style.left = x / window.innerWidth * 100 + "%";
+            windowRef.current.style.top = y / window.innerHeight * 100 + "%";
         }
         window.addEventListener("mousemove", move);
         window.addEventListener("touchmove", move);
@@ -87,11 +87,11 @@ export default function (props: {
                     windowRef.current.style.left = "0px";
                     return;
                 }
-                windowRef.current.style.left = left + "px";
+                windowRef.current.style.left = left / window.innerWidth * 100 + "%";
             }else if(x + width > window.innerWidth){
                 width = window.innerWidth - x;
             }
-            windowRef.current.style.width = width + "px";
+            windowRef.current.style.width = width / window.innerWidth * 100 + "%";
         }
         const resizeHeight = (height: number) => {
             if(resizeY == -1){
@@ -100,11 +100,11 @@ export default function (props: {
                     windowRef.current.style.top = "0px";
                     return;
                 }
-                windowRef.current.style.top = top + "px";
+                windowRef.current.style.top = top / window.innerHeight * 100 + "%";
             }else if(y + height > window.innerHeight){
                 height = window.innerHeight - y;
             }
-            windowRef.current.style.height = height + "px";
+            windowRef.current.style.height = height / window.innerHeight * 100 + "%";
 
         }
         const resize = (e: MouseEvent | TouchEvent) => {
