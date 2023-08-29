@@ -68,10 +68,10 @@ export default class CommandPalette extends Component {
     initCursor;
     deltaMovement;
     getPos = (e: TouchEvent | MouseEvent) => {
-        if(e instanceof TouchEvent)
-            return {x: e.touches[0].clientX, y: e.touches[0].clientY};
-        else
+        if(e instanceof MouseEvent)
             return {x: e.clientX, y: e.clientY};
+        else
+            return {x: e.touches[0].clientX, y: e.touches[0].clientY};
     }
     start = (e: TouchEvent | MouseEvent) => {
         this.triggerBB = this.triggerRef.current.getBoundingClientRect();

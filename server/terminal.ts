@@ -57,7 +57,7 @@ export class Terminal {
                 env: {
                     ...process.env,
                     SESSION_ID,
-                    PATH: dirname(fileURLToPath(import.meta.url)) + "/bin"
+                    PATH: dirname(fileURLToPath(import.meta.url)) + "/bin:" + process.env.PATH.replace(/%3A/g, ":")
                 }
             });
 
