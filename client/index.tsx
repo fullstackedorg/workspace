@@ -6,6 +6,8 @@ import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
 import CommandPalette from "./commandPalette";
 import logo from "./icons/fullstacked-logo.svg";
+import {client} from "./client";
+import logoutIcon from "./icons/log-out.svg";
 
 
 document.body.style.backgroundImage = `url(${logo})`;
@@ -50,6 +52,19 @@ async function keepAccessTokenValid(){
 keepAccessTokenValid();
 setInterval(keepAccessTokenValid, 1000);
 
+if(Cookies.get("fullstackedAccessToken")){
+    Workspace.apps.push({
+        title: "Logout",
+        order: 100,
+        icon: logoutIcon,
+        element: () => {
+            client.get().logout().then(() => {
+                window.location.href = "/?logout=1";
+            });
+            return <>Logging out...</>
+        }
+    })
+}
 
 await import("./terminal");
 await import("./explorer");

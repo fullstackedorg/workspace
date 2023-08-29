@@ -1,6 +1,8 @@
 import {WebSocket, WebSocketServer} from "ws";
 import PTy, {IPty} from "node-pty";
 import {IncomingMessage} from "http";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 
 type Session = {
@@ -54,7 +56,8 @@ export class Terminal {
                 cwd: process.cwd(),
                 env: {
                     ...process.env,
-                    SESSION_ID
+                    SESSION_ID,
+                    PATH: dirname(fileURLToPath(import.meta.url)) + "/bin"
                 }
             });
 

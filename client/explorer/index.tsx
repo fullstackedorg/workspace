@@ -79,7 +79,7 @@ function Explorer(props: {dir?: string}) {
 
     const openFileEditor = (filename) => {
         Workspace.instance.addWindow({
-            title: filename,
+            title: filename.length > 8 ? "..." + filename.slice(-8) : filename,
             icon: editorIcon,
             element: () => <Editor filename={filename} />
         })

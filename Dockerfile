@@ -31,12 +31,6 @@ RUN npm i -g fullstacked && \
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
 WORKDIR /home
 
-# custom commands
-COPY bin /fbin
-RUN chmod +x -R /fbin && \
-    mv /fbin/* /bin && \
-    rm -rf /fbin
-
 RUN rm -rf /home/dockremap && \
     npm config set prefix '/home/.npm/' && \
     echo "export PATH=\$PATH:/home/.npm/bin" >> /etc/profile && \
