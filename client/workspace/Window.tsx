@@ -207,6 +207,9 @@ export default function (props: {
             onMouseEnter={() => setShowOptions(true)}
             onClick={() => setShowOptions(true)}
             onMouseLeave={() => setShowOptions(false)}
+            style={{
+                maxWidth: showOptions ? 52 * 2 + 100 : 11 * 2
+            }}
         >
             <div>
                 <button onClick={(e) => {

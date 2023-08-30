@@ -58,11 +58,13 @@ body.resizing #move-overlay {
 
 .window > .options {
     height: 10px;
+    width: 100%;
     position: absolute;
     top: 0;
     right: 5px;
     overflow: visible;
     transition: 0.1s all;
+    text-align: right;
 }
 
 .window > .options > div {
@@ -80,6 +82,7 @@ body.resizing #move-overlay {
     padding: 2px;
     margin-top: 1px;
     margin-left: 3px;
+    transition: 0.1s all;
 }
 .window > .options > div > button:hover {
     background-color: #0f1724;
@@ -94,7 +97,7 @@ body.resizing #move-overlay {
 .window > .options > div > button svg {
     height: 100%;
     width: 100%;
-    max-width: 25px
+    max-width: 25px;
 }
 
 .window > .options.open {
