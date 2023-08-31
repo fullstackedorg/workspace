@@ -177,7 +177,8 @@ Workspace.apps.push({
         const terminalRef = createRef<Terminal>();
         win.callbacks = {
             onWindowResize: () => terminalRef.current.onResize(),
-            onFocus: () => terminalRef.current.xterm.focus()
+            onFocus: () => terminalRef.current.xterm.focus(),
+            onClose: () => client.delete().killTerminalSession(terminalRef.current.SESSION_ID)
         }
         return <Terminal ref={terminalRef} />
     }
