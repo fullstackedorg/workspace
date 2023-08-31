@@ -8,7 +8,8 @@ type App = {
     element: (app: App) => ReactNode,
     callbacks?: {
         onWindowResize?(): void,
-        onFocus?(): void
+        onFocus?(): void,
+        onClose?(): void
     }
 }
 
@@ -122,7 +123,10 @@ export class Workspace extends Component {
                 <WindowElement
                     key={id}
                     close={() => {
-                        this.state.windows.splice(i, 1);
+                        const [{id}] = this.state.windows.splice(i, 1);
+                        const app = this.activeApps.get(id);
+                        if(app?.callbacks?.onClose)
+                            app.callbacks.onClose();
                         this.setState({windows: [...this.state.windows]});
                     }}
                     initPos={Workspace.calcInitPos()}

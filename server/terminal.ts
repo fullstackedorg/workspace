@@ -26,7 +26,7 @@ export class Terminal {
     startCleanupInterval(){
         setInterval(() => {
             for(const [SESSION_ID, {pty, ws, lastActivity}] of this.sessions.entries()){
-                if(lastActivity - Date.now() > Terminal.killTimeout){
+                if(Date.now() - lastActivity > Terminal.killTimeout){
                     pty.kill();
                     ws.close()
                     this.sessions.delete(SESSION_ID);

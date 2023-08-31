@@ -208,7 +208,7 @@ export default function (props: {
             onClick={() => setShowOptions(true)}
             onMouseLeave={() => setShowOptions(false)}
             style={{
-                maxWidth: showOptions ? 52 * 2 + 100 : 11 * 2
+                maxWidth: showOptions ? 56 * 2 + 100 : 14 * 2
             }}
         >
             <div>

@@ -2,7 +2,7 @@ FROM docker:dind
 
 # install basic tools
 RUN apk add --update make g++ nodejs npm git python3 curl vim gcompat tini \
-    curl-dev openssl-dev krb5-dev libxml2-dev sqlite-dev oniguruma-dev
+    krb5-dev curl-dev openssl-dev libxml2-dev sqlite-dev oniguruma-dev
 
 # Bun and Deno (and probably other binaries) glibc dependency
 # source https://github.com/oven-sh/bun/issues/3075#issuecomment-1565069263
@@ -22,10 +22,10 @@ COPY github-credential.js /root/github-credential
 RUN chmod +x /root/github-credential
 COPY gitconfig-base /home/.gitconfig
 
-# install fullstacked globally
-RUN npm i -g fullstacked && \
-    ln -s /usr/local/lib/node_modules/fullstacked/node_modules/@fullstacked/cli/cli.js /usr/local/bin/fsc && \
-    ln -s /usr/local/lib/node_modules/fullstacked/node_modules/@fullstacked/cli/cli.js /usr/local/bin/fullstacked
+# add current fullstacked build
+COPY dist /fullstacked/dist
+COPY index.js /fullstacked/index.mjs
+RUN cd /fullstacked && npm i node-pty
 
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
@@ -38,4 +38,4 @@ RUN rm -rf /home/dockremap && \
     echo "export PS1='\w \$ '" >> /etc/profile && \
     mkdir -p /home/.npm/lib
 
-CMD ["tini", "--", "/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & fsc workspace"]
+CMD ["tini", "--", "/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" node /fullstacked/index.mjs"]
