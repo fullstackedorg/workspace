@@ -55,6 +55,7 @@ if(process.env.DOCKER_HOST !== undefined && !WATCH_MODE)
     initInternalRPC(terminal);
 
 server.start();
+console.log(`FullStacked running at http://localhost:${server.port}`);
 
 export default server.serverHTTP;
 

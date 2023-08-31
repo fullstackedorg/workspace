@@ -34,9 +34,11 @@ function onWindowClose() {
 Neutralino.init();
 
 function loadIframe(){
+    console.log("ici")
     const image = document.querySelector("img");
     if(!image) return;
     setTimeout(() => {
+        console.log("ici")
         const iframe = document.createElement("iframe");
         iframe.src = "http://localhost:8000";
         image.replaceWith(iframe);
