@@ -3,6 +3,7 @@ import PTy, {IPty} from "node-pty";
 import {IncomingMessage} from "http";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import { platform } from "os";
 
 
 type Session = {
@@ -11,6 +12,9 @@ type Session = {
     lastActivity: number,
     data: string[]
 }
+
+const shell = platform() === 'win32' ? 'powershell.exe' : '/bin/sh';
+const args  = platform() === 'win32' ? [] : ['-l'];
 
 export class Terminal {
     static killTimeout = 1000 * 60 * 15 // 15 minutes
@@ -49,7 +53,7 @@ export class Terminal {
         // create new
         if(!session) {
             SESSION_ID = Math.floor(Math.random() * 1000000).toString();
-            const pty = PTy.spawn("/bin/sh", ["-l"], {
+            const pty = PTy.spawn(shell, args, {
                 name: '',
                 cols: 80,
                 rows: 30,
