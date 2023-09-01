@@ -69,7 +69,7 @@ class Terminal extends Component {
                 this.SESSION_ID = e.data.split("#").pop();
                 return;
             }
-            else if(data.match(/CODE#.*/g)){
+            else if(data.match(/CODE#.*/g) && data.split("\n").length < 3){
                 const command = data.match(/CODE#.*/g).at(0);
                 const codeOSS = Workspace.apps.find(app => app.title === "Code");
                 Workspace.instance.addWindow({
