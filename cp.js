@@ -1,18 +1,19 @@
 import {cpSync} from "fs";
 import {dirname} from "path";
 
-const pwaDirectory = new URL(import.meta.url);
-pwaDirectory.pathname = dirname(pwaDirectory.pathname) + "/pwa";
 
-const distClientDirectory = new URL(import.meta.url);
-distClientDirectory.pathname = dirname(pwaDirectory.pathname) + "/dist/client/pwa";
+const directoriesToCopy = [
+    ["/pwa", "/dist/client/pwa"],
+    ["/server/bin", "/dist/server/bin"],
+    ["/server/bat", "/dist/server/bat"]
+]
 
-cpSync(pwaDirectory, distClientDirectory, {recursive: true});
+const currentDir = new URL(dirname(import.meta.url));
 
-const binDirectory = new URL(import.meta.url);
-binDirectory.pathname = dirname(binDirectory.pathname) + "/server/bin";
-
-const distServerDirectory = new URL(import.meta.url);
-distServerDirectory.pathname = dirname(pwaDirectory.pathname) + "/dist/server/bin";
-
-cpSync(binDirectory, distServerDirectory, {recursive: true});
+directoriesToCopy.forEach(([from, to]) => {
+    const fromURL = new URL(currentDir);
+    fromURL.pathname += from;
+    const toURL = new URL(currentDir);
+    toURL.pathname += to;
+    cpSync(fromURL, toURL, {recursive: true});
+});

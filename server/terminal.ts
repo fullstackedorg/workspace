@@ -16,9 +16,9 @@ type Session = {
 const isWin = platform() === 'win32';
 const shell = isWin ? 'powershell.exe' : '/bin/sh';
 const args  = isWin ? [] : ['-l'];
-const PATH = isWin
-    ? process.env.RUNTIME_PATH
-    : dirname(fileURLToPath(import.meta.url)) + "/bin:" + process.env.RUNTIME_PATH
+(process.env as any).PATH += isWin
+    ? ";" + dirname(fileURLToPath(import.meta.url)) + "\\bat"
+    : ":" + dirname(fileURLToPath(import.meta.url)) + "/bin";
 
 export class Terminal {
     static killTimeout = 1000 * 60 * 15 // 15 minutes
@@ -64,8 +64,7 @@ export class Terminal {
                 cwd: process.cwd(),
                 env: {
                     ...process.env,
-                    SESSION_ID,
-                    PATH
+                    SESSION_ID
                 }
             });
 
@@ -110,3 +109,8 @@ export class Terminal {
         });
     }
 }
+
+
+// C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\nodejs\;C:\Program Files\PowerShell\7\;C:\Users\CP\AppData\Local\Microsoft\WindowsApps;C:\Users\CP\.deno\bin;C:\Users\CP\AppData\Local\Programs\Python\Python311;C:\Users\CP\.dotnet\tools;C:\Users\CP\AppData\Roaming\npm
+// C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\nodejs\;C:\Program Files\PowerShell\7\;C:\Users\CP\AppData\Local\Microsoft\WindowsApps;C:\Users\CP\.deno\bin;C:\Users\CP\AppData\Local\Programs\Python\Python311;C:\Users\CP\.dotnet\tools;C:\Users\CP\AppData\Roaming\npm;C:\Users\CP\Desktop\Projets\fullstackedorg\workspace\node_modules\.bin
+// C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\nodejs\;C:\Program Files\PowerShell\7\;C:\Users\CP\AppData\Local\Microsoft\WindowsApps;C:\Users\CP\.deno\bin;C:\Users\CP\AppData\Local\Programs\Python\Python311;C:\Users\CP\.dotnet\tools;C:\Users\CP\AppData\Roaming\npm;C:\Users\CP\Desktop\Projets\fullstackedorg\workspace\node_modules\.bin
