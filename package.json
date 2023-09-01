@@ -32,7 +32,7 @@
     "@codemirror/lint": "^6.4.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.16.0",
-    "@fullstacked/build": "^0.10.5",
+    "@fullstacked/build": "^0.10.6",
     "@fullstacked/cli": "^0.10.6",
     "@fullstacked/share": "^0.10.9",
     "@fullstacked/watch": "^0.10.12",
