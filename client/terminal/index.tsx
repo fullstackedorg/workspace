@@ -64,32 +64,29 @@ class Terminal extends Component {
         this.ws.onopen = () => this.onResize();
 
         this.ws.onmessage = e => {
-            if(e.data.startsWith("SESSION_ID#")){
+            let {data} = e;
+            if(data.startsWith("SESSION_ID#")){
                 this.SESSION_ID = e.data.split("#").pop();
                 return;
             }
-            else if(e.data.startsWith("CODE#")){
+            else if(data.match(/CODE#.*/g)){
+                const command = data.match(/CODE#.*/g).at(0);
                 const codeOSS = Workspace.apps.find(app => app.title === "Code");
                 Workspace.instance.addWindow({
                     ...codeOSS,
-                    element: () => {
-                        const host = window.location.host.match(/localhost:\d\d\d\d/g)
-                            ? `localhost:8888`
-                            : `8888.${window.location.host}`;
-
-                        const url = new URL(`${window.location.protocol}//${host}`);
-                        return <iframe src={url.toString() + `?folder=${e.data.split("#").pop()}`} />
+                    args: {
+                        folder: command.split("#").pop()
                     }
                 });
-                return;
+                data = data.replace(/CODE#.*/g, "").trim();
             }
             // else if(e.data.startsWith("OPEN#")){
             //     openExplorer(e.data.split("#").pop());
             //     this.xterm.blur();
             //     return;
             // }
-            else if(e.data.startsWith("GITHUB_DEVICE_FLOW#")){
-                const [_, verification_uri, device_code] = e.data.split("#");
+            else if(data.startsWith("GITHUB_DEVICE_FLOW#")){
+                const [_, verification_uri, device_code] = data.split("#");
 
                 // const mount = document.createElement("div");
                 // this.githubDeviceFlow = createWindow("GitHub Auth", {mount});
@@ -100,13 +97,13 @@ class Terminal extends Component {
                 // focusWindow(this.githubDeviceFlow.id);
 
                 return;
-            }else if(this.githubDeviceFlow && e.data === "GITHUB_DEVICE_FLOW_DONE"){
+            }else if(this.githubDeviceFlow && data === "GITHUB_DEVICE_FLOW_DONE"){
                 this.githubDeviceFlow.winBox.close();
                 this.githubDeviceFlow = null;
                 return;
             }
 
-            this.xterm.write(e.data);
+            this.xterm.write(data);
         }
     }
 
