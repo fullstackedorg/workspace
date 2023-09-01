@@ -1,10 +1,13 @@
 {
-  "name": "@fullstacked/workspace",
+  "name": "fullstacked",
   "description": "A Cloud Workspace for Web Developer",
-  "version": "0.10.40",
+  "version": "0.11.0-alpha.6",
   "author": "cplepage",
   "dependencies": {
     "node-pty": "^0.10.1"
+  },
+  "bin": {
+    "fullstacked": "index.js"
   },
   "scripts": {
     "start": "fsc watch",
@@ -13,7 +16,8 @@
     "prepack": "npm run build",
     "docker": "docker build . -t fullstackedorg/workspace:latest",
     "predocker:dev": "npm run build",
-    "docker:dev": "docker build . -f Dockerfile-dev -t fullstackedorg/workspace:dev"
+    "docker:dev": "docker build . -f Dockerfile-dev -t fullstackedorg/workspace:dev",
+    "postinstall": "cd code-oss && npm i --legacy-peer-deps"
   },
   "type": "module",
   "devDependencies": {
@@ -29,10 +33,11 @@
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.16.0",
     "@fullstacked/build": "^0.10.5",
-    "@fullstacked/cli": "^0.10.4",
+    "@fullstacked/cli": "^0.10.6",
     "@fullstacked/share": "^0.10.9",
     "@fullstacked/watch": "^0.10.12",
     "@fullstacked/webapp": "^0.10.3",
+    "@neutralinojs/neu": "^9.6.1",
     "@types/cookie": "^0.5.1",
     "@types/http-proxy": "^1.17.11",
     "@types/js-cookie": "^3.0.3",
@@ -45,9 +50,9 @@
     "fast-querystring": "^1.1.2",
     "http-proxy": "^1.18.1",
     "js-cookie": "^3.0.5",
+    "open": "^9.1.0",
     "rc-tree": "^5.7.9",
     "react-dom": "^18.2.0",
-    "winbox": "^0.2.82",
     "ws": "^8.13.0",
     "xterm": "^5.2.1",
     "xterm-addon-fit": "^0.7.0",

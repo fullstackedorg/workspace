@@ -13,6 +13,8 @@ import Share from "@fullstacked/share";
 import randStr from "@fullstacked/cli/utils/randStr"
 import {Terminal} from "./terminal";
 import {initInternalRPC} from "./internal";
+import open from "open";
+import {platform} from "os";
 
 const server = new Server();
 
@@ -56,6 +58,9 @@ if(process.env.DOCKER_HOST !== undefined && !WATCH_MODE)
 
 server.start();
 console.log(`FullStacked running at http://localhost:${server.port}`);
+if(process.env.CLI_START){
+    open(`http://localhost:${server.port}`);
+}
 
 export default server.serverHTTP;
 
@@ -103,6 +108,14 @@ export const API = {
             })
         ]);
     },
+    currentDir(){
+        let path = process.cwd();
+        if(platform() !== "win32")
+            return path;
+
+        // windows
+        return path.split(":").pop().replace(/\\/g, "/");
+    },
     readDir(dirPath: string){
         return fs.readdirSync(dirPath).map(name => {
             const path = (dirPath === "." ? "" : (dirPath + "/")) + name;
@@ -142,6 +155,9 @@ export const API = {
             session.ws.close();
             terminal.sessions.delete(SESSION_ID);
         }
+    },
+    openBrowserNative(url: string){
+        open(url);
     }
 }
 

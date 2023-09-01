@@ -13,8 +13,12 @@ type Session = {
     data: string[]
 }
 
-const shell = platform() === 'win32' ? 'powershell.exe' : '/bin/sh';
-const args  = platform() === 'win32' ? [] : ['-l'];
+const isWin = platform() === 'win32';
+const shell = isWin ? 'powershell.exe' : '/bin/sh';
+const args  = isWin ? [] : ['-l'];
+const PATH = isWin
+    ? process.env.RUNTIME_PATH
+    : dirname(fileURLToPath(import.meta.url)) + "/bin:" + process.env.RUNTIME_PATH
 
 export class Terminal {
     static killTimeout = 1000 * 60 * 15 // 15 minutes
@@ -61,12 +65,14 @@ export class Terminal {
                 env: {
                     ...process.env,
                     SESSION_ID,
-                    PATH: dirname(fileURLToPath(import.meta.url)) + "/bin:" + process.env.PATH.replace(/%3A/g, ":")
+                    PATH
                 }
             });
 
             pty.onData((data) => {
                 const terminalSession = this.sessions.get(SESSION_ID);
+                if(!terminalSession) return;
+
                 if(terminalSession.ws.readyState === terminalSession.ws.CLOSED) {
                     terminalSession.data.push(data);
                 }else{

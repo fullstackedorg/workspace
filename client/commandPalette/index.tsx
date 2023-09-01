@@ -66,7 +66,7 @@ export default class CommandPalette extends Component {
     triggerRef = createRef<HTMLDivElement>();
     triggerBB;
     initCursor;
-    deltaMovement;
+    deltaMovement = 0;
     getPos = (e: TouchEvent | MouseEvent) => {
         if(e instanceof MouseEvent)
             return {x: e.clientX, y: e.clientY};

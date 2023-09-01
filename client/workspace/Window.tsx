@@ -146,10 +146,21 @@ export default function (props: {
         props.hasIFrames(iframesIDs);
     }, []);
 
+    const currentStyle = windowRef.current?.style;
+    const currentPos = currentStyle
+        ? {
+            height: currentStyle.height,
+            width: currentStyle.width,
+            top: currentStyle.top,
+            left: currentStyle.left,
+        }
+        : {};
+
     return <div
         ref={windowRef}
         style={{
             ...props.initPos,
+            ...currentPos,
             zIndex: props.zIndex
         }}
         className={"window" + (fullscreen ? " full" : "")}
