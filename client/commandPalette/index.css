@@ -88,7 +88,7 @@
     height: 50px;
     width: 50px;
     position: fixed;
-    top: 10px;
+    top: calc(50% - 25px);
     left: calc(100% - 60px);
     padding: 9px;
     border-radius: 10px;
