@@ -6,6 +6,7 @@ type App = {
     title: string,
     icon: string,
     element: (app: App) => ReactNode,
+    args?: any,
     callbacks?: {
         onWindowResize?(): void,
         onFocus?(): void,
@@ -76,7 +77,6 @@ export class Workspace extends Component {
     checkIfInIFrames(){
         window.requestAnimationFrame(this.checkIfInIFrames.bind(this));
         if(document.activeElement.tagName === "IFRAME" && document.activeElement !== this.lastActiveElement){
-            console.log("ICICIIC")
             const iframeID = document.activeElement.getAttribute("id");
             if(!iframeID) return;
             const window = this.iframeIDsToWindow.get(iframeID);
@@ -118,14 +118,16 @@ export class Workspace extends Component {
     }
 
     render(){
+        console.log(this.state.windows);
         return <>
-            {this.state.windows.map(({id, order}, i) =>
-                <WindowElement
+            {this.state.windows.map(({id, order}, i) => {
+                console.log(id);
+                return <WindowElement
                     key={id}
                     close={() => {
                         const [{id}] = this.state.windows.splice(i, 1);
                         const app = this.activeApps.get(id);
-                        if(app?.callbacks?.onClose)
+                        if (app?.callbacks?.onClose)
                             app.callbacks.onClose();
                         this.setState({windows: [...this.state.windows]});
                     }}
@@ -133,7 +135,7 @@ export class Workspace extends Component {
                     zIndex={order}
                     didResize={() => {
                         const activeApp = this.activeApps.get(id);
-                        if(activeApp?.callbacks?.onWindowResize)
+                        if (activeApp?.callbacks?.onWindowResize)
                             activeApp.callbacks.onWindowResize();
                     }}
                     didFocus={() => this.focusWindow(this.activeApps.get(id))}
@@ -144,7 +146,8 @@ export class Workspace extends Component {
                     }}
                 >
                     {this.activeApps.get(id).element(this.activeApps.get(id))}
-                </WindowElement>)}
+                </WindowElement>
+            })}
             <div id={"move-overlay"} />
         </>;
     }

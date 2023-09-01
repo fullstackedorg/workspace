@@ -3,6 +3,7 @@ import Console from "./console";
 import Share from "./share";
 import browserIcon from "../icons/browser.svg";
 import {Workspace} from "../workspace";
+import {client} from "../client";
 
 Workspace.apps.push({
     title: "Browser",
@@ -109,6 +110,11 @@ export function Browser(props: {port?: string, path?: string}) {
             <div>
                 <a ref={eTabRef} href={"#"} target={"_blank"} onClick={e => {
                     if(!port) e.preventDefault();
+                    const url = e.currentTarget.getAttribute("href");
+                    if(url.match(/localhost:\d\d\d\d/)){
+                        client.post().openBrowserNative(url);
+                        e.preventDefault();
+                    }
                 }}>
                     <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 3}}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"

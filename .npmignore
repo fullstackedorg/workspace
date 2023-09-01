@@ -6,11 +6,17 @@
 *.tsx
 !*.d.ts
 
-/bin
+
 /client
 /server
 /pwa
-/code-oss
+/code-oss-build
+/neutralino
+/code-oss-build
+/docker
+/code-oss/bin
+/code-oss/node_modules
+/code-oss/package-lock.json
 
 cp.js
 

@@ -54,7 +54,7 @@ Neutralino.events.on("ready", async () => {
         return;
     }
 
-    fullstackedProc = await Neutralino.os.spawnProcess('node ../../index.js');
+    fullstackedProc = await Neutralino.os.spawnProcess('node ../index.js');
 
     Neutralino.events.on('spawnedProcess', (evt) => {
         if(fullstackedProc.id === evt.detail.id) {
