@@ -1,7 +1,7 @@
 FROM docker:dind
 
 # install basic tools
-RUN apk add --update make g++ nodejs npm git python3 curl vim gcompat tini \
+RUN apk add --update bash make g++ nodejs npm git python3 curl vim gcompat tini \
     krb5-dev curl-dev openssl-dev libxml2-dev sqlite-dev oniguruma-dev
 
 # Bun and Deno (and probably other binaries) glibc dependency

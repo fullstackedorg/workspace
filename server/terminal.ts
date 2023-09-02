@@ -14,7 +14,7 @@ type Session = {
 }
 
 const isWin = platform() === 'win32';
-const shell = isWin ? 'powershell.exe' : '/bin/sh';
+const shell = isWin ? 'powershell.exe' : '/bin/bash';
 const args  = isWin ? [] : ['-l'];
 process.env.PATH += isWin
     ? ";" + dirname(fileURLToPath(import.meta.url)) + "\\bat"
