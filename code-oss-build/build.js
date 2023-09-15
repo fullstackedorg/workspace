@@ -3,7 +3,7 @@ import https from "https";
 import decompress from "decompress";
 import {execSync} from "child_process";
 
-const platform = "darwin-x64";
+const platform = "linux-x64";
 const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.82.1";
 
 const file = fs.createWriteStream("vscode.zip");
