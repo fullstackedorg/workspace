@@ -5,6 +5,7 @@ import {Workspace} from "../workspace";
 export default class CommandPalette extends Component {
     static instance: CommandPalette;
     inputRef = createRef<HTMLInputElement>();
+    first = true;
     state = {
         inputValue: "",
         show: false,
@@ -13,16 +14,20 @@ export default class CommandPalette extends Component {
 
     constructor(props) {
         super(props);
-
         CommandPalette.instance = this;
     }
 
-    open(){
+    toggle(){
+        const activeApps = Workspace.instance?.getActiveApp();
+
         if(!this.state.show)
             this.setState({show: true})
+        else if(!activeApps || activeApps.length <= 1) {
+            this.setState({show: false});
+            return;
+        }
 
-        const activeApps = Workspace.instance?.getActiveApp();
-        if(activeApps && activeApps.length){
+        if(activeApps?.length){
             let nextFocusIndex = this.state.focus === null
                 ? 0
                 : activeApps.map(({id}) => id).indexOf(this.state.focus) + 1;
@@ -38,7 +43,7 @@ export default class CommandPalette extends Component {
         window.addEventListener("keydown", e => {
             if(e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey) && e.shiftKey){
                 e.preventDefault();
-                this.open();
+                this.toggle();
             }else if(e.key === "Escape" && this.state.show) {
                 this.setState({show: false})
             }
@@ -59,8 +64,10 @@ export default class CommandPalette extends Component {
     componentDidUpdate(prevProps: Readonly<{}>, prevState, snapshot?: any) {
         if(!prevState.show && this.state.show)
             this.inputRef.current.focus();
-        else if(prevState.show && !this.state.show)
+        else if(prevState.show && !this.state.show) {
+            this.first = false;
             this.setState({focus: null});
+        }
     }
 
     triggerRef = createRef<HTMLDivElement>();
@@ -158,6 +165,9 @@ export default class CommandPalette extends Component {
             <div id={"command-palette"} style={{display: this.state.show ? "flex" : "none"}}>
                 <div onClick={() => this.setState({show: false})} />
                 <div>
+                    {this.first && <div className={"hint"}>
+                        [ cmd/ctrl ] + [ shift ] + [ k ] to toggle
+                    </div>}
                     <form onSubmit={submit}
                           style={!this.state.inputValue ? {opacity: 0, height: 0} : {}}>
                         <input ref={this.inputRef} value={this.state.inputValue}

@@ -50,6 +50,7 @@ export class Workspace extends Component {
         super(props);
 
         Workspace.instance = this;
+        (window as any).Workspace = Workspace;
         this.checkIfInIFrames();
     }
 
@@ -118,10 +119,8 @@ export class Workspace extends Component {
     }
 
     render(){
-        console.log(this.state.windows);
         return <>
             {this.state.windows.map(({id, order}, i) => {
-                console.log(id);
                 return <WindowElement
                     key={id}
                     close={() => {

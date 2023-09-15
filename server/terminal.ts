@@ -13,8 +13,13 @@ type Session = {
     data: string[]
 }
 
-const isWin = platform() === 'win32';
-const shell = isWin ? 'powershell.exe' : '/bin/bash';
+const isWin = platform() === "win32";
+const isMac = platform() === "darwin";
+const shell = isWin
+    ? "powershell.exe"
+    : isMac
+        ? "/bin/zsh"
+        : "/bin/bash";
 const args  = isWin ? [] : ['-l'];
 process.env.PATH += isWin
     ? ";" + dirname(fileURLToPath(import.meta.url)) + "\\bat"

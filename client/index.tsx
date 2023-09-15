@@ -9,6 +9,10 @@ import logo from "./icons/fullstacked-logo.svg";
 import {client} from "./client";
 import logoutIcon from "./icons/log-out.svg";
 
+window.addEventListener("keydown", e => {
+    if(e.key === "r" && (e.metaKey || e.ctrlKey))
+        e.preventDefault();
+});
 
 document.body.style.backgroundImage = `url(${logo})`;
 
@@ -61,7 +65,7 @@ if(Cookies.get("fullstackedAccessToken")){
             client.get().logout().then(() => {
                 window.location.href = "/?logout=1";
             });
-            return <>Logging out...</>
+            return <div className={"logout"}>Logging out...</div>
         }
     })
 }

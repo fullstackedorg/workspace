@@ -1,14 +1,13 @@
 import {EditorView, keymap} from "@codemirror/view";
 import {indentWithTab} from "@codemirror/commands";
 import {basicSetup} from "codemirror";
-import {client} from "../client";
 import {linter} from "@codemirror/lint";
 import {oneDark} from "@codemirror/theme-one-dark";
 import { StreamLanguage, LanguageSupport } from "@codemirror/language";
 import React, {useEffect, useRef} from "react";
 
 
-async function initEditor(filename: string, container: HTMLDivElement) {
+async function initEditor(client, filename: string, container: HTMLDivElement) {
     // container.parentElement.style.backgroundColor = "#282c34";
 
     // switch delete line keybinding Shift-Mod-k for Shift-Mod-d
@@ -77,10 +76,10 @@ async function initEditor(filename: string, container: HTMLDivElement) {
         client.put().updateFile(filename, editor.state.doc.toString()));
 }
 
-export default function (props: {filename: string}) {
+export default function (props: {filename: string, client}) {
     const containerRef = useRef<HTMLDivElement>();
 
-    useEffect(() => {initEditor(props.filename, containerRef.current)}, []);
+    useEffect(() => {initEditor(props.client, props.filename, containerRef.current)}, []);
 
     return <div ref={containerRef} style={{height: "100%"}} />
 }

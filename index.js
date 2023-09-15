@@ -2,13 +2,24 @@
 import {fork} from "child_process";
 import {fileURLToPath} from "url";
 import {dirname} from "path"
+import {Socket} from "net";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const lastArg = process.argv.at(-1);
 
-fork(`${currentDir}/dist/server/index.mjs`, {
+const portCodeOSS = await getNextAvailablePort(10000);
+fork(`${currentDir}/code-oss/out/server-main.js`, [
+    "--without-connection-token",
+    "--host", "0.0.0.0",
+    "--port", portCodeOSS.toString()
+], {stdio: "ignore"});
+
+const portFullStacked = await getNextAvailablePort(8000);
+fork(`${currentDir}/dist/server/index.mjs`,  {
     env: {
         ...process.env,
+        FULLSTACKED_PORT: portFullStacked,
+        CODE_OSS_PORT: portCodeOSS,
         FULLSTACKED_ENV: "production",
         RUNTIME_PATH: process.env.PATH,
         CLI_START: lastArg.endsWith("fullstacked") || lastArg.endsWith("fullstacked\\index.js")
@@ -17,8 +28,36 @@ fork(`${currentDir}/dist/server/index.mjs`, {
     }
 });
 
-fork(`${currentDir}/code-oss/out/server-main.js`, [
-    "--without-connection-token",
-    "--host", "0.0.0.0",
-    "--port", "8888"
-]);
+
+function getNextAvailablePort(port) {
+    return new Promise((resolve, reject) => {
+        const socket = new Socket();
+
+        const timeout = () => {
+            resolve(port);
+            socket.destroy();
+        };
+
+        const next = () => {
+            socket.destroy();
+            resolve(getNextAvailablePort(++port));
+        };
+
+        setTimeout(timeout, 200);
+        socket.on("timeout", timeout);
+
+        socket.on("connect", function () {
+            next();
+        });
+
+        socket.on("error", function (exception) {
+            if (exception.code !== "ECONNREFUSED") {
+                reject(exception);
+            } else {
+                timeout();
+            }
+        });
+
+        socket.connect(port, "0.0.0.0");
+    });
+}

@@ -77,51 +77,6 @@ authPage.addInHead(`<style>
 authPage.addInBody(`
     <img src="/pwa/app-icons/app-icon.png" />
     <script type="module">
-        function getCookie(cname) {
-            let name = cname + "=";
-            let decodedCookie = decodeURIComponent(document.cookie);
-            let ca = decodedCookie.split(';');
-            for(let i = 0; i <ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') {
-                    c = c.substring(1);
-            }
-            if (c.indexOf(name) === 0) {
-                return c.substring(name.length, c.length);
-                }
-            }
-            return "";
-        }
-        async function logout(message){
-            "${process.env.SESSION_COOKIES}".split(",").forEach(cookieName => {
-                window.sessionStorage.setItem(cookieName, getCookie(cookieName));
-                document.cookie = cookieName + "=" +
-                    ";path=/" + 
-                    ";domain=" + window.location.hostname +
-                    ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
-            });
-            
-            if("${process.env.REVOKE_URL ?? ""}") {
-                await fetch("${process.env.REVOKE_URL}", {
-                    method: "POST",
-                    credentials: "include"
-                });
-            }
-            
-            if(message){
-                const msg = document.createElement("div");
-                msg.innerHTML = message;
-                msg.style.marginBottom = "10px";
-                document.body.append(msg);
-            }else{
-                const button = document.createElement("button");
-                button.addEventListener("click", () => window.location.reload());
-                button.classList.add("login-btn");
-                button.innerHTML = \`${arrow}\`;
-                document.body.append(button);
-            }
-        }
-        
         async function tryRefreshingToken(){
             let response, payload;
             try{
@@ -132,9 +87,12 @@ authPage.addInBody(`
             }
             
             if(payload === "Bonjour")
-                window.location.reload();
-            else
-                logout(payload);
+                return window.location.reload();
+            
+            const msg = document.createElement("div");
+            msg.innerHTML = payload;
+            msg.style.marginBottom = "10px";
+            document.body.append(msg);
         }
         
         const url = new URL(window.location.href);
@@ -142,7 +100,9 @@ authPage.addInBody(`
             url.searchParams.delete("logout");
             window.history.replaceState(null, null, url.toString());
             
-            logout();
+            ${process.env.LOGOUT_REDIRECT
+                ? `window.location.href = "${process.env.LOGOUT_REDIRECT}";`
+                : ""}
         }else{
             tryRefreshingToken();
         }
@@ -151,23 +111,24 @@ authPage.addInBody(`
 export default {
     html: authPage,
     validator: async req => {
-        let response;
+        let response, authorization;
         try{
             response = await fetch(process.env.AUTH_URL, {
-                method: "POST",
+                method: "GET",
                 headers: {
-                    authorization: process.env.AUTH_SECRET,
                     cookie: req.headers.cookie
                 }
             });
 
+            authorization = await response.text();
+
             if(response.status >= 400)
-                return new Error(await response.text());
+                return new Error(authorization);
         }catch (e){
             console.log(e);
             return e;
         }
 
-        return true;
+        return !!authorization;
     }
 }

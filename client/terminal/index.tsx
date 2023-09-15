@@ -9,6 +9,8 @@ import { Workspace } from "../workspace";
 import terminalIcon from "../icons/terminal.svg";
 import {Browser} from "../browser";
 
+const inDocker = await client.get(true).isInDockerRuntime();
+
 class Terminal extends Component {
     SESSION_ID: string;
     githubDeviceFlow;
@@ -21,7 +23,6 @@ class Terminal extends Component {
             const url = new URL(uri);
 
             if(e.ctrlKey || e.metaKey){
-                const div = document.createElement("div");
                 const browserApp = Workspace.apps.find(({title}) => title === "Browser");
                 Workspace.instance.addWindow({
                     ...browserApp,
@@ -30,9 +31,12 @@ class Terminal extends Component {
                 return;
             }
 
-            url.hostname = url.port + "." + window.location.hostname;
-            url.port = window.location.port;
-            url.protocol = window.location.protocol;
+            if(inDocker){
+                url.hostname = url.port + "." + window.location.hostname;
+                url.port = window.location.port;
+                url.protocol = window.location.protocol;
+            }
+
             uri = url.toString();
         }
 
@@ -72,6 +76,7 @@ class Terminal extends Component {
             else if(data.match(/CODE#.*/g) && data.split("\n").length < 3){
                 const command = data.match(/CODE#.*/g).at(0);
                 const codeOSS = Workspace.apps.find(app => app.title === "Code");
+                if(!codeOSS) return;
                 Workspace.instance.addWindow({
                     ...codeOSS,
                     args: {

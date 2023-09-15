@@ -1,0 +1,31 @@
+.tabs {
+    color: white;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    text-align: center;
+    background-color: #4b5567;
+    border-radius: 5px;
+}
+
+.tabs > div {
+    flex: 1;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.tabs > div.active {
+    background-color: #2d4c86;
+}
+
+
+.explorer-with-tabs{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.explorer-with-tabs > div:last-child {
+    flex: 1;
+    overflow: auto;
+}
