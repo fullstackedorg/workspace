@@ -3,8 +3,8 @@ import https from "https";
 import decompress from "decompress";
 import {execSync} from "child_process";
 
-const platform = "linux-x64";
-const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.81.1";
+const platform = "darwin-x64";
+const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.82.1";
 
 const file = fs.createWriteStream("vscode.zip");
 await new Promise(resolve => {
@@ -34,6 +34,14 @@ productJSON.extensionsGallery = {
 fs.writeFileSync("vscode/product.json", JSON.stringify(productJSON, null, 2));
 
 fs.appendFileSync("vscode/src/vs/workbench/browser/actions/windowActions.ts", fs.readFileSync("blurFocus.js").toString());
+
+const themeConfigsFile = "vscode/src/vs/workbench/services/themes/common/themeConfiguration.ts";
+const themeConfigs = fs.readFileSync(themeConfigsFile).toString();
+const codeBlockMatch = themeConfigs.match(/detectColorSchemeSettingSchema(.|\r|\n)*?default: false\n};/);
+if(codeBlockMatch){
+    const updatedCodeBlock = codeBlockMatch[0].replace("default: false", "default: true");
+    fs.writeFileSync(themeConfigsFile, themeConfigs.replace(codeBlockMatch[0], updatedCodeBlock));
+}
 
 execSync(`cd vscode && yarn && yarn gulp vscode-reh-web-${platform}-min`, {stdio: "inherit"});
 

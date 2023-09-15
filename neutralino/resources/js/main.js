@@ -33,14 +33,12 @@ function onWindowClose() {
 
 Neutralino.init();
 
-function loadIframe(){
-    console.log("ici")
+function loadIframe(url){
     const image = document.querySelector("img");
     if(!image) return;
     setTimeout(() => {
-        console.log("ici")
         const iframe = document.createElement("iframe");
-        iframe.src = "http://localhost:8000";
+        iframe.src = url;
         image.replaceWith(iframe);
     }, 2000);
 }
@@ -54,14 +52,16 @@ Neutralino.events.on("ready", async () => {
         return;
     }
 
-    fullstackedProc = await Neutralino.os.spawnProcess('node ../index.js');
+    fullstackedProc = await Neutralino.os.spawnProcess('node ../index');
 
     Neutralino.events.on('spawnedProcess', (evt) => {
         if(fullstackedProc.id === evt.detail.id) {
             switch(evt.detail.action) {
                 case 'stdOut':
                     console.log(evt.detail.data);
-                    loadIframe();
+                    if(evt.detail.data.match(/FullStacked.*http:\/\/localhost:\d\d\d\d/)){
+                        loadIframe(evt.detail.data.match(/http:\/\/localhost:\d\d\d\d/)[0]);
+                    }
                     break;
                 case 'stdErr':
                     console.error(evt.detail.data);

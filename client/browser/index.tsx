@@ -17,6 +17,9 @@ declare global {
         hasCredentialless: boolean
     }
 }
+
+const inDocker = await client.get(true).isInDockerRuntime();
+
 export function Browser(props: {port?: string, path?: string}) {
     const [openShare, setOpenShare] = useState(false);
     const openShareRef = useRef<boolean>();
@@ -66,7 +69,6 @@ export function Browser(props: {port?: string, path?: string}) {
     }, []);
 
     const load = () => {
-        console.log(path)
         let url = new URL(window.location.href);
         url.searchParams.forEach((value, param) =>
             url.searchParams.delete(param));
@@ -78,7 +80,7 @@ export function Browser(props: {port?: string, path?: string}) {
         // webcontainer setup
         if(url.host.includes("-8000-")){
             urlSubDomain.host = urlSubDomain.host.replace(/-8000-/, `-${port}-`);
-        }else if(url.host.match(/localhost:\d\d\d\d/)){
+        }else if(!inDocker && url.host.match(/localhost:\d\d\d\d/)){
             urlSubDomain.host = "localhost:" + port;
         }else{
             urlSubDomain.host = port + "." + urlSubDomain.host;
@@ -111,7 +113,7 @@ export function Browser(props: {port?: string, path?: string}) {
                 <a ref={eTabRef} href={"#"} target={"_blank"} onClick={e => {
                     if(!port) e.preventDefault();
                     const url = e.currentTarget.getAttribute("href");
-                    if(url.match(/localhost:\d\d\d\d/)){
+                    if(!inDocker && url.match(/localhost:\d\d\d\d/)){
                         client.post().openBrowserNative(url);
                         e.preventDefault();
                     }
@@ -123,21 +125,22 @@ export function Browser(props: {port?: string, path?: string}) {
                         </svg>
                     </button>
                 </a>
-                <span ref={shareTooltipRef} style={{position: "relative"}}>
-                    <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 2}} onClick={() => {
-                        if(!port) return;
-                        setOpenShare(true)
-                    }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
-                             stroke="currentColor" >
-                            <path strokeLinecap="round" strokeLinejoin="round"
-                                  d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15"/>
-                        </svg>
-                    </button>
-                    <div className={"tooltip"} style={{display: openShare ? "block" : "none"}}>
-                        <Share port={port} close={() => setOpenShare(false)} />
-                    </div>
-                </span>
+
+                {/*<span ref={shareTooltipRef} style={{position: "relative"}}>*/}
+                {/*    <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 2}} onClick={() => {*/}
+                {/*        if(!port) return;*/}
+                {/*        setOpenShare(true)*/}
+                {/*    }}>*/}
+                {/*        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"*/}
+                {/*             stroke="currentColor" >*/}
+                {/*            <path strokeLinecap="round" strokeLinejoin="round"*/}
+                {/*                  d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15"/>*/}
+                {/*        </svg>*/}
+                {/*    </button>*/}
+                {/*    <div className={"tooltip"} style={{display: openShare ? "block" : "none"}}>*/}
+                {/*        <Share port={port} close={() => setOpenShare(false)} />*/}
+                {/*    </div>*/}
+                {/*</span>*/}
 
             </div>
             {/*<small>*/}

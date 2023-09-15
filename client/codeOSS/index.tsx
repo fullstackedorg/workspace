@@ -1,18 +1,20 @@
 import {client} from "../client";
 import {Workspace} from "../workspace";
 import CodeOSSIcon from "../icons/code-oss.svg";
-import React, {createRef} from "react";
+import React from "react";
 import CommandPalette from "../commandPalette";
 
-if(await client.get(true).hasCodeOSS()){
+const portCodeOSS = await client.get(true).portCodeOSS();
+if(portCodeOSS){
+    const inDocker = await client.get(true).isInDockerRuntime();
     Workspace.apps.push({
         title: "Code",
         icon: CodeOSSIcon,
         order: 3,
         element: ({args: {folder}}) => {
-            const host = window.location.host.match(/localhost:\d\d\d\d/g)
-                ? `localhost:8888`
-                : `8888.${window.location.host}`;
+            const host = !inDocker && window.location.host.match(/localhost:\d\d\d\d/g)
+                ? `localhost:${portCodeOSS}`
+                : `${portCodeOSS}.${window.location.host}`;
 
             const url = new URL(`${window.location.protocol}//${host}`);
             url.search = `folder=${folder}`;
@@ -27,9 +29,8 @@ if(await client.get(true).hasCodeOSS()){
                 let openCommandPalette = true;
                 const blurEvent = () => {
                     setTimeout(() => {
-                        console.log(openCommandPalette)
                         if(openCommandPalette)
-                            CommandPalette.instance.open();
+                            CommandPalette.instance.toggle();
                     }, 100);
                     window.removeEventListener("focus", blurEvent);
                 }

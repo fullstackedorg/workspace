@@ -13,10 +13,6 @@ RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/s
     /usr/glibc-compat/bin/ldd /lib/ld-linux-x86-64.so.2 && \
     rm -rf glibc-2.35-r1.apk glibc-bin-2.35-r1.apk
 
-# add code-oss package
-COPY code-oss/vscode-reh-web-linux-x64 /code-oss
-RUN cd /code-oss && npm i --legacy-peer-deps
-
 # github device flow setup
 COPY github-credential.js /root/github-credential
 RUN chmod +x /root/github-credential
@@ -27,15 +23,19 @@ COPY dist /fullstacked/dist
 COPY index.js /fullstacked/index.mjs
 RUN cd /fullstacked && npm i node-pty
 
+# add code-oss package
+COPY code-oss /fullstacked/code-oss
+RUN cd /fullstacked/code-oss && npm ci --legacy-peer-deps
+
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
 WORKDIR /home
 
 RUN rm -rf /home/dockremap && \
     npm config set prefix '/home/.npm/' && \
-    echo "export PATH=\$PATH:/home/.npm/bin" >> /etc/profile && \
+    echo "export PATH=\$PATH:/home/.npm/bin:/fullstacked/dist/server/bin" >> /etc/profile && \
     echo "export DOCKER_HOST=\"\"" >> /etc/profile && \
     echo "export PS1='\w \$ '" >> /etc/profile && \
-    mkdir -p /home/.npm/lib
+    echo "export DOCKER_RUNTIME=1" >> /etc/profile
 
-CMD ["tini", "--", "/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & node /code-oss/out/server-main.js --without-connection-token --host 0.0.0.0 --port 8888 & DOCKER_HOST=\"\" node /fullstacked/index.mjs"]
+CMD ["tini", "--", "/bin/sh", "-c", "/usr/local/bin/dockerd-entrypoint.sh & DOCKER_RUNTIME=1 node /fullstacked/index.mjs"]

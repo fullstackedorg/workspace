@@ -80,6 +80,15 @@
     font-weight: bold;
     font-size: smaller;
 }
+#command-palette .hint {
+    font-weight: bold;
+    font-size: small;
+    position: absolute;
+    top: -24px;
+    left: 12px;
+    color: white;
+    opacity: 0.7;
+}
 
 
 #command-palette-trigger {
@@ -103,3 +112,4 @@
     width: 100%;
     z-index: 9999998;
 }
+

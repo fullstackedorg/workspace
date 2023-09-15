@@ -1,7 +1,5 @@
 import Server from '@fullstacked/webapp/server';
-import fs from "fs";
-import {extname} from "path";
-import createListener from "@fullstacked/webapp/rpc/createListener";
+import createListener, {createHandler} from "@fullstacked/webapp/rpc/createListener";
 import {WebSocketServer} from "ws";
 import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
@@ -15,8 +13,14 @@ import {Terminal} from "./terminal";
 import {initInternalRPC} from "./internal";
 import open from "open";
 import {platform} from "os";
+import {LocalFS} from "./Explorer/local-fs";
+import {CloudFS} from "./Explorer/cloud-fs";
+import fs from "fs";
 
 const server = new Server();
+
+if(process.env.FULLSTACKED_PORT)
+    server.port = parseInt(process.env.FULLSTACKED_PORT);
 
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
@@ -29,6 +33,14 @@ server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="Fu
 server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
+
+const injectionFileURL = new URL(import.meta.url);
+const pathComponents = injectionFileURL.pathname.split("/");
+pathComponents.splice(-1, 1, "injection.html")
+injectionFileURL.pathname = pathComponents.join("/");
+if(fs.existsSync(injectionFileURL)){
+    server.pages["/"].addInBody(fs.readFileSync(injectionFileURL).toString());
+}
 
 server.addListener({
     prefix: "global",
@@ -68,24 +80,21 @@ export const API = {
     ping(){
         return (Math.random() * 100000).toFixed(0);
     },
-    papercups(){
-        return {
-            accountId: process.env.PAPERCUPS_ACCOUNT_ID,
-            publicKey: process.env.PAPERCUPS_PUBLIC_KEY,
-            token: process.env.PAPERCUPS_TOKEN,
-            inbox: process.env.PAPERCUPS_INBOX,
-            baseUrl: process.env.PAPERCUPS_BASE_URL
-        };
-    },
-    async hasCodeOSS(){
+    async portCodeOSS(){
+        if(!process.env.CODE_OSS_PORT)
+            return null;
+
         try{
-           await fetch("http://0.0.0.0:8888");
+           await fetch(`http://0.0.0.0:${process.env.CODE_OSS_PORT}`);
         }catch (e){
-            return false
+            return null;
         }
-        return true;
+        return process.env.CODE_OSS_PORT;
     },
-    logout(this: {req: IncomingMessage, res: ServerResponse}){
+    isInDockerRuntime(){
+        return process.env.DOCKER_RUNTIME === "1";
+    },
+    async logout(this: {req: IncomingMessage, res: ServerResponse}){
         const cookies = cookie.parse(this.req.headers.cookie ?? "");
 
         if(auth){
@@ -107,31 +116,23 @@ export const API = {
                 expires: new Date(0)
             })
         ]);
+
+        if(process.env.REVOKE_URL){
+            await fetch(process.env.REVOKE_URL, {
+                headers: {
+                    cookie: this.req.headers.cookie
+                }
+            })
+        }
     },
     currentDir(){
         let path = process.cwd();
-        if(platform() !== "win32")
-            return path;
 
-        // windows
-        return path.split(":").pop().replace(/\\/g, "/");
-    },
-    readDir(dirPath: string){
-        return fs.readdirSync(dirPath).map(name => {
-            const path = (dirPath === "." ? "" : (dirPath + "/")) + name;
-            return {
-                name,
-                path,
-                extension: extname(name),
-                isDirectory: fs.statSync(path).isDirectory(),
-            }
-        });
-    },
-    getFileContents(fileName: string){
-        return fs.readFileSync(fileName).toString();
-    },
-    updateFile(filename: string, contents: string){
-        fs.writeFileSync(filename, contents);
+        //windows
+        if(platform() === "win32")
+            return path.split(":").pop().replace(/\\/g, "/");
+
+        return path;
     },
     share(port: string, password: string){
         const share = new Share();
@@ -162,6 +163,16 @@ export const API = {
 }
 
 server.addListener(createListener(API));
+
+server.addListener({
+    prefix: "/local-fs",
+    handler: createHandler(LocalFS)
+});
+
+server.addListener({
+    prefix: "/cloud-fs",
+    handler: createHandler(CloudFS)
+});
 
 const shareWSS = new WebSocketServer({noServer: true});
 const activeShare = new Set<Share>();

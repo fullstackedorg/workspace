@@ -406,3 +406,13 @@ button.danger:active {
 .cm-editor {
     min-height: 100%;
 }
+
+.logout {
+    color: white;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
