@@ -25,7 +25,9 @@ RUN cd /fullstacked && npm i node-pty
 
 # add code-oss package
 COPY code-oss /fullstacked/code-oss
-RUN cd /fullstacked/code-oss && npm ci --legacy-peer-deps
+RUN cd /fullstacked/code-oss &&  \
+    rm -rf /fullstacked/code-oss/node_modules /fullstacked/code-oss/package-lock.json && \
+    npm i --legacy-peer-deps
 
 # make /home the user root folder
 RUN sed -i 's/\/root:\/bin\/ash/\/home:\/bin\/ash/g' /etc/passwd
