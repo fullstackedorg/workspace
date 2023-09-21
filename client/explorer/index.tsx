@@ -22,11 +22,9 @@ function Explorers() {
     </div>
 }
 
-const inDocker = await client.get(true).isInDockerRuntime();
-
 Workspace.apps.push({
     title: "Explorer",
     icon: explorerIcon,
     order: 1,
-    element: () => inDocker ? <Local /> : <Explorers />
+    element: () => <Explorers />
 })

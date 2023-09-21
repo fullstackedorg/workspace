@@ -30,7 +30,7 @@ export default class CommandPalette extends Component {
         if(activeApps?.length){
             let nextFocusIndex = this.state.focus === null
                 ? 0
-                : activeApps.map(({id}) => id).indexOf(this.state.focus) + 1;
+                : activeApps.findIndex(({id}) => id === this.state.focus) + 1;
             if(nextFocusIndex >= activeApps.length)
                 nextFocusIndex = 0;
 

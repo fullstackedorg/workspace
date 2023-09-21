@@ -97,7 +97,7 @@ authPage.addInBody(`
         
         const url = new URL(window.location.href);
         if(url.searchParams.get("logout")){
-            url.searchParams.delete("logout");
+            url.search = "";
             window.history.replaceState(null, null, url.toString());
             
             ${process.env.LOGOUT_REDIRECT

@@ -52,41 +52,6 @@ iframe {
     z-index: 100;
 }
 
-.rc-tree-list {
-    color: #ced9ec;
-}
-
-.rc-tree-switcher {
-    display: none!important;
-}
-
-.rc-tree-treenode {
-    display: flex;
-}
-
-.rc-tree-node-content-wrapper{
-    padding: 0 5px!important;
-    flex-grow: 1;
-}
-
-.rc-tree-node-selected {
-    background-color: transparent!important;
-    box-shadow: none!important;
-    border-radius: 5px;
-}
-
-.rc-tree-treenode-selected {
-    background-color: #0a85b5 !important;
-    color: white;
-    box-shadow: none!important;
-    border-radius: 5px;
-}
-
-.rc-tree-treenode:nth-child(even){
-    background-color: rgba(0,0,0,0.2);
-    border-radius: 5px;
-}
-
 .background {
     position: fixed;
     height: 100%;
@@ -330,6 +295,10 @@ button {
     text-decoration: none;
     display: inline-block;
     line-height: 1;
+}
+
+button.small {
+    padding: 2px 4px;
 }
 
 button:hover {

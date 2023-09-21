@@ -8,12 +8,13 @@ import GithubDeviceFlow from "./github-device-flow";
 import { Workspace } from "../workspace";
 import terminalIcon from "../icons/terminal.svg";
 import {Browser} from "../browser";
+import githubLogo from "./github.svg";
 
 const inDocker = await client.get(true).isInDockerRuntime();
 
 class Terminal extends Component {
     SESSION_ID: string;
-    githubDeviceFlow;
+    githubDeviceFlowWindowId;
     ws: WebSocket;
     xtermRef = createRef<HTMLDivElement>();
     xterm = new Xterm();
@@ -93,18 +94,18 @@ class Terminal extends Component {
             else if(data.startsWith("GITHUB_DEVICE_FLOW#")){
                 const [_, verification_uri, device_code] = data.split("#");
 
-                // const mount = document.createElement("div");
-                // this.githubDeviceFlow = createWindow("GitHub Auth", {mount});
-                // createRoot(mount).render(<GithubDeviceFlow
-                //     verificationUri={verification_uri}
-                //     deviceCode={device_code}
-                // />)
-                // focusWindow(this.githubDeviceFlow.id);
-
+                this.githubDeviceFlowWindowId = Workspace.instance.addWindow({
+                    title: "GitHub",
+                    icon: githubLogo,
+                    element: app => <GithubDeviceFlow
+                        verificationUri={verification_uri}
+                        deviceCode={device_code}
+                    />
+                });
                 return;
-            }else if(this.githubDeviceFlow && data === "GITHUB_DEVICE_FLOW_DONE"){
-                this.githubDeviceFlow.winBox.close();
-                this.githubDeviceFlow = null;
+            }else if(this.githubDeviceFlowWindowId && data === "GITHUB_DEVICE_FLOW_DONE"){
+                const activeApp = Workspace.instance.activeApps.get(this.githubDeviceFlowWindowId);
+                Workspace.instance.removeWindow(activeApp);
                 return;
             }
 
@@ -123,13 +124,12 @@ class Terminal extends Component {
         }
     }
 
+    pasteInterval;
     componentDidMount() {
         this.xterm.loadAddon(this.fitAddon);
         this.xterm.loadAddon(this.webLinks);
         this.xterm.open(this.xtermRef.current);
         this.xterm.focus();
-
-        this.xterm.textarea.addEventListener("keypress", console.log)
 
         this.xterm.onKey(({key, domEvent}) => {
             // issue with ctrl+c on safari mobile
@@ -143,15 +143,23 @@ class Terminal extends Component {
             //     debugBinaryValues.push(key[i].charCodeAt(0).toString(16));
             // }
             // console.log(debugBinaryValues)
-
+            if(this.pasteInterval)
+                clearInterval(this.pasteInterval);
+            this.pasteInterval = null;
             this.ws.send(key);
         });
 
         this.xterm.attachCustomKeyEventHandler((arg) => {
             if ((arg.metaKey || arg.ctrlKey) && arg.code === "KeyV" && arg.type === "keydown") {
-                navigator.clipboard.readText().then(text => {
-                    this.ws.send(text)
-                });
+                this.pasteInterval = setInterval(() => {
+                    if(this.xterm.textarea.value.trim()){
+                        this.ws.send(this.xterm.textarea.value);
+                        this.xterm.textarea.value = "";
+                        clearInterval(this.pasteInterval);
+                        this.pasteInterval = null;
+                    }
+                }, 10);
+                return false;
             }
             return true;
         });

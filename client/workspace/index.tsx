@@ -58,7 +58,10 @@ export class Workspace extends Component {
         const id = Math.floor(Math.random() * 100000).toString();
 
         (app as ActiveApp).id = id;
-        this.activeApps.set(id, (app as ActiveApp));
+        this.activeApps.set(id, {
+            ...app,
+            id
+        });
 
         const order = this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1;
 
@@ -72,6 +75,15 @@ export class Workspace extends Component {
             ]
         }, () => {this.focusWindow((app as ActiveApp))});
 
+        return id;
+    }
+
+    removeWindow(activeApp: ActiveApp){
+        const index = this.state.windows.findIndex(window => window.id === activeApp.id);
+        this.state.windows.splice(index, 1);
+        if (activeApp?.callbacks?.onClose)
+            activeApp.callbacks.onClose();
+        this.setState({windows: [...this.state.windows]});
     }
 
     lastActiveElement;
@@ -93,7 +105,9 @@ export class Workspace extends Component {
     focusWindow(window: ActiveApp){
         if(window.id === this.topActiveApp?.id) return;
 
-        const i = this.state.windows.map(({id}) => id).indexOf(window.id);
+        const i = this.state.windows.findIndex(({id}) => id === window.id);
+        if(i < 0) return;
+
         this.state.windows[i].order = this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1;
         const idOrder = new Map<string, number>();
         [...this.state.windows]
@@ -121,30 +135,26 @@ export class Workspace extends Component {
     render(){
         return <>
             {this.state.windows.map(({id, order}, i) => {
+                const app = this.activeApps.get(id);
                 return <WindowElement
                     key={id}
                     close={() => {
-                        const [{id}] = this.state.windows.splice(i, 1);
-                        const app = this.activeApps.get(id);
-                        if (app?.callbacks?.onClose)
-                            app.callbacks.onClose();
-                        this.setState({windows: [...this.state.windows]});
+                        this.removeWindow(app);
                     }}
                     initPos={Workspace.calcInitPos()}
                     zIndex={order}
                     didResize={() => {
-                        const activeApp = this.activeApps.get(id);
-                        if (activeApp?.callbacks?.onWindowResize)
-                            activeApp.callbacks.onWindowResize();
+                        if (app?.callbacks?.onWindowResize)
+                            app.callbacks.onWindowResize();
                     }}
-                    didFocus={() => this.focusWindow(this.activeApps.get(id))}
+                    didFocus={() => this.focusWindow(app)}
                     hasIFrames={iframesIDs => {
                         iframesIDs.forEach(iframeID => {
                             this.iframeIDsToWindow.set(iframeID, this.activeApps.get(id));
                         })
                     }}
                 >
-                    {this.activeApps.get(id).element(this.activeApps.get(id))}
+                    {app.element(app)}
                 </WindowElement>
             })}
             <div id={"move-overlay"} />
