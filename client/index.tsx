@@ -1,15 +1,22 @@
 import "./sw";
 import {createRoot} from "react-dom/client";
-import React, { createRef } from "react";
+import React, {createRef, useState} from "react";
 import "./index.css";
-import Cookies from "js-cookie";
+import Cookies, {set} from "js-cookie";
 import {Workspace} from "./workspace";
 import CommandPalette from "./commandPalette";
 import logo from "./icons/fullstacked-logo.svg";
 import {client} from "./client";
 import logoutIcon from "./icons/log-out.svg";
+import {AuthFlow} from "./explorer/cloud";
 
 (() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if(searchParams.get("auth")){
+        renderAuthFlow(searchParams.get("auth"));
+        return;
+    }
+
     const hasAuth = hasAuthToken();
 
     if(hasAuth){
@@ -64,6 +71,19 @@ function preventRefreshKeyBinding(){
 
 function setBackground(){
     document.body.style.backgroundImage = `url(${logo})`;
+}
+
+function renderAuthFlow(url){
+    let rootDiv = document.querySelector("#root") as HTMLDivElement;
+    if(!rootDiv){
+        rootDiv = document.createElement("div");
+        rootDiv.setAttribute("id", "root");
+        document.body.append(rootDiv);
+    }
+
+    createRoot(rootDiv).render(<AuthFlow url={url} didAuthenticate={() => {
+        window.close()
+    }}/>)
 }
 
 async function main(){

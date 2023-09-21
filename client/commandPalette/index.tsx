@@ -44,17 +44,31 @@ export default class CommandPalette extends Component {
             if(e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey) && e.shiftKey){
                 e.preventDefault();
                 this.toggle();
+                return;
             }else if(e.key === "Escape" && this.state.show) {
-                this.setState({show: false})
+                this.setState({show: false});
+                return;
+            }
+
+            if(this.state.show && document.activeElement !== this.inputRef.current){
+                this.inputRef.current.focus();
             }
         })
         window.addEventListener("keyup", e => {
-            if(!this.state.focus) return;
-            if(e.shiftKey || (e.metaKey || e.ctrlKey)) return;
+            if(!this.state.focus)
+                return;
+
+            if(e.shiftKey || (e.metaKey || e.ctrlKey))
+                return;
+
             const activeApps = Workspace.instance.getActiveApp();
-            if(!activeApps?.length || activeApps.length < 2) return;
+            if(!activeApps?.length || activeApps.length < 2)
+                return;
+
             const appIndex = activeApps.map(({id}) => id).indexOf(this.state.focus);
-            if(appIndex === 0) return;
+            if(appIndex === 0)
+                return;
+
             const nextActiveApp = activeApps.find(({id}) => this.state.focus === id);
             Workspace.instance.focusWindow(nextActiveApp);
             this.setState({show: false})
@@ -62,9 +76,12 @@ export default class CommandPalette extends Component {
     }
 
     componentDidUpdate(prevProps: Readonly<{}>, prevState, snapshot?: any) {
-        if(!prevState.show && this.state.show)
-            this.inputRef.current.focus();
-        else if(prevState.show && !this.state.show) {
+        if(!prevState.show && this.state.show) {
+            if(this.inputRef.current.value)
+                this.inputRef.current.focus();
+            else if(typeof (document.activeElement as HTMLInputElement).blur === "function")
+                (document.activeElement as HTMLInputElement).blur()
+        }else if(prevState.show && !this.state.show) {
             this.first = false;
             this.setState({focus: null});
         }
@@ -126,7 +143,7 @@ export default class CommandPalette extends Component {
 
     render(){
         const filter = app => this.state.inputValue
-            ? app.title.toLowerCase().startsWith(this.state.inputValue)
+            ? app.title.toLowerCase().startsWith(this.state.inputValue.toLowerCase())
             : true
 
         const activeApps = (Workspace.instance ? Workspace.instance.getActiveApp() : []).filter(filter);
@@ -170,7 +187,7 @@ export default class CommandPalette extends Component {
                     </div>}
                     <form onSubmit={submit}
                           style={!this.state.inputValue ? {opacity: 0, height: 0} : {}}>
-                        <input ref={this.inputRef} value={this.state.inputValue}
+                        <input autoCapitalize={"0"} ref={this.inputRef} value={this.state.inputValue}
                                onChange={e => this.setState({inputValue: e.currentTarget.value})} />
                     </form>
                     {!!activeApps.length && <>
