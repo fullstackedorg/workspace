@@ -33,6 +33,11 @@ productJSON.extensionsGallery = {
 }
 fs.writeFileSync("vscode/product.json", JSON.stringify(productJSON, null, 2));
 
+const packageJSON = JSON.parse(fs.readFileSync("vscode/package.json").toString());
+packageJSON.name = "code-oss"
+fs.writeFileSync("vscode/package.json", JSON.stringify(packageJSON, null, 2));
+
+
 fs.appendFileSync("vscode/src/vs/workbench/browser/actions/windowActions.ts", fs.readFileSync("blurFocus.js").toString());
 
 const themeConfigsFile = "vscode/src/vs/workbench/services/themes/common/themeConfiguration.ts";

@@ -3,8 +3,11 @@ import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import Explorer from "./explorer";
 import createClient from "@fullstacked/webapp/rpc/createClient";
 import type {CloudFS} from "../../server/Explorer/cloud-fs";
+import {client} from "../client";
 
 const cloudFSClient = createClient<typeof CloudFS>(window.location.protocol + "//" + window.location.host + "/cloud-fs");
+
+const isNeutralino = await client.get(true).isInNeutralinoRuntime();
 
 export default function () {
     const [start, refreshStart] = useAPI(cloudFSClient.get().start);
@@ -23,18 +26,39 @@ export default function () {
 }
 
 let body = {}, win;
-function AuthFlow({url, didAuthenticate}){
+export function AuthFlow({url, didAuthenticate}){
     const [code, setCode] = useState("");
+    const [failedOpened, setFailedOpen] = useState(false);
+
+    const openPopup = () => {
+        win = window.open(url, "", centeredPopupFeatures())
+    };
 
     useEffect(() => {
-        window.addEventListener("message", ({data}) => {
+        const searchParams = new URLSearchParams(window.location.search);
+        if(isNeutralino && !searchParams.get("auth")){
+            client.post().openBrowserNative(window.location.href + `?auth=${url}`);
+            return;
+        }
+
+        const catchArgs = ({data}) => {
+            console.log(data);
             body = {
                 ...body,
                 ...data
             }
-        });
+        };
 
-        win = window.open(url, "", centeredPopupFeatures());
+        window.addEventListener("message", catchArgs);
+
+        openPopup();
+
+        if(!win) setFailedOpen(true);
+
+        return () => {
+            win = null;
+            window.removeEventListener("message", catchArgs)
+        }
     }, []);
 
     const submit = async (e) => {
@@ -47,27 +71,54 @@ function AuthFlow({url, didAuthenticate}){
         didAuthenticate();
     }
 
-    return <form onSubmit={submit}>
-        <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)} />
-        <button>Submit</button>
-    </form>;
+    return failedOpened
+            ? <button onClick={() => {
+                openPopup();
+                if(win)
+                    setFailedOpen(false)
+                }}>Authenticate</button>
+            : <form onSubmit={submit}>
+                <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)} />
+                <button>Submit</button>
+            </form>;
 }
 
 function EndpointSelection({url, didSelectEndpoint}){
+    const [failedOpen, setFailedOpen] = useState(false);
+
+    const openPopup = () => {
+        win = window.open(url, "", centeredPopupFeatures())
+    };
+
     useEffect(() => {
-        window.addEventListener("message", ({data}) => {
+        const catchEndpoint = ({data}) => {
             if(data.endpoint){
                 cloudFSClient.post().setCloudFSEndpoint(data.endpoint).then(() => {
                     win.close();
                     didSelectEndpoint();
                 })
             }
-        });
+        };
 
-        win = window.open(url, "", centeredPopupFeatures());
+        window.addEventListener("message", catchEndpoint);
+
+        openPopup();
+
+        if(!win) setFailedOpen(true);
+
+        return () => {
+            win = null;
+            window.removeEventListener("message", catchEndpoint)
+        }
     }, []);
 
-    return <div>Selecting Storage</div>
+    return failedOpen
+        ? <button onClick={() => {
+            openPopup()
+            if(win)
+                setFailedOpen(false);
+        }}>Select Storage</button>
+        : <div>Selecting Storage</div>
 }
 
 

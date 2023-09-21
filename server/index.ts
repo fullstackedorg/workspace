@@ -19,7 +19,9 @@ import fs from "fs";
 
 const server = new Server();
 
-if(process.env.NODE_ENV !== 'development')
+if(process.env.NODE_ENV !== 'development' // we're production
+    && !process.env.NEUTRALINO // we're not running in neutralino
+    && !process.env.CLI_START) // it's not a CLI start
     server.staticFilesCacheControl = "max-age=900";
 
 if(process.env.FULLSTACKED_PORT)
@@ -100,7 +102,7 @@ export default server.serverHTTP;
 
 export const API = {
     ping(){
-        return (Math.random() * 100000).toFixed(0);
+        return Date.now();
     },
     async portCodeOSS(){
         if(!process.env.CODE_OSS_PORT)
@@ -112,6 +114,9 @@ export const API = {
             return null;
         }
         return process.env.CODE_OSS_PORT;
+    },
+    isInNeutralinoRuntime(){
+        return process.env.NEUTRALINO === "1";
     },
     isInDockerRuntime(){
         return process.env.DOCKER_RUNTIME === "1";
