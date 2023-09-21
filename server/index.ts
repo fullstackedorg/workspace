@@ -19,6 +19,9 @@ import fs from "fs";
 
 const server = new Server();
 
+if(process.env.NODE_ENV !== 'development')
+    server.staticFilesCacheControl = "max-age=900";
+
 if(process.env.FULLSTACKED_PORT)
     server.port = parseInt(process.env.FULLSTACKED_PORT);
 
@@ -36,7 +39,7 @@ server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" 
 
 const injectionFileURL = new URL(import.meta.url);
 const pathComponents = injectionFileURL.pathname.split("/");
-pathComponents.splice(-1, 1, "injection.html")
+pathComponents.splice(-1, 1, "html", "injection.html");
 injectionFileURL.pathname = pathComponents.join("/");
 if(fs.existsSync(injectionFileURL)){
     server.pages["/"].addInBody(fs.readFileSync(injectionFileURL).toString());
@@ -65,8 +68,27 @@ if(!WATCH_MODE)
 
 const terminal = new Terminal();
 
-if(process.env.DOCKER_HOST !== undefined && !WATCH_MODE)
+if(process.env.DOCKER_RUNTIME)
     initInternalRPC(terminal);
+
+// auto shutdown
+if(process.env.AUTO_SHUTDOWN){
+    const shutdownDelay = parseInt(process.env.AUTO_SHUTDOWN) * 1000;
+    let lastActivity = Date.now();
+    setInterval(() => {
+        if(Date.now() - lastActivity > shutdownDelay)
+            process.exit();
+    }, 1000);
+
+    server.addListener({
+        prefix: "global",
+        handler(): any {
+            lastActivity = Date.now();
+        }
+    });
+
+    terminal.onDataListeners.add(() => lastActivity = Date.now());
+}
 
 server.start();
 console.log(`FullStacked running at http://localhost:${server.port}`);

@@ -4,28 +4,26 @@ import Explorer from "./explorer";
 import createClient from "@fullstacked/webapp/rpc/createClient";
 import type {CloudFS} from "../../server/Explorer/cloud-fs";
 
-const cloudFSClient = createClient<typeof CloudFS>(window.location.href + "cloud-fs");
-
-const AuthApp = await cloudFSClient.get(true).authAppEndpoint();
+const cloudFSClient = createClient<typeof CloudFS>(window.location.protocol + "//" + window.location.host + "/cloud-fs");
 
 export default function () {
-    const [hasAuth, refreshHasAuth] = useAPI(cloudFSClient.get().hasAuth);
+    const [start, refreshStart] = useAPI(cloudFSClient.get().start);
 
-    if(hasAuth === null) return <></>;
+    if(start === null) return <></>;
 
-    return hasAuth ? <InitExplorer /> : <AuthFlow didAuthenticate={refreshHasAuth} />
-}
-
-function InitExplorer(){
-    const [started] = useAPI(cloudFSClient.get().start);
-
-    if(started === null) return <></>;
-
-    return <Explorer client={cloudFSClient} />
+    return typeof start === "object"
+            ? start.error === "authorization"
+                ? <AuthFlow url={start.url} didAuthenticate={refreshStart} />
+                : start.error === "endpoint_selection"
+                    ? <EndpointSelection url={start.url} didSelectEndpoint={refreshStart} />
+                    : <div>Uh oh. Unknown response: [{JSON.stringify(start)}]</div>
+            : typeof start === "boolean" && start
+                ? <Explorer client={cloudFSClient} />
+                : <div>Uh oh. Unknown response: [{start}]</div>
 }
 
 let body = {}, win;
-function AuthFlow({didAuthenticate}){
+function AuthFlow({url, didAuthenticate}){
     const [code, setCode] = useState("");
 
     useEffect(() => {
@@ -36,7 +34,7 @@ function AuthFlow({didAuthenticate}){
             }
         });
 
-        win = window.open(`${AuthApp}?auth=1`, "", centeredPopupFeatures());
+        win = window.open(url, "", centeredPopupFeatures());
     }, []);
 
     const submit = async (e) => {
@@ -53,6 +51,23 @@ function AuthFlow({didAuthenticate}){
         <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)} />
         <button>Submit</button>
     </form>;
+}
+
+function EndpointSelection({url, didSelectEndpoint}){
+    useEffect(() => {
+        window.addEventListener("message", ({data}) => {
+            if(data.endpoint){
+                cloudFSClient.post().setCloudFSEndpoint(data.endpoint).then(() => {
+                    win.close();
+                    didSelectEndpoint();
+                })
+            }
+        });
+
+        win = window.open(url, "", centeredPopupFeatures());
+    }, []);
+
+    return <div>Selecting Storage</div>
 }
 
 

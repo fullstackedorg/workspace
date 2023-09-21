@@ -8,14 +8,14 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 const lastArg = process.argv.at(-1);
 
 const portCodeOSS = await getNextAvailablePort(randomIntFromInterval(10000, 50000));
-fork(`${currentDir}/code-oss/out/server-main.js`, [
+const processCodeOSS = fork(`${currentDir}/code-oss/out/server-main.js`, [
     "--without-connection-token",
     "--host", "0.0.0.0",
     "--port", portCodeOSS.toString()
 ], {stdio: "ignore"});
 
 const portFullStacked = await getNextAvailablePort(8000);
-fork(`${currentDir}/dist/server/index.mjs`,  {
+const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
     env: {
         ...process.env,
         FULLSTACKED_PORT: portFullStacked,
@@ -26,6 +26,11 @@ fork(`${currentDir}/dist/server/index.mjs`,  {
             ? "1"
             : ""
     }
+});
+
+processFullStacked.on("exit", () => {
+    processCodeOSS.kill();
+    process.exit();
 });
 
 

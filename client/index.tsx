@@ -9,25 +9,85 @@ import logo from "./icons/fullstacked-logo.svg";
 import {client} from "./client";
 import logoutIcon from "./icons/log-out.svg";
 
-window.addEventListener("keydown", e => {
-    if(e.key === "r" && (e.metaKey || e.ctrlKey))
-        e.preventDefault();
-});
+(() => {
+    const hasAuth = hasAuthToken();
 
-document.body.style.backgroundImage = `url(${logo})`;
+    if(hasAuth){
+        if(hasLogoutFlag()){
+            return logout();
+        }else{
+            addLogoutIcon();
 
-let rootDiv = document.querySelector("#root") as HTMLDivElement;
-if(!rootDiv){
-    rootDiv = document.createElement("div");
-    rootDiv.setAttribute("id", "root");
-    document.body.append(rootDiv);
+            keepAccessTokenValid();
+            setInterval(keepAccessTokenValid, 1000);
+        }
+    }
+
+    preventRefreshKeyBinding();
+    setBackground();
+
+    main();
+})()
+
+function hasAuthToken(){
+    return Cookies.get("fullstackedAccessToken")
 }
 
-const commandPaletteRef = createRef<CommandPalette>();
-createRoot(rootDiv).render(<>
-    <CommandPalette ref={commandPaletteRef} />
-    <Workspace />
-</>);
+function hasLogoutFlag(){
+    const url = new URL(window.location.href);
+    return !!url.searchParams.get("logout");
+}
+
+async function logout(){
+    await client.get().logout();
+    window.location.href = "/?logout=1";
+}
+
+function addLogoutIcon(){
+    Workspace.apps.push({
+        title: "Logout",
+        order: 100,
+        icon: logoutIcon,
+        element: () => {
+            logout();
+            return <div className={"logout"}>Logging out...</div>
+        }
+    });
+}
+
+function preventRefreshKeyBinding(){
+    window.addEventListener("keydown", e => {
+        if(e.key === "r" && (e.metaKey || e.ctrlKey))
+            e.preventDefault();
+    });
+}
+
+function setBackground(){
+    document.body.style.backgroundImage = `url(${logo})`;
+}
+
+async function main(){
+    let rootDiv = document.querySelector("#root") as HTMLDivElement;
+    if(!rootDiv){
+        rootDiv = document.createElement("div");
+        rootDiv.setAttribute("id", "root");
+        document.body.append(rootDiv);
+    }
+
+    const commandPaletteRef = createRef<CommandPalette>();
+    createRoot(rootDiv).render(<>
+        <CommandPalette ref={commandPaletteRef} />
+        <Workspace />
+    </>);
+
+    await import("./terminal");
+    await import("./explorer");
+    await import("./browser");
+    await import("./latency");
+    await import("./codeOSS");
+
+    commandPaletteRef.current.setState({show: true});
+}
 
 async function keepAccessTokenValid(){
     const accessToken = Cookies.get("fullstackedAccessToken");
@@ -51,29 +111,3 @@ async function keepAccessTokenValid(){
 
     window.location.reload();
 }
-
-
-keepAccessTokenValid();
-setInterval(keepAccessTokenValid, 1000);
-
-if(Cookies.get("fullstackedAccessToken")){
-    Workspace.apps.push({
-        title: "Logout",
-        order: 100,
-        icon: logoutIcon,
-        element: () => {
-            client.get().logout().then(() => {
-                window.location.href = "/?logout=1";
-            });
-            return <div className={"logout"}>Logging out...</div>
-        }
-    })
-}
-
-await import("./terminal");
-await import("./explorer");
-await import("./browser");
-await import("./latency");
-await import("./codeOSS");
-
-commandPaletteRef.current.setState({show: true});

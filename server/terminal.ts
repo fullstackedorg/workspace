@@ -30,6 +30,7 @@ export class Terminal {
 
     webSocketServer = new WebSocketServer({noServer: true});
     sessions: Map<string, Session> = new Map();
+    onDataListeners: Set<() => void> = new Set();
 
     constructor() {
         this.startCleanupInterval();
@@ -83,6 +84,8 @@ export class Terminal {
                     terminalSession.ws.send(data);
                     terminalSession.lastActivity = Date.now();
                 }
+
+                this.onDataListeners.forEach(listener => listener());
             });
 
             session = {

@@ -62,8 +62,8 @@ export function initInternalRPC(terminal: Terminal){
                 if(!email.primary) return;
                 fs.appendFileSync(os.homedir() + "/.gitconfig",
                     `[user]
-email = ${email}
-name = ${username}`);
+    email = ${email.email}
+    name = ${username}`);
             });
 
             session.ws.send(`GITHUB_DEVICE_FLOW_DONE`);
@@ -74,8 +74,6 @@ password=${access_token}`;
 
             return credential;
         }
-
-
     }
 
     server.addListener(createListener(rpc));
@@ -85,11 +83,11 @@ password=${access_token}`;
 
 const timeLimit = 1000 * 60 * 20 // 20 minutes
 async function waitForAccessToken(device_code){
-    let access_token;
+    let access_token, wait_time = 10;
     const start = Date.now();
     while(!access_token){
         if(Date.now() - start > timeLimit) return null;
-        await sleep(5000);
+        await sleep(wait_time * 1000 + 500);
         const response = await (await fetch("https://github.com/login/oauth/access_token", {
             method: "post",
             headers: {
@@ -102,6 +100,9 @@ async function waitForAccessToken(device_code){
                 grant_type: "urn:ietf:params:oauth:grant-type:device_code"
             })
         })).json();
+
+        if(response.error === "slow_down")
+            wait_time = response.interval;
 
         if(response.access_token)
             access_token = response.access_token

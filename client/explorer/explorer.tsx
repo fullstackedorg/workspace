@@ -39,6 +39,10 @@ export default function Explorer({client}) {
                 : fileIcons + "#" + iconForFilename(item.data.title as string)}>
             </use>
         </svg>}
+        titleRender={item => <div>
+            <div>{item.title}</div>
+            {item.isDir && <SyncButton client={client} fileKey={item.key} />}
+        </div>}
         onExpand={async (keys: string[], {node, expanded}) => {
             if(!keys?.length || !expanded || !node.isDir) return;
             files[node.key] = await client.get().readDir(node.key);
@@ -77,25 +81,31 @@ function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFil
     if(!flatFileTree[fileName])
         return [{key: Math.floor(Math.random() * 100000).toString(), title: "Loading..."}];
 
-    return flatFileTree[fileName].filter(file => !file.name.startsWith(".")).map((file, i) => ({
-        key: file.path,
-        title: file.name,
-        children: file.isDirectory
-            ? flatFileTreeToTreeDataRecursive(file.path, flatFileTree)
-            : undefined,
-        isDir: file.isDirectory
-    }))
+    return flatFileTree[fileName]
+        // .filter(file => !file.name.startsWith("."))
+        .map((file, i) => ({
+            key: file.path,
+            title: file.name,
+            children: file.isDirectory
+                ? flatFileTreeToTreeDataRecursive(file.path, flatFileTree)
+                : undefined,
+            isDir: file.isDirectory
+        }))
 }
 
 function flatFileTreeToTreeData(files: FlatFileTree): File[] {
-    return files?.fileTreeRoot?.filter(file => !file.name.startsWith(".")).map((file, i) => ({
-        key: file.path,
-        title: file.name,
-        children: file.isDirectory
-            ? flatFileTreeToTreeDataRecursive(file.path, files)
-            : undefined,
-        isDir: file.isDirectory
-    }))
+    return files?.fileTreeRoot
+        ? files?.fileTreeRoot
+            // .filter(file => !file.name.startsWith("."))
+            .map((file, i) => ({
+                key: file.path,
+                title: file.name,
+                children: file.isDirectory
+                    ? flatFileTreeToTreeDataRecursive(file.path, files)
+                    : undefined,
+                isDir: file.isDirectory
+            }))
+        : []
 }
 
 
@@ -124,4 +134,17 @@ function iconForFilename(filename: string){
         default:
             return "file";
     }
+}
+
+
+function SyncButton({client, fileKey}) {
+    const [loading, setLoading] = useState(false);
+
+    return loading
+        ? <span><small>Syncing...</small></span>
+        : <button className={"small"} onClick={e => {
+            e.stopPropagation();
+            setLoading(true);
+            client.post().sync(fileKey).then(() => setLoading(false));
+        }}>Sync</button>
 }

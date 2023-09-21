@@ -29,3 +29,53 @@
     flex: 1;
     overflow: auto;
 }
+
+
+.rc-tree-list {
+    color: #ced9ec;
+}
+
+.rc-tree-switcher {
+    display: none!important;
+}
+
+.rc-tree-treenode {
+    display: flex;
+}
+
+.rc-tree-node-content-wrapper{
+    padding: 0 5px!important;
+    flex-grow: 1;
+    display: inline-flex!important;
+    align-items: center;
+}
+
+.rc-tree-title{
+    height: 100%;
+    display: inline-flex!important;
+    flex: 1;
+    justify-content: space-between;
+}
+.rc-tree-title > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rc-tree-node-selected {
+    background-color: transparent!important;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode-selected {
+    background-color: #0a85b5 !important;
+    color: white;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode:nth-child(even){
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 5px;
+}

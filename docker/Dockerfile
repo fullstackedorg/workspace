@@ -2,7 +2,7 @@ FROM docker:dind
 
 # install basic tools
 RUN apk add --update bash make g++ nodejs npm git python3 curl vim gcompat tini \
-    krb5-dev curl-dev openssl-dev libxml2-dev sqlite-dev oniguruma-dev
+    krb5-dev curl-dev openssl-dev libxml2-dev sqlite-dev oniguruma-dev rsync sshpass
 
 # Bun and Deno (and probably other binaries) glibc dependency
 # source https://github.com/oven-sh/bun/issues/3075#issuecomment-1565069263
