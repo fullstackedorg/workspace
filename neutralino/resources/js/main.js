@@ -82,16 +82,3 @@ if(NL_OS != "Darwin") { // TODO: Fix https://github.com/neutralinojs/neutralinoj
 }
 
 Neutralino.window.setTitle('FullStacked');
-
-window.addEventListener("message", ({data}) => {
-    console.log(data);
-    Neutralino.window.create('/popup.html', {
-        icon: '/resources/icons/app-icon.png',
-        enableInspector: true,
-        width: 500,
-        height: 300,
-        maximizable: false,
-        exitProcessOnClose: true,
-        processArgs: `URL=${data}`
-    })
-});
