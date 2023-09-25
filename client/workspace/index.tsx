@@ -1,25 +1,14 @@
-import React, {Component, ReactNode} from "react";
+import React, {Component} from "react";
 import WindowElement from "./Window";
 import "./index.css";
-
-type App = {
-    title: string,
-    icon: string,
-    element: (app: App) => ReactNode,
-    args?: any,
-    callbacks?: {
-        onWindowResize?(): void,
-        onFocus?(): void,
-        onClose?(): void
-    }
-}
+import {App} from "./App";
 
 type ActiveApp = ({
     id: string
 } & App)
 
 export class Workspace extends Component {
-    static apps: (App & {order: number})[] = [];
+    static apps: App[] = [];
     static instance: Workspace;
 
     private topActiveApp: ActiveApp;
@@ -34,6 +23,7 @@ export class Workspace extends Component {
         }
     }
 
+    workspaceDidUpdate = new Set<() => void>();
     activeApps = new Map<string, ActiveApp>();
     iframeIDsToWindow = new Map<string, ActiveApp>();
 
@@ -52,6 +42,10 @@ export class Workspace extends Component {
         Workspace.instance = this;
         (window as any).Workspace = Workspace;
         this.checkIfInIFrames();
+    }
+
+    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{}>, snapshot?: any) {
+        this.workspaceDidUpdate.forEach(listener => listener());
     }
 
     addWindow(app: App){

@@ -2,10 +2,10 @@ import React, {useEffect, useRef, useState} from "react";
 import Console from "./console";
 import Share from "./share";
 import browserIcon from "../icons/browser.svg";
-import {Workspace} from "../workspace";
 import {client} from "../client";
+import AddApp from "../workspace/AddApp";
 
-Workspace.apps.push({
+AddApp({
     title: "Browser",
     icon: browserIcon,
     order: 2,

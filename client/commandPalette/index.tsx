@@ -8,7 +8,7 @@ export default class CommandPalette extends Component {
     first = true;
     state = {
         inputValue: "",
-        show: false,
+        show: true,
         focus: null
     }
 
@@ -72,7 +72,11 @@ export default class CommandPalette extends Component {
             const nextActiveApp = activeApps.find(({id}) => this.state.focus === id);
             Workspace.instance.focusWindow(nextActiveApp);
             this.setState({show: false})
-        })
+        });
+        Workspace.instance.workspaceDidUpdate.add(() => {
+            if(Workspace.instance.state.windows.length === 0)
+                this.setState({show: true});
+        });
     }
 
     componentDidUpdate(prevProps: Readonly<{}>, prevState, snapshot?: any) {

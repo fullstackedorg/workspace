@@ -12,18 +12,22 @@ const processCodeOSS = fork(`${currentDir}/code-oss/out/server-main.js`, [
     "--without-connection-token",
     "--host", "0.0.0.0",
     "--port", portCodeOSS.toString()
-], {stdio: "ignore"});
+], {stdio: "inherit"});
+
+console.log(portCodeOSS)
 
 const portFullStacked = await getNextAvailablePort(8000);
 const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
     env: {
         ...process.env,
-        NEUTRALINO: process.argv.includes("--neutralino") ? "1" : "0",
+        NEUTRALINO: process.argv.includes("--neutralino")
+            ? "1"
+            : "",
         FULLSTACKED_PORT: portFullStacked,
         CODE_OSS_PORT: portCodeOSS,
         FULLSTACKED_ENV: "production",
         RUNTIME_PATH: process.env.PATH,
-        CLI_START: lastArg.endsWith("fullstacked") || lastArg.endsWith("fullstacked\\index.js")
+        NPX_START: lastArg.endsWith("fullstacked") || lastArg.endsWith("fullstacked\\index.js")
             ? "1"
             : ""
     }

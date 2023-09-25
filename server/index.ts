@@ -16,12 +16,13 @@ import {platform} from "os";
 import {LocalFS} from "./Explorer/local-fs";
 import {CloudFS} from "./Explorer/cloud-fs";
 import fs from "fs";
+import {CloudFSClient} from "./Explorer/cloud-fs-client";
 
 const server = new Server();
 
 if(process.env.NODE_ENV !== 'development' // we're production
     && !process.env.NEUTRALINO // we're not running in neutralino
-    && !process.env.CLI_START) // it's not a CLI start
+    && !process.env.NPX_START) // it's not a NPX start
     server.staticFilesCacheControl = "max-age=900";
 
 if(process.env.FULLSTACKED_PORT)
@@ -65,13 +66,16 @@ let auth: Auth;
 if((process.env.PASS || process.env.AUTH_URL) && !WATCH_MODE)
     auth = initAuth(server);
 
+
 if(!WATCH_MODE)
     initPortProxy(server);
 
 const terminal = new Terminal();
 
-if(process.env.DOCKER_RUNTIME)
+if(process.env.DOCKER_RUNTIME) {
+    initCloudFS()
     initInternalRPC(terminal);
+}
 
 // auto shutdown
 if(process.env.AUTO_SHUTDOWN){
@@ -94,7 +98,7 @@ if(process.env.AUTO_SHUTDOWN){
 
 server.start();
 console.log(`FullStacked running at http://localhost:${server.port}`);
-if(process.env.CLI_START){
+if(process.env.NPX_START){
     open(`http://localhost:${server.port}`);
 }
 
@@ -144,12 +148,16 @@ export const API = {
             })
         ]);
 
-        if(process.env.REVOKE_URL){
-            await fetch(process.env.REVOKE_URL, {
+        if(process.env.DOCKER_RUNTIME){
+            await LocalFS.sync.bind(this)();
+        }
+
+        if(process.env.REVOKE_URL) {
+            return fetch(process.env.REVOKE_URL, {
                 headers: {
                     cookie: this.req.headers.cookie
                 }
-            })
+            });
         }
     },
     currentDir(){
@@ -356,4 +364,27 @@ function initPortProxy(server: Server) {
             }
         }
     });
+}
+
+
+function initCloudFS(){
+    server.addListener({
+        name: "CloudFS Init",
+        prefix: "global",
+        handler(req, res) {
+            // sync only once
+            if(CloudFSClient.initSyncLaunched) return;
+            CloudFSClient.initSyncLaunched = true;
+
+            // since req will be highly modified while waiting for CloudFS.start,
+            // we better copy what we need from it
+            const copiedCookies = {
+                headers: {
+                    cookie: req.headers.cookie
+                }
+            }
+
+            CloudFS.sync.bind({req: copiedCookies})();
+        }
+    })
 }

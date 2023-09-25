@@ -1,8 +1,8 @@
 import "./sw";
 import {createRoot} from "react-dom/client";
-import React, {createRef, useState} from "react";
+import React, {useEffect} from "react";
 import "./index.css";
-import Cookies, {set} from "js-cookie";
+import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
 import CommandPalette from "./commandPalette";
 import logo from "./icons/fullstacked-logo.svg";
@@ -50,14 +50,21 @@ async function logout(){
     window.location.href = "/?logout=1";
 }
 
+function LogoutComponent(){
+    useEffect(() => {
+        logout()
+    }, []);
+
+    return <div className={"logout"}>Logging out...</div>
+}
+
 function addLogoutIcon(){
     Workspace.apps.push({
         title: "Logout",
         order: 100,
         icon: logoutIcon,
         element: () => {
-            logout();
-            return <div className={"logout"}>Logging out...</div>
+            return <LogoutComponent />
         }
     });
 }
@@ -94,19 +101,18 @@ async function main(){
         document.body.append(rootDiv);
     }
 
-    const commandPaletteRef = createRef<CommandPalette>();
     createRoot(rootDiv).render(<>
-        <CommandPalette ref={commandPaletteRef} />
+        <CommandPalette />
         <Workspace />
     </>);
 
-    await import("./terminal");
-    await import("./explorer");
-    await import("./browser");
-    await import("./latency");
-    await import("./codeOSS");
-
-    commandPaletteRef.current.setState({show: true});
+    Promise.all([
+        import("./terminal"),
+        import("./explorer"),
+        import("./browser"),
+        import("./latency"),
+        import("./codeOSS")
+    ]).then(() => CommandPalette.instance.setState({show: true}))
 }
 
 async function keepAccessTokenValid(){

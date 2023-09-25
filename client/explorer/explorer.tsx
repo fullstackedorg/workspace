@@ -8,7 +8,9 @@ import fileIcons from "../icons/file-icons.svg";
 import {EventDataNode} from "rc-tree/es/interface";
 import "rc-tree/assets/index.css"
 import type {LocalFS} from "../../server/Explorer/local-fs";
+import {client as mainClient} from "../client";
 
+const hasCodeOSS = !!(await mainClient.get(true).portCodeOSS())
 
 export default function Explorer({client}) {
     const [files, setFiles] = useState<FlatFileTree>();
@@ -41,7 +43,19 @@ export default function Explorer({client}) {
         </svg>}
         titleRender={item => <div>
             <div>{item.title}</div>
-            {item.isDir && <SyncButton client={client} fileKey={item.key} />}
+            {item.isDir && hasCodeOSS && <>
+                <button className={"small"} onClick={async e => {
+                    e.stopPropagation();
+                    const codeOSS = Workspace.apps.find(app => app.title === "Code");
+                    const folder = (await mainClient.get(true).currentDir()) + "/" + item.key
+                    Workspace.instance.addWindow({
+                        ...codeOSS,
+                        args: {
+                            folder
+                        }
+                    })
+                }}>Code</button>
+            </>}
         </div>}
         onExpand={async (keys: string[], {node, expanded}) => {
             if(!keys?.length || !expanded || !node.isDir) return;
@@ -134,17 +148,4 @@ function iconForFilename(filename: string){
         default:
             return "file";
     }
-}
-
-
-function SyncButton({client, fileKey}) {
-    const [loading, setLoading] = useState(false);
-
-    return loading
-        ? <span><small>Syncing...</small></span>
-        : <button className={"small"} onClick={e => {
-            e.stopPropagation();
-            setLoading(true);
-            client.post().sync(fileKey).then(() => setLoading(false));
-        }}>Sync</button>
 }

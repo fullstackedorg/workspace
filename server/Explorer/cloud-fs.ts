@@ -2,7 +2,6 @@ import {CloudFSClient} from "./cloud-fs-client";
 import {initFS} from "./init-fs";
 import {execSync} from "child_process";
 import {IncomingMessage} from "http";
-import cookie from "cookie";
 import * as os from "os";
 
 type CloudFSStartResponseType =
@@ -24,14 +23,25 @@ type CloudFSStartResponseType =
 export const CloudFS = {
     ...initFS(CloudFSClient.client.post.bind(CloudFSClient.client)),
 
-    async sync(remoteKey: string){
-        const {id, ip, port, password} = await (await fetch(`${CloudFSClient.endpoint}/sync`, {headers: {authorization: CloudFSClient.authorization}})).json();
+    async sync(remoteKey: string = ""){
+        // init remote rsync service
+        const {id, ip, port, password} = await (await fetch(`${CloudFSClient.endpoint}/sync`, {headers: {
+            cookie: this.req.headers.cookie,
+            authorization: CloudFSClient.authorization
+        }})).json();
+
+        // launch rsync
         try{
-            execSync(`sshpass -p ${password} rsync -rvz -e 'ssh -p ${port} -o StrictHostKeyChecking=no' --exclude='**/node_modules/**' root@${ip}:/home/${remoteKey} ${os.homedir}`);
+            execSync(`sshpass -p ${password} rsync -rvz -e 'ssh -p ${port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --exclude='**/node_modules/**' root@${ip}:/home/${remoteKey} ${os.homedir}`);
         }catch (e) { console.log(e) }
+
+        // stop remote rsync service
         return (await fetch(`${CloudFSClient.endpoint}/stopSync`, {
             method: "POST",
-            headers: {authorization: CloudFSClient.authorization},
+            headers: {
+                cookie: this.req.headers.cookie,
+                authorization: CloudFSClient.authorization
+            },
             body: JSON.stringify({0: id})
         })).text();
     },
@@ -56,10 +66,12 @@ export const CloudFS = {
     },
 
     async start(this: {req: IncomingMessage}): Promise<CloudFSStartResponseType>{
-        const cookies = cookie.parse(this.req.headers.cookie || "");
-        const authorization = cookies.token || CloudFSClient.authorization;
-
-        const response = await fetch(`${CloudFSClient.endpoint}/start`, {headers: {authorization}})
+        const response = await fetch(`${CloudFSClient.endpoint}/start`, {
+            headers: {
+                cookie: this.req.headers.cookie,
+                authorization: CloudFSClient.authorization
+            }
+        });
         const dataStr = await response.text();
 
         let data;
@@ -70,12 +82,11 @@ export const CloudFS = {
         }
 
         if(data === true) {
-            CloudFSClient.authorization = authorization
             CloudFSClient.client.origin = CloudFSClient.endpoint;
-            CloudFSClient.client.headers.authorization = authorization;
+            CloudFSClient.client.headers.authorization = CloudFSClient.authorization;
+            CloudFSClient.client.headers.cookie = this.req.headers.cookie;
         }
 
         return data;
     }
 }
-
