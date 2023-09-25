@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {client} from "../client";
 import { Workspace } from "../workspace";
 import latencyIcon from "../icons/stopwatch.svg"
+import AddApp from "../workspace/AddApp";
 
 function Latency() {
     const [tests, setTests] = useState([]);
@@ -33,7 +34,7 @@ function Latency() {
     </div>
 }
 
-Workspace.apps.push({
+AddApp({
     title: "Latency",
     icon: latencyIcon,
     order: 10,

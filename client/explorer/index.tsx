@@ -5,6 +5,7 @@ import explorerIcon from "../icons/explorer.svg";
 import "./index.css";
 import Cloud from "./cloud";
 import Local from "./local";
+import AddApp from "../workspace/AddApp";
 
 function Explorers() {
     const [activeTab, setActiveTab] = useState(0);
@@ -22,9 +23,11 @@ function Explorers() {
     </div>
 }
 
-Workspace.apps.push({
+const inDocker = await client.get(true).isInDockerRuntime();
+
+AddApp({
     title: "Explorer",
     icon: explorerIcon,
     order: 1,
-    element: () => <Explorers />
+    element: () => inDocker ? <Local /> : <Explorers />
 })

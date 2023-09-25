@@ -4,6 +4,7 @@ import createClient from "@fullstacked/webapp/rpc/createClient";
 
 
 export class CloudFSClient {
+    static initSyncLaunched = false;
     static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
     static authorization;
     static authTokenFile = `${homedir()}/.fullstacked`;

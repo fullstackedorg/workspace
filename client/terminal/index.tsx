@@ -9,6 +9,7 @@ import { Workspace } from "../workspace";
 import terminalIcon from "../icons/terminal.svg";
 import {Browser} from "../browser";
 import githubLogo from "./github.svg";
+import AddApp from "../workspace/AddApp";
 
 const inDocker = await client.get(true).isInDockerRuntime();
 
@@ -179,7 +180,7 @@ class Terminal extends Component {
     }
 }
 
-Workspace.apps.push({
+AddApp({
     title: "Terminal",
     icon: terminalIcon,
     order: 0,

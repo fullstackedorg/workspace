@@ -1,13 +1,13 @@
 import {client} from "../client";
-import {Workspace} from "../workspace";
 import CodeOSSIcon from "../icons/code-oss.svg";
 import React from "react";
 import CommandPalette from "../commandPalette";
+import AddApp from "../workspace/AddApp";
 
 const portCodeOSS = await client.get(true).portCodeOSS();
 if(portCodeOSS){
     const inDocker = await client.get(true).isInDockerRuntime();
-    Workspace.apps.push({
+    AddApp({
         title: "Code",
         icon: CodeOSSIcon,
         order: 3,
