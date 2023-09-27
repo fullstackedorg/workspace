@@ -1,5 +1,4 @@
 import HTML from "@fullstacked/webapp/server/HTML";
-import arrow from "../arrow";
 
 const authPage = new HTML();
 authPage.addInHead(`<meta property="og:image" content="https://files.cplepage.com/fullstacked/sharing-image.jpg">`);

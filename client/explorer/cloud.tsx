@@ -1,28 +1,44 @@
 import React, {useEffect, useState} from "react";
-import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import Explorer from "./explorer";
 import createClient from "@fullstacked/webapp/rpc/createClient";
-import type {CloudFS} from "../../server/Explorer/cloud-fs";
+import type {fsCloud as fsCloudType} from "../../server/sync/fs-cloud";
+import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import {client} from "../client";
+import {RenderSyncIndicator} from "../sync/Indicator";
 
-const cloudFSClient = createClient<typeof CloudFS>(window.location.protocol + "//" + window.location.host + "/cloud-fs");
+export const fsCloud = createClient<typeof fsCloudType>(window.location.protocol + "//" + window.location.host + "/fs-cloud");
+
+export default function (props: {showHiddenFiles: boolean}){
+    return <PrepareFsRemote onSuccess={() => {
+        RenderSyncIndicator();
+        return <Explorer client={fsCloud} action={(item) => undefined} showHiddenFiles={props.showHiddenFiles}/>
+    }} />
+}
+
 
 const isNeutralino = await client.get(true).isInNeutralinoRuntime();
 
-export default function () {
-    const [start, refreshStart] = useAPI(cloudFSClient.get().start);
+export function PrepareFsRemote({onSuccess}) {
+    const [start, refreshStart] = useAPI(fsCloud.get().start);
 
     if(start === null) return <></>;
 
     return typeof start === "object"
-            ? start.error === "authorization"
-                ? <AuthFlow url={start.url} didAuthenticate={refreshStart} />
-                : start.error === "endpoint_selection"
-                    ? <EndpointSelection url={start.url} didSelectEndpoint={refreshStart} />
-                    : <div>Uh oh. Unknown response: [{JSON.stringify(start)}]</div>
-            : typeof start === "boolean" && start
-                ? <Explorer client={cloudFSClient} />
-                : <div>Uh oh. Unknown response: [{start}]</div>
+        ? (() => {
+            switch (start.error){
+                case "directory":
+                    return <Directory didSelectDirectory={refreshStart} />
+                case "authorization":
+                    return <AuthFlow url={start.url} didAuthenticate={refreshStart} />;
+                case "endpoint_selection":
+                    return <EndpointSelection url={start.url} didSelectEndpoint={refreshStart} />;
+                default:
+                    return <div>Uh oh. Unknown response: [{JSON.stringify(start)}]</div>
+            }
+        })()
+        : typeof start === "boolean" && start
+            ? onSuccess()
+            : <div>Uh oh. Unknown response: [{start}]</div>
 }
 
 let body = {}, win;
@@ -63,7 +79,7 @@ export function AuthFlow({url, didAuthenticate}){
 
     const submit = async (e) => {
         e.preventDefault();
-        await cloudFSClient.post().authenticate({
+        await fsCloud.post().authenticate({
             ...body,
             code
         });
@@ -72,15 +88,15 @@ export function AuthFlow({url, didAuthenticate}){
     }
 
     return failedOpened
-            ? <button onClick={() => {
-                openPopup();
-                if(win)
-                    setFailedOpen(false)
-                }}>Authenticate</button>
-            : <form onSubmit={submit}>
-                <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)} />
-                <button>Submit</button>
-            </form>;
+        ? <button onClick={() => {
+            openPopup();
+            if(win)
+                setFailedOpen(false)
+        }}>Authenticate</button>
+        : <form onSubmit={submit}>
+            <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)} />
+            <button>Submit</button>
+        </form>;
 }
 
 function EndpointSelection({url, didSelectEndpoint}){
@@ -93,7 +109,7 @@ function EndpointSelection({url, didSelectEndpoint}){
     useEffect(() => {
         const catchEndpoint = ({data}) => {
             if(data.endpoint){
-                cloudFSClient.post().setCloudFSEndpoint(data.endpoint).then(() => {
+                fsCloud.post().setEndpoint(data.endpoint).then(() => {
                     win.close();
                     didSelectEndpoint();
                 })
@@ -119,6 +135,23 @@ function EndpointSelection({url, didSelectEndpoint}){
                 setFailedOpen(false);
         }}>Select Storage</button>
         : <div>Selecting Storage</div>
+}
+
+function Directory({didSelectDirectory}){
+    const [value, setValue] = useState("");
+
+    useEffect(() => {client.get().homeDir().then(setValue)}, []);
+
+    const submit = async e => {
+        e.preventDefault();
+        await fsCloud.post().setDirectory(value);
+        didSelectDirectory();
+    }
+
+    return <form onSubmit={submit}>
+        <input type={"text"} value={value} onChange={e => setValue(e.currentTarget.value)}  />
+        <button>Submit</button>
+    </form>
 }
 
 

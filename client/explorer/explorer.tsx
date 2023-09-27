@@ -7,16 +7,16 @@ import fileIcons2 from "../icons/file-icons-2.svg";
 import fileIcons from "../icons/file-icons.svg";
 import {EventDataNode} from "rc-tree/es/interface";
 import "rc-tree/assets/index.css"
-import type {LocalFS} from "../../server/Explorer/local-fs";
+import type {fsLocal} from "../../server/sync/fs-local";
+import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import {client as mainClient} from "../client";
 
-const hasCodeOSS = !!(await mainClient.get(true).portCodeOSS())
-
-export default function Explorer({client}) {
+export default function Explorer(props: {client: any, action: (item: File) => any, showHiddenFiles: boolean}) {
+    const [syncedKeys, refreshSyncedKeys] = useAPI(mainClient.get(true).getSyncedKeys);
     const [files, setFiles] = useState<FlatFileTree>();
 
     useEffect(() => {
-        client.get().readDir(".")
+        props.client.get().readDir("")
             .then(async fileTreeRoot => {
                 let files = {fileTreeRoot}
                 setFiles(files);
@@ -27,14 +27,18 @@ export default function Explorer({client}) {
         Workspace.instance.addWindow({
             title: filename.length > 8 ? "..." + filename.slice(-8) : filename,
             icon: editorIcon,
-            element: () => <Editor client={client} filename={filename} />
+            element: () => <Editor client={props.client} filename={filename} />
         })
+    }
+
+    const didSyncKey = () => {
+        mainClient.get().getSyncedKeys().then(refreshSyncedKeys)
     }
 
     if(!files) return <></>;
 
     return <Tree
-        treeData={flatFileTreeToTreeData(files)}
+        treeData={flatFileTreeToTreeData(files, props.showHiddenFiles)}
         icon={item => <svg style={{fill: "white", width: 16, height: 16}}>
             <use xlinkHref={(item.data as File).isDir
                 ? fileIcons2 + "#folder"
@@ -43,23 +47,13 @@ export default function Explorer({client}) {
         </svg>}
         titleRender={item => <div>
             <div>{item.title}</div>
-            {item.isDir && hasCodeOSS && <>
-                <button className={"small"} onClick={async e => {
-                    e.stopPropagation();
-                    const codeOSS = Workspace.apps.find(app => app.title === "Code");
-                    const folder = (await mainClient.get(true).currentDir()) + "/" + item.key
-                    Workspace.instance.addWindow({
-                        ...codeOSS,
-                        args: {
-                            folder
-                        }
-                    })
-                }}>Code</button>
-            </>}
+            {props.action && props.action(item)}
+            {syncedKeys && item.isDir && !item.key.startsWith(".") && !syncedKeys.includes(item.key) &&
+                <SyncButton itemKey={item.key} client={props.client} didSync={didSyncKey}/> }
         </div>}
         onExpand={async (keys: string[], {node, expanded}) => {
             if(!keys?.length || !expanded || !node.isDir) return;
-            files[node.key] = await client.get().readDir(node.key);
+            files[node.key] = await props.client.get().readDir(node.key);
             setFiles( {...files});
         }}
         onSelect={(selectedKeys, data: {node: File, nativeEvent}) => {
@@ -76,7 +70,7 @@ export default function Explorer({client}) {
 
 
 type FlatFileTree = {
-    [filePath: string]: Awaited<ReturnType<typeof LocalFS.readDir>>
+    [filePath: string]: Awaited<ReturnType<typeof fsLocal.readDir>>
 }
 
 type PlaceholderFile = {
@@ -91,31 +85,31 @@ type File = {
     isDir: boolean
 }
 
-function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFileTree): File[] | [PlaceholderFile]{
+function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFileTree, showHidden): File[] | [PlaceholderFile]{
     if(!flatFileTree[fileName])
         return [{key: Math.floor(Math.random() * 100000).toString(), title: "Loading..."}];
 
     return flatFileTree[fileName]
-        // .filter(file => !file.name.startsWith("."))
+        .filter(file => showHidden || !file.name.startsWith("."))
         .map((file, i) => ({
-            key: file.path,
+            key: file.key,
             title: file.name,
             children: file.isDirectory
-                ? flatFileTreeToTreeDataRecursive(file.path, flatFileTree)
+                ? flatFileTreeToTreeDataRecursive(file.key, flatFileTree, showHidden)
                 : undefined,
             isDir: file.isDirectory
         }))
 }
 
-function flatFileTreeToTreeData(files: FlatFileTree): File[] {
+function flatFileTreeToTreeData(files: FlatFileTree, showHidden): File[] {
     return files?.fileTreeRoot
         ? files?.fileTreeRoot
-            // .filter(file => !file.name.startsWith("."))
+            .filter(file => showHidden || !file.name.startsWith("."))
             .map((file, i) => ({
-                key: file.path,
+                key: file.key,
                 title: file.name,
                 children: file.isDirectory
-                    ? flatFileTreeToTreeDataRecursive(file.path, files)
+                    ? flatFileTreeToTreeDataRecursive(file.key, files, showHidden)
                     : undefined,
                 isDir: file.isDirectory
             }))
@@ -148,4 +142,17 @@ function iconForFilename(filename: string){
         default:
             return "file";
     }
+}
+
+function SyncButton(props: {client, itemKey: string, didSync}){
+    const [syncing, setSyncing] = useState(false)
+
+    return syncing ? <small>Syncing...</small> : <button className={"small"} onClick={(e) => {
+        e.stopPropagation();
+        setSyncing(true)
+        props.client.post().sync([props.itemKey]).then(() => {
+            setSyncing(false);
+            props.didSync();
+        });
+    }}>Sync</button>
 }

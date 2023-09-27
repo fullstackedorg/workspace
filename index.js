@@ -14,8 +14,6 @@ const processCodeOSS = fork(`${currentDir}/code-oss/out/server-main.js`, [
     "--port", portCodeOSS.toString()
 ], {stdio: "inherit"});
 
-console.log(portCodeOSS)
-
 const portFullStacked = await getNextAvailablePort(8000);
 const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
     env: {

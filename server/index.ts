@@ -12,11 +12,11 @@ import randStr from "@fullstacked/cli/utils/randStr"
 import {Terminal} from "./terminal";
 import {initInternalRPC} from "./internal";
 import open from "open";
-import {platform} from "os";
-import {LocalFS} from "./Explorer/local-fs";
-import {CloudFS} from "./Explorer/cloud-fs";
+import {homedir, platform} from "os";
 import fs from "fs";
-import {CloudFSClient} from "./Explorer/cloud-fs-client";
+import {Sync} from "./sync";
+import {fsCloud} from "./sync/fs-cloud";
+import {fsLocal} from "./sync/fs-local";
 
 const server = new Server();
 
@@ -73,7 +73,6 @@ if(!WATCH_MODE)
 const terminal = new Terminal();
 
 if(process.env.DOCKER_RUNTIME) {
-    initCloudFS()
     initInternalRPC(terminal);
 }
 
@@ -148,9 +147,8 @@ export const API = {
             })
         ]);
 
-        if(process.env.DOCKER_RUNTIME){
-            await LocalFS.sync.bind(this)();
-        }
+        if(Sync.status !== null)
+            await sync(this.req)
 
         if(process.env.REVOKE_URL) {
             return fetch(process.env.REVOKE_URL, {
@@ -160,8 +158,11 @@ export const API = {
             });
         }
     },
+    homeDir(){
+        return homedir()
+    },
     currentDir(){
-        let path = process.cwd();
+        let path = Sync.config?.directory || process.cwd();
 
         //windows
         if(platform() === "win32")
@@ -194,19 +195,70 @@ export const API = {
     },
     openBrowserNative(url: string){
         open(url);
+    },
+    getSyncedKeys(): string[] {
+        return Sync.config?.keys
+    },
+    async initSync(this: {req: IncomingMessage}){
+        // init only once
+        if(Sync.status) return true;
+
+        Sync.updateStatus({
+            status: "initializing"
+        });
+
+        // DOCKER_RUNTIME needs the fs-remote started to function
+        if(process.env.DOCKER_RUNTIME){
+            const start = await fsCloud.start.bind(this)();
+            if(!start || (typeof start === "object" && start.error)) {
+                Sync.updateStatus(null);
+                return start;
+            }
+        }
+
+        await Sync.loadLocalConfigs();
+
+        const keysToSync = Sync.config?.keys
+            ? [...Sync.config?.keys]
+            : [];
+
+        // in docker sync .xyz files since their mostly configs and stuff
+        // ie .profile
+        if(process.env.DOCKER_RUNTIME){
+            const dotKeys = (await fsCloud.readDir(""))
+                .filter(item => item.name.startsWith("."))
+                .map(item => item.key);
+            keysToSync.push(...dotKeys);
+        }
+
+        const response = await fsCloud.sync.bind(this)(keysToSync, false);
+
+        if(!response || typeof response !== "boolean") {
+            Sync.updateStatus(null)
+            return response;
+        }
+
+        Sync.updateStatus({
+            status: "synced",
+            lastSync: Date.now()
+        })
+
+        startSyncing();
+
+        return true;
     }
 }
 
 server.addListener(createListener(API));
 
 server.addListener({
-    prefix: "/local-fs",
-    handler: createHandler(LocalFS)
+    prefix: "/fs-local",
+    handler: createHandler(fsLocal)
 });
 
 server.addListener({
-    prefix: "/cloud-fs",
-    handler: createHandler(CloudFS)
+    prefix: "/fs-cloud",
+    handler: createHandler(fsCloud)
 });
 
 const shareWSS = new WebSocketServer({noServer: true});
@@ -285,6 +337,10 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
     if(req.url.startsWith("/fullstacked-terminal")){
         terminal.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
             terminal.webSocketServer.emit('connection', ws, req);
+        });
+    }else if(req.url.startsWith("/fullstacked-sync")){
+        Sync.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
+            Sync.webSocketServer.emit('connection', ws);
         });
     }else if(req.url.split("?").shift() === "/fullstacked-share"){
         shareWSS.handleUpgrade(req, socket, head, (ws) => {
@@ -367,24 +423,41 @@ function initPortProxy(server: Server) {
 }
 
 
-function initCloudFS(){
+function startSyncing(){
     server.addListener({
-        name: "CloudFS Init",
         prefix: "global",
-        handler(req, res) {
-            // sync only once
-            if(CloudFSClient.initSyncLaunched) return;
-            CloudFSClient.initSyncLaunched = true;
+        handler(req, res): any {
+            if(Sync.status?.status !== "synced") return;
 
-            // since req will be highly modified while waiting for CloudFS.start,
-            // we better copy what we need from it
-            const copiedCookies = {
-                headers: {
-                    cookie: req.headers.cookie
-                }
-            }
+            if(Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
 
-            CloudFS.sync.bind({req: copiedCookies})();
+            Sync.updateStatus({
+                status: "syncing"
+            })
+            sync(req).then(() => Sync.updateStatus({
+                status: "synced",
+                lastSync: Date.now()
+            }));
         }
-    })
+    });
+}
+
+async function sync(req){
+    // better copy the cookie before request gets modified
+    const copiedCookie = {
+        headers: {
+            cookie: req.headers.cookie
+        }
+    }
+
+    const keys = [...Sync.config.keys];
+
+    if(process.env.DOCKER_RUNTIME){
+        const dotFiles = (await fsLocal.readDir(""))
+            .filter(item => item.key.startsWith("."))
+            .map(item => item.key);
+        keys.push(...dotFiles);
+    }
+
+    return fsLocal.sync.bind({req: copiedCookie})(keys, false);
 }

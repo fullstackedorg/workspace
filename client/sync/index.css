@@ -1,0 +1,10 @@
+#sync{
+    position: fixed;
+    top: 0;
+    right: 0;
+    color: white;
+    font-weight: bold;
+    font-size: small;
+    opacity: 0.6;
+    padding: 3px;
+}
