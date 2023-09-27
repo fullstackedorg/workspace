@@ -3,7 +3,8 @@ import PTy, {IPty} from "node-pty";
 import {IncomingMessage} from "http";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import { platform } from "os";
+import {homedir, platform} from "os";
+import {Sync} from "./sync";
 
 
 type Session = {
@@ -67,7 +68,7 @@ export class Terminal {
                 name: '',
                 cols: 80,
                 rows: 30,
-                cwd: process.cwd(),
+                cwd: Sync.config?.directory || homedir(),
                 env: {
                     ...process.env,
                     SESSION_ID

@@ -1,13 +1,14 @@
 import "./sw";
+import "./index.css";
 import {createRoot} from "react-dom/client";
 import React, {useEffect} from "react";
-import "./index.css";
 import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
 import CommandPalette from "./commandPalette";
 import logo from "./icons/fullstacked-logo.svg";
 import {client} from "./client";
 import logoutIcon from "./icons/log-out.svg";
+import {Sync} from "./sync";
 import {AuthFlow} from "./explorer/cloud";
 
 (() => {
@@ -106,13 +107,13 @@ async function main(){
         <Workspace />
     </>);
 
-    Promise.all([
-        import("./terminal"),
-        import("./explorer"),
-        import("./browser"),
-        import("./latency"),
-        import("./codeOSS")
-    ]).then(() => CommandPalette.instance.setState({show: true}))
+    Sync.init();
+
+    [import("./terminal"),
+    import("./explorer"),
+    import("./browser"),
+    import("./latency"),
+    import("./codeOSS")]
 }
 
 async function keepAccessTokenValid(){

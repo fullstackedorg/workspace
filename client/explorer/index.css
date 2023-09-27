@@ -80,3 +80,13 @@
     background-color: rgba(0,0,0,0.2);
     border-radius: 5px;
 }
+
+.explorer-with-tabs .checkbox {
+    color: white;
+    font-weight: bold;
+    font-size: small;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
