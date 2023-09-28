@@ -1,11 +1,7 @@
 import React, {Component} from "react";
 import WindowElement from "./Window";
 import "./index.css";
-import {App} from "./App";
-
-type ActiveApp = ({
-    id: string
-} & App)
+import {ActiveApp, App} from "./App";
 
 export class Workspace extends Component {
     static apps: App[] = [];
@@ -130,6 +126,11 @@ export class Workspace extends Component {
         return <>
             {this.state.windows.map(({id, order}, i) => {
                 const app = this.activeApps.get(id);
+                if(app.noWindow) {
+                    app.element(app);
+                    return undefined;
+                }
+
                 return <WindowElement
                     key={id}
                     close={() => {

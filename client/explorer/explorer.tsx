@@ -46,10 +46,19 @@ export default function Explorer(props: {client: any, action: (item: File) => an
             </use>
         </svg>}
         titleRender={item => <div>
-            <div>{item.title}</div>
-            {props.action && props.action(item)}
-            {syncedKeys && item.isDir && !item.key.startsWith(".") && !syncedKeys.includes(item.key) &&
-                <SyncButton itemKey={item.key} client={props.client} didSync={didSyncKey}/> }
+            <div className={"title"}>{item.title}</div>
+            <div>
+                {props.action && props.action(item)}
+                <button className={"small danger"} onClick={async (e) => {
+                    e.stopPropagation();
+                    await props.client.delete().deleteFile(item.key)
+                    const parentKey = item.key.split("/").slice(0, -1).join("/");
+                    files[parentKey] = await props.client.get().readDir(parentKey);
+                    setFiles( {...files});
+                }}>Delete</button>
+                {syncedKeys && item.isDir && !item.key.startsWith(".") && !syncedKeys.includes(item.key) &&
+                    <SyncButton itemKey={item.key} client={props.client} didSync={didSyncKey}/> }
+            </div>
         </div>}
         onExpand={async (keys: string[], {node, expanded}) => {
             if(!keys?.length || !expanded || !node.isDir) return;

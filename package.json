@@ -33,7 +33,7 @@
     "@fullstacked/build": "^0.10.6",
     "@fullstacked/cli": "^0.10.6",
     "@fullstacked/share": "^0.10.9",
-    "@fullstacked/watch": "^0.10.15",
+    "@fullstacked/watch": "^0.10.18",
     "@fullstacked/webapp": "^0.10.6",
     "@neutralinojs/neu": "^9.6.1",
     "@types/cookie": "^0.5.1",
