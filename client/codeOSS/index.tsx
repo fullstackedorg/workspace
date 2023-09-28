@@ -1,8 +1,10 @@
+import "./index.css";
 import {client} from "../client";
 import CodeOSSIcon from "../icons/code-oss.svg";
 import React from "react";
-import CommandPalette from "../commandPalette";
 import AddApp from "../workspace/AddApp";
+import {Workspace} from "../workspace";
+import sleep from "@fullstacked/cli/utils/sleep";
 
 const portCodeOSS = await client.get(true).portCodeOSS();
 if(portCodeOSS){
@@ -11,39 +13,82 @@ if(portCodeOSS){
         title: "Code",
         icon: CodeOSSIcon,
         order: 3,
-        element: ({args: {folder}}) => {
-            const host = !inDocker && window.location.host.match(/localhost:\d\d\d\d/g)
-                ? `localhost:${portCodeOSS}`
-                : `${portCodeOSS}.${window.location.host}`;
+        noWindow: true,
+        element: ({id, args: {folder}}) => {
+            const win = Workspace.instance.state.windows.find(window => window.id === id);
+            CodeOSS.load(win, folder);
 
-            const url = new URL(`${window.location.protocol}//${host}`);
-            url.search = `folder=${folder}`;
-
-            return <iframe src={url.toString()} />
+            return undefined;
         },
         args: {
             folder: await client.get(true).currentDir()
-        },
-        callbacks: {
-            onFocus() {
-                let openCommandPalette = true;
-                const blurEvent = () => {
-                    setTimeout(() => {
-                        if(openCommandPalette)
-                            CommandPalette.instance.toggle();
-                    }, 100);
-                    window.removeEventListener("focus", blurEvent);
-                }
-                const clickEvent = () => {
-                    console.log("click")
-                    openCommandPalette = false;
-                    window.removeEventListener("mousedown", clickEvent);
-                    window.removeEventListener("touchstart", clickEvent);
-                }
-                window.addEventListener("mousedown", clickEvent);
-                window.addEventListener("touchstart", clickEvent);
-                window.addEventListener("focus", blurEvent);
-            }
         }
     });
+}
+
+class CodeOSS {
+    static loaded = false;
+    static element: HTMLDivElement;
+    private static async waitForElement(){
+        while(!CodeOSS.element){
+            CodeOSS.element = document.querySelector(".monaco-workbench");
+            await sleep(100);
+        }
+    }
+    static load({id, order}, folder) {
+        if(CodeOSS.loaded){
+            CodeOSS.waitForElement().then(() => {
+                CodeOSS.element.style.zIndex = order.toString();
+            });
+            return;
+        };
+        CodeOSS.loaded = true;
+
+        const parser = new DOMParser();
+
+        fetch("/oss-dev")
+            .then(res => res.text())
+            .then(async htmlStr => {
+                const url = new URL(window.location.href);
+                url.search = `folder=${folder}`;
+                window.history.replaceState(null, null, url);
+
+                const html = parser.parseFromString(htmlStr, "text/html");
+                const head = html.head;
+                head.querySelectorAll(":scope > *").forEach(element => {
+                    if(element.getAttribute("rel") === "icon") return;
+                    document.head.append(element)
+                })
+                const body = html.body;
+                const elements = Array.from(body.querySelectorAll(":scope > *"))
+                for(const element of elements){
+                    if(element.tagName !== "SCRIPT") return;
+
+                    const script = document.createElement("script");
+
+                    if(element.getAttribute("src")) {
+                        script.src = element.getAttribute("src");
+                        await new Promise(resolve => {
+                            script.onload = resolve;
+                            document.body.append(script);
+                        })
+                    }else {
+                        script.textContent = element.textContent;
+                        document.body.append(script);
+                    }
+                }
+
+                await CodeOSS.waitForElement();
+
+                document.querySelector("#root").append(CodeOSS.element);
+                CodeOSS.element.style.zIndex = order.toString();
+
+                CodeOSS.element.addEventListener("click", () => {
+                    Workspace.instance.focusWindow(Workspace.instance.activeApps.get(id))
+                });
+
+                url.search = ``;
+                window.history.replaceState(null, null, url);
+            });
+    }
 }

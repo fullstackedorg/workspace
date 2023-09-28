@@ -1,7 +1,7 @@
 import Server from '@fullstacked/webapp/server';
 import createListener, {createHandler} from "@fullstacked/webapp/rpc/createListener";
 import {WebSocketServer} from "ws";
-import httpProxy from "http-proxy";
+import httpProxy, {createProxy} from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
 import Auth from "./auth";
@@ -147,8 +147,16 @@ export const API = {
             })
         ]);
 
-        if(Sync.status !== null)
-            await sync(this.req)
+        if(Sync.status !== null) {
+            Sync.updateStatus({
+                status: "syncing"
+            })
+            await sync(this.req);
+            Sync.updateStatus({
+                status: "synced",
+                lastSync: Date.now()
+            })
+        }
 
         if(process.env.REVOKE_URL) {
             return fetch(process.env.REVOKE_URL, {
@@ -197,7 +205,7 @@ export const API = {
         open(url);
     },
     getSyncedKeys(): string[] {
-        return Sync.config?.keys
+        return Sync.config?.keys;
     },
     async initSync(this: {req: IncomingMessage}){
         // init only once
@@ -338,6 +346,8 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
         terminal.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
             terminal.webSocketServer.emit('connection', ws, req);
         });
+    }else if(req.url.startsWith("/oss-dev")){
+        proxyCodeOSS.ws(req, socket, head);
     }else if(req.url.startsWith("/fullstacked-sync")){
         Sync.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
             Sync.webSocketServer.emit('connection', ws);
@@ -461,3 +471,15 @@ async function sync(req){
 
     return fsLocal.sync.bind({req: copiedCookie})(keys, false);
 }
+
+const proxyCodeOSS = createProxy({
+    target: `http://0.0.0.0:${process.env.CODE_OSS_PORT}`
+})
+server.addListener({
+    prefix: "/oss-dev",
+    handler(req: IncomingMessage, res: ServerResponse): any {
+        if(req.url)
+            req.url = "/oss-dev" + req.url;
+        proxyCodeOSS.web(req, res);
+    }
+})

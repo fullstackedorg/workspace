@@ -16,8 +16,8 @@ export class Sync {
                 Workspace.instance.addWindow({
                     title: "Sync",
                     icon: "",
-                    element: () => <PrepareFsRemote onSuccess={() => {
-                        Workspace.instance.removeWindow(Workspace.instance.getActiveApp().find(app => app.title === "Sync"));
+                    element: ({id}) => <PrepareFsRemote onSuccess={() => {
+                        Workspace.instance.removeWindow(Workspace.instance.activeApps.get(id));
                         Sync.init();
                     }} />
                 });

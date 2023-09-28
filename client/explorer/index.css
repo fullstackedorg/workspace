@@ -48,6 +48,7 @@
     flex-grow: 1;
     display: inline-flex!important;
     align-items: center;
+    width: 100%;
 }
 
 .rc-tree-title{
@@ -55,12 +56,19 @@
     display: inline-flex!important;
     flex: 1;
     justify-content: space-between;
+    overflow: hidden;
 }
 .rc-tree-title > div {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex: 1;
+    width: 100%
+}
+
+.rc-tree-title .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .rc-tree-node-selected {

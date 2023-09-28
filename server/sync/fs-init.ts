@@ -22,5 +22,8 @@ export function fsInit(client, getBaseDir: () => string) {
         updateFile(key: string, contents: string){
             return initClient(client).writeFile(resolve(getBaseDir(), key), contents);
         },
+        deleteFile(key: string){
+            return initClient(client).rm(resolve(getBaseDir(), key), {force: true, recursive: true});
+        }
     }
 }

@@ -37,9 +37,16 @@ const packageJSON = JSON.parse(fs.readFileSync("vscode/package.json").toString()
 packageJSON.name = "code-oss"
 fs.writeFileSync("vscode/package.json", JSON.stringify(packageJSON, null, 2));
 
+// add cmd/ctrl + shift + k to blur
+fs.appendFileSync("vscode/src/vs/workbench/browser/actions/windowActions.ts", `
+KeybindingsRegistry.registerKeybindingRule({
+    id: 'workbench.action.blur',
+    primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyK,
+    weight: KeybindingWeight.WorkbenchContrib
+});
+`);
 
-fs.appendFileSync("vscode/src/vs/workbench/browser/actions/windowActions.ts", fs.readFileSync("blurFocus.js").toString());
-
+// set detectColorSchemeSettingSchema to true by default
 const themeConfigsFile = "vscode/src/vs/workbench/services/themes/common/themeConfiguration.ts";
 const themeConfigs = fs.readFileSync(themeConfigsFile).toString();
 const codeBlockMatch = themeConfigs.match(/detectColorSchemeSettingSchema(.|\r|\n)*?default: false\n};/);
@@ -47,6 +54,11 @@ if(codeBlockMatch){
     const updatedCodeBlock = codeBlockMatch[0].replace("default: false", "default: true");
     fs.writeFileSync(themeConfigsFile, themeConfigs.replace(codeBlockMatch[0], updatedCodeBlock));
 }
+
+// comment out setting the page title
+const windowTitleFile = "vscode/src/vs/workbench/browser/parts/titlebar/windowTitle.ts";
+const windowTitle = fs.readFileSync(windowTitleFile).toString();
+fs.writeFileSync(windowTitleFile, windowTitle.replace(/window\.document\.title = /g, `// window.document.title = `))
 
 execSync(`cd vscode && yarn && yarn gulp vscode-reh-web-${platform}-min`, {stdio: "inherit"});
 

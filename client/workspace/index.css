@@ -23,6 +23,7 @@ body.resizing #move-overlay {
     border-radius: 5px;
     transition: 0.1s all;
     user-select: none;
+    font-size: initial;
 }
 .window.moving,
 .window.resizing {

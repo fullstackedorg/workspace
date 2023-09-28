@@ -95,13 +95,17 @@ class Terminal extends Component {
             else if(data.startsWith("GITHUB_DEVICE_FLOW#")){
                 const [_, verification_uri, device_code] = data.split("#");
 
-                this.githubDeviceFlowWindowId = Workspace.instance.addWindow({
+                Workspace.instance.addWindow({
                     title: "GitHub",
                     icon: githubLogo,
-                    element: app => <GithubDeviceFlow
-                        verificationUri={verification_uri}
-                        deviceCode={device_code}
-                    />
+                    element: ({id}) => {
+                        this.githubDeviceFlowWindowId = id;
+
+                        return <GithubDeviceFlow
+                            verificationUri={verification_uri}
+                            deviceCode={device_code}
+                        />
+                    }
                 });
                 return;
             }else if(this.githubDeviceFlowWindowId && data === "GITHUB_DEVICE_FLOW_DONE"){
