@@ -10,10 +10,21 @@ export const fsLocal = {
     // push files to cloud
     async sync(keys: string[], save = true){
         // init remote rsync service
-        const {id, ip, port, password} = await (await fetch(`${Sync.endpoint}/sync`, {headers: {
+        const startResponseStr = await (await fetch(`${Sync.endpoint}/sync`, {headers: {
                 cookie: this.req.headers.cookie,
                 authorization: Sync.config?.authorization
-            }})).json();
+            }})).text();
+
+        let startResponse: {id: string, ip: string, port: string, password:string};
+        try{
+            startResponse = JSON.parse(startResponseStr)
+        }catch (e) {
+            console.log(startResponseStr);
+            return startResponseStr;
+        }
+
+        if(!startResponse.id || !startResponse.ip || !startResponse.port || !startResponse.password)
+            return startResponse;
 
         try{
             await Promise.all(keys.map(key => new Promise<void>(resolve => {
@@ -21,7 +32,7 @@ export const fsLocal = {
                     Sync.addKey(key);
                 const localPath = Sync.config.directory + "/" + key;
                 const remotePath = `/home/${key}`.split("/").slice(0, -1).join("/");
-                const rsyncProcess = exec(`sshpass -p ${password} rsync -rvz -e 'ssh -p ${port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --exclude='**/node_modules/**' ${localPath} root@${ip}:${remotePath}`);
+                const rsyncProcess = exec(`sshpass -p ${startResponse.password} rsync -rvz -e 'ssh -p ${startResponse.port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --exclude='**/node_modules/**' ${localPath} root@${startResponse.ip}:${remotePath}`);
                 rsyncProcess.on("error", data => {
                     console.log(data);
                     resolve();
@@ -31,13 +42,20 @@ export const fsLocal = {
         }catch (e) { console.log(e) }
 
         // stop remote rsync service
-        return (await fetch(`${Sync.endpoint}/stopSync`, {
+        const stopResponseStr = await (await fetch(`${Sync.endpoint}/stopSync`, {
             method: "POST",
             headers: {
                 cookie: this.req.headers.cookie,
-                authorization: Sync.config.authorization
+                authorization: Sync.config?.authorization
             },
-            body: JSON.stringify({0: id})
+            body: JSON.stringify({0: startResponse.id})
         })).text();
+
+        try{
+            return JSON.parse(stopResponseStr);
+        }catch (e) {
+            console.log(stopResponseStr);
+            return stopResponseStr;
+        }
     }
 }

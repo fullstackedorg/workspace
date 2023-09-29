@@ -57,7 +57,6 @@ function Indicator(props: {remove(): void}){
         const interval = setInterval(updateLastSyncInterval, 10000);
 
         return () => {
-            console.log("ici");
             clearInterval(interval);
         }
     }, []);

@@ -1,3 +1,15 @@
-.monaco-workbench {
+.monaco-workbench * {
+    box-sizing: initial;
+}
 
+.code-oss-window-options {
+    top: 5px;
+    left: 0;
+    position: absolute;
+    height: 10px;
+    width: 30px;
+}
+
+.code-oss-window-options * {
+    box-sizing: border-box;
 }

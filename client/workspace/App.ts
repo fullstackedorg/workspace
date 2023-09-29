@@ -10,7 +10,6 @@ export type App = {
     element: (app: ActiveApp) => ReactNode,
     order?: number,
     args?: any,
-    noWindow?: boolean,
     callbacks?: {
         onWindowResize?(): void,
         onFocus?(): void,

@@ -11,7 +11,12 @@ import type {fsLocal} from "../../server/sync/fs-local";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import {client as mainClient} from "../client";
 
-export default function Explorer(props: {client: any, action: (item: File) => any, showHiddenFiles: boolean}) {
+export type ExplorerOptions = {
+    showHiddenFiles: boolean,
+    showDeleteButtons: boolean
+}
+
+export default function Explorer(props: {client: any, action: (item: File) => any, options: ExplorerOptions}) {
     const [syncedKeys, refreshSyncedKeys] = useAPI(mainClient.get(true).getSyncedKeys);
     const [files, setFiles] = useState<FlatFileTree>();
 
@@ -38,7 +43,7 @@ export default function Explorer(props: {client: any, action: (item: File) => an
     if(!files) return <></>;
 
     return <Tree
-        treeData={flatFileTreeToTreeData(files, props.showHiddenFiles)}
+        treeData={flatFileTreeToTreeData(files, props.options.showHiddenFiles)}
         icon={item => <svg style={{fill: "white", width: 16, height: 16}}>
             <use xlinkHref={(item.data as File).isDir
                 ? fileIcons2 + "#folder"
@@ -49,13 +54,13 @@ export default function Explorer(props: {client: any, action: (item: File) => an
             <div className={"title"}>{item.title}</div>
             <div>
                 {props.action && props.action(item)}
-                <button className={"small danger"} onClick={async (e) => {
+                {props.options.showDeleteButtons && <button className={"small danger"} onClick={async (e) => {
                     e.stopPropagation();
                     await props.client.delete().deleteFile(item.key)
                     const parentKey = item.key.split("/").slice(0, -1).join("/");
                     files[parentKey] = await props.client.get().readDir(parentKey);
-                    setFiles( {...files});
-                }}>Delete</button>
+                    setFiles({...files});
+                }}>Delete</button>}
                 {syncedKeys && item.isDir && !item.key.startsWith(".") && !syncedKeys.includes(item.key) &&
                     <SyncButton itemKey={item.key} client={props.client} didSync={didSyncKey}/> }
             </div>

@@ -3,9 +3,9 @@ import Console from "./console";
 import Share from "./share";
 import browserIcon from "../icons/browser.svg";
 import {client} from "../client";
-import AddApp from "../workspace/AddApp";
+import {Workspace} from "../workspace";
 
-AddApp({
+Workspace.addApp({
     title: "Browser",
     icon: browserIcon,
     order: 2,
