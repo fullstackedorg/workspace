@@ -1,11 +1,28 @@
-import React, {Component} from "react";
+import React, {Component, createRef, RefObject} from "react";
 import WindowElement from "./Window";
 import "./index.css";
 import {ActiveApp, App} from "./App";
+import CommandPalette from "../commandPalette";
 
 export class Workspace extends Component {
-    static apps: App[] = [];
     static instance: Workspace;
+    private static appQueue: App[] = [];
+    static addApp(app: App){
+        if(!Workspace.instance)
+            Workspace.appQueue.push(app);
+        else{
+            Workspace.instance.apps.push(app);
+            Workspace.instance.commandPaletteRef.current?.forceUpdate();
+        }
+    }
+
+    private static onReadyCallbacks: Set<() => void> = new Set();
+    static onReady(callback: () => void) {
+        if(Workspace.instance?.isMounted)
+            callback();
+        else
+            this.onReadyCallbacks.add(callback);
+    }
 
     private topActiveApp: ActiveApp;
     private static calcInitPos = () => {
@@ -18,6 +35,11 @@ export class Workspace extends Component {
             top: (window.innerHeight / 2 - height / 2) / window.innerHeight * 100 + "%"
         }
     }
+
+    apps: App[] = Workspace.appQueue;
+    commandPaletteRef = createRef<CommandPalette>();
+    isMounted = false;
+
 
     workspaceDidUpdate = new Set<() => void>();
     activeApps = new Map<string, ActiveApp>();
@@ -38,6 +60,12 @@ export class Workspace extends Component {
         Workspace.instance = this;
         (window as any).Workspace = Workspace;
         this.checkIfInIFrames();
+    }
+
+    componentDidMount() {
+        this.isMounted = true;
+        Workspace.onReadyCallbacks.forEach(cb => cb());
+        Workspace.onReadyCallbacks.clear();
     }
 
     componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{}>, snapshot?: any) {
@@ -124,10 +152,11 @@ export class Workspace extends Component {
 
     render(){
         return <>
+            <CommandPalette ref={this.commandPaletteRef} workspace={this} />
             {this.state.windows.map(({id, order}, i) => {
                 const app = this.activeApps.get(id);
-                if(app.noWindow) {
-                    app.element(app);
+                const element = app.element(app);
+                if(!element) {
                     return undefined;
                 }
 
@@ -149,7 +178,7 @@ export class Workspace extends Component {
                         })
                     }}
                 >
-                    {app.element(app)}
+                    {element}
                 </WindowElement>
             })}
             <div id={"move-overlay"} />

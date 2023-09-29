@@ -5,6 +5,7 @@ import CommandPalette from "../commandPalette";
 import {Workspace} from "../workspace";
 import {PrepareFsRemote} from "../explorer/cloud";
 import {RenderSyncIndicator} from "./Indicator";
+import syncIcon from "../icons/sync.svg";
 
 export class Sync {
     static init() {
@@ -12,10 +13,10 @@ export class Sync {
             .then(response => {
                 if((response && typeof response === 'boolean') || !response) return;
 
-                CommandPalette.instance.setState({show: false});
+                Workspace.instance.commandPaletteRef.current.setState({show: false});
                 Workspace.instance.addWindow({
                     title: "Sync",
-                    icon: "",
+                    icon: syncIcon,
                     element: ({id}) => <PrepareFsRemote onSuccess={() => {
                         Workspace.instance.removeWindow(Workspace.instance.activeApps.get(id));
                         Sync.init();

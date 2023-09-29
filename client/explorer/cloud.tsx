@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import Explorer from "./explorer";
+import Explorer, {ExplorerOptions} from "./explorer";
 import createClient from "@fullstacked/webapp/rpc/createClient";
 import type {fsCloud as fsCloudType} from "../../server/sync/fs-cloud";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
@@ -8,10 +8,10 @@ import {RenderSyncIndicator} from "../sync/Indicator";
 
 export const fsCloud = createClient<typeof fsCloudType>(window.location.protocol + "//" + window.location.host + "/fs-cloud");
 
-export default function (props: {showHiddenFiles: boolean}){
+export default function (props: {options: ExplorerOptions}){
     return <PrepareFsRemote onSuccess={() => {
         RenderSyncIndicator();
-        return <Explorer client={fsCloud} action={(item) => undefined} showHiddenFiles={props.showHiddenFiles}/>
+        return <Explorer client={fsCloud} action={(item) => undefined} options={props.options}/>
     }} />
 }
 

@@ -1,4 +1,4 @@
-.tabs {
+.explorer-with-tabs > .tabs {
     color: white;
     display: flex;
     width: 100%;
@@ -8,14 +8,14 @@
     border-radius: 5px;
 }
 
-.tabs > div {
+.explorer-with-tabs > .tabs > div {
     flex: 1;
     padding: 5px;
     border-radius: 5px;
     cursor: pointer;
 }
 
-.tabs > div.active {
+.explorer-with-tabs > .tabs > div.active {
     background-color: #2d4c86;
 }
 
@@ -89,6 +89,11 @@
     border-radius: 5px;
 }
 
+.explorer-with-tabs > .options {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .explorer-with-tabs .checkbox {
     color: white;
     font-weight: bold;
@@ -97,4 +102,5 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    margin-left: 10px;
 }

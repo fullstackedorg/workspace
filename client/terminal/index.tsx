@@ -9,7 +9,6 @@ import { Workspace } from "../workspace";
 import terminalIcon from "../icons/terminal.svg";
 import {Browser} from "../browser";
 import githubLogo from "./github.svg";
-import AddApp from "../workspace/AddApp";
 
 const inDocker = await client.get(true).isInDockerRuntime();
 
@@ -25,7 +24,7 @@ class Terminal extends Component {
             const url = new URL(uri);
 
             if(e.ctrlKey || e.metaKey){
-                const browserApp = Workspace.apps.find(({title}) => title === "Browser");
+                const browserApp = Workspace.instance.apps.find(({title}) => title === "Browser");
                 Workspace.instance.addWindow({
                     ...browserApp,
                     element: () => <Browser port={url.port} path={url.pathname} />
@@ -77,7 +76,7 @@ class Terminal extends Component {
             }
             else if(data.match(/CODE#.*/g) && data.split("\n").length < 3){
                 const command = data.match(/CODE#.*/g).at(0);
-                const codeOSS = Workspace.apps.find(app => app.title === "Code");
+                const codeOSS = Workspace.instance.apps.find(app => app.title === "Code");
                 if(!codeOSS) return;
                 Workspace.instance.addWindow({
                     ...codeOSS,
@@ -184,7 +183,7 @@ class Terminal extends Component {
     }
 }
 
-AddApp({
+Workspace.addApp({
     title: "Terminal",
     icon: terminalIcon,
     order: 0,

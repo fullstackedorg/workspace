@@ -1,9 +1,8 @@
 import React, {Component, createRef} from "react";
-import "./index.css"
-import {Workspace} from "../workspace";
+import "./index.css";
+import type {Workspace} from "../workspace";
 
-export default class CommandPalette extends Component {
-    static instance: CommandPalette;
+export default class CommandPalette extends Component<{workspace: Workspace}> {
     inputRef = createRef<HTMLInputElement>();
     first = true;
     state = {
@@ -12,13 +11,8 @@ export default class CommandPalette extends Component {
         focus: null
     }
 
-    constructor(props) {
-        super(props);
-        CommandPalette.instance = this;
-    }
-
     toggle(){
-        const activeApps = Workspace.instance?.getActiveApp();
+        const activeApps = this.props.workspace.getActiveApp();
 
         if(!this.state.show)
             this.setState({show: true})
@@ -61,7 +55,7 @@ export default class CommandPalette extends Component {
             if(e.shiftKey || (e.metaKey || e.ctrlKey))
                 return;
 
-            const activeApps = Workspace.instance.getActiveApp();
+            const activeApps = this.props.workspace.getActiveApp();
             if(!activeApps?.length || activeApps.length < 2)
                 return;
 
@@ -70,12 +64,15 @@ export default class CommandPalette extends Component {
                 return;
 
             const nextActiveApp = activeApps.find(({id}) => this.state.focus === id);
-            Workspace.instance.focusWindow(nextActiveApp);
+            this.props.workspace.focusWindow(nextActiveApp);
             this.setState({show: false})
         });
-        Workspace.instance.workspaceDidUpdate.add(() => {
-            if(Workspace.instance.state.windows.length === 0)
+        this.props.workspace.workspaceDidUpdate.add(() => {
+            if(this.props.workspace.state.windows.length === 0) {
                 this.setState({show: true});
+            }else if(this.state.show && this.props.workspace.state.windows.length > 0){
+                this.setState({show: false});
+            }
         });
     }
 
@@ -150,18 +147,18 @@ export default class CommandPalette extends Component {
             ? app.title.toLowerCase().startsWith(this.state.inputValue.toLowerCase())
             : true
 
-        const activeApps = (Workspace.instance ? Workspace.instance.getActiveApp() : []).filter(filter);
-        const filteredApps = Workspace.apps.filter(filter).sort((appA, appB) => appA.order - appB.order);
+        const activeApps = (this.props.workspace ? this.props.workspace.getActiveApp() : []).filter(filter);
+        const filteredApps = this.props.workspace.apps.filter(filter).sort((appA, appB) => appA.order - appB.order);
 
         const submit = e => {
             e.preventDefault();
 
             if (this.state.focus && !this.state.inputValue) {
-                Workspace.instance.focusWindow(Workspace.instance.getActiveApp().find(({id}) => id === this.state.focus));
+                this.props.workspace.focusWindow(this.props.workspace.getActiveApp().find(({id}) => id === this.state.focus));
             } else {
                 const app = filteredApps.at(0);
                 if (!app) return;
-                Workspace.instance.addWindow(app);
+                this.props.workspace.addWindow(app);
             }
 
             this.setState({
@@ -204,7 +201,7 @@ export default class CommandPalette extends Component {
                                         show: false,
                                         inputValue: ""
                                     });
-                                    Workspace.instance.focusWindow(app)
+                                    this.props.workspace.focusWindow(app)
                                 }}
                             >
                                 <img src={app.icon} />
@@ -220,7 +217,7 @@ export default class CommandPalette extends Component {
                                     show: false,
                                     inputValue: ""
                                 });
-                                Workspace.instance.addWindow(app);
+                                this.props.workspace.addWindow(app);
                             }}
                         >
                             <img src={app.icon} />

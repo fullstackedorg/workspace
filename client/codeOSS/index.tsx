@@ -2,33 +2,17 @@ import "./index.css";
 import {client} from "../client";
 import CodeOSSIcon from "../icons/code-oss.svg";
 import React from "react";
-import AddApp from "../workspace/AddApp";
 import {Workspace} from "../workspace";
 import sleep from "@fullstacked/cli/utils/sleep";
+import {createRoot} from "react-dom/client";
+import {OptionButtons} from "../workspace/Window";
 
-const portCodeOSS = await client.get(true).portCodeOSS();
-if(portCodeOSS){
-    const inDocker = await client.get(true).isInDockerRuntime();
-    AddApp({
-        title: "Code",
-        icon: CodeOSSIcon,
-        order: 3,
-        noWindow: true,
-        element: ({id, args: {folder}}) => {
-            const win = Workspace.instance.state.windows.find(window => window.id === id);
-            CodeOSS.load(win, folder);
-
-            return undefined;
-        },
-        args: {
-            folder: await client.get(true).currentDir()
-        }
-    });
-}
 
 class CodeOSS {
     static loaded = false;
     static element: HTMLDivElement;
+    static folder;
+    static windowId;
     private static async waitForElement(){
         while(!CodeOSS.element){
             CodeOSS.element = document.querySelector(".monaco-workbench");
@@ -36,9 +20,21 @@ class CodeOSS {
         }
     }
     static load({id, order}, folder) {
+        if(folder && CodeOSS.folder && folder !== CodeOSS.folder){
+            window.location.href = window.location.href + `?folder=${folder}`;
+            return;
+        }
+
+        CodeOSS.windowId = id;
+        CodeOSS.folder = folder;
+
+        if(Workspace.instance?.apps)
+            Workspace.instance.apps.find(app => app.title === "Code").args.folder = folder;
+
         if(CodeOSS.loaded){
             CodeOSS.waitForElement().then(() => {
                 CodeOSS.element.style.zIndex = order.toString();
+                CodeOSS.element.style.display = "block";
             });
             return;
         };
@@ -84,11 +80,61 @@ class CodeOSS {
                 CodeOSS.element.style.zIndex = order.toString();
 
                 CodeOSS.element.addEventListener("click", () => {
-                    Workspace.instance.focusWindow(Workspace.instance.activeApps.get(id))
+                    Workspace.instance.focusWindow(Workspace.instance.activeApps.get(CodeOSS.windowId))
                 });
 
                 url.search = ``;
                 window.history.replaceState(null, null, url);
+
+                const optionButtonsContainer = document.createElement("div");
+                optionButtonsContainer.classList.add("code-oss-window-options")
+                CodeOSS.element.append(optionButtonsContainer);
+                createRoot(optionButtonsContainer).render(<OptionButtons buttons={[
+                    {
+                        onClick: () => {
+                            CodeOSS.element.style.display = "none";
+                            Workspace.instance.removeWindow(Workspace.instance.activeApps.get(CodeOSS.windowId));
+                        },
+                        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
+                                   stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    },
+                ]} />)
             });
     }
+}
+
+const portCodeOSS = await client.get(true).portCodeOSS();
+if(portCodeOSS) {
+    Workspace.addApp({
+        title: "Code",
+        icon: CodeOSSIcon,
+        order: 3,
+        element: ({id, args: {folder}}) => {
+            const win = Workspace.instance.state.windows.find(window => window.id === id);
+            CodeOSS.load(win, folder);
+
+            return undefined;
+        },
+        args: {
+            folder: await client.get(true).currentDir()
+        }
+    });
+
+    Workspace.onReady(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const folder = searchParams.get("folder");
+        if (folder) {
+            const url = new URL(window.location.href);
+            url.search = "";
+            window.history.replaceState(null, null, url.toString());
+            Workspace.instance.addWindow({
+                ...Workspace.instance.apps.find(app => app.title === "Code"),
+                args: {
+                    folder
+                }
+            })
+        }
+    })
 }

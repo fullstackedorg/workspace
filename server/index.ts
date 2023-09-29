@@ -246,6 +246,11 @@ export const API = {
             return response;
         }
 
+        if(!Sync.config)
+            Sync.config = {}
+        if(!Sync.config.keys)
+            Sync.config.keys = [];
+
         Sync.updateStatus({
             status: "synced",
             lastSync: Date.now()
@@ -437,13 +442,13 @@ function startSyncing(){
     server.addListener({
         prefix: "global",
         handler(req, res): any {
-            if(Sync.status?.status !== "synced") return;
+            if(Sync.status?.status !== "synced" || req.url.startsWith("/oss-dev")) return;
 
             if(Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
 
             Sync.updateStatus({
                 status: "syncing"
-            })
+            });
             sync(req).then(() => Sync.updateStatus({
                 status: "synced",
                 lastSync: Date.now()
@@ -472,7 +477,7 @@ async function sync(req){
     return fsLocal.sync.bind({req: copiedCookie})(keys, false);
 }
 
-const proxyCodeOSS = createProxy({
+const proxyCodeOSS = httpProxy.createProxy({
     target: `http://0.0.0.0:${process.env.CODE_OSS_PORT}`
 })
 server.addListener({
@@ -480,6 +485,8 @@ server.addListener({
     handler(req: IncomingMessage, res: ServerResponse): any {
         if(req.url)
             req.url = "/oss-dev" + req.url;
-        proxyCodeOSS.web(req, res);
+        return new Promise(resolve => {
+            proxyCodeOSS.web(req, res, undefined, resolve)
+        });
     }
 })

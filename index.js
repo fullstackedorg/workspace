@@ -7,7 +7,7 @@ import {Socket} from "net";
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const lastArg = process.argv.at(-1);
 
-const portCodeOSS = await getNextAvailablePort(randomIntFromInterval(10000, 50000));
+const portCodeOSS = await getNextAvailablePort(10000);
 const processCodeOSS = fork(`${currentDir}/code-oss/out/server-main.js`, [
     "--without-connection-token",
     "--host", "0.0.0.0",

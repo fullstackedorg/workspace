@@ -31,7 +31,6 @@ import {AuthFlow} from "./explorer/cloud";
         }
     }
 
-    preventRefreshKeyBinding();
     setBackground();
 
     main();
@@ -60,20 +59,13 @@ function LogoutComponent(){
 }
 
 function addLogoutIcon(){
-    Workspace.apps.push({
+    Workspace.addApp({
         title: "Logout",
         order: 100,
         icon: logoutIcon,
         element: () => {
             return <LogoutComponent />
         }
-    });
-}
-
-function preventRefreshKeyBinding(){
-    window.addEventListener("keydown", e => {
-        if(e.key === "r" && (e.metaKey || e.ctrlKey))
-            e.preventDefault();
     });
 }
 
@@ -102,10 +94,7 @@ async function main(){
         document.body.append(rootDiv);
     }
 
-    createRoot(rootDiv).render(<>
-        <CommandPalette />
-        <Workspace />
-    </>);
+    createRoot(rootDiv).render(<Workspace />);
 
     Sync.init();
 
