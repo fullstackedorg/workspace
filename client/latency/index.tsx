@@ -36,6 +36,6 @@ function Latency() {
 Workspace.addApp({
     title: "Latency",
     icon: latencyIcon,
-    order: 10,
+    order: 30,
     element: () => <Latency />
 })

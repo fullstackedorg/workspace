@@ -17,6 +17,7 @@ import fs from "fs";
 import {Sync} from "./sync";
 import {fsCloud} from "./sync/fs-cloud";
 import {fsLocal} from "./sync/fs-local";
+import {fsCloudClient} from "./sync/fs-cloud-client";
 
 const server = new Server();
 
@@ -121,8 +122,9 @@ export const API = {
     isInNeutralinoRuntime(){
         return process.env.NEUTRALINO === "1";
     },
-    isInDockerRuntime(){
-        return process.env.DOCKER_RUNTIME === "1";
+    usePort(){
+        // if forced, or is not in docker
+        return process.env.FORCE_PORT_USAGE === "1" || process.env.DOCKER_RUNTIME !== "1";
     },
     async logout(this: {req: IncomingMessage, res: ServerResponse}){
         const cookies = cookie.parse(this.req.headers.cookie ?? "");
@@ -207,6 +209,9 @@ export const API = {
     getSyncedKeys(): string[] {
         return Sync.config?.keys;
     },
+    getSyncConflicts() {
+        return Sync.conflicts;
+    },
     async initSync(this: {req: IncomingMessage}){
         // init only once
         if(Sync.status) return true;
@@ -215,48 +220,75 @@ export const API = {
             status: "initializing"
         });
 
-        // DOCKER_RUNTIME needs the fs-remote started to function
-        if(process.env.DOCKER_RUNTIME){
-            const start = await fsCloud.start.bind(this)();
-            if(!start || (typeof start === "object" && start.error)) {
-                Sync.updateStatus(null);
-                return start;
-            }
+        // in native nodejs try to load config beforehand
+        if(!process.env.DOCKER_RUNTIME){
+            await Sync.loadLocalConfigs();
         }
 
-        await Sync.loadLocalConfigs();
+        // start fs-remote
+        const start = await fsCloud.start.bind(this)();
+        if(!start || (typeof start === "object" && start.error)) {
+            Sync.updateStatus(null);
+            return start;
+        }
 
-        const keysToSync = Sync.config?.keys
-            ? [...Sync.config?.keys]
-            : [];
+        // in docker container load after
+        if(process.env.DOCKER_RUNTIME){
+            await Sync.loadLocalConfigs();
+        }
 
         // in docker sync .xyz files since their mostly configs and stuff
         // ie .profile
         if(process.env.DOCKER_RUNTIME){
             const dotKeys = (await fsCloud.readDir(""))
-                .filter(item => item.name.startsWith("."))
-                .map(item => item.key);
-            keysToSync.push(...dotKeys);
+                .filter(item => item.name.startsWith(".") && !Sync.dotKeysToIgnore.includes(item.name));
+
+            await Promise.all(dotKeys.map(({key, isDirectory}) => {
+                return isDirectory
+                    ? fsCloud.sync.bind(this)(key, false)
+                    : new Promise(resolve => {
+                        fsCloud.getFileContents(key)
+                            .then(contents => fsLocal.updateFile(key, contents))
+                            .then(resolve)
+                    })
+            }));
         }
 
-        const response = await fsCloud.sync.bind(this)(keysToSync, false);
-
-        if(!response || typeof response !== "boolean") {
-            Sync.updateStatus(null)
-            return response;
+        if(Sync.config?.keys)
+            await Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind(this)(key)));
+        else {
+            if(!Sync.config)
+                Sync.config = {}
+            if(!Sync.config.keys)
+                Sync.config.keys = [];
         }
 
-        if(!Sync.config)
-            Sync.config = {}
-        if(!Sync.config.keys)
-            Sync.config.keys = [];
-
-        Sync.updateStatus({
-            status: "synced",
-            lastSync: Date.now()
-        })
+        if(Object.keys(Sync.conflicts).length){
+            Sync.updateStatus({
+                status: "conflicts"
+            })
+        }else{
+            Sync.updateStatus({
+                status: "synced",
+                lastSync: Date.now()
+            });
+        }
 
         startSyncing();
+
+        return true;
+    },
+    sync(){
+        if(Sync.status.status !== "synced") return false;
+
+        Sync.updateStatus({
+            status: "syncing"
+        });
+
+        sync(this.req).then(() => Sync.updateStatus({
+            status: "synced",
+            lastSync: Date.now()
+        }));
 
         return true;
     }
@@ -465,16 +497,25 @@ async function sync(req){
         }
     }
 
-    const keys = [...Sync.config.keys];
-
     if(process.env.DOCKER_RUNTIME){
-        const dotFiles = (await fsLocal.readDir(""))
-            .filter(item => item.key.startsWith("."))
-            .map(item => item.key);
-        keys.push(...dotFiles);
+        const dotKeys = (await fsLocal.readDir(""))
+            .filter(item => item.name.startsWith(".") && !Sync.dotKeysToIgnore.includes(item.name));
+
+        await Promise.all(dotKeys.map(({key, isDirectory}) => {
+            return isDirectory
+                ? fsLocal.sync.bind({req: copiedCookie})(key, false)
+                : new Promise(resolve => {
+                    fsLocal.getFileContents(key)
+                        .then(contents => fsCloud.updateFile(key, contents))
+                        .then(resolve)
+                })
+        }));
     }
 
-    return fsLocal.sync.bind({req: copiedCookie})(keys, false);
+    if(!Sync.config?.keys?.length)
+        return;
+
+    await Promise.all(Sync.config?.keys.map(key => fsLocal.sync.bind({req: copiedCookie})(key)));
 }
 
 const proxyCodeOSS = httpProxy.createProxy({

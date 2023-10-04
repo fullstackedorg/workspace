@@ -12,3 +12,16 @@
 ```
 docker run --privileged -p 8000:8000 -v workspace-data:/home fullstackedorg/workspace
 ```
+
+
+## Environment Variables
+```
+AUTO_SHUTDOWN= in seconds, inactivity duration before ending process
+PASS= set a password
+AUTH_URL= url agains't which to authorize token generation
+REVOKE_URL= url to poke on logout
+LOGOUT_REDIRECT= page to redirect to after logging out
+STORAGE_ENDPOINT= default is FullStacked Cloud, define another storage server endpoint
+CONFIG_FILE= default $HOME/.fullstacked, but use another for different server without overwriting
+FORCE_PORT_USAGE= force the usage of port instead of subdomains
+```

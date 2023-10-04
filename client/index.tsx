@@ -10,6 +10,7 @@ import {client} from "./client";
 import logoutIcon from "./icons/log-out.svg";
 import {Sync} from "./sync";
 import {AuthFlow} from "./explorer/cloud";
+import Merge from "./editor/merge";
 
 (() => {
     const searchParams = new URLSearchParams(window.location.search);

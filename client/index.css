@@ -371,8 +371,15 @@ button.danger:active {
     gap: 20px;
 }
 
+.cm-mergeView,
+.cm-mergeViewEditors,
+.cm-mergeViewEditor,
 .cm-editor {
     min-height: 100%;
+}
+
+.cm-merge-revert button {
+    padding: 4px 0;
 }
 
 .logout {

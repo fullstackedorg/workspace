@@ -1,61 +1,82 @@
 import fs from "fs";
 import {fsInit} from "./fs-init";
-import {exec} from "child_process";
 import {homedir} from "os";
 import {Sync} from "./index";
+import {join, resolve} from "path";
+import {fsCloudClient} from "./fs-cloud-client";
+import {createSnapshot, walkAndIgnore} from "./utils";
+import {fsCloud} from "./fs-cloud";
+
+const getBaseDir = () => Sync.config?.directory || homedir();
 
 export const fsLocal = {
-    ...fsInit(fs.promises, () => Sync.config?.directory || homedir()),
+    ...fsInit(fs.promises, getBaseDir),
+
+    resolveConflict(baseKey: string, key: string, contents: string){
+        const filePath = resolve(getBaseDir(), baseKey, key);
+        fs.writeFileSync(filePath, contents);
+        Sync.conflicts[baseKey][key] = true;
+        return fsCloud.sync.bind(this)(baseKey);
+    },
 
     // push files to cloud
-    async sync(keys: string[], save = true){
-        // init remote rsync service
-        const startResponseStr = await (await fetch(`${Sync.endpoint}/sync`, {headers: {
-                cookie: this.req.headers.cookie,
-                authorization: Sync.config?.authorization
-            }})).text();
+    async sync(key: string, save = true){
+        const syncFilePath = resolve(getBaseDir(), key, ".fullstacked-sync");
+        let localVersion;
 
-        let startResponse: {id: string, ip: string, port: string, password:string};
-        try{
-            startResponse = JSON.parse(startResponseStr)
-        }catch (e) {
-            console.log(startResponseStr);
-            return startResponseStr;
+        // version check
+        if(save){
+            const syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
+                method: "POST",
+                body: JSON.stringify({
+                    0: key
+                }),
+                headers: {
+                    cookie: this.req.headers.cookie,
+                    authorization: Sync.config?.authorization
+                }}
+            )).json();
+
+            let previousSnapshot;
+            if(fs.existsSync(syncFilePath)){
+                previousSnapshot = JSON.parse(fs.readFileSync(syncFilePath).toString());
+            }
+
+            localVersion = previousSnapshot?.version || 0;
+
+            if(syncStart.version !== localVersion) {
+                // TODO: pull needed here
+                console.log("Version mismatch");
+                return;
+            }
         }
 
-        if(!startResponse.id || !startResponse.ip || !startResponse.port || !startResponse.password)
-            return startResponse;
+        const subKeys = walkAndIgnore(join(getBaseDir(), key));
 
-        try{
-            await Promise.all(keys.map(key => new Promise<void>(resolve => {
-                if(save)
-                    Sync.addKey(key);
-                const localPath = Sync.config.directory + "/" + key;
-                const remotePath = `/home/${key}`.split("/").slice(0, -1).join("/");
-                const rsyncProcess = exec(`sshpass -p ${startResponse.password} rsync -rvz -e 'ssh -p ${startResponse.port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --exclude='**/node_modules/**' ${localPath} root@${startResponse.ip}:${remotePath}`);
-                rsyncProcess.on("error", data => {
-                    console.log(data);
-                    resolve();
-                })
-                rsyncProcess.on("exit", resolve);
-            })));
-        }catch (e) { console.log(e) }
+        await fsCloudClient.post().mkdir(key, {recursive: true});
 
-        // stop remote rsync service
-        const stopResponseStr = await (await fetch(`${Sync.endpoint}/stopSync`, {
+        const subDirectories = subKeys.filter(subKey => fs.lstatSync(resolve(getBaseDir(), key, subKey)).isDirectory());
+        const subFiles = subKeys.filter(subKey => !subDirectories.includes(subKey) && !subKey.endsWith(".fullstacked-sync"));
+
+        await Promise.all(subDirectories.map(subDir => fsCloudClient.post().mkdir(`${key}/${subDir}`, {recursive: true})));
+        await Promise.all(subFiles.map(subFile => fsCloudClient.post().writeFile(`${key}/${subFile}`, fs.readFileSync(resolve(getBaseDir(), key, subFile)).toString())));
+
+        if(!save)
+            return;
+
+        const syncDone = await (await fetch(`${Sync.endpoint}/pushDone`, {
             method: "POST",
+            body: JSON.stringify({
+                0: key
+            }),
             headers: {
                 cookie: this.req.headers.cookie,
                 authorization: Sync.config?.authorization
-            },
-            body: JSON.stringify({0: startResponse.id})
-        })).text();
+            }}
+        )).text();
 
-        try{
-            return JSON.parse(stopResponseStr);
-        }catch (e) {
-            console.log(stopResponseStr);
-            return stopResponseStr;
-        }
+        fs.writeFileSync(syncFilePath, JSON.stringify({...(await createSnapshot(resolve(getBaseDir(), key), subFiles)), version: localVersion + 1}));
+
+        Sync.addKey(key);
     }
 }

@@ -10,6 +10,9 @@ export type SyncStatus = null |
         status: "syncing"
     } |
     {
+        status: "conflicts",
+    } |
+    {
         status: "error",
         message: string
     }

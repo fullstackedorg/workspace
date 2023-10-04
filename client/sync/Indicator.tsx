@@ -27,7 +27,7 @@ function initWS(cb) {
     ws.onclose = () => {
         if(!document.querySelector("#sync")) return;
 
-        initWS(cb)
+        setTimeout(() => initWS(cb), 2000);
     };
 }
 
@@ -72,7 +72,9 @@ function Indicator(props: {remove(): void}){
                 : status.status === "syncing"
                     ? <>Syncing...</>
                     // error
-                    : <>{status.message}</>}
+                    : status.status === "conflicts"
+                        ? <>Sync conflicts</>
+                        : <>{status.message}</>}
     </>
 }
 

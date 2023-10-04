@@ -13,17 +13,24 @@ function Explorers() {
     return <div className={"explorer-with-tabs"}>
 
         <div className={"options"}>
-            <div className={"checkbox"}>
-                <label>Delete Buttons</label>
-                <input type={"checkbox"} onChange={e => setShowDeleteButtons(e.currentTarget.checked)} checked={showDeleteButtons} />
+            <div>
+                {/*<button className={"small"} onClick={() => {*/}
+
+                {/*}}>Global Ignore</button>*/}
             </div>
 
-            <div className={"checkbox"}>
-                <label>Hidden Files</label>
-                <input type={"checkbox"} onChange={e => setShowHiddenFiles(e.currentTarget.checked)} checked={showHiddenFiles} />
+            <div>
+                <span className={"checkbox"}>
+                    <label>Delete Buttons</label>
+                    <input type={"checkbox"} onChange={e => setShowDeleteButtons(e.currentTarget.checked)} checked={showDeleteButtons} />
+                </span>
+
+                <span className={"checkbox"}>
+                    <label>Hidden Files</label>
+                    <input type={"checkbox"} onChange={e => setShowHiddenFiles(e.currentTarget.checked)} checked={showHiddenFiles} />
+                </span>
             </div>
         </div>
-
 
         <div className={"tabs"}>
             <div onClick={() => setActiveTab(0)} className={activeTab === 0 ? "active" : ""}>Local</div>

@@ -1,11 +1,33 @@
-import createClient from "@fullstacked/webapp/rpc/createClient";
-import type {fsLocal as fsLocalType} from "../../server/sync/fs-local";
 import Explorer, {ExplorerOptions} from "./explorer";
 import React from "react";
+import {fsLocal} from "./clients/local";
+import useAPI from "@fullstacked/webapp/client/react/useAPI";
+import {client} from "../client";
+import {Workspace} from "../workspace";
+import Merge from "../editor/merge";
+import conflictIcon from "../icons/conflict.svg"
 
-const fsLocal = createClient<typeof fsLocalType>(window.location.protocol + "//" + window.location.host + "/fs-local");
 
 export default function (props: {options: ExplorerOptions}) {
-    return <Explorer client={fsLocal} action={(item) => undefined} options={props.options} />
+    const [conflicts, reloadConflicts] = useAPI(client.get().getSyncConflicts);
+
+    return <Explorer client={fsLocal} action={(item) => {
+        if(conflicts[item.key])
+            return <button className={"small danger"} onClick={e => {
+                e.stopPropagation();
+                Object.keys(conflicts[item.key]).filter(fileKey => !conflicts[item.key][fileKey]).forEach(key => {
+                    Workspace.instance.addWindow({
+                        title: "Resolve",
+                        icon: conflictIcon,
+                        element: (app) =>
+                            <Merge baseKey={item.key} fileKey={key}
+                                   didResolve={() => {
+                                       Workspace.instance.removeWindow(app)
+                                       reloadConflicts();
+                                   }} />
+                    })
+                })
+            }}>Resolve</button>
+    }} options={props.options} />
 }
 

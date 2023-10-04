@@ -110,7 +110,7 @@ if(portCodeOSS) {
     Workspace.addApp({
         title: "Code",
         icon: CodeOSSIcon,
-        order: 3,
+        order: 20,
         element: ({id, args: {folder}}) => {
             const win = Workspace.instance.state.windows.find(window => window.id === id);
             CodeOSS.load(win, folder);

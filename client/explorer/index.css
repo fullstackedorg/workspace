@@ -71,6 +71,10 @@
     text-overflow: ellipsis;
 }
 
+.rc-tree-title .buttons > button:not(:first-child) {
+    margin-left: 3px;
+}
+
 .rc-tree-node-selected {
     background-color: transparent!important;
     box-shadow: none!important;
@@ -91,7 +95,7 @@
 
 .explorer-with-tabs > .options {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
 .explorer-with-tabs .checkbox {
@@ -99,7 +103,7 @@
     font-weight: bold;
     font-size: small;
     padding: 3px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: flex-end;
     margin-left: 10px;

@@ -6,9 +6,14 @@ import {WebSocket, WebSocketServer} from "ws";
 
 export class Sync {
     static status: SyncStatus;
-    static syncInterval = 1000 * 60 * 5; // 5 minutes
-    static initialEndpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
-    static endpoint = Sync.initialEndpoint;
+    static syncInterval = 1000 * 60 * 2; // 2 minutes
+    // static syncInterval = 1000 * 30; // 30s for dev
+    static dotKeysToIgnore = [
+        ".fullstacked",
+        ".cache",
+        ".npm"
+    ]
+    static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
     static config: {
         authorization?: string,
         directory?: string,
@@ -16,7 +21,7 @@ export class Sync {
     } = {
         directory: process.env.DOCKER_RUNTIME ? "/home" : undefined
     };
-    static configFile = `${homedir()}/.fullstacked`;
+    static configFile = process.env.CONFIG_FILE || `${homedir()}/.fullstacked`;
 
     static setDirectory(directory: string) {
         Sync.config.directory = directory;
@@ -36,51 +41,43 @@ export class Sync {
         if(!Sync.config.keys)
             Sync.config.keys = [];
 
+        if(Sync.config.keys.includes(key)) return;
+
         Sync.config.keys.push(key);
         Sync.saveConfigs();
     }
 
     private static async saveConfigs(){
-        let configData = await this.getAllConfigs() || {};
-
-        configData[Sync.initialEndpoint] = Sync.config;
-
-        const stringified = JSON.stringify(configData, null, 2);
-        if(process.env.DOCKER_RUNTIME)
+        const stringified = JSON.stringify(Sync.config, null, 2);
+        if(process.env.DOCKER_RUNTIME) {
             fsCloudClient.post().writeFile(Sync.configFile, stringified);
-        else
+        }else
             fs.writeFileSync(Sync.configFile, stringified);
     }
 
-    private static async getAllConfigs(){
+    static async loadLocalConfigs(){
         let configData;
         if(process.env.DOCKER_RUNTIME){
             try{
                 configData = await fsCloudClient.get().readFile(this.configFile);
-            }catch (e){
-                console.log(e)
-            }
-        }else{
-            if(existsSync(Sync.configFile))
-                configData = fs.readFileSync(Sync.configFile);
+            }catch (e){ console.log(e) }
+        }else if(existsSync(Sync.configFile)){
+            configData = fs.readFileSync(Sync.configFile).toString();
         }
 
-        if(!configData) return undefined;
+        if(!configData) return;
 
         try{
-            configData = JSON.parse(configData)
-        }catch (e) { return undefined }
-
-        return configData;
+            Sync.config = JSON.parse(configData)
+        }catch (e) { console.log(e) }
     }
 
-    static async loadLocalConfigs(){
-        const configData = await this.getAllConfigs();
-
-        if(!configData || !configData[Sync.initialEndpoint]) return;
-
-        Sync.config = configData[Sync.initialEndpoint];
-    }
+    // baseKey => problematic keys => resolved
+    static conflicts: {
+        [baseKey: string]: {
+            [key: string]: boolean
+        }
+    } = {};
 
     static webSocketServer = new WebSocketServer({noServer: true});
     static ws = new Set<WebSocket>();

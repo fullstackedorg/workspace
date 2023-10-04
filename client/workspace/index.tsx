@@ -40,7 +40,6 @@ export class Workspace extends Component {
     commandPaletteRef = createRef<CommandPalette>();
     isMounted = false;
 
-
     workspaceDidUpdate = new Set<() => void>();
     activeApps = new Map<string, ActiveApp>();
     iframeIDsToWindow = new Map<string, ActiveApp>();
@@ -83,15 +82,15 @@ export class Workspace extends Component {
 
         const order = this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1;
 
-        this.setState({
+        this.setState((prevState: Workspace["state"]) => ({
             windows: [
-                ...this.state.windows,
+                ...prevState.windows,
                 {
                     id,
                     order,
                 }
             ]
-        }, () => {this.focusWindow((app as ActiveApp))});
+        }), () => {this.focusWindow((app as ActiveApp))});
 
         return id;
     }
