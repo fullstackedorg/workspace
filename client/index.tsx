@@ -4,13 +4,11 @@ import {createRoot} from "react-dom/client";
 import React, {useEffect} from "react";
 import Cookies from "js-cookie";
 import {Workspace} from "./workspace";
-import CommandPalette from "./commandPalette";
 import logo from "./icons/fullstacked-logo.svg";
 import {client} from "./client";
 import logoutIcon from "./icons/log-out.svg";
 import {Sync} from "./sync";
 import {AuthFlow} from "./explorer/cloud";
-import Merge from "./editor/merge";
 
 (() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -47,6 +45,13 @@ function hasLogoutFlag(){
 }
 
 async function logout(){
+    if(Sync.isInit){
+        await client.get().sync();
+        const conflicts = await client.get().getSyncConflicts();
+        if(conflicts && Object.keys(conflicts).length)
+            return;
+    }
+
     await client.get().logout();
     window.location.href = "/?logout=1";
 }

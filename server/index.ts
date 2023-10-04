@@ -18,6 +18,7 @@ import {Sync} from "./sync";
 import {fsCloud} from "./sync/fs-cloud";
 import {fsLocal} from "./sync/fs-local";
 import {fsCloudClient} from "./sync/fs-cloud-client";
+import ignore from "ignore";
 
 const server = new Server();
 
@@ -149,17 +150,6 @@ export const API = {
             })
         ]);
 
-        if(Sync.status !== null) {
-            Sync.updateStatus({
-                status: "syncing"
-            })
-            await sync(this.req);
-            Sync.updateStatus({
-                status: "synced",
-                lastSync: Date.now()
-            })
-        }
-
         if(process.env.REVOKE_URL) {
             return fetch(process.env.REVOKE_URL, {
                 headers: {
@@ -240,8 +230,11 @@ export const API = {
         // in docker sync .xyz files since their mostly configs and stuff
         // ie .profile
         if(process.env.DOCKER_RUNTIME){
+            const ig = ignore();
+            ig.add(Sync.globalIgnore);
+
             const dotKeys = (await fsCloud.readDir(""))
-                .filter(item => item.name.startsWith(".") && !Sync.dotKeysToIgnore.includes(item.name));
+                .filter(item => item.name.startsWith(".") && !ig.ignores(item.key));
 
             await Promise.all(dotKeys.map(({key, isDirectory}) => {
                 return isDirectory
@@ -285,10 +278,19 @@ export const API = {
             status: "syncing"
         });
 
-        sync(this.req).then(() => Sync.updateStatus({
-            status: "synced",
-            lastSync: Date.now()
-        }));
+        sync(this.req).then(() => {
+            if(Object.keys(Sync.conflicts).length){
+                Sync.updateStatus({
+                    status: "conflicts"
+                })
+            }else{
+                Sync.updateStatus({
+                    status: "synced",
+                    lastSync: Date.now()
+                });
+            }
+
+        });
 
         return true;
     }
@@ -481,10 +483,18 @@ function startSyncing(){
             Sync.updateStatus({
                 status: "syncing"
             });
-            sync(req).then(() => Sync.updateStatus({
-                status: "synced",
-                lastSync: Date.now()
-            }));
+            sync(req).then(() => {
+                if(Object.keys(Sync.conflicts).length){
+                    Sync.updateStatus({
+                        status: "conflicts"
+                    })
+                }else{
+                    Sync.updateStatus({
+                        status: "synced",
+                        lastSync: Date.now()
+                    });
+                }
+            });
         }
     });
 }
@@ -498,8 +508,11 @@ async function sync(req){
     }
 
     if(process.env.DOCKER_RUNTIME){
+        const ig = ignore();
+        ig.add(Sync.globalIgnore);
+
         const dotKeys = (await fsLocal.readDir(""))
-            .filter(item => item.name.startsWith(".") && !Sync.dotKeysToIgnore.includes(item.name));
+            .filter(item => item.name.startsWith(".") && !ig.ignores(item.key));
 
         await Promise.all(dotKeys.map(({key, isDirectory}) => {
             return isDirectory

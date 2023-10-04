@@ -13,6 +13,10 @@ export type SyncStatus = null |
         status: "conflicts",
     } |
     {
+        status: "large-file",
+        message: string
+    } |
+    {
         status: "error",
         message: string
     }
