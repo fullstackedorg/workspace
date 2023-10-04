@@ -8,11 +8,15 @@ export class Sync {
     static status: SyncStatus;
     static syncInterval = 1000 * 60 * 2; // 2 minutes
     // static syncInterval = 1000 * 30; // 30s for dev
-    static dotKeysToIgnore = [
+    static globalIgnore = [
         ".fullstacked",
+        ".fullstacked-sync",
         ".cache",
-        ".npm"
+        ".npm",
+        ".bun/install",
+        ".vscode-server-oss/data/logs"
     ]
+    static transferBlockSize = 10485760;
     static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
     static config: {
         authorization?: string,
@@ -47,10 +51,11 @@ export class Sync {
         Sync.saveConfigs();
     }
 
-    private static async saveConfigs(){
+    static async saveConfigs(){
         const stringified = JSON.stringify(Sync.config, null, 2);
         if(process.env.DOCKER_RUNTIME) {
-            fsCloudClient.post().writeFile(Sync.configFile, stringified);
+            if(fsCloudClient.origin)
+                fsCloudClient.post().writeFile(Sync.configFile, stringified);
         }else
             fs.writeFileSync(Sync.configFile, stringified);
     }

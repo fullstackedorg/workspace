@@ -5,7 +5,8 @@ import {homedir} from "os";
 import {Sync} from "./index";
 import {fsCloudClient} from "./fs-cloud-client";
 import {join, resolve} from "path";
-import {createSnapshot, getSnapshotDiffs} from "./utils";
+import {createSnapshot, getSnapshotDiffs, walkAndIgnore} from "./utils";
+import prettyBytes from "pretty-bytes";
 
 type CloudFSStartResponseType =
     // missing dependencies on local machine to run CloudFS operations
@@ -43,41 +44,43 @@ export const fsCloud = {
         const syncFilePath = resolve(getLocalBaseDir(), key, ".fullstacked-sync");
         let remoteVersion;
 
-        if(save){
-            const syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
-                method: "POST",
-                body: JSON.stringify({
-                    0: key
-                }),
-                headers: {
-                    cookie: this.req.headers.cookie,
-                    authorization: Sync.config?.authorization
-                }}
-            )).json();
+        const syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
+            method: "POST",
+            body: JSON.stringify({
+                0: key
+            }),
+            headers: {
+                cookie: this.req.headers.cookie,
+                authorization: Sync.config?.authorization
+            }}
+        )).json();
 
-            if(fs.existsSync(syncFilePath)){
-                const { version, ...previousSnapshot } = JSON.parse(fs.readFileSync(syncFilePath).toString());
-                const subFileKeys = (await fs.promises.readdir(resolve(getLocalBaseDir(), key), {recursive: true}))
-                    .filter(subKey => !fs.lstatSync(resolve(getLocalBaseDir(), key, subKey)).isDirectory())
-                const currentSnapshot = await createSnapshot(resolve(getLocalBaseDir(), key), subFileKeys);
+        remoteVersion = syncStart.version;
 
-                const snapshotsDiffs = getSnapshotDiffs(previousSnapshot, currentSnapshot)
-                    // remove resolved one
-                    .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey]));
+        if(fs.existsSync(syncFilePath)){
+            const { version, ...previousSnapshot } = JSON.parse(fs.readFileSync(syncFilePath).toString());
 
-                if(snapshotsDiffs.length){
-
-                    if(!Sync.conflicts[key])
-                        Sync.conflicts[key] = {};
-
-                    snapshotsDiffs.forEach(fileKey => Sync.conflicts[key][fileKey] = false);
-                    return;
-                }
+            if(remoteVersion === version){
+                return;
             }
 
-            remoteVersion = syncStart.version;
-        }
+            const subFileKeys = walkAndIgnore(getLocalBaseDir(), key)
+                .filter(subKey => !fs.lstatSync(resolve(getLocalBaseDir(), key, subKey)).isDirectory())
+            const currentSnapshot = await createSnapshot(resolve(getLocalBaseDir(), key), subFileKeys);
 
+            const snapshotsDiffs = getSnapshotDiffs(previousSnapshot, currentSnapshot).diffs
+                // remove resolved one
+                .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey]));
+
+            if(snapshotsDiffs.length){
+
+                if(!Sync.conflicts[key])
+                    Sync.conflicts[key] = {};
+
+                snapshotsDiffs.forEach(fileKey => Sync.conflicts[key][fileKey] = false);
+                return;
+            }
+        }
 
         const subKeys = (await fsCloudClient.get().readdir(key, {recursive: true, withFileTypes: true}));
 
@@ -95,13 +98,28 @@ export const fsCloud = {
 
         await Promise.all(subFiles.map(subFile => new Promise<void>(async res => {
             const filePath = resolve(getLocalBaseDir(), subFile);
-            const content = await fsCloudClient.get().readFile(subFile);
-            await fs.promises.writeFile(filePath, content);
-            res();
-        })));
 
-        if(!save)
-            return;
+            const contentLength = (await fsCloudClient.get().lstat(subFile)).size as number;
+            if(contentLength <= Sync.transferBlockSize) {
+                const content = await fsCloudClient.get(false, true).readFile(subFile);
+                await fs.promises.writeFile(filePath, Buffer.from(content));
+            }else{
+                const parts = Math.ceil(contentLength / Sync.transferBlockSize);
+                for (let i = 0; i < parts; i++) {
+                    Sync.updateStatus({
+                        status: "large-file",
+                        message: `[${subFile} ${prettyBytes(contentLength)}] ${(i * Sync.transferBlockSize / contentLength * 100).toFixed(2)}%`
+                    })
+
+                    const bufferPart = await fsCloudClient.get(false, true).readFilePart(subFile, i * Sync.transferBlockSize, (i + 1) * Sync.transferBlockSize)
+                    if(i === 0)
+                        await fs.promises.writeFile(filePath, Buffer.from(bufferPart))
+                    else
+                        await fs.promises.appendFile(filePath, Buffer.from(bufferPart))
+                }
+            }
+            res()
+        })));
 
         const filesKeys = subFiles.map(subFile => subFile.slice(key.length + 1));
         const snapshot = {
@@ -109,7 +127,8 @@ export const fsCloud = {
             ...await createSnapshot(resolve(getLocalBaseDir(), key), filesKeys)
         };
 
-        Sync.addKey(key);
+        if(save)
+            Sync.addKey(key);
 
         if(Sync.conflicts[key]) {
             delete Sync.conflicts[key];
@@ -170,6 +189,7 @@ export const fsCloud = {
             fsCloudClient.origin = Sync.endpoint;
             fsCloudClient.headers.authorization = Sync.config?.authorization;
             fsCloudClient.headers.cookie = this.req.headers.cookie;
+            Sync.saveConfigs();
         }
 
         return data;

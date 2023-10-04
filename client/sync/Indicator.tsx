@@ -71,7 +71,6 @@ function Indicator(props: {remove(): void}){
                 ? <>Initializing...</>
                 : status.status === "syncing"
                     ? <>Syncing...</>
-                    // error
                     : status.status === "conflicts"
                         ? <>Sync conflicts</>
                         : <>{status.message}</>}
@@ -82,6 +81,8 @@ const msForSecond = 1000;
 const msForMinute = msForSecond * 60;
 const msForHour = msForMinute * 60;
 function msDurationToHumanReadable(ms: number){
+    if(ms <= 0) ms = 0;
+
     const hours   = Math.floor(ms / msForHour);
     const minutes = Math.floor((ms - (hours * msForHour)) / msForMinute);
     const seconds = Math.floor((ms - (hours * msForHour) - (minutes * msForMinute)) / msForSecond);
