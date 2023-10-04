@@ -5,7 +5,7 @@ import Editor from "../editor";
 import Tree from "rc-tree";
 import fileIcons2 from "../icons/file-icons-2.svg";
 import fileIcons from "../icons/file-icons.svg";
-import {EventDataNode} from "rc-tree/es/interface";
+import type {EventDataNode} from "rc-tree/es/interface";
 import "rc-tree/assets/index.css"
 import type {fsLocal} from "../../server/sync/fs-local";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
@@ -52,17 +52,24 @@ export default function Explorer(props: {client: any, action: (item: File) => an
         </svg>}
         titleRender={item => <div>
             <div className={"title"}>{item.title}</div>
-            <div>
+            <div className={"buttons"}>
                 {props.action && props.action(item)}
                 {props.options.showDeleteButtons && <button className={"small danger"} onClick={async (e) => {
                     e.stopPropagation();
                     await props.client.delete().deleteFile(item.key)
-                    const parentKey = item.key.split("/").slice(0, -1).join("/");
-                    files[parentKey] = await props.client.get().readDir(parentKey);
+                    let parentKey = item.key.split("/").slice(0, -1).join("/");
+                    files[parentKey || "fileTreeRoot"] = await props.client.get().readDir(parentKey);
                     setFiles({...files});
                 }}>Delete</button>}
-                {syncedKeys && item.isDir && !item.key.startsWith(".") && !syncedKeys.includes(item.key) &&
-                    <SyncButton itemKey={item.key} client={props.client} didSync={didSyncKey}/> }
+                {syncedKeys && item.isDir && !item.key.startsWith(".") && !syncedKeys.find(key => {
+                        const keyParts = key.split("/");
+                        const itemKeyParts = item.key.split("/");
+                        for (let i = 0; i < keyParts.length; i++){
+                            if(keyParts[i] !== itemKeyParts[i])
+                                return false;
+                        }
+                        return true;
+                    }) && <SyncButton itemKey={item.key} client={props.client} didSync={didSyncKey}/> }
             </div>
         </div>}
         onExpand={async (keys: string[], {node, expanded}) => {
@@ -164,7 +171,7 @@ function SyncButton(props: {client, itemKey: string, didSync}){
     return syncing ? <small>Syncing...</small> : <button className={"small"} onClick={(e) => {
         e.stopPropagation();
         setSyncing(true)
-        props.client.post().sync([props.itemKey]).then(() => {
+        props.client.post().sync(props.itemKey).then(() => {
             setSyncing(false);
             props.didSync();
         });

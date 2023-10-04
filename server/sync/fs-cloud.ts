@@ -1,10 +1,11 @@
 import {fsInit} from "./fs-init";
-import {exec} from "child_process";
 import {IncomingMessage} from "http";
-import {existsSync} from "fs";
+import fs, {existsSync} from "fs";
 import {homedir} from "os";
 import {Sync} from "./index";
 import {fsCloudClient} from "./fs-cloud-client";
+import {join, resolve} from "path";
+import {createSnapshot, getSnapshotDiffs} from "./utils";
 
 type CloudFSStartResponseType =
     // missing dependencies on local machine to run CloudFS operations
@@ -32,68 +33,95 @@ type CloudFSStartResponseType =
     // returned unknown stuff
     string;
 
+const getLocalBaseDir = () => Sync.config?.directory || homedir()
 
 export const fsCloud = {
-    ...fsInit(fsCloudClient.post.bind(fsCloudClient), () => "/home"),
+    ...fsInit(fsCloudClient.post.bind(fsCloudClient), () => "./"),
 
     // pull files from cloud
-    async sync(keys: string[], save = true): Promise<CloudFSStartResponseType>{
-        // if you simply have no configs at all, abort
-        if(!Sync.config.directory && !Sync.config.keys && !Sync.config.authorization)
-            return null;
+    async sync(key: string, save = true) {
+        const syncFilePath = resolve(getLocalBaseDir(), key, ".fullstacked-sync");
+        let remoteVersion;
 
-        // dir check before launching rsync
-        const dirCheck = directoryCheck();
-        if(dirCheck)
-            return dirCheck;
+        if(save){
+            const syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
+                method: "POST",
+                body: JSON.stringify({
+                    0: key
+                }),
+                headers: {
+                    cookie: this.req.headers.cookie,
+                    authorization: Sync.config?.authorization
+                }}
+            )).json();
 
-        // init remote rsync service
-        const startResponseStr = await (await fetch(`${Sync.endpoint}/sync`, {headers: {
-            cookie: this.req.headers.cookie,
-            authorization: Sync.config?.authorization
-        }})).text();
+            if(fs.existsSync(syncFilePath)){
+                const { version, ...previousSnapshot } = JSON.parse(fs.readFileSync(syncFilePath).toString());
+                const subFileKeys = (await fs.promises.readdir(resolve(getLocalBaseDir(), key), {recursive: true}))
+                    .filter(subKey => !fs.lstatSync(resolve(getLocalBaseDir(), key, subKey)).isDirectory())
+                const currentSnapshot = await createSnapshot(resolve(getLocalBaseDir(), key), subFileKeys);
 
-        let startResponse: {id: string, ip: string, port: string, password:string};
-        try{
-            startResponse = JSON.parse(startResponseStr)
-        }catch (e) {
-            return startResponseStr;
+                const snapshotsDiffs = getSnapshotDiffs(previousSnapshot, currentSnapshot)
+                    // remove resolved one
+                    .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey]));
+
+                if(snapshotsDiffs.length){
+
+                    if(!Sync.conflicts[key])
+                        Sync.conflicts[key] = {};
+
+                    snapshotsDiffs.forEach(fileKey => Sync.conflicts[key][fileKey] = false);
+                    return;
+                }
+            }
+
+            remoteVersion = syncStart.version;
         }
 
-        if(!startResponse.id || !startResponse.ip || !startResponse.port || !startResponse.password)
-            return startResponse as unknown as CloudFSStartResponseType;
 
-        // launch rsync
-        try{
-            await Promise.all(keys.map(key => new Promise<void>(resolve => {
-                if(save)
-                    Sync.addKey(key);
-                const localPath = (Sync.config.directory + "/" + key).split("/").slice(0, -1).join("/");
-                const remotePath = `/home/${key}`;
-                const rsyncProcess = exec(`sshpass -p ${startResponse.password} rsync -rvz -e 'ssh -p ${startResponse.port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --exclude='**/node_modules/**' root@${startResponse.ip}:${remotePath} ${localPath}`);
-                rsyncProcess.on("error", data => {
-                    console.log(data);
-                    resolve();
+        const subKeys = (await fsCloudClient.get().readdir(key, {recursive: true, withFileTypes: true}));
+
+        const subDirectories = subKeys.filter(subKey => subKey.isDirectory).map(({ path, name}) => join(path, name));
+        const subFiles = subKeys
+            .map(({path, name}) => join(path, name))
+            .filter(subKey => !subDirectories.includes(subKey) && !subKey.endsWith(".fullstacked-sync"))
+            // remove conflicts that has been resolved manually
+            .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey.slice(key.length + 1)]));
+
+
+        await fs.promises.mkdir(resolve(getLocalBaseDir(), key), {recursive: true});
+
+        await Promise.all(subDirectories.map(subDir => fs.promises.mkdir(resolve(getLocalBaseDir(), subDir), {recursive: true})));
+
+        await Promise.all(subFiles.map(subFile => new Promise<void>(async res => {
+            const filePath = resolve(getLocalBaseDir(), subFile);
+            const content = await fsCloudClient.get().readFile(subFile);
+            await fs.promises.writeFile(filePath, content);
+            res();
+        })));
+
+        if(!save)
+            return;
+
+        const filesKeys = subFiles.map(subFile => subFile.slice(key.length + 1));
+        const snapshot = {
+            version: remoteVersion,
+            ...await createSnapshot(resolve(getLocalBaseDir(), key), filesKeys)
+        };
+
+        Sync.addKey(key);
+
+        if(Sync.conflicts[key]) {
+            delete Sync.conflicts[key];
+            if(Object.keys(Sync.conflicts).length === 0) {
+                Sync.updateStatus({
+                    status: "synced",
+                    lastSync: Date.now()
                 })
-                rsyncProcess.on("exit", resolve);
-            })));
-        }catch (e) { console.log(e) }
-
-        // stop remote rsync service
-        const stopResponseStr = await (await fetch(`${Sync.endpoint}/stopSync`, {
-            method: "POST",
-            headers: {
-                cookie: this.req.headers.cookie,
-                authorization: Sync.config?.authorization
-            },
-            body: JSON.stringify({0: startResponse.id})
-        })).text();
-
-        try{
-            return JSON.parse(stopResponseStr);
-        }catch (e) {
-            return stopResponseStr;
+            }
         }
+
+        return fs.promises.writeFile(syncFilePath, JSON.stringify(snapshot));
     },
 
     async authenticate(data: any){
@@ -103,9 +131,7 @@ export const fsCloud = {
                 method: "POST",
                 body: JSON.stringify(data)
             })).text()
-        }catch (e) {
-            console.log(e)
-        }
+        }catch (e) { console.log(e) }
 
         fsCloudClient.headers.authorization = token;
         Sync.setAuthorization(token);

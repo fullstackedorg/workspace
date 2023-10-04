@@ -1,12 +1,9 @@
 import React, {useEffect, useState} from "react";
 import Explorer, {ExplorerOptions} from "./explorer";
-import createClient from "@fullstacked/webapp/rpc/createClient";
-import type {fsCloud as fsCloudType} from "../../server/sync/fs-cloud";
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import {client} from "../client";
 import {RenderSyncIndicator} from "../sync/Indicator";
-
-export const fsCloud = createClient<typeof fsCloudType>(window.location.protocol + "//" + window.location.host + "/fs-cloud");
+import {fsCloud} from "./clients/cloud";
 
 export default function (props: {options: ExplorerOptions}){
     return <PrepareFsRemote onSuccess={() => {

@@ -11,7 +11,19 @@ export class Sync {
     static init() {
         client.post().initSync()
             .then(response => {
-                if((response && typeof response === 'boolean') || !response) return;
+                if((response && typeof response === 'boolean') || !response) {
+                    Workspace.addApp({
+                        title: "Sync",
+                        icon: syncIcon,
+                        order: 5,
+                        element: app => {
+                            client.post().sync();
+                            Workspace.instance.removeWindow(app);
+                            return undefined;
+                        }
+                    });
+                    return;
+                }
 
                 Workspace.instance.commandPaletteRef.current.setState({show: false});
                 Workspace.instance.addWindow({

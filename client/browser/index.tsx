@@ -8,7 +8,7 @@ import {Workspace} from "../workspace";
 Workspace.addApp({
     title: "Browser",
     icon: browserIcon,
-    order: 2,
+    order: 10,
     element: () => <Browser />
 });
 
@@ -18,7 +18,7 @@ declare global {
     }
 }
 
-const inDocker = await client.get(true).isInDockerRuntime();
+const usePort = await client.get(true).usePort();
 
 export function Browser(props: {port?: string, path?: string}) {
     const [openShare, setOpenShare] = useState(false);
@@ -75,19 +75,17 @@ export function Browser(props: {port?: string, path?: string}) {
 
         url.pathname = path;
 
-        const urlSubDomain = new URL(url);
-
         // webcontainer setup
         if(url.host.includes("-8000-")){
-            urlSubDomain.host = urlSubDomain.host.replace(/-8000-/, `-${port}-`);
-        }else if(!inDocker && url.host.match(/localhost:\d\d\d\d/)){
-            urlSubDomain.host = "localhost:" + port;
+            url.host = url.host.replace(/-8000-/, `-${port}-`);
+        }else if(usePort){
+            url.host = url.hostname + ":" + port;
         }else{
-            urlSubDomain.host = port + "." + urlSubDomain.host;
+            url.host = port + "." + url.host;
         }
 
-        iframeRef.current.src = urlSubDomain.toString();
-        eTabRef.current.href = urlSubDomain.toString();
+        iframeRef.current.src = url.toString();
+        eTabRef.current.href = url.toString();
     }
 
     return <div className={"browser"}>
@@ -110,10 +108,10 @@ export function Browser(props: {port?: string, path?: string}) {
             </form>
             {window.hasCredentialless && <button onClick={() => consoleRef.current.setState({show: !consoleRef.current.state.show})}>Console</button>}
             <div>
-                <a ref={eTabRef} href={"#"} target={"_blank"} onClick={e => {
+                <a ref={eTabRef} target={"_blank"} onClick={async e => {
                     if(!port) e.preventDefault();
                     const url = e.currentTarget.getAttribute("href");
-                    if(!inDocker && url.match(/localhost:\d\d\d\d/)){
+                    if(usePort && await client.get(true).isInNeutralinoRuntime()){
                         client.post().openBrowserNative(url);
                         e.preventDefault();
                     }

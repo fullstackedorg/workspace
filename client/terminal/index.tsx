@@ -10,7 +10,7 @@ import terminalIcon from "../icons/terminal.svg";
 import {Browser} from "../browser";
 import githubLogo from "./github.svg";
 
-const inDocker = await client.get(true).isInDockerRuntime();
+const usePort = await client.get(true).usePort();
 
 class Terminal extends Component {
     SESSION_ID: string;
@@ -32,7 +32,7 @@ class Terminal extends Component {
                 return;
             }
 
-            if(inDocker){
+            if(!usePort){
                 url.hostname = url.port + "." + window.location.hostname;
                 url.port = window.location.port;
                 url.protocol = window.location.protocol;
