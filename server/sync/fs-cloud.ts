@@ -189,7 +189,6 @@ export const fsCloud = {
             fsCloudClient.origin = Sync.endpoint;
             fsCloudClient.headers.authorization = Sync.config?.authorization;
             fsCloudClient.headers.cookie = this.req.headers.cookie;
-            Sync.saveConfigs();
         }
 
         return data;

@@ -215,7 +215,7 @@ export const API = {
             await Sync.loadLocalConfigs();
         }
 
-        // start fs-remote
+        // start fs-cloud
         const start = await fsCloud.start.bind(this)();
         if(!start || (typeof start === "object" && start.error)) {
             Sync.updateStatus(null);
