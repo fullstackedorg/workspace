@@ -210,10 +210,8 @@ export const API = {
             status: "initializing"
         });
 
-        // in native nodejs try to load config beforehand
-        if(!process.env.DOCKER_RUNTIME){
-            await Sync.loadLocalConfigs();
-        }
+        // try to load beforehand
+        await Sync.loadLocalConfigs();
 
         // start fs-cloud
         const start = await fsCloud.start.bind(this)();
@@ -222,8 +220,8 @@ export const API = {
             return start;
         }
 
-        // in docker container load after
-        if(process.env.DOCKER_RUNTIME){
+        // with cloud config, retry to load from the cloud once authenticated
+        if(process.env.USE_CLOUD_CONFIG){
             await Sync.loadLocalConfigs();
         }
 
@@ -252,6 +250,7 @@ export const API = {
         else {
             if(!Sync.config)
                 Sync.config = {}
+
             if(!Sync.config.keys)
                 Sync.config.keys = [];
         }
