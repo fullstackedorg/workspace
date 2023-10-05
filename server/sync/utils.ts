@@ -1,5 +1,5 @@
 import fs from "fs";
-import {resolve, basename, join} from "path";
+import path, {resolve, basename, join} from "path";
 import ignore, {Ignore} from "ignore";
 import {Sync} from "./index";
 
@@ -43,7 +43,7 @@ export function getSnapshotDiffs(snapshotA: Snapshot, snapshotB: Snapshot){
 export function walkAndIgnore(baseDirectory: string, baseKey: string, directory?: string, ignoreAcc?: Ignore){
     directory = directory || ".";
 
-    let items = fs.readdirSync(join(baseDirectory, baseKey, directory)).map(item => join(directory, item));
+    let items = fs.readdirSync(join(baseDirectory, baseKey, directory)).map(item => normalizePath(join(directory, item)));
     const itemsNames = items.map(item => basename(item));
 
     if(!ignoreAcc){
@@ -59,4 +59,8 @@ export function walkAndIgnore(baseDirectory: string, baseKey: string, directory?
         items = items.filter(item => !ignoreAcc.ignores(join(baseKey, item)));
 
     return items.concat(items.filter(item => fs.lstatSync(join(baseDirectory, baseKey, item)).isDirectory()).map(dir => walkAndIgnore(baseDirectory, baseKey, dir, ignoreAcc)).flat());
+}
+
+export const normalizePath = maybeWindowsPath => {
+    return maybeWindowsPath.split(path.sep).join("/")
 }
