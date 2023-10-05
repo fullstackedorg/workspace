@@ -10,7 +10,7 @@ export class Sync {
     static isInit: boolean = false;
     static init() {
         client.post().initSync()
-            .then(response => {
+            .then(async response => {
                 if((response && typeof response === 'boolean') || !response) {
                     Sync.isInit = true;
                     Workspace.addApp({
@@ -25,6 +25,9 @@ export class Sync {
                     });
                     return;
                 }
+
+                if(!await client.get().getSyncDirectory())
+                    return;
 
                 Workspace.instance.commandPaletteRef.current.setState({show: false});
                 Workspace.instance.addWindow({

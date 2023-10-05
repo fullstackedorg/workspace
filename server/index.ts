@@ -199,6 +199,9 @@ export const API = {
     getSyncedKeys(): string[] {
         return Sync.config?.keys;
     },
+    getSyncDirectory(){
+        return Sync.config?.directory;
+    },
     getSyncConflicts() {
         return Sync.conflicts;
     },
