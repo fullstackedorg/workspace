@@ -7,12 +7,11 @@ import {Workspace} from "../workspace";
 import Merge from "../editor/merge";
 import conflictIcon from "../icons/conflict.svg"
 
-
 export default function (props: {options: ExplorerOptions}) {
     const [conflicts, reloadConflicts] = useAPI(client.get().getSyncConflicts);
 
     return <Explorer client={fsLocal} action={(item) => {
-        if(conflicts[item.key])
+        if(conflicts && conflicts[item.key])
             return <button className={"small danger"} onClick={e => {
                 e.stopPropagation();
                 Object.keys(conflicts[item.key]).filter(fileKey => !conflicts[item.key][fileKey]).forEach(key => {
