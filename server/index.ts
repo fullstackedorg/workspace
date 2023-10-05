@@ -542,4 +542,7 @@ server.addListener({
             proxyCodeOSS.web(req, res, undefined, resolve)
         });
     }
-})
+});
+
+// throws on windows
+proxyCodeOSS.removeAllListeners("error");

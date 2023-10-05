@@ -5,7 +5,7 @@ import {homedir} from "os";
 import {Sync} from "./index";
 import {fsCloudClient} from "./fs-cloud-client";
 import {join, resolve} from "path";
-import {createSnapshot, getSnapshotDiffs, walkAndIgnore} from "./utils";
+import {createSnapshot, getSnapshotDiffs, normalizePath, walkAndIgnore} from "./utils";
 import prettyBytes from "pretty-bytes";
 
 type CloudFSStartResponseType =
@@ -84,9 +84,9 @@ export const fsCloud = {
 
         const subKeys = (await fsCloudClient.get().readdir(key, {recursive: true, withFileTypes: true}));
 
-        const subDirectories = subKeys.filter(subKey => subKey.isDirectory).map(({ path, name}) => join(path, name));
+        const subDirectories = subKeys.filter(subKey => subKey.isDirectory).map(({ path, name}) => normalizePath(join(path, name)));
         const subFiles = subKeys
-            .map(({path, name}) => join(path, name))
+            .map(({path, name}) => normalizePath(join(path, name)))
             .filter(subKey => !subDirectories.includes(subKey) && !subKey.endsWith(".fullstacked-sync"))
             // remove conflicts that has been resolved manually
             .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey.slice(key.length + 1)]));
