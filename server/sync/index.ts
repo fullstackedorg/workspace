@@ -52,29 +52,45 @@ export class Sync {
     }
 
     static async saveConfigs(){
-        const stringified = JSON.stringify(Sync.config, null, 2);
-        if(process.env.DOCKER_RUNTIME) {
+        if(process.env.USE_CLOUD_CONFIG){
+            const {authorization, ...configs} = Sync.config;
+
+            // save configs to cloud config, never send authorization
             if(fsCloudClient.origin)
-                fsCloudClient.post().writeFile(Sync.configFile, stringified);
-        }else
-            fs.writeFileSync(Sync.configFile, stringified);
+                fsCloudClient.post().writeFile(Sync.configFile, JSON.stringify(configs, null, 2));
+
+            // save authorization locally
+            if(authorization)
+                fs.writeFileSync(Sync.configFile, JSON.stringify({authorization}, null, 2));
+        }else{
+            fs.writeFileSync(Sync.configFile, JSON.stringify(Sync.config, null, 2));
+        }
     }
 
     static async loadLocalConfigs(){
-        let configData;
-        if(process.env.DOCKER_RUNTIME){
-            try{
-                configData = await fsCloudClient.get().readFile(this.configFile);
-            }catch (e){ console.log(e) }
-        }else if(existsSync(Sync.configFile)){
-            configData = fs.readFileSync(Sync.configFile).toString();
+        let configData = {};
+
+        // load local configs
+        if(existsSync(Sync.configFile)){
+            configData = JSON.parse(fs.readFileSync(Sync.configFile).toString());
         }
 
-        if(!configData) return;
+        // get config from cloud
+        if(process.env.USE_CLOUD_CONFIG && fsCloudClient.origin){
+            const cloudConfigs = (await fsCloudClient.get().readFile(this.configFile)).toString();
+            configData = {
+                ...configData,
+                ...JSON.parse(cloudConfigs)
+            };
+        }
 
-        try{
-            Sync.config = JSON.parse(configData)
-        }catch (e) { console.log(e) }
+        if(!Sync.config)
+            Sync.config = {}
+
+        Sync.config = {
+            ...Sync.config,
+            ...configData
+        }
     }
 
     // baseKey => problematic keys => resolved

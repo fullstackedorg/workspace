@@ -22,6 +22,7 @@ AUTH_URL= url agains't which to authorize token generation
 REVOKE_URL= url to poke on logout
 LOGOUT_REDIRECT= page to redirect to after logging out
 STORAGE_ENDPOINT= default is FullStacked Cloud, define another storage server endpoint
+USE_CLOUD_CONFIG= use cloud configs
 CONFIG_FILE= default $HOME/.fullstacked, but use another for different server without overwriting
 FORCE_PORT_USAGE= force the usage of port instead of subdomains
 ```
