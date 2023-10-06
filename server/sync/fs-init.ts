@@ -1,8 +1,9 @@
 import fs from "fs";
-import path, {join} from "path";
+import {join} from "path";
 import {normalizePath} from "./utils";
+import {Sync} from "./index";
 
-const initClient: (client: any) => fs.promises = client => client instanceof Function ? client() : client
+const initClient: (client: any) => typeof fs.promises = client => client instanceof Function ? client() : client
 
 export function fsInit(client, getBaseDir: () => string) {
     const filePath = (key) => normalizePath(join(getBaseDir(), key));
@@ -26,6 +27,7 @@ export function fsInit(client, getBaseDir: () => string) {
             return initClient(client).writeFile(filePath(key), contents);
         },
         deleteFile(key: string){
+            Sync.removeKey(key);
             return initClient(client).rm(filePath(key), {force: true, recursive: true});
         }
     }

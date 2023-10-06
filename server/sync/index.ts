@@ -28,6 +28,15 @@ export class Sync {
     static configFile = process.env.CONFIG_FILE || `${homedir()}/.fullstacked`;
 
     static setDirectory(directory: string) {
+        const exists = existsSync(directory);
+        const isFile = exists && fs.statSync(directory).isFile();
+
+        if(isFile)
+            return;
+
+        if(!exists)
+            fs.mkdirSync(directory, {recursive: true});
+
         Sync.config.directory = directory;
         Sync.config.keys = Sync.config.keys || [];
         Sync.saveConfigs();
@@ -51,6 +60,14 @@ export class Sync {
         Sync.saveConfigs();
     }
 
+    static removeKey(key: string){
+        console.log(key)
+        if(!Sync.config?.keys?.includes(key)) return;
+
+        Sync.config.keys.splice(Sync.config.keys.indexOf(key), 1);
+        Sync.saveConfigs();
+    }
+
     static async saveConfigs(){
         if(process.env.USE_CLOUD_CONFIG){
             const {authorization, ...configs} = Sync.config;
@@ -71,7 +88,7 @@ export class Sync {
         let configData = {};
 
         // load local configs
-        if(existsSync(Sync.configFile)){
+        if(existsSync(Sync.configFile) && fs.statSync(Sync.configFile).isFile()){
             configData = JSON.parse(fs.readFileSync(Sync.configFile).toString());
         }
 

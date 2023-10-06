@@ -22,6 +22,10 @@ export const fsLocal = {
 
     // push files to cloud
     async sync(key: string, save = true){
+        // make sure key exists
+        if(!fs.existsSync(resolve(getBaseDir(), key)))
+            return;
+
         const syncFilePath = resolve(getBaseDir(), key, ".fullstacked-sync");
         let localVersion;
 

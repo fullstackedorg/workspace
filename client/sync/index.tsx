@@ -2,13 +2,13 @@ import "./index.css";
 import React from "react";
 import {client} from "../client";
 import {Workspace} from "../workspace";
-import {PrepareFsRemote} from "../explorer/cloud";
 import {RenderSyncIndicator} from "./Indicator";
 import syncIcon from "../icons/sync.svg";
+import {PrepareFsRemote} from "./prepare";
 
 export class Sync {
     static isInit: boolean = false;
-    static init() {
+    static init(callback?: () => void, force = false) {
         client.post().initSync()
             .then(async response => {
                 if((response && typeof response === 'boolean') || !response) {
@@ -23,10 +23,15 @@ export class Sync {
                             return undefined;
                         }
                     });
+
+                    await client.get().getSyncedKeys();
+
+                    if(callback)
+                        callback();
                     return;
                 }
 
-                if(!await client.get().getSyncDirectory())
+                if(!force && !await client.get().getSyncDirectory())
                     return;
 
                 Workspace.instance.commandPaletteRef.current.setState({show: false});
@@ -35,7 +40,7 @@ export class Sync {
                     icon: syncIcon,
                     element: ({id}) => <PrepareFsRemote onSuccess={() => {
                         Workspace.instance.removeWindow(Workspace.instance.activeApps.get(id));
-                        Sync.init();
+                        Sync.init(callback);
                     }} />
                 });
             });

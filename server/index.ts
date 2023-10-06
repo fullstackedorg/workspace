@@ -19,6 +19,7 @@ import {fsCloud} from "./sync/fs-cloud";
 import {fsLocal} from "./sync/fs-local";
 import {fsCloudClient} from "./sync/fs-cloud-client";
 import ignore from "ignore";
+import path from "path";
 
 const server = new Server();
 
@@ -159,7 +160,7 @@ export const API = {
         }
     },
     homeDir(){
-        return homedir()
+        return homedir() + path.sep
     },
     currentDir(){
         let path = Sync.config?.directory || process.cwd();
