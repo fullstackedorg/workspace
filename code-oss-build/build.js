@@ -33,10 +33,6 @@ productJSON.extensionsGallery = {
 }
 fs.writeFileSync("vscode/product.json", JSON.stringify(productJSON, null, 2));
 
-const packageJSON = JSON.parse(fs.readFileSync("vscode/package.json").toString());
-packageJSON.name = "code-oss"
-fs.writeFileSync("vscode/package.json", JSON.stringify(packageJSON, null, 2));
-
 // add cmd/ctrl + shift + k to blur
 fs.appendFileSync("vscode/src/vs/workbench/browser/actions/windowActions.ts", `
 KeybindingsRegistry.registerKeybindingRule({
@@ -78,3 +74,7 @@ fs.rmSync("vscode", {recursive: true});
 if(fs.existsSync("../code-oss"))
     fs.rmSync("../code-oss", {recursive: true});
 fs.renameSync(`vscode-reh-web-${platform}`, "../code-oss");
+
+const packageJSON = JSON.parse(fs.readFileSync("../code-oss/package.json").toString());
+packageJSON.name = "code-oss"
+fs.writeFileSync("../code-oss/package.json", JSON.stringify(packageJSON, null, 2));
