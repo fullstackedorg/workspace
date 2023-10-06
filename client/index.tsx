@@ -8,15 +8,8 @@ import logo from "./icons/fullstacked-logo.svg";
 import {client} from "./client";
 import logoutIcon from "./icons/log-out.svg";
 import {Sync} from "./sync";
-import {AuthFlow} from "./explorer/cloud";
 
 (() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    if(searchParams.get("auth")){
-        renderAuthFlow(searchParams.get("auth"));
-        return;
-    }
-
     const hasAuth = hasAuthToken();
 
     if(hasAuth){
@@ -77,19 +70,6 @@ function addLogoutIcon(){
 
 function setBackground(){
     document.body.style.backgroundImage = `url(${logo})`;
-}
-
-function renderAuthFlow(url){
-    let rootDiv = document.querySelector("#root") as HTMLDivElement;
-    if(!rootDiv){
-        rootDiv = document.createElement("div");
-        rootDiv.setAttribute("id", "root");
-        document.body.append(rootDiv);
-    }
-
-    createRoot(rootDiv).render(<AuthFlow url={url} didAuthenticate={() => {
-        window.close()
-    }}/>)
 }
 
 async function main(){

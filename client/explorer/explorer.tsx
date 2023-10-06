@@ -17,7 +17,7 @@ export type ExplorerOptions = {
 }
 
 export default function Explorer(props: {client: any, action: (item: File) => any, options: ExplorerOptions}) {
-    const [syncedKeys, refreshSyncedKeys] = useAPI(mainClient.get(true).getSyncedKeys);
+    const [syncedKeys, refreshSyncedKeys] = useAPI(mainClient.get().getSyncedKeys);
     const [files, setFiles] = useState<FlatFileTree>();
 
     useEffect(() => {
@@ -26,7 +26,7 @@ export default function Explorer(props: {client: any, action: (item: File) => an
                 let files = {fileTreeRoot}
                 setFiles(files);
             });
-    }, [])
+    }, []);
 
     const openFileEditor = (filename) => {
         Workspace.instance.addWindow({
@@ -34,10 +34,6 @@ export default function Explorer(props: {client: any, action: (item: File) => an
             icon: editorIcon,
             element: () => <Editor client={props.client} filename={filename} />
         })
-    }
-
-    const didSyncKey = () => {
-        mainClient.get().getSyncedKeys().then(refreshSyncedKeys)
     }
 
     if(!files) return <></>;
@@ -69,7 +65,7 @@ export default function Explorer(props: {client: any, action: (item: File) => an
                                 return false;
                         }
                         return true;
-                    }) && <SyncButton itemKey={item.key} client={props.client} didSync={didSyncKey}/> }
+                    }) && <SyncButton itemKey={item.key} client={props.client} didSync={refreshSyncedKeys}/> }
             </div>
         </div>}
         onExpand={async (keys: string[], {node, expanded}) => {

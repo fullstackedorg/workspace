@@ -41,6 +41,14 @@ export const fsCloud = {
 
     // pull files from cloud
     async sync(key: string, save = true) {
+        // make sure key exists
+        try{
+            await fsCloudClient.get().access(key);
+        }catch (e) {
+            console.log(`Key [${key}] does not exists on remote`);
+            return;
+        }
+
         const syncFilePath = resolve(getLocalBaseDir(), key, ".fullstacked-sync");
         let remoteVersion;
 
