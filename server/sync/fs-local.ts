@@ -48,7 +48,7 @@ export const fsLocal = {
 
         localVersion = previousSnapshotWithVersion?.version || 0;
 
-        if(syncStart.version !== localVersion) {
+        if(syncStart.version && syncStart.version !== localVersion) {
             await fsCloud.sync.bind(this)(key, save);
             return;
         }
@@ -64,7 +64,12 @@ export const fsLocal = {
             const {version, ...previousSnapshot} = previousSnapshotWithVersion;
             const currentSnapshot = await createSnapshot(resolve(getBaseDir(), key), subFiles);
 
-            if(getSnapshotDiffs(previousSnapshot, currentSnapshot).diffs.length === 0){
+            const {
+                missingInA, // new
+                missingInB, // deleted
+                diffs// modified
+            } = getSnapshotDiffs(previousSnapshot, currentSnapshot);
+            if(!missingInA.length && !missingInB.length && !diffs.length){
                 return;
             }
         }
