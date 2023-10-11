@@ -76,7 +76,13 @@ export const fsLocal = {
 
         await Promise.all(subDirectories.map(subDir => fsCloudClient.post().mkdir(`${key}/${subDir}`, {recursive: true})));
         await Promise.all(subFiles.map(subFile => {
-            const contents = fs.readFileSync(resolve(getBaseDir(), key, subFile));
+            let contents: Buffer;
+            try {
+                contents = fs.readFileSync(resolve(getBaseDir(), key, subFile));
+            }catch (e){
+                console.log(resolve(getBaseDir(), key, subFile));
+                throw e;
+            }
 
             if(contents.byteLength <= Sync.transferBlockSize)
                 return fsCloudClient.post().writeFile(`${key}/${subFile}`, contents);
