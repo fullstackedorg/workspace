@@ -71,6 +71,11 @@
     text-overflow: ellipsis;
 }
 
+.rc-tree-title .buttons {
+    display: flex;
+    align-items: center;
+}
+
 .rc-tree-title .buttons > button:not(:first-child) {
     margin-left: 3px;
 }

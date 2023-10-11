@@ -7,16 +7,16 @@ import {WebSocket, WebSocketServer} from "ws";
 export class Sync {
     static status: SyncStatus;
     static syncInterval = 1000 * 60 * 2; // 2 minutes
-    // static syncInterval = 1000 * 30; // 30s for dev
     static globalIgnore = [
         ".fullstacked",
         ".fullstacked-sync",
         ".cache",
         ".npm",
         ".bun/install",
-        ".vscode-server-oss/data/logs"
+        ".vscode-server-oss",
+        "node_modules"
     ]
-    static transferBlockSize = 10485760;
+    static transferBlockSize = 10485760; // 10 MiB
     static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
     static config: {
         authorization?: string,
@@ -131,4 +131,3 @@ Sync.webSocketServer.on("connection", ws => {
     ws.send(JSON.stringify(Sync.status))
     ws.on("close", () => Sync.ws.delete(ws));
 });
-

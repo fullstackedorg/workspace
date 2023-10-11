@@ -229,7 +229,7 @@ export const API = {
             await Sync.loadLocalConfigs();
         }
 
-        // in docker sync .xyz files since their mostly configs and stuff
+        // in docker, sync .xyz files since their mostly configs and stuff
         // ie .profile
         if(process.env.DOCKER_RUNTIME){
             const ig = ignore();

@@ -17,7 +17,7 @@ export const fsLocal = {
         const filePath = resolve(getBaseDir(), baseKey, key);
         fs.writeFileSync(filePath, contents);
         Sync.conflicts[baseKey][key] = true;
-        return fsCloud.sync.bind(this)(baseKey);
+        return fsCloud.sync.bind(this)(baseKey, false);
     },
 
     // push files to cloud
@@ -55,8 +55,6 @@ export const fsLocal = {
 
         const subKeys = walkAndIgnore(getBaseDir(), key);
 
-        await fsCloudClient.post().mkdir(key, {recursive: true});
-
         const subDirectories = subKeys.filter(subKey => fs.lstatSync(resolve(getBaseDir(), key, subKey)).isDirectory());
         const subFiles = subKeys.filter(subKey => !subDirectories.includes(subKey) && !subKey.endsWith(".fullstacked-sync"));
 
@@ -73,6 +71,8 @@ export const fsLocal = {
                 return;
             }
         }
+
+        await fsCloudClient.post().mkdir(key, {recursive: true});
 
         await Promise.all(subDirectories.map(subDir => fsCloudClient.post().mkdir(`${key}/${subDir}`, {recursive: true})));
         await Promise.all(subFiles.map(subFile => {
@@ -105,7 +105,7 @@ export const fsLocal = {
             })
         }));
 
-        const syncDone = await (await fetch(`${Sync.endpoint}/pushDone`, {
+        await (await fetch(`${Sync.endpoint}/pushDone`, {
             method: "POST",
             body: JSON.stringify({
                 0: key
