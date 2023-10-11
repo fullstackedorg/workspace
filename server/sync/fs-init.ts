@@ -10,7 +10,18 @@ export function fsInit(client, getBaseDir: () => string) {
 
     return {
         async readDir(key: string){
-            return (await initClient(client).readdir(filePath(key), {withFileTypes: true})).map(item => ({
+            let readDir: fs.Dirent[];
+            try {
+                readDir = await initClient(client).readdir(filePath(key), {withFileTypes: true});
+            }catch (e) {
+                Sync.updateStatus({
+                    status: "error",
+                    message: e.message
+                });
+                return []
+            }
+
+            return readDir.map(item => ({
                     name: item.name,
                     key: (key ? key + "/" : "") + item.name,
                     isDirectory: item.isDirectory instanceof Function
@@ -20,15 +31,39 @@ export function fsInit(client, getBaseDir: () => string) {
             );
         },
         async getFileContents(key: string){
-            const data = await initClient(client).readFile(filePath(key));
+            let data: Buffer;
+            try{
+                data = await initClient(client).readFile(filePath(key));
+            }catch (e){
+                Sync.updateStatus({
+                    status: "error",
+                    message: e.message
+                });
+                return "";
+            }
+
             return data.toString();
         },
         updateFile(key: string, contents: string){
-            return initClient(client).writeFile(filePath(key), contents);
+            try{
+                return initClient(client).writeFile(filePath(key), contents);
+            }catch (e) {
+                Sync.updateStatus({
+                    status: "error",
+                    message: e.message
+                });
+            }
         },
         deleteFile(key: string){
             Sync.removeKey(key);
-            return initClient(client).rm(filePath(key), {force: true, recursive: true});
+            try{
+                return initClient(client).rm(filePath(key), {force: true, recursive: true});
+            }catch (e){
+                Sync.updateStatus({
+                    status: "error",
+                    message: e.message
+                });
+            }
         }
     }
 }

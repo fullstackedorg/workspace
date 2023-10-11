@@ -43,7 +43,7 @@ export const fsCloud = {
     async sync(key: string, save = true) {
         // make sure key exists
         try{
-            await fsCloudClient.get().access(key);
+            await fsCloudClient.post().access(key);
         }catch (e) {
             console.log(`Key [${key}] does not exists on remote`);
             return;
@@ -90,7 +90,7 @@ export const fsCloud = {
             }
         }
 
-        const subKeys = (await fsCloudClient.get().readdir(key, {recursive: true, withFileTypes: true}));
+        const subKeys = (await fsCloudClient.post().readdir(key, {recursive: true, withFileTypes: true}));
 
         const subDirectories = subKeys.filter(subKey => subKey.isDirectory).map(({ path, name}) => normalizePath(join(path, name)));
         const subFiles = subKeys
@@ -107,9 +107,9 @@ export const fsCloud = {
         await Promise.all(subFiles.map(subFile => new Promise<void>(async res => {
             const filePath = resolve(getLocalBaseDir(), subFile);
 
-            const contentLength = (await fsCloudClient.get().lstat(subFile)).size as number;
+            const contentLength = (await fsCloudClient.post().lstat(subFile)).size as number;
             if(contentLength <= Sync.transferBlockSize) {
-                const content = await fsCloudClient.get(false, true).readFile(subFile);
+                const content = await fsCloudClient.post(true).readFile(subFile);
                 await fs.promises.writeFile(filePath, Buffer.from(content));
             }else{
                 const parts = Math.ceil(contentLength / Sync.transferBlockSize);
@@ -119,7 +119,7 @@ export const fsCloud = {
                         message: `[${subFile} ${prettyBytes(contentLength)}] ${(i * Sync.transferBlockSize / contentLength * 100).toFixed(2)}%`
                     })
 
-                    const bufferPart = await fsCloudClient.get(false, true).readFilePart(subFile, i * Sync.transferBlockSize, (i + 1) * Sync.transferBlockSize)
+                    const bufferPart = await fsCloudClient.post(true).readFilePart(subFile, i * Sync.transferBlockSize, (i + 1) * Sync.transferBlockSize)
                     if(i === 0)
                         await fs.promises.writeFile(filePath, Buffer.from(bufferPart))
                     else

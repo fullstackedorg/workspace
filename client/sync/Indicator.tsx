@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {SyncStatus} from "./status";
 import {createRoot} from "react-dom/client";
 
-export function RenderSyncIndicator(){
+export function RenderSyncIndicator(onError: () => void){
     // render only once
     if(document.querySelector("#sync")) return;
 
@@ -13,7 +13,7 @@ export function RenderSyncIndicator(){
     root.render(<Indicator remove={() => {
         root.unmount();
         div.remove();
-    }} />);
+    }} didError={onError} />);
 }
 
 function initWS(cb) {
@@ -31,7 +31,7 @@ function initWS(cb) {
     };
 }
 
-function Indicator(props: {remove(): void}){
+function Indicator(props: {remove(): void, didError(): void}){
     const [status, setStatus] = useState<SyncStatus>();
     const [lastSyncInterval, setLastSyncInterval] = useState("");
 
@@ -43,6 +43,10 @@ function Indicator(props: {remove(): void}){
             if(status === null){
                 props.remove();
                 return;
+            }
+
+            if(status.status === "error"){
+                props.didError();
             }
 
             setStatus(status);
