@@ -14,7 +14,8 @@ export class Sync {
         ".npm",
         ".bun/install",
         ".vscode-server-oss",
-        "node_modules"
+        "node_modules",
+        "core"
     ]
     static transferBlockSize = 10485760; // 10 MiB
     static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
@@ -61,7 +62,6 @@ export class Sync {
     }
 
     static removeKey(key: string){
-        console.log(key)
         if(!Sync.config?.keys?.includes(key)) return;
 
         Sync.config.keys.splice(Sync.config.keys.indexOf(key), 1);
