@@ -208,7 +208,7 @@ export const API = {
     },
     async initSync(this: {req: IncomingMessage}){
         // init only once
-        if(Sync.status) return true;
+        if(Sync.status && Sync.status.status !== "error") return true;
 
         Sync.updateStatus({
             status: "initializing"

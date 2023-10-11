@@ -12,17 +12,19 @@ export class Sync {
         client.post().initSync()
             .then(async response => {
                 if((response && typeof response === 'boolean') || !response) {
-                    Sync.isInit = true;
-                    Workspace.addApp({
-                        title: "Sync",
-                        icon: syncIcon,
-                        order: 5,
-                        element: app => {
-                            client.post().sync();
-                            Workspace.instance.removeWindow(app);
-                            return undefined;
-                        }
-                    });
+                    if(!Sync.isInit){
+                        Sync.isInit = true;
+                        Workspace.addApp({
+                            title: "Sync",
+                            icon: syncIcon,
+                            order: 5,
+                            element: app => {
+                                client.post().sync();
+                                Workspace.instance.removeWindow(app);
+                                return undefined;
+                            }
+                        });
+                    }
 
                     await client.get().getSyncedKeys();
 
@@ -45,6 +47,8 @@ export class Sync {
                 });
             });
 
-        RenderSyncIndicator();
+        RenderSyncIndicator(() => {
+            Sync.init()
+        });
     }
 }
