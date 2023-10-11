@@ -151,11 +151,14 @@ export const fsCloud = {
         return fs.promises.writeFile(syncFilePath, JSON.stringify(snapshot));
     },
 
-    async authenticate(data: any){
+    async authenticate(this: {req: IncomingMessage}, data: any){
         let token;
         try{
             token = await (await fetch(data.url, {
                 method: "POST",
+                headers: {
+                    "user-agent": this.req.headers["user-agent"]
+                },
                 body: JSON.stringify(data)
             })).text()
         }catch (e) { console.log(e) }
