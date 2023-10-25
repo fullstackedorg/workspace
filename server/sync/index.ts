@@ -120,6 +120,8 @@ export class Sync {
         }
     } = {};
 
+    static keysSyncing = new Set<string>();
+
     static webSocketServer = new WebSocketServer({noServer: true});
     static ws = new Set<WebSocket>();
     static updateStatus(status: SyncStatus){
