@@ -94,11 +94,14 @@ export class Sync {
 
         // get config from cloud
         if(process.env.USE_CLOUD_CONFIG && fsCloudClient.origin){
-            const cloudConfigs = (await fsCloudClient.post().readFile(this.configFile)).toString();
-            configData = {
-                ...configData,
-                ...JSON.parse(cloudConfigs)
-            };
+            let cloudConfigs;
+            try{
+                cloudConfigs = (await fsCloudClient.post().readFile(this.configFile)).toString();
+                configData = {
+                    ...configData,
+                    ...JSON.parse(cloudConfigs)
+                };
+            }catch (e) { }
         }
 
         if(!Sync.config)

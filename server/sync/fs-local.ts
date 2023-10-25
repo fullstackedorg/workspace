@@ -74,8 +74,15 @@ export const fsLocal = {
 
         await fsCloudClient.post().mkdir(key, {recursive: true});
 
-        await Promise.all(subDirectories.map(subDir => fsCloudClient.post().mkdir(`${key}/${subDir}`, {recursive: true})));
-        await Promise.all(subFiles.map(subFile => {
+        const mkdirMulti = fsCloudClient.multi();
+        subDirectories.forEach(subDir => mkdirMulti.add().mkdir(`${key}/${subDir}`, {recursive: true}));
+        await mkdirMulti.fetch();
+
+        let writeFileMulti = fsCloudClient.multi();
+        let payloadSize = 0;
+        const multiFetchPromises = [];
+        const largeFiles = [];
+        subFiles.forEach(subFile => {
             let contents: Buffer;
             try {
                 contents = fs.readFileSync(resolve(getBaseDir(), key, subFile));
@@ -84,17 +91,29 @@ export const fsLocal = {
                 throw e;
             }
 
-            if(contents.byteLength <= Sync.transferBlockSize)
-                return fsCloudClient.post().writeFile(`${key}/${subFile}`, contents);
+            if(contents.byteLength <= Sync.transferBlockSize) {
 
-            return new Promise<void>(async resolve => {
+                if(payloadSize < Sync.transferBlockSize){
+                    payloadSize += contents.byteLength;
+                }else{
+                    multiFetchPromises.push((writeFileMulti.fetch()))
+                    payloadSize = contents.byteLength;
+                    writeFileMulti = fsCloudClient.multi();
+                }
+
+                writeFileMulti.add().writeFile(`${key}/${subFile}`, contents);
+                return;
+            }
+
+            // large files
+            const promise = new Promise<void>(async resolve => {
                 const parts = Math.ceil(contents.byteLength / Sync.transferBlockSize);
 
                 for (let i = 0; i < parts; i++) {
                     Sync.updateStatus({
                         status: "large-file",
                         message: `[${key}/${subFile} ${prettyBytes(contents.byteLength)}] ${(i * Sync.transferBlockSize / contents.byteLength * 100).toFixed(2)}%`
-                    })
+                    });
 
                     const bufferPart = contents.subarray(i * Sync.transferBlockSize, (i + 1) * Sync.transferBlockSize);
                     // write first part
@@ -108,8 +127,15 @@ export const fsLocal = {
                 }
 
                 resolve();
-            })
-        }));
+            });
+            largeFiles.push(promise);
+        });
+
+        multiFetchPromises.push(writeFileMulti.fetch());
+        await Promise.all([
+            Promise.all(multiFetchPromises),
+            Promise.all(largeFiles)
+        ]);
 
         await (await fetch(`${Sync.endpoint}/pushDone`, {
             method: "POST",

@@ -104,14 +104,36 @@ export const fsCloud = {
 
         await Promise.all(subDirectories.map(subDir => fs.promises.mkdir(resolve(getLocalBaseDir(), subDir), {recursive: true})));
 
-        await Promise.all(subFiles.map(subFile => new Promise<void>(async res => {
-            const filePath = resolve(getLocalBaseDir(), subFile);
+        const lstatMulti = fsCloudClient.multi();
+        subFiles.forEach(subFile => lstatMulti.add().lstat(subFile));
+        const lstats = await lstatMulti.fetch();
 
-            const contentLength = (await fsCloudClient.post().lstat(subFile)).size as number;
+        let payloadSize = 0;
+        let readFileMulti = fsCloudClient.multi();
+        const multiFetchPromises = [];
+        const smallFiles = [];
+        const largeFiles = [];
+        subFiles.forEach((subFile, index) => {
+            const filePath = resolve(getLocalBaseDir(), subFile);
+            const contentLength = lstats[index].size;
+
             if(contentLength <= Sync.transferBlockSize) {
-                const content = await fsCloudClient.post(true).readFile(subFile);
-                await fs.promises.writeFile(filePath, Buffer.from(content));
-            }else{
+
+                if(payloadSize < Sync.transferBlockSize) {
+                    payloadSize += contentLength;
+                } else {
+                    multiFetchPromises.push(readFileMulti.fetch());
+                    readFileMulti = fsCloudClient.multi();
+                    payloadSize = contentLength;
+                }
+
+                smallFiles.push(filePath);
+                readFileMulti.add(true).readFile(subFile);
+                return;
+            }
+
+            // large file
+            const promise = new Promise<void>(async resolve => {
                 const parts = Math.ceil(contentLength / Sync.transferBlockSize);
                 for (let i = 0; i < parts; i++) {
                     Sync.updateStatus({
@@ -125,9 +147,23 @@ export const fsCloud = {
                     else
                         await fs.promises.appendFile(filePath, Buffer.from(bufferPart))
                 }
-            }
-            res()
-        })));
+                resolve();
+            });
+            largeFiles.push(promise);
+        });
+
+        multiFetchPromises.push(readFileMulti.fetch());
+        const contents = (await Promise.all(multiFetchPromises)).flat();
+        const writeFilePromises = contents.map((content, index) => {
+            if(content.error) return false;
+
+            const filePath = smallFiles[index];
+            return fs.promises.writeFile(filePath, Buffer.from(content));
+        });
+        await Promise.all([
+            ...writeFilePromises.filter(Boolean),
+            ...largeFiles
+        ]);
 
         const filesKeys = subFiles.map(subFile => subFile.slice(key.length + 1));
         const snapshot = {

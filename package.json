@@ -36,7 +36,7 @@
     "@fullstacked/cli": "^0.10.6",
     "@fullstacked/share": "^0.10.9",
     "@fullstacked/watch": "^0.10.18",
-    "@fullstacked/webapp": "^0.10.10",
+    "@fullstacked/webapp": "^0.10.15",
     "@types/cookie": "^0.5.1",
     "@types/http-proxy": "^1.17.11",
     "@types/js-cookie": "^3.0.3",
