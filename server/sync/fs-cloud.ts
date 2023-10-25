@@ -90,6 +90,8 @@ export const fsCloud = {
             }
         }
 
+        Sync.keysSyncing.add(key);
+
         const subKeys = (await fsCloudClient.post().readdir(key, {recursive: true, withFileTypes: true}));
 
         const subDirectories = subKeys.filter(subKey => subKey.isDirectory).map(({ path, name}) => normalizePath(join(path, name)));
@@ -174,6 +176,8 @@ export const fsCloud = {
         if(save)
             Sync.addKey(key);
 
+        Sync.keysSyncing.delete(key);
+
         if(Sync.conflicts[key]) {
             delete Sync.conflicts[key];
             if(Object.keys(Sync.conflicts).length === 0) {
@@ -182,6 +186,11 @@ export const fsCloud = {
                     lastSync: Date.now()
                 })
             }
+        }else if(Sync.keysSyncing.size === 0){
+            Sync.updateStatus({
+                status: "synced",
+                lastSync: Date.now()
+            });
         }
 
         return fs.promises.writeFile(syncFilePath, JSON.stringify(snapshot));

@@ -72,6 +72,8 @@ export const fsLocal = {
             }
         }
 
+        Sync.keysSyncing.add(key);
+
         await fsCloudClient.post().mkdir(key, {recursive: true});
 
         const mkdirMulti = fsCloudClient.multi();
@@ -152,5 +154,14 @@ export const fsLocal = {
 
         if(save)
             Sync.addKey(key);
+
+        Sync.keysSyncing.delete(key);
+
+        if(Sync.keysSyncing.size === 0){
+            Sync.updateStatus({
+                status: "synced",
+                lastSync: Date.now()
+            });
+        }
     }
 }
