@@ -10,7 +10,8 @@ export async function createSnapshot(baseDir: string, keys: string[]) {
     const snapshot: Snapshot  = {};
 
     await Promise.all(keys.map(key => new Promise<void>(res => {
-        fs.promises.lstat(resolve(baseDir, key)).then(({mtimeMs}) => {
+        const filePath = resolve(baseDir, key);
+        fs.promises.lstat(filePath).then(({mtimeMs}) => {
             snapshot[key] = mtimeMs;
             res();
         })

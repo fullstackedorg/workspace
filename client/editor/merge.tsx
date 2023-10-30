@@ -8,7 +8,7 @@ async function initMerge(container: HTMLDivElement, {baseKey, fileKey}) {
     const extensions = await getExtensions(fileKey);
 
     const path = baseKey + "/" + fileKey;
-    const mergeView = new MergeView({
+    return new MergeView({
         a: {
             doc: await fsLocal.get().getFileContents(path),
             extensions
@@ -20,8 +20,6 @@ async function initMerge(container: HTMLDivElement, {baseKey, fileKey}) {
         revertControls: "b-to-a",
         parent: container
     });
-
-    return mergeView
 }
 
 
@@ -34,9 +32,9 @@ export default function (props: {baseKey: string, fileKey: string, didResolve():
     }, []);
 
     return <>
-        <button onClick={async () => {
-            await fsLocal.post().resolveConflict(props.baseKey, props.fileKey, mergeView.a.state.doc.toString());
-            props.didResolve()
+        <button onClick={() => {
+            fsLocal.post().resolveConflict(props.baseKey, props.fileKey, mergeView.a.state.doc.toString());
+            props.didResolve();
         }}>Mark Resolved</button>
         <div ref={containerRef} style={{
             height: "calc(100% - 34px)",
