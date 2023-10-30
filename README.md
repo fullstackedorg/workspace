@@ -97,7 +97,7 @@ volumes:
 | `AUTH_URL` | URL against which to authorize token generation | `string` | - |
 | `REVOKE_URL` | URL to poke on logout | `string` | - |
 | `LOGOUT_REDIRECT` | URL to redirect to after logout | `string` | - |
-| `STORAGE_ENDPOINT` | Endpoint to use for the storage Sync | `string` | `https://fullstacked.cloud/storages` |
+| `STORAGE_ENDPOINT` | Endpoint to use for the storage Sync | `string` | `https://auth.fullstacked.cloud/storages` |
 | `USE_CLOUD_CONFIG` | Use the cloud config for storage Sync | `boolean` | `false` |
 | `CONFIG_FILE` | Path to file to save storage Sync configs | `string` | `$HOME/.fullstacked-config` |
 | `FORCE_PORT_USAGE` | Force the usage of direct port instead of port subdomain reverse-proxy (only useful in some docker install edge cases) | `boolean` | `false` |

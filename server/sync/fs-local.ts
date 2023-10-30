@@ -30,16 +30,26 @@ export const fsLocal = {
         let localVersion;
 
         // version check
-        const syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
-            method: "POST",
-            body: JSON.stringify({
-                0: key
-            }),
-            headers: {
-                cookie: this.req.headers.cookie,
-                authorization: Sync.config?.authorization
-            }}
-        )).json();
+        let syncStart;
+        try{
+            syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
+                method: "POST",
+                body: JSON.stringify({
+                    0: key
+                }),
+                headers: {
+                    cookie: this.req.headers.cookie,
+                    authorization: Sync.config?.authorization
+                }}
+            )).json();
+        } catch(e) {
+            Sync.updateStatus({
+                status: "error",
+                message: e.message
+            });
+            return;
+        }
+        
 
         let previousSnapshotWithVersion;
         if(fs.existsSync(syncFilePath)){
@@ -73,6 +83,10 @@ export const fsLocal = {
         }
 
         Sync.keysSyncing.add(key);
+        Sync.updateStatus({
+            status: "syncing",
+            keys: Array.from(Sync.keysSyncing)
+        });
 
         await fsCloudClient.post().mkdir(key, {recursive: true});
 
