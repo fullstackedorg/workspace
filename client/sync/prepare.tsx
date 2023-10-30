@@ -59,7 +59,7 @@ export function AuthFlow({url, didAuthenticate}){
         e.preventDefault();
         await fsCloud.post().authenticate({
             ...body,
-            code
+            code: code.trim()
         });
         win?.close();
         didAuthenticate();
@@ -75,7 +75,7 @@ export function AuthFlow({url, didAuthenticate}){
             : <>
                 <div>Enter the code or the token to authenticate this device</div>
                 <form onSubmit={submit}>
-                    <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value.trim())}/>
+                    <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)}/>
                     <button>Submit</button>
                 </form>
             </>}
