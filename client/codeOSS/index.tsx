@@ -114,7 +114,11 @@ if(portCodeOSS) {
         element: ({id, args: {folder}}) => {
             const {zIndex} = Workspace.instance.state.windows.find(win => win.id === id);
             CodeOSS.load(id, zIndex, folder);
-            return <div className={"code-oss-loading"}>Opening&nbsp;<b>{folder}</b>&nbsp;in CodeOSS...</div>;
+            return <div className={"code-oss-loading"}>
+                <div>Opening</div>
+                <code>{folder}</code>
+                <div>in CodeOSS...</div>
+            </div>;
         },
         args: {
             folder: await client.get(true).currentDir()

@@ -171,17 +171,28 @@ export const fsCloud = {
         });
 
         multiFetchPromises.push(readFileMulti.fetch());
-        const contents = (await Promise.all(multiFetchPromises)).flat();
+        const contents = (await Promise.allSettled(multiFetchPromises)).map(promiseSettled => {
+            if(promiseSettled.status === "rejected"){
+                throw Error("Failed a multi readFile");
+            }
+            return promiseSettled.value
+        }).flat();
         const writeFilePromises = contents.map((content, index) => {
-            if(content.error) return false;
+            if(content.error){
+                return false;
+            }
 
             const filePath = smallFiles[index];
             return fs.promises.writeFile(filePath, Buffer.from(content));
         });
-        await Promise.all([
+        const results = await Promise.allSettled([
             ...writeFilePromises.filter(Boolean),
             ...largeFiles
         ]);
+
+        if(results.find(promiseSettled => promiseSettled.status === "rejected")){
+            throw Error("Failed a local file write or large file transfer");
+        }
 
         const filesKeys = subFiles.map(subFile => subFile.slice(key.length + 1));
         const snapshot = {

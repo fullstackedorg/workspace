@@ -15,8 +15,7 @@ export class Sync {
         ".bun/install",
         ".vscode-server-oss",
         "node_modules",
-        "core",
-        ".git/objects"
+        "core"
     ]
     static transferBlockSize = 10485760; // 10 MiB
     static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
