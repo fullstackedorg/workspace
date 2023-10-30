@@ -74,7 +74,10 @@ function Indicator(props: {remove(): void, didError(): void}){
             : status.status === "initializing"
                 ? <>Initializing...</>
                 : status.status === "syncing"
-                    ? <>Syncing...</>
+                    ? <div>
+                        Syncing...
+                        {status.keys.map(key => <div>{key}</div>)}
+                    </div>
                     : status.status === "conflicts"
                         ? <>Sync conflicts</>
                         : <>{status.message}</>}

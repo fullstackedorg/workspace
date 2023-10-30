@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
-  "description": "A Cloud Workspace for Web Developer",
-  "version": "0.11.0-alpha.17",
+  "description": "A Ubiquitous Workspace for Developers",
+  "version": "0.11.0-alpha.24",
   "author": "cplepage",
   "dependencies": {
     "node-pty": "^0.10.1"
@@ -15,7 +15,6 @@
     "build": "fsc build --production && npm run cp",
     "predocker": "npm run build",
     "docker": "docker build . -f docker/Dockerfile -t fullstackedorg/workspace:test",
-    "postinstall": "cd code-oss && npm i --legacy-peer-deps",
     "prepack": "npm run build"
   },
   "type": "module",
@@ -43,6 +42,7 @@
     "@types/react": "^18.2.18",
     "@types/react-dom": "^18.2.7",
     "@types/ws": "^8.5.5",
+    "@webcontainer/api": "^1.1.8",
     "codemirror": "^6.0.1",
     "cookie": "^0.5.0",
     "decompress": "^4.2.1",

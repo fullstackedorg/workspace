@@ -19,7 +19,7 @@ class CodeOSS {
             await sleep(100);
         }
     }
-    static load({id, order}, folder) {
+    static async load({id, order}, folder) {
         if(folder && CodeOSS.folder && folder !== CodeOSS.folder){
             window.location.href = window.location.href + `?folder=${folder}`;
             return;
@@ -42,66 +42,65 @@ class CodeOSS {
 
         const parser = new DOMParser();
 
-        fetch("/oss-dev")
-            .then(res => res.text())
-            .then(async htmlStr => {
-                const url = new URL(window.location.href);
-                url.search = `folder=${folder}`;
-                window.history.replaceState(null, null, url);
+        const response = await fetch("/oss-dev");
+        const htmlStr = await response.text();
 
-                const html = parser.parseFromString(htmlStr, "text/html");
-                const head = html.head;
-                head.querySelectorAll(":scope > *").forEach(element => {
-                    if(element.getAttribute("rel") === "icon") return;
-                    document.head.append(element)
+        const url = new URL(window.location.href);
+        url.search = `folder=${folder}`;
+        window.history.replaceState(null, null, url);
+
+        const html = parser.parseFromString(htmlStr, "text/html");
+        const head = html.head;
+        head.querySelectorAll(":scope > *").forEach(element => {
+            if(element.getAttribute("rel") === "icon") return;
+            document.head.append(element)
+        })
+        const body = html.body;
+        const elements = Array.from(body.querySelectorAll(":scope > *"))
+        for(const element of elements){
+            if(element.tagName !== "SCRIPT") return;
+
+            const script = document.createElement("script");
+
+            if(element.getAttribute("src")) {
+                script.src = element.getAttribute("src");
+                await new Promise(resolve => {
+                    script.onload = resolve;
+                    document.body.append(script);
                 })
-                const body = html.body;
-                const elements = Array.from(body.querySelectorAll(":scope > *"))
-                for(const element of elements){
-                    if(element.tagName !== "SCRIPT") return;
+            }else {
+                script.textContent = element.textContent;
+                document.body.append(script);
+            }
+        }
 
-                    const script = document.createElement("script");
+        await CodeOSS.waitForElement();
 
-                    if(element.getAttribute("src")) {
-                        script.src = element.getAttribute("src");
-                        await new Promise(resolve => {
-                            script.onload = resolve;
-                            document.body.append(script);
-                        })
-                    }else {
-                        script.textContent = element.textContent;
-                        document.body.append(script);
-                    }
-                }
+        document.querySelector("#root").append(CodeOSS.element);
+        CodeOSS.element.style.zIndex = order.toString();
 
-                await CodeOSS.waitForElement();
+        CodeOSS.element.addEventListener("click", () => {
+            Workspace.instance.focusWindow(Workspace.instance.activeApps.get(CodeOSS.windowId))
+        });
 
-                document.querySelector("#root").append(CodeOSS.element);
-                CodeOSS.element.style.zIndex = order.toString();
+        url.search = ``;
+        window.history.replaceState(null, null, url);
 
-                CodeOSS.element.addEventListener("click", () => {
-                    Workspace.instance.focusWindow(Workspace.instance.activeApps.get(CodeOSS.windowId))
-                });
-
-                url.search = ``;
-                window.history.replaceState(null, null, url);
-
-                const optionButtonsContainer = document.createElement("div");
-                optionButtonsContainer.classList.add("code-oss-window-options")
-                CodeOSS.element.append(optionButtonsContainer);
-                createRoot(optionButtonsContainer).render(<OptionButtons buttons={[
-                    {
-                        onClick: () => {
-                            CodeOSS.element.style.display = "none";
-                            Workspace.instance.removeWindow(Workspace.instance.activeApps.get(CodeOSS.windowId));
-                        },
-                        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
-                                   stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    },
-                ]} />)
-            });
+        const optionButtonsContainer = document.createElement("div");
+        optionButtonsContainer.classList.add("code-oss-window-options")
+        CodeOSS.element.append(optionButtonsContainer);
+        createRoot(optionButtonsContainer).render(<OptionButtons buttons={[
+            {
+                onClick: () => {
+                    CodeOSS.element.style.display = "none";
+                    Workspace.instance.removeWindow(Workspace.instance.activeApps.get(CodeOSS.windowId));
+                },
+                icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
+                            stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            },
+        ]} />)
     }
 }
 
@@ -112,8 +111,20 @@ if(portCodeOSS) {
         icon: CodeOSSIcon,
         order: 20,
         element: ({id, args: {folder}}) => {
+            let loadingWindow;
+            Workspace.instance.addWindow({
+                title: "CodeOSS",
+                icon: CodeOSSIcon,
+                element: (app) => {
+                    loadingWindow = app;
+                    return <div>Code OSS is loading...</div>
+                }
+            })
+
+
             const win = Workspace.instance.state.windows.find(window => window.id === id);
-            CodeOSS.load(win, folder);
+            CodeOSS.load(win, folder).then(() => Workspace.instance.removeWindow(loadingWindow));
+
 
             return undefined;
         },
