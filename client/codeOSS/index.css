@@ -13,3 +13,12 @@
 .code-oss-window-options * {
     box-sizing: border-box;
 }
+
+.code-oss-loading {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}

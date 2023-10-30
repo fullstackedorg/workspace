@@ -19,7 +19,7 @@ class CodeOSS {
             await sleep(100);
         }
     }
-    static async load({id, order}, folder) {
+    static async load(id, zIndex, folder) {
         if(folder && CodeOSS.folder && folder !== CodeOSS.folder){
             window.location.href = window.location.href + `?folder=${folder}`;
             return;
@@ -33,16 +33,17 @@ class CodeOSS {
 
         if(CodeOSS.loaded){
             CodeOSS.waitForElement().then(() => {
-                CodeOSS.element.style.zIndex = order.toString();
+                CodeOSS.element.style.zIndex = zIndex.toString();
                 CodeOSS.element.style.display = "block";
             });
             return;
-        };
+        }
+
         CodeOSS.loaded = true;
 
         const parser = new DOMParser();
 
-        const response = await fetch("/oss-dev");
+        const response = await fetch("/oss-dev")
         const htmlStr = await response.text();
 
         const url = new URL(window.location.href);
@@ -77,7 +78,7 @@ class CodeOSS {
         await CodeOSS.waitForElement();
 
         document.querySelector("#root").append(CodeOSS.element);
-        CodeOSS.element.style.zIndex = order.toString();
+        CodeOSS.element.style.zIndex = zIndex.toString();
 
         CodeOSS.element.addEventListener("click", () => {
             Workspace.instance.focusWindow(Workspace.instance.activeApps.get(CodeOSS.windowId))
@@ -96,11 +97,11 @@ class CodeOSS {
                     Workspace.instance.removeWindow(Workspace.instance.activeApps.get(CodeOSS.windowId));
                 },
                 icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
-                            stroke="currentColor" className="w-6 h-6">
+                           stroke="currentColor" className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             },
-        ]} />)
+        ]} />);
     }
 }
 
@@ -111,22 +112,9 @@ if(portCodeOSS) {
         icon: CodeOSSIcon,
         order: 20,
         element: ({id, args: {folder}}) => {
-            let loadingWindow;
-            Workspace.instance.addWindow({
-                title: "CodeOSS",
-                icon: CodeOSSIcon,
-                element: (app) => {
-                    loadingWindow = app;
-                    return <div>Code OSS is loading...</div>
-                }
-            })
-
-
-            const win = Workspace.instance.state.windows.find(window => window.id === id);
-            CodeOSS.load(win, folder).then(() => Workspace.instance.removeWindow(loadingWindow));
-
-
-            return undefined;
+            const {zIndex} = Workspace.instance.state.windows.find(win => win.id === id);
+            CodeOSS.load(id, zIndex, folder);
+            return <div className={"code-oss-loading"}>Opening&nbsp;<b>{folder}</b>&nbsp;in CodeOSS...</div>;
         },
         args: {
             folder: await client.get(true).currentDir()

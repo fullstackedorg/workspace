@@ -68,20 +68,22 @@ function Indicator(props: {remove(): void, didError(): void}){
     if(!status)
         return <></>
 
-    return <>
+    return <div id={"sync-indicator"}>
         {status.status === "synced"
-            ? lastSyncInterval && <>Synced {lastSyncInterval} ago</>
+            ? lastSyncInterval && <div className={Date.now() - status.lastSync < 10000 ? "on-top" : ""}>Synced {lastSyncInterval} ago</div>
             : status.status === "initializing"
-                ? <>Initializing...</>
+                ? <div>Initializing...</div>
                 : status.status === "syncing"
-                    ? <div>
+                    ? <div className={"on-top"}>
                         Syncing...
-                        {status.keys.map(key => <div>{key}</div>)}
+                        <div>
+                            {status.keys.map(key => <div>{key}</div>)}
+                        </div>
                     </div>
                     : status.status === "conflicts"
-                        ? <>Sync conflicts</>
-                        : <>{status.message}</>}
-    </>
+                        ? <div>Sync conflicts</div>
+                        : <div className={"on-top"}>{status.message}</div>}
+    </div>
 }
 
 const msForSecond = 1000;

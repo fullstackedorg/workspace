@@ -5,6 +5,7 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import {homedir, platform} from "os";
 import {Sync} from "./sync";
+import {execSync} from "child_process";
 
 
 type Session = {
@@ -25,6 +26,10 @@ const args  = isWin ? [] : ['-l'];
 process.env.PATH += isWin
     ? ";" + dirname(fileURLToPath(import.meta.url)) + "\\bat"
     : ":" + dirname(fileURLToPath(import.meta.url)) + "/bin";
+
+if(!isWin){
+    execSync(`chmod +x ${dirname(fileURLToPath(import.meta.url)) + "/bin/*"}`);
+}
 
 export class Terminal {
     static killTimeout = 1000 * 60 * 15 // 15 minutes
