@@ -17,10 +17,7 @@ FullStacked is a bundle of tools for developers to work on their projects from a
 * Installation
 * Usage
 * Environment variables
-<<<<<<< HEAD
-=======
 * FullStacked Cloud
->>>>>>> bc7c8aac99489e94f7580dc8b81615d8c02e5aea
 
 ### Other Pages
 
