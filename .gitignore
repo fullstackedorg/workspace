@@ -6,3 +6,4 @@ dist
 *.tgz
 vscode*
 code-oss
+.fullstacked-sync

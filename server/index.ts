@@ -17,7 +17,6 @@ import fs from "fs";
 import {Sync} from "./sync";
 import {fsCloud} from "./sync/fs-cloud";
 import {fsLocal} from "./sync/fs-local";
-import {fsCloudClient} from "./sync/fs-cloud-client";
 import ignore from "ignore";
 import path from "path";
 

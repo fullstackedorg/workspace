@@ -18,9 +18,6 @@ const portFullStacked = await getNextAvailablePort(8000);
 const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
     env: {
         ...process.env,
-        NEUTRALINO: process.argv.includes("--neutralino")
-            ? "1"
-            : "",
         FULLSTACKED_PORT: portFullStacked,
         CODE_OSS_PORT: portCodeOSS,
         FULLSTACKED_ENV: "production",
@@ -68,8 +65,4 @@ function getNextAvailablePort(port) {
 
         socket.connect(port, "0.0.0.0");
     });
-}
-
-function randomIntFromInterval(min, max) { // min and max included
-    return Math.floor(Math.random() * (max - min + 1) + min)
 }
