@@ -365,6 +365,7 @@ footer {
     width: 100%;
     font-size: smaller;
     padding: 0 spacing(2);
+    color: colorOpacity($white, 0.7);
 
     a {
         text-decoration: underline;
