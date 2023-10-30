@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {existsSync} from "fs";
 import {fork} from "child_process";
 import {fileURLToPath} from "url";
 import {dirname} from "path"
@@ -7,14 +8,20 @@ import {Socket} from "net";
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const lastArg = process.argv.at(-1);
 
-const portCodeOSS = await getNextAvailablePort(10000);
-const processCodeOSS = fork(`${currentDir}/code-oss/out/server-main.js`, [
-    "--without-connection-token",
-    "--host", "0.0.0.0",
-    "--port", portCodeOSS.toString()
-], {stdio: "inherit"});
+const dirCodeOSS = `${currentDir}/code-oss`
+const entrypointCodeOSS =  `${dirCodeOSS}/out/server-main.js`;
 
-const portFullStacked = await getNextAvailablePort(8000);
+let portCodeOSS, processCodeOSS;
+if(existsSync(entrypointCodeOSS) && existsSync(dirCodeOSS + "/node_modules")){
+    portCodeOSS = await getNextAvailablePort(10000);
+    processCodeOSS = fork(entrypointCodeOSS, [
+        "--without-connection-token",
+        "--host", "0.0.0.0",
+        "--port", portCodeOSS.toString()
+    ], {stdio: "inherit"});
+}
+
+const portFullStacked = process.env.FULLSTACKED_PORT || await getNextAvailablePort(8000);
 const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
     env: {
         ...process.env,
@@ -29,7 +36,8 @@ const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
 });
 
 processFullStacked.on("exit", () => {
-    processCodeOSS.kill();
+    if(processCodeOSS)
+        processCodeOSS.kill();
     process.exit();
 });
 
