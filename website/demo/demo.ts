@@ -43,7 +43,6 @@ await webContainer.fs.writeFile("node_modules/fullstacked/dist/server/html/injec
         element: (app) => {
             window.open("https://twitter.com/intent/tweet?text=${encodeURIComponent(`Try the FullStacked Demo!\n\nhttps://fullstacked.org/demo/`)}")
             window.Workspace.instance.removeWindow(app);
-            return;
         }
     });
     
@@ -54,7 +53,6 @@ await webContainer.fs.writeFile("node_modules/fullstacked/dist/server/html/injec
         element: (app) => {
             window.open("https://tally.so/r/npyYkP")
             window.Workspace.instance.removeWindow(app);
-            return;
         }
     });
 })()
