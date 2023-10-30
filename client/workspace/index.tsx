@@ -1,4 +1,4 @@
-import React, {Component, createRef, RefObject} from "react";
+import React, {Component, createRef} from "react";
 import WindowElement from "./Window";
 import "./index.css";
 import {ActiveApp, App} from "./App";
@@ -47,7 +47,7 @@ export class Workspace extends Component {
     state: {
         windows: {
             id: string,
-            order: number
+            zIndex: number
         }[],
     } = {
         windows: []
@@ -72,6 +72,7 @@ export class Workspace extends Component {
     }
 
     addWindow(app: App){
+        console.log(app)
         const id = Math.floor(Math.random() * 100000).toString();
 
         (app as ActiveApp).id = id;
@@ -80,14 +81,14 @@ export class Workspace extends Component {
             id
         });
 
-        const order = this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1;
+        const zIndex = this.state.windows.reduce((highest, {zIndex}) => zIndex > highest ? zIndex : highest, 0) + 1;
 
         this.setState((prevState: Workspace["state"]) => ({
             windows: [
                 ...prevState.windows,
                 {
                     id,
-                    order,
+                    zIndex
                 }
             ]
         }), () => {this.focusWindow((app as ActiveApp))});
@@ -125,10 +126,10 @@ export class Workspace extends Component {
         const i = this.state.windows.findIndex(({id}) => id === window.id);
         if(i < 0) return;
 
-        this.state.windows[i].order = this.state.windows.reduce((highest, {order}) => order > highest ? order : highest, 0) + 1;
+        this.state.windows[i].zIndex = this.state.windows.reduce((highest, {zIndex}) => zIndex > highest ? zIndex : highest, 0) + 1;
         const idOrder = new Map<string, number>();
         [...this.state.windows]
-            .sort((winA, winB) => winA.order - winB.order)
+            .sort((winA, winB) => winA.zIndex - winB.zIndex)
             .forEach(({id}, i) => idOrder.set(id, i + 1));
         this.topActiveApp = window;
         this.setState({
@@ -145,14 +146,14 @@ export class Workspace extends Component {
 
     getActiveApp(){
         return [...this.state.windows]
-            .sort((winA, winB) => winB.order - winA.order)
+            .sort((winA, winB) => winB.zIndex - winA.zIndex)
             .map(({id}) => this.activeApps.get(id));
     }
 
     render(){
         return <>
             <CommandPalette ref={this.commandPaletteRef} workspace={this} />
-            {this.state.windows.map(({id, order}, i) => {
+            {this.state.windows.map(({id, zIndex}, i) => {
                 const app = this.activeApps.get(id);
                 const element = app.element(app);
                 if(!element) {
@@ -165,7 +166,7 @@ export class Workspace extends Component {
                         this.removeWindow(app);
                     }}
                     initPos={Workspace.calcInitPos()}
-                    zIndex={order}
+                    zIndex={zIndex}
                     didResize={() => {
                         if (app?.callbacks?.onWindowResize)
                             app.callbacks.onWindowResize();
