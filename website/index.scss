@@ -1,0 +1,373 @@
+$white: #fafbfb;
+$blue: #00b0df;
+$blue-dark: #1e293b;
+
+$text-size-lg: 21px;
+
+@function spacing($multiplier: 1) {
+    @return 10 * $multiplier * 1px;
+}
+
+@function colorOpacity($color, $opacity) {
+    @return rgba(red($color), green($color), blue($color), $opacity);
+}
+
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-sizing: border-box;
+}
+
+html, body{
+    background-color: $blue-dark;
+    color: $white;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+h4 {
+    color: $blue;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+header {
+    height: 100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: spacing(1.5) spacing(2);
+    border-bottom: 1px solid colorOpacity($white, 0.2);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    background-color: $blue-dark;
+    z-index: 1;
+
+    #logo {
+        display: flex;
+        height: 100%;
+        align-items: center;
+
+        img {
+            height: 100%;
+            object-fit: contain;
+            margin-right: spacing();
+        }
+
+        svg {
+            fill: $white;
+            height: 100%;
+            padding: spacing(1.9) 0;
+            flex: 1;
+        }
+    }
+
+    nav {
+        font-weight: bold;
+
+        ul {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            li {
+                margin-left: spacing(1.5);
+                
+                a {
+                    opacity: 0.7;
+
+                    &:hover{
+                        opacity: 1;
+                    }
+                }
+
+                svg {
+                    height: 20px;
+                    width: 20px;
+                    vertical-align: bottom;
+                }
+                
+            }
+        }
+    }
+}
+
+h2 {
+    font-size: 32px;
+}
+
+main {
+    padding-top: spacing(10);
+}
+
+section {
+    margin-bottom: spacing(10);
+    p {
+        width: 100%;
+        max-width: 950px;
+        margin: spacing() auto;
+        color: colorOpacity($white, 0.8);
+        font-size: $text-size-lg;
+        line-height: 1.5;
+        a {
+            text-decoration: underline;
+        }
+    }
+}
+
+#hero {
+    display: flex;
+    overflow: hidden;
+    
+    > div {
+        width: 50%;
+
+        &:first-child {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            padding: spacing(2);
+            > div {
+                max-width: 650px;
+            }
+        }
+    }
+
+    h1 {
+        font-size: 80px;
+        margin: 0 0 spacing(3);
+        span {
+            color: $blue;
+        }
+    }
+
+    img {
+        position: relative;
+        left: -15%;
+        height: 100%;
+        width: 120%;
+        object-fit: contain;
+    }
+
+    code {
+        border: 1px solid colorOpacity($white, 0.3);
+        display: inline-block;
+        padding: spacing(2);
+        border-radius: 5px;
+        background-color: colorOpacity($white, 0.1);
+        cursor: pointer;
+
+        svg {
+            height: 20px;
+            width: 20px;
+            vertical-align: bottom;
+            margin-left: spacing(0.5);
+            opacity: 0.8;
+        }
+
+        &:hover {
+            background-color: colorOpacity($white, 0.15);
+        }
+    }
+}
+
+button {
+    padding: spacing() spacing(2);
+    color: $white;
+    background-color: colorOpacity($blue, 0.5);
+    border: 1px solid colorOpacity($blue, 0.8);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    &:hover{
+        background-color: colorOpacity($blue, 0.7);
+    }
+
+    svg {
+        height: 20px;
+        width: 20px;
+        vertical-align: bottom;
+    }
+
+    &.disabled {
+        background-color: colorOpacity($white, 0.2);
+        border: 1px solid colorOpacity($white, 0.3);
+        color: colorOpacity($white, 0.4);
+        cursor: default;
+    }
+}
+
+$npmjs-red: #cc3534;
+#npmjs {
+    background-color: colorOpacity($npmjs-red, 0.5);
+    border: 1px solid colorOpacity($npmjs-red, 0.8);
+    &:hover {
+        background-color: colorOpacity($npmjs-red, 0.7);
+    }
+}
+
+$docker-blue: #1D63ED;
+#docker {
+    background-color: colorOpacity($docker-blue, 0.4);
+    border: 1px solid colorOpacity($docker-blue, 0.9);
+    &:hover {
+        background-color: colorOpacity($docker-blue, 0.7);
+    }
+}
+
+$github-black: #52525b;
+#github {
+    background-color: colorOpacity($github-black, 0.5);
+    border: 1px solid colorOpacity($github-black, 0.8);
+    &:hover {
+        background-color: colorOpacity($github-black, 0.7);
+    }
+}
+
+#introduction {
+    text-align: center;
+}
+
+
+#anywhere {
+    display: flex;
+    align-items: center;
+
+    > div {
+        width: 50%;
+        padding: spacing(2);
+        &:first-child{
+            display: flex;
+            justify-content: center;
+            > div {
+                max-width: 650px;
+            }
+           
+        }
+    }
+
+    iframe {
+        border: 0;
+        width: 100%;
+        aspect-ratio: 16/9;
+        border-radius: 10px;
+    }
+}
+
+#installation-types {
+    text-align: center;
+    > div {
+        > div {
+            text-align: left;
+            display: inline-flex;
+            min-height: 520px;
+            background-color: colorOpacity($white, 0.1);
+            border: 1px solid colorOpacity($white, 0.3);
+            border-radius: 5px;
+            padding: spacing(2);
+            width: 425px;
+            margin: spacing();
+            vertical-align: top;
+
+            flex-direction: column;
+            justify-content: space-between;
+
+            > div {
+                > div:first-child{
+                    display: flex;
+                    font-weight: bold;
+                    font-size: $text-size-lg;
+                    align-items: center;
+                    img, svg {
+                        height: 70px;
+                        width: 70px;
+                        object-fit: contain;
+                        margin-right: spacing();
+                    }
+                }
+            }
+
+            > *:last-child {
+                align-self: flex-end;
+            }
+            
+
+            p {
+                font-size: 16px;
+                margin: spacing() 0;
+                color: $white;
+            }
+
+            code {
+                display: block;
+                margin: spacing(2) 0;
+                padding: spacing();
+                border: 1px solid colorOpacity($white, 0.7);
+                border-radius: 5px;
+                background-color: $blue-dark;
+            }
+
+            ul {
+                list-style: none;
+                display: flex;
+                padding: 0;
+            }
+
+            a, button, code {
+                svg {
+                    height: 20px;
+                    width: 20px;
+                    vertical-align: bottom;
+                }
+            }
+        }
+    }
+}
+
+#oss {
+    text-align: center;
+}
+
+#showcase {
+    text-align: center;
+
+    > div {
+        background-color: colorOpacity($white,  0.05);
+        border-top: 1px solid colorOpacity($white,  0.1);
+        border-bottom: 1px solid colorOpacity($white,  0.1);
+        padding: spacing(0.5);
+        overflow-x: auto;
+        > div {
+            white-space: nowrap;
+            > div {
+                vertical-align: top;
+                display: inline-block;
+                width: 300px;
+                margin: 0 spacing(0.5);
+            }
+        }
+    }
+}
+
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: smaller;
+    padding: 0 spacing(2);
+    color: colorOpacity($white, 0.7);
+
+    a {
+        text-decoration: underline;
+    }
+}

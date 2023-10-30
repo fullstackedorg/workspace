@@ -41,6 +41,28 @@ export const fsCloud = {
 
     // pull files from cloud
     async sync(key: string, save = true) {
+        // make sure we are authoorized
+        let syncStart;
+        try {
+            syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
+                method: "POST",
+                body: JSON.stringify({
+                    0: key
+                }),
+                headers: {
+                    cookie: this.req.headers.cookie,
+                    authorization: Sync.config?.authorization
+                }}
+            )).json();
+        }catch(e){
+            Sync.updateStatus({
+                status: "error",
+                message: e.message
+            });
+            return;
+        }
+
+
         // make sure key exists
         try{
             await fsCloudClient.post().access(key);
@@ -52,16 +74,6 @@ export const fsCloud = {
         const syncFilePath = resolve(getLocalBaseDir(), key, ".fullstacked-sync");
         let remoteVersion;
 
-        const syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
-            method: "POST",
-            body: JSON.stringify({
-                0: key
-            }),
-            headers: {
-                cookie: this.req.headers.cookie,
-                authorization: Sync.config?.authorization
-            }}
-        )).json();
 
         remoteVersion = syncStart.version;
 
@@ -91,6 +103,10 @@ export const fsCloud = {
         }
 
         Sync.keysSyncing.add(key);
+        Sync.updateStatus({
+            status: "syncing",
+            keys: Array.from(Sync.keysSyncing)
+        });
 
         const subKeys = (await fsCloudClient.post().readdir(key, {recursive: true, withFileTypes: true}));
 

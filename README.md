@@ -2,7 +2,7 @@
 
 **A ubiquitous workspace for developers**
 
-Spin up [FullStacked](https://fullstacked.org) by running `npx fullstacked@latest`
+[DEMO](https://fullstacked.org/demo)
 
 [![npm version](https://img.shields.io/npm/v/fullstacked?logo=npm)](https://www.npmjs.com/package/fullstacked)
 [![Follow FullStacked on X](https://img.shields.io/twitter/follow/get_fullstacked)](https://twitter.com/get_fullstacked)
@@ -17,6 +17,10 @@ FullStacked is a bundle of tools for developers to work on their projects from a
 * Installation
 * Usage
 * Environment variables
+<<<<<<< HEAD
+=======
+* FullStacked Cloud
+>>>>>>> bc7c8aac99489e94f7580dc8b81615d8c02e5aea
 
 ### Other Pages
 
@@ -43,7 +47,7 @@ fullstacked
 If you want to spin up FullStacked only once, use `npx` to install and run it on the fly
 
 ```shell
-npx fullstacked
+npx -y fullstacked@latest
 ```
 
 ### Docker
@@ -55,6 +59,13 @@ npx fullstacked
 * [Docker](https://docs.docker.com/get-docker)
 
 ```shell
+docker run --rm -p 8000:8000 -v workspace-data:/home fullstackedorg/workspace
+```
+
+If you intend to use docker in your workspace, run it with the `--privileged` flag to enable it.
+Be aware that this opens up your container to more vulnerabilities.
+
+```shell
 docker run --rm --privileged -p 8000:8000 -v workspace-data:/home fullstackedorg/workspace
 ```
 
@@ -64,7 +75,7 @@ docker run --rm --privileged -p 8000:8000 -v workspace-data:/home fullstackedorg
 services:
   fullstacked:
     image: fullstackedorg/workspace
-    privileged: true
+    # privileged: true
     ports:
       - 8000
     volumes:
@@ -81,13 +92,17 @@ volumes:
 
 | Variable | Description | Type | Default Value |
 |---|---|---|---|
+| `FULLSTACKED_PORT` | Define a port where FullStacked will listen to | `number` | 8000 |
 | `AUTO_SHUTDOWN` | Inactivity duration before ending process, never shutdowns if undefined | `number` | - |
 | `PASS` | Password to access the workspace | `string` | - |
 | `AUTH_URL` | URL against which to authorize token generation | `string` | - |
 | `REVOKE_URL` | URL to poke on logout | `string` | - |
 | `LOGOUT_REDIRECT` | URL to redirect to after logout | `string` | - |
-| `STORAGE_ENDPOINT` | Endpoint to use for the storage Sync | `string` | `https://fullstacked.cloud/storages` |
+| `STORAGE_ENDPOINT` | Endpoint to use for the storage Sync | `string` | `https://auth.fullstacked.cloud/storages` |
 | `USE_CLOUD_CONFIG` | Use the cloud config for storage Sync | `boolean` | `false` |
 | `CONFIG_FILE` | Path to file to save storage Sync configs | `string` | `$HOME/.fullstacked-config` |
 | `FORCE_PORT_USAGE` | Force the usage of direct port instead of port subdomain reverse-proxy (only useful in some docker install edge cases) | `boolean` | `false` |
 
+## FullStacked Cloud
+
+FullStacked Cloud completely decouples computing and storage. Through a global network of servers, it provides syncing across all of your workspace instances and also provides access to ephemeral workspace instances. Meaning that every single device is a login or a `npm` command away from your entire workspace.
