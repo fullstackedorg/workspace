@@ -37,7 +37,6 @@ export function AuthFlow({url, didAuthenticate}){
 
     useEffect(() => {
         const catchArgs = ({data}) => {
-            console.log(data);
             body = {
                 ...body,
                 ...data
@@ -76,7 +75,7 @@ export function AuthFlow({url, didAuthenticate}){
             : <>
                 <div>Enter the code or the token to authenticate this device</div>
                 <form onSubmit={submit}>
-                    <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)}/>
+                    <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value.trim())}/>
                     <button>Submit</button>
                 </form>
             </>}

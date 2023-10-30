@@ -30,6 +30,36 @@ installProcess.output.pipeTo(new WritableStream({
 
 await installProcess.exit;
 
+await webContainer.fs.mkdir("node_modules/fullstacked/dist/server/html")
+await webContainer.fs.writeFile("node_modules/fullstacked/dist/server/html/injection.html", `<script>
+(async () => {
+    while(!window.Workspace){
+        await new Promise(res => setTimeout(res, 100));
+    }
+    window.Workspace.addApp({
+        icon: "https://files.fullstacked.org/x-logo.svg",
+        order:99,
+        title: "Share",
+        element: (app) => {
+            window.open("https://twitter.com/intent/tweet?text=${encodeURIComponent(`Try the FullStacked Demo!\n\nhttps://fullstacked.org/demo/`)}")
+            window.Workspace.instance.removeWindow(app);
+            return;
+        }
+    });
+    
+    window.Workspace.addApp({
+        icon: "https://files.fullstacked.org/feedback.svg",
+        order: 98,
+        title: "Feedback",
+        element: (app) => {
+            window.open("https://tally.so/r/npyYkP")
+            window.Workspace.instance.removeWindow(app);
+            return;
+        }
+    });
+})()
+</script>`);
+
 webContainer.on('server-ready', (port, url) => {
     if(port === 8000) {
         document.querySelector('.terminal').remove();

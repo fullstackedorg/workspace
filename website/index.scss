@@ -134,8 +134,11 @@ section {
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-end;
             padding: spacing(2);
+            > div {
+                max-width: 650px;
+            }
         }
     }
 
@@ -190,10 +193,9 @@ button {
     }
 
     svg {
-        height: 25px;
-        width: 25px;
-        vertical-align: middle;
-        margin-left: spacing(0.5);
+        height: 20px;
+        width: 20px;
+        vertical-align: bottom;
     }
 
     &.disabled {
@@ -243,6 +245,14 @@ $github-black: #52525b;
     > div {
         width: 50%;
         padding: spacing(2);
+        &:first-child{
+            display: flex;
+            justify-content: center;
+            > div {
+                max-width: 650px;
+            }
+           
+        }
     }
 
     iframe {
@@ -258,7 +268,8 @@ $github-black: #52525b;
     > div {
         > div {
             text-align: left;
-            display: inline-block;
+            display: inline-flex;
+            min-height: 520px;
             background-color: colorOpacity($white, 0.1);
             border: 1px solid colorOpacity($white, 0.3);
             border-radius: 5px;
@@ -266,18 +277,29 @@ $github-black: #52525b;
             width: 425px;
             margin: spacing();
             vertical-align: top;
-            > div:first-child{
-                display: flex;
-                font-weight: bold;
-                font-size: $text-size-lg;
-                align-items: center;
-                img, svg {
-                    height: 70px;
-                    width: 70px;
-                    object-fit: contain;
-                    margin-right: spacing();
+
+            flex-direction: column;
+            justify-content: space-between;
+
+            > div {
+                > div:first-child{
+                    display: flex;
+                    font-weight: bold;
+                    font-size: $text-size-lg;
+                    align-items: center;
+                    img, svg {
+                        height: 70px;
+                        width: 70px;
+                        object-fit: contain;
+                        margin-right: spacing();
+                    }
                 }
             }
+
+            > *:last-child {
+                align-self: flex-end;
+            }
+            
 
             p {
                 font-size: 16px;
@@ -287,11 +309,17 @@ $github-black: #52525b;
 
             code {
                 display: block;
-                margin: spacing() 0;
+                margin: spacing(2) 0;
                 padding: spacing();
                 border: 1px solid colorOpacity($white, 0.7);
                 border-radius: 5px;
                 background-color: $blue-dark;
+            }
+
+            ul {
+                list-style: none;
+                display: flex;
+                padding: 0;
             }
 
             a, button, code {
@@ -332,26 +360,13 @@ $github-black: #52525b;
 
 
 footer {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: smaller;
+    padding: 0 spacing(2);
 
-    > div:first-child {
-        background-color: colorOpacity($white,  0.05);
-        border-top: 1px solid colorOpacity($white,  0.1);
-        border-bottom: 1px solid colorOpacity($white,  0.1);
-        padding: spacing(2);
-
-    
-        ul {
-            list-style: none;
-            display: flex;
-            justify-content: center;
-            li {
-                margin: 0 spacing()
-            }
-        }
-    }
-
-    > div:last-child {
-        padding: spacing(3);
+    a {
+        text-decoration: underline;
     }
 }

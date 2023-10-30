@@ -276,10 +276,6 @@ export const API = {
     sync(){
         if(Sync.status.status !== "synced") return false;
 
-        Sync.updateStatus({
-            status: "syncing"
-        });
-
         sync(this.req).then(() => {
             if(Object.keys(Sync.conflicts).length){
                 Sync.updateStatus({
@@ -482,9 +478,6 @@ function startSyncing(){
 
             if(Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
 
-            Sync.updateStatus({
-                status: "syncing"
-            });
             sync(req).then(() => {
                 if(Object.keys(Sync.conflicts).length){
                     Sync.updateStatus({

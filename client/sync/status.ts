@@ -7,7 +7,8 @@ export type SyncStatus = null |
         status: "initializing"
     } |
     {
-        status: "syncing"
+        status: "syncing",
+        keys: string[]
     } |
     {
         status: "conflicts",
