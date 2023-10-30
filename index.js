@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import {existsSync} from "fs";
-import {fork} from "child_process";
+import {execSync, fork} from "child_process";
 import {fileURLToPath} from "url";
 import {dirname} from "path"
 import {Socket} from "net";
@@ -12,7 +12,16 @@ const dirCodeOSS = `${currentDir}/code-oss`
 const entrypointCodeOSS =  `${dirCodeOSS}/out/server-main.js`;
 
 let portCodeOSS, processCodeOSS;
-if(existsSync(entrypointCodeOSS) && existsSync(dirCodeOSS + "/node_modules")){
+if(existsSync(entrypointCodeOSS)){
+
+    if(!existsSync(dirCodeOSS + "/node_modules")){
+        console.log("Installing Code OSS node_modules");
+        execSync("npm i --legacy-peer-deps", {
+            stdio: "inherit",
+            cwd: dirCodeOSS
+        });
+    }
+
     portCodeOSS = await getNextAvailablePort(10000);
     processCodeOSS = fork(entrypointCodeOSS, [
         "--without-connection-token",

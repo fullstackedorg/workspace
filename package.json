@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
-  "description": "A Cloud Workspace for Web Developer",
-  "version": "0.11.0-alpha.22",
+  "description": "A Ubiquitous Workspace for Developers",
+  "version": "0.11.0-alpha.24",
   "author": "cplepage",
   "dependencies": {
     "node-pty": "^0.10.1"
@@ -15,7 +15,6 @@
     "build": "fsc build --production && npm run cp",
     "predocker": "npm run build",
     "docker": "docker build . -f docker/Dockerfile -t fullstackedorg/workspace:test",
-    "postinstall": "node postinstall.js",
     "prepack": "npm run build"
   },
   "type": "module",
