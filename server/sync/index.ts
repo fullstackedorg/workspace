@@ -8,7 +8,7 @@ export class Sync {
     static status: SyncStatus;
     static syncInterval = 1000 * 60 * 2; // 2 minutes
     static globalIgnore = [
-        ".fullstacked",
+        ".fullstacked-config",
         ".fullstacked-sync",
         ".cache",
         ".npm",
@@ -26,7 +26,7 @@ export class Sync {
     } = {
         directory: process.env.DOCKER_RUNTIME ? "/home" : undefined
     };
-    static configFile = process.env.CONFIG_FILE || `${homedir()}/.fullstacked`;
+    static configFile = process.env.CONFIG_FILE || `${homedir()}/.fullstacked-config`;
 
     static setDirectory(directory: string) {
         const exists = existsSync(directory);
