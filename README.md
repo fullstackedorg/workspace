@@ -10,9 +10,9 @@
 [![Follow FullStacked on X](https://img.shields.io/twitter/follow/get_fullstacked)](https://twitter.com/get_fullstacked)
 [![Roadmap](https://img.shields.io/badge/Roadmap-ffffff?logo=notion&logoColor=black)](https://fullstacked.notion.site/fullstacked/FullStacked-Roadmap-ebfcb685b77446c7a7898c05b219215e)
 
-FullStacked is a web application providing a workspace for developers. It is so easy to spin up that you will feel like any device is good enough for you to jump into your dev environment. Run it locally when you use a powerful machine and access it from the cloud to leverage cloud computing.
-
 ![FullStacked](https://files.fullstacked.org/fullstacked-cloud.png)
+
+FullStacked is a web application providing a workspace for developers. It is so easy to spin up that you will feel like any device is good enough for you to jump into your dev environment. Run it locally when you use a powerful machine and access it from the cloud to leverage cloud computing.
 
 ## Table of Contents
 
@@ -109,4 +109,4 @@ FullStacked Cloud completely decouples computing and storage. Through a global n
 
 Here's a little doodle to help comprehend
 
-![FullStacked Setup Map](https://files.fullstacked.org/fullstacked-setup-map-white-bg.png)
+![FullStacked Setup Map](https://files.fullstacked.org/fullstacked-setup-map-white-bg.jpg)
