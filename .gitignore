@@ -7,3 +7,4 @@ dist
 vscode*
 code-oss
 .fullstacked-sync
+.wrangler

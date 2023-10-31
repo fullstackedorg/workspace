@@ -8,9 +8,9 @@
 [![Follow FullStacked on X](https://img.shields.io/twitter/follow/get_fullstacked)](https://twitter.com/get_fullstacked)
 [![Roadmap](https://img.shields.io/badge/Roadmap-ffffff?logo=notion&logoColor=black)](https://fullstacked.notion.site/fullstacked/FullStacked-Roadmap-ebfcb685b77446c7a7898c05b219215e)
 
-FullStacked is a bundle of tools for developers to work on their projects from any device. It runs locally to utilize powerful machines and runs in the cloud to leverage accessibility and cloud computing.
+FullStacked is a web application providing a workspace for developers. It is so easy to spin up that you will feel like any device is good enough for you to jump into your dev environment. Run it locally when you use a powerful machine and access it from the cloud to leverage cloud computing.
 
-![FullStacked](https://files.cplepage.com/fullstacked/fullstacked-sharing.jpg)
+![FullStacked](https://files.fullstacked.org/fullstacked-cloud.png)
 
 ## Table of Contents
 
@@ -98,8 +98,12 @@ volumes:
 | `STORAGE_ENDPOINT` | Endpoint to use for the storage Sync | `string` | `https://auth.fullstacked.cloud/storages` |
 | `USE_CLOUD_CONFIG` | Use the cloud config for storage Sync | `boolean` | `false` |
 | `CONFIG_FILE` | Path to file to save storage Sync configs | `string` | `$HOME/.fullstacked-config` |
-| `FORCE_PORT_USAGE` | Force the usage of direct port instead of port subdomain reverse-proxy (only useful in some docker install edge cases) | `boolean` | `false` |
+| `FORCE_PORT_USAGE` | Force the usage of direct port instead of port subdomain reverse-proxy (only useful in some docker installation edge cases) | `boolean` | `false` |
 
 ## FullStacked Cloud
 
-FullStacked Cloud completely decouples computing and storage. Through a global network of servers, it provides syncing across all of your workspace instances and also provides access to ephemeral workspace instances. Meaning that every single device is a login or a `npm` command away from your entire workspace.
+FullStacked Cloud completely decouples computing and storage. Through a global network of servers, it provides syncing across all of your workspace instances and also provides access to ephemeral workspace instances. Meaning that every single device is a login or a `npm` command away from your entire workspace. 
+
+Here's a little doodle to help comprehend
+
+![FullStacked Setup Map](https://files.fullstacked.org/fullstacked-setup-map-white-bg.png)
