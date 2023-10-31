@@ -78,3 +78,5 @@ fs.renameSync(`vscode-reh-web-${platform}`, "../code-oss");
 const packageJSON = JSON.parse(fs.readFileSync("../code-oss/package.json").toString());
 packageJSON.name = "code-oss"
 fs.writeFileSync("../code-oss/package.json", JSON.stringify(packageJSON, null, 2));
+
+fs.rmSync("../.git/hooks", {recursive: true});
