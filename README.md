@@ -14,16 +14,15 @@ FullStacked is a web application providing a workspace for developers. It is so 
 
 ## Table of Contents
 
-* Installation
-* Usage
-* Environment variables
-* FullStacked Cloud
+* [Installation](#installation)
+* [Environment variables](#environment-variables)
+* [FullStacked Cloud](#fullstacked-cloud)
 
 ### Other Pages
 
-* Contributing
-* Code of Conduct
-* License
+* [Contributing](./CONTRIBUTING.md)
+* [Code of Conduct](./CODE_OF_CONDUCT.md)
+* [License](./LICENSE.md)
 
 ## Installation
 
