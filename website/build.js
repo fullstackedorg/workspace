@@ -7,9 +7,10 @@ import esbuild from "esbuild";
 if(fs.existsSync("dist"))
     fs.rmSync("dist", {recursive: true});
 
-fs.mkdirSync("dist");
+fs.mkdirSync("dist/demo", {recursive: true});
 
-fs.writeFileSync("dist/index.html", buildHTMLPage());
+fs.writeFileSync("dist/index.html", buildHTMLPage("index.html"));
+fs.writeFileSync("dist/demo/index.html", buildHTMLPage("demo/index.html"));
 
 fs.writeFileSync("dist/index.css", sass.compile("index.scss", {style: "compressed"}).css);
 
@@ -18,6 +19,14 @@ esbuild.buildSync({
     outfile: "dist/script.js",
     bundle: true,
     minify: true
+});
+
+esbuild.buildSync({
+    entryPoints: ["demo/demo.ts"],
+    outfile: "dist/demo/demo.js",
+    bundle: true,
+    minify: true,
+    format: "esm"
 });
 
 [].forEach(item => fs.cpSync(item, "dist/" + item, {recursive: true}))

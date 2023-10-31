@@ -8,10 +8,12 @@ const fitAddon = new FitAddon();
 
 xterm.loadAddon(fitAddon);
 xterm.open(document.querySelector('body'));
-fitAddon.fit();
 window.addEventListener("resize", () => {
     fitAddon.fit();
 });
+setTimeout(() => {
+    fitAddon.fit();
+}, 100);
 
 const webContainer = await WebContainer.boot();
 
