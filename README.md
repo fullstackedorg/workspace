@@ -2,7 +2,7 @@
 
 **A ubiquitous workspace for developers**
 
-[DEMO](https://fullstacked.org/demo)
+[DEMO](https://fullstacked.org/demo) | [WEBSITE](https://fullstacked.org)
 
 [![npm version](https://img.shields.io/npm/v/fullstacked?logo=npm)](https://www.npmjs.com/package/fullstacked)
 [![Follow FullStacked on X](https://img.shields.io/twitter/follow/get_fullstacked)](https://twitter.com/get_fullstacked)
@@ -73,13 +73,15 @@ services:
     image: fullstackedorg/workspace
     # privileged: true
     ports:
-      - 8000
+      - 8000:8000
     volumes:
       - workspace-data:/home
 
 volumes:
   workspace-data:
 ```
+
+![FullStacked Screenshot](https://files.fullstacked.org/fullstacked-screenshot.png)
 
 ## Environment Variables
 
