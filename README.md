@@ -1,3 +1,5 @@
+![FullStacked](https://files.fullstacked.org/app-icon-banner.jpg?v=2)
+
 # FullStacked
 
 **A ubiquitous workspace for developers**
