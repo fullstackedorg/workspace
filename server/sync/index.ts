@@ -17,7 +17,7 @@ export class Sync {
         "node_modules",
         "core"
     ]
-    static transferBlockSize = 10485760; // 10 MiB
+    static transferBlockSize = 5242880; // 5 MiB
     static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
     static config: {
         authorization?: string,
@@ -120,7 +120,50 @@ export class Sync {
         }
     } = {};
 
-    static keysSyncing = new Set<string>();
+    // baseKey => {
+    //  way: "pull" | "push",
+    //  progress: number
+    // }
+    private static keysSyncing = new Map<string, "pull" | "push">();
+
+    static addSyncingKey(key: string, way: "pull" | "push"){
+        if(Sync.keysSyncing.has(key)){
+            return false;
+        }
+
+        Sync.keysSyncing.set(key, way);
+        Sync.updateStatus({
+            status: "syncing",
+            keys: Array.from(Sync.keysSyncing.entries())
+        });
+
+        return true;
+    }
+
+    static removeSyncingKey(key: string){
+        Sync.keysSyncing.delete(key);
+
+        if(Sync.keysSyncing.size === 0){
+            const conflictKeys = Object.keys(Sync.conflicts);
+            if(conflictKeys.length){
+                Sync.updateStatus({
+                    status: "conflicts",
+                    keys: conflictKeys
+                })
+            }else{
+                Sync.updateStatus({
+                    status: "synced",
+                    lastSync: Date.now()
+                });
+            }
+            return;
+        }
+
+        Sync.updateStatus({
+            status: "syncing",
+            keys: Array.from(Sync.keysSyncing.entries())
+        })
+    }
 
     static webSocketServer = new WebSocketServer({noServer: true});
     static ws = new Set<WebSocket>();

@@ -258,9 +258,11 @@ export const API = {
                 Sync.config.keys = [];
         }
 
-        if(Object.keys(Sync.conflicts).length){
+        const conflicts = Object.keys(Sync.conflicts);
+        if(conflicts.length){
             Sync.updateStatus({
-                status: "conflicts"
+                status: "conflicts",
+                keys: conflicts
             })
         }else{
             Sync.updateStatus({
@@ -277,9 +279,11 @@ export const API = {
         if(Sync.status.status !== "synced") return false;
 
         sync(this.req).then(() => {
-            if(Object.keys(Sync.conflicts).length){
+            const conflicts = Object.keys(Sync.conflicts);
+            if(conflicts.length){
                 Sync.updateStatus({
-                    status: "conflicts"
+                    status: "conflicts",
+                    keys: conflicts
                 })
             }else{
                 Sync.updateStatus({
@@ -479,9 +483,11 @@ function startSyncing(){
             if(Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
 
             sync(req).then(() => {
-                if(Object.keys(Sync.conflicts).length){
+                const conflicts = Object.keys(Sync.conflicts);
+                if(conflicts.length){
                     Sync.updateStatus({
-                        status: "conflicts"
+                        status: "conflicts",
+                        keys: conflicts
                     })
                 }else{
                     Sync.updateStatus({

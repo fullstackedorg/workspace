@@ -23,3 +23,13 @@
 #sync-indicator > div > div {
     font-weight: normal;
 }
+
+.green, .red{
+    font-weight: bold;
+}
+.green {
+    color: #50c952;
+}
+.red {
+    color: #ea614f;
+}
