@@ -77,11 +77,19 @@ function Indicator(props: {remove(): void, didError(): void}){
                     ? <div className={"on-top"}>
                         Syncing...
                         <div>
-                            {status.keys.map(key => <div>{key}</div>)}
+                            {status.keys.map(([key, way]) => <div>
+                                {way === "pull" ? <span className={"green"}>↙</span> : <span className={"red"}>↗</span>}&nbsp;
+                                {key}
+                            </div>)}
                         </div>
                     </div>
                     : status.status === "conflicts"
-                        ? <div>Sync conflicts</div>
+                        ? <div className={"on-top"}>
+                            Sync Conflicts
+                            <div>
+                                {status.keys.map(key => <div>{key}</div>)}
+                            </div>
+                        </div>
                         : <div className={"on-top"}>{status.message}</div>}
     </div>
 }

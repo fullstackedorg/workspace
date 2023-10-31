@@ -8,10 +8,11 @@ export type SyncStatus = null |
     } |
     {
         status: "syncing",
-        keys: string[]
+        keys: [string, "push" | "pull"][]
     } |
     {
         status: "conflicts",
+        keys: string[]
     } |
     {
         status: "large-file",

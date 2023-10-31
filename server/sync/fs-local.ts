@@ -30,9 +30,9 @@ export const fsLocal = {
         let localVersion;
 
         // version check
-        let syncStart;
+        let response, syncStart;
         try{
-            syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
+            response = await fetch(`${Sync.endpoint}/sync`, {
                 method: "POST",
                 body: JSON.stringify({
                     0: key
@@ -41,7 +41,8 @@ export const fsLocal = {
                     cookie: this.req.headers.cookie,
                     authorization: Sync.config?.authorization
                 }}
-            )).json();
+            );
+            syncStart = await response.json();
         } catch(e) {
             Sync.updateStatus({
                 status: "error",
@@ -49,7 +50,10 @@ export const fsLocal = {
             });
             return;
         }
-        
+
+        if(response.status >= 400 || syncStart?.version === undefined){
+            throw Error(`[push] Could not get remote version for key [${key}]`);
+        }
 
         let previousSnapshotWithVersion;
         if(fs.existsSync(syncFilePath)){
@@ -77,16 +81,14 @@ export const fsLocal = {
                 missingInB, // deleted
                 diffs// modified
             } = getSnapshotDiffs(previousSnapshot, currentSnapshot);
-            if(!missingInA.length && !missingInB.length && !diffs.length){
+            if(!missingInA.length && !diffs.length){
                 return;
             }
         }
 
-        Sync.keysSyncing.add(key);
-        Sync.updateStatus({
-            status: "syncing",
-            keys: Array.from(Sync.keysSyncing)
-        });
+        if(!Sync.addSyncingKey(key, "push")){
+            return;
+        }
 
         await fsCloudClient.post().mkdir(key, {recursive: true});
 
@@ -169,13 +171,6 @@ export const fsLocal = {
         if(save)
             Sync.addKey(key);
 
-        Sync.keysSyncing.delete(key);
-
-        if(Sync.keysSyncing.size === 0){
-            Sync.updateStatus({
-                status: "synced",
-                lastSync: Date.now()
-            });
-        }
+        Sync.removeSyncingKey(key);
     }
 }

@@ -41,10 +41,10 @@ export const fsCloud = {
 
     // pull files from cloud
     async sync(key: string, save = true) {
-        // make sure we are authoorized
-        let syncStart;
+        // make sure we are authorized, and get remote version for key
+        let response, syncStart;
         try {
-            syncStart = await (await fetch(`${Sync.endpoint}/sync`, {
+            response = await fetch(`${Sync.endpoint}/sync`, {
                 method: "POST",
                 body: JSON.stringify({
                     0: key
@@ -53,13 +53,18 @@ export const fsCloud = {
                     cookie: this.req.headers.cookie,
                     authorization: Sync.config?.authorization
                 }}
-            )).json();
+            )
+            syncStart = await response.json();
         }catch(e){
             Sync.updateStatus({
                 status: "error",
                 message: e.message
             });
             return;
+        }
+
+        if(response.status >= 400 || syncStart?.version === undefined){
+            throw Error(`[pull] Could not get remote version for key [${key}]`);
         }
 
 
@@ -72,10 +77,7 @@ export const fsCloud = {
         }
 
         const syncFilePath = resolve(getLocalBaseDir(), key, ".fullstacked-sync");
-        let remoteVersion;
-
-
-        remoteVersion = syncStart.version;
+        const remoteVersion = syncStart.version;
 
         if(fs.existsSync(syncFilePath)){
             const { version, ...previousSnapshot } = JSON.parse(fs.readFileSync(syncFilePath).toString());
@@ -102,21 +104,21 @@ export const fsCloud = {
             }
         }
 
-        Sync.keysSyncing.add(key);
-        Sync.updateStatus({
-            status: "syncing",
-            keys: Array.from(Sync.keysSyncing)
-        });
+        if(!Sync.addSyncingKey(key, "pull")){
+            return;
+        }
 
         const subKeys = (await fsCloudClient.post().readdir(key, {recursive: true, withFileTypes: true}));
 
-        const subDirectories = subKeys.filter(subKey => subKey.isDirectory).map(({ path, name}) => normalizePath(join(path, name)));
+        const subDirectories = subKeys
+            .filter(subKey => subKey.isDirectory)
+            .map(({ path, name}) => normalizePath(join(path, name)));
+
         const subFiles = subKeys
             .map(({path, name}) => normalizePath(join(path, name)))
             .filter(subKey => !subDirectories.includes(subKey) && !subKey.endsWith(".fullstacked-sync"))
             // remove conflicts that has been resolved manually
             .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey.slice(key.length + 1)]));
-
 
         await fs.promises.mkdir(resolve(getLocalBaseDir(), key), {recursive: true});
 
@@ -177,6 +179,7 @@ export const fsCloud = {
             }
             return promiseSettled.value
         }).flat();
+
         const writeFilePromises = contents.map((content, index) => {
             if(content.error){
                 return false;
@@ -185,6 +188,7 @@ export const fsCloud = {
             const filePath = smallFiles[index];
             return fs.promises.writeFile(filePath, Buffer.from(content));
         });
+
         const results = await Promise.allSettled([
             ...writeFilePromises.filter(Boolean),
             ...largeFiles
@@ -203,22 +207,11 @@ export const fsCloud = {
         if(save)
             Sync.addKey(key);
 
-        Sync.keysSyncing.delete(key);
-
         if(Sync.conflicts[key]) {
             delete Sync.conflicts[key];
-            if(Object.keys(Sync.conflicts).length === 0) {
-                Sync.updateStatus({
-                    status: "synced",
-                    lastSync: Date.now()
-                })
-            }
-        }else if(Sync.keysSyncing.size === 0){
-            Sync.updateStatus({
-                status: "synced",
-                lastSync: Date.now()
-            });
         }
+
+        Sync.removeSyncingKey(key);
 
         return fs.promises.writeFile(syncFilePath, JSON.stringify(snapshot));
     },
