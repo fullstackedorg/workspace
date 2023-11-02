@@ -1,7 +1,6 @@
 import {cpSync} from "fs";
 import {dirname} from "path";
 
-
 const directoriesToCopy = [
     ["/pwa", "/dist/client/pwa"],
     ["/server/bin", "/dist/server/bin"],

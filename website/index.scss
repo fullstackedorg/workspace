@@ -1,6 +1,7 @@
 $white: #fafbfb;
 $blue: #00b0df;
 $blue-dark: #1e293b;
+$green: #57b87b;
 
 $text-size-lg: 21px;
 
@@ -11,8 +12,6 @@ $text-size-lg: 21px;
 @function colorOpacity($color, $opacity) {
     @return rgba(red($color), green($color), blue($color), $opacity);
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
 
 * {
     -webkit-font-smoothing: antialiased;
@@ -159,27 +158,6 @@ section {
         width: 120%;
         object-fit: contain;
     }
-
-    code {
-        border: 1px solid colorOpacity($white, 0.3);
-        display: inline-block;
-        padding: spacing(2);
-        border-radius: 5px;
-        background-color: colorOpacity($white, 0.1);
-        cursor: pointer;
-
-        svg {
-            height: 20px;
-            width: 20px;
-            vertical-align: bottom;
-            margin-left: spacing(0.5);
-            opacity: 0.8;
-        }
-
-        &:hover {
-            background-color: colorOpacity($white, 0.15);
-        }
-    }
 }
 
 button {
@@ -248,7 +226,7 @@ $github-black: #52525b;
         aspect-ratio: 16/9;
         border-radius: 10px;
         max-width: 800px;
-        margin: 0 auto;
+        margin: spacing(2) auto 0;
     }
 }
 
@@ -275,6 +253,7 @@ $github-black: #52525b;
             object-fit: contain;
             mix-blend-mode: screen;
             padding-right: spacing(2);
+            filter: contrast(1.01);
         }
 
         #zoom{
@@ -291,6 +270,7 @@ $github-black: #52525b;
             border-radius: 10px;
             img{
                 mix-blend-mode: screen;
+                filter: contrast(1.01);
             }
         }
 
@@ -315,8 +295,8 @@ $github-black: #52525b;
             border: 1px solid colorOpacity($white, 0.3);
             border-radius: 5px;
             padding: spacing(2);
-            width: 425px;
-            margin: spacing();
+            width: 430px;
+            margin: spacing(1.2) spacing();
             vertical-align: top;
 
             flex-direction: column;
@@ -348,22 +328,18 @@ $github-black: #52525b;
                 color: $white;
             }
 
-            code {
-                display: block;
-                margin: spacing(2) 0;
-                padding: spacing();
-                border: 1px solid colorOpacity($white, 0.7);
-                border-radius: 5px;
-                background-color: $blue-dark;
-            }
-
             ul {
                 list-style: none;
                 display: flex;
                 padding: 0;
+                font-size: 30px;
+                margin: 0;
+                li {
+                    margin-right: spacing(0.5);
+                }
             }
 
-            a, button, code {
+            a, button {
                 svg {
                     height: 20px;
                     width: 20px;
@@ -376,6 +352,9 @@ $github-black: #52525b;
 
 #oss {
     text-align: center;
+    p:nth-child(2) {
+        margin-bottom: spacing(3);
+    }
 }
 
 #showcase {
@@ -390,11 +369,58 @@ $github-black: #52525b;
         > div {
             white-space: nowrap;
             > div {
+                white-space: normal;
                 vertical-align: top;
                 display: inline-block;
                 width: 300px;
                 margin: 0 spacing(0.5);
             }
+        }
+    }
+}
+
+.copy {
+    border: 1px solid colorOpacity($white, 0.3);
+    display: inline-flex;
+    border-radius: 5px;
+    background-color: colorOpacity($white, 0.1);
+    cursor: pointer;
+    position: relative;
+    align-items: center;
+    padding-left: spacing();
+    padding-right: 62px;
+    max-width: 100%;;
+
+    span {
+        padding: spacing(2) 0;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: auto;
+    }
+
+    svg {
+        position: absolute;
+        right: spacing();
+        top: 50%;
+        transform: translateY(-50%);
+        height: 40px;
+        width: 40px;
+        padding: spacing();
+        border: 1px solid colorOpacity($blue, 1);
+        border-radius: 3px;
+        background-color: colorOpacity($blue, 0.05);
+        color: $blue;
+        &.success{
+            color: $green;
+            border: 1px solid colorOpacity($green, 1);
+            background-color: colorOpacity($green, 0.2)!important;
+        }
+    }
+
+    &:hover {
+        background-color: colorOpacity($white, 0.15);
+        svg {
+            background-color: colorOpacity($blue, 0.2);
         }
     }
 }
