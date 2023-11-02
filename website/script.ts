@@ -26,9 +26,24 @@ map.addEventListener("mousemove", (e:MouseEvent) => {
 });
 
 
-if(window.navigator.userAgent.includes("win")){
+if(window.navigator.userAgent.toLocaleLowerCase().includes("windows")){
     const style = document.createElement("style");
-    style.innerText = `@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');`;
+    style.innerText = `
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #00000010;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #00000040;
+        border-radius: 30px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #00000070;
+      }`;
     document.head.append(style);
 }
 
@@ -45,6 +60,10 @@ document.querySelectorAll(".copy").forEach(element => {
         var textArea = document.createElement("textarea");
         textArea.value = text;
         textArea.style.opacity = "0";
+        textArea.style.position = "fixed";
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+
       
         document.body.appendChild(textArea);
         textArea.focus();
