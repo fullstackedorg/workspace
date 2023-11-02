@@ -2,7 +2,7 @@
 
 # FullStacked
 
-### A Ubiquitous Workspace for Developers
+**A Ubiquitous Workspace for Developers**
 
 [DEMO](https://fullstacked.org/demo) | [WEBSITE](https://fullstacked.org)
 
