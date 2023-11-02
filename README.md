@@ -2,7 +2,7 @@
 
 # FullStacked
 
-**A ubiquitous workspace for developers**
+### A Ubiquitous Workspace for Developers
 
 [DEMO](https://fullstacked.org/demo) | [WEBSITE](https://fullstacked.org)
 
@@ -38,7 +38,7 @@ Run FullStacked locally to utilize the resources of your powerful machine, or ac
 * [NodeJS](https://nodejs.org/en) `>=18` with npm
 
 ```shell
-npm i -g fullstacked
+npm i -g fullstacked@latest
 fullstacked
 ```
 
