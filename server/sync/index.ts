@@ -1,8 +1,8 @@
 import {homedir} from "os";
 import fs, {existsSync} from "fs";
 import {fsCloudClient} from "./fs-cloud-client";
-import {SyncStatus} from "../../client/sync/status";
 import {WebSocket, WebSocketServer} from "ws";
+import {SyncStatus} from "../../client/sync/status";
 
 export class Sync {
     static status: SyncStatus;
@@ -113,62 +113,87 @@ export class Sync {
         }
     }
 
-    // baseKey => problematic keys => resolved
-    static conflicts: {
-        [baseKey: string]: {
-            [key: string]: boolean
-        }
-    } = {};
+    static addConflicts(baseKey, conflictingKeys){
+       if(!Sync.status.conflicts)
+           Sync.status.conflicts = {};
 
-    // baseKey => {
-    //  way: "pull" | "push",
-    //  progress: number
-    // }
-    private static keysSyncing = new Map<string, "pull" | "push">();
+       if(!Sync.status.conflicts[baseKey])
+           Sync.status.conflicts[baseKey] = {};
+
+        conflictingKeys.forEach(fileKey => Sync.status.conflicts[baseKey][fileKey] = false);
+        Sync.sendStatus();
+    }
+
+    static resolveConflict(baseKey, conflictingKey){
+        if(!Sync.status.conflicts || !Sync.status.conflicts[baseKey])
+            throw Error(`Trying to resolve conflict, but cannot find base key [${baseKey}]`);
+
+        if(Sync.status.conflicts[baseKey][conflictingKey] === undefined)
+            throw Error(`Trying to resolve conflict, but cannot find key [${baseKey}] [${conflictingKey}]`);
+
+        Sync.status.conflicts[baseKey][conflictingKey] = true;
+        Sync.sendStatus();
+    }
+
+    static removeResolvedConflictKey(key){
+        if(!Sync.status.conflicts || !Sync.status.conflicts[key])
+            throw Error(`Trying to remove resolved conflict, but cannot find key [${key}]`);
+
+        const conflictingKeys = Object.keys(Sync.status.conflicts[key]);
+        for(const conflictingKey of conflictingKeys){
+            if(!Sync.status.conflicts[key][conflictingKey])
+                throw Error(`Trying to remove resolved conflict, but cannot because conflicting key isn't resolved [${key}] [${conflictingKey}]`);
+        }
+
+        delete Sync.status.conflicts[key];
+        Sync.sendStatus();
+    }
 
     static addSyncingKey(key: string, way: "pull" | "push"){
-        if(Sync.keysSyncing.has(key)){
+        if(Sync.status.syncing && Object.keys(Sync.status.syncing).includes(key)){
             return false;
         }
 
-        Sync.keysSyncing.set(key, way);
-        Sync.updateStatus({
-            status: "syncing",
-            keys: Array.from(Sync.keysSyncing.entries())
-        });
+        if(!Sync.status.syncing)
+            Sync.status.syncing = {};
 
+        Sync.status.syncing[key] = way;
+        Sync.sendStatus();
         return true;
     }
 
     static removeSyncingKey(key: string){
-        Sync.keysSyncing.delete(key);
+        delete Sync.status.syncing[key];
+        Sync.sendStatus()
+    }
 
-        if(Sync.keysSyncing.size === 0){
-            const conflictKeys = Object.keys(Sync.conflicts);
-            if(conflictKeys.length){
-                Sync.updateStatus({
-                    status: "conflicts",
-                    keys: conflictKeys
-                })
-            }else{
-                Sync.updateStatus({
-                    status: "synced",
-                    lastSync: Date.now()
-                });
-            }
-            return;
+    static updateLargeFileProgress(key, progress, total){
+        if(!Sync.status.largeFiles)
+            Sync.status.largeFiles = {};
+
+        Sync.status.largeFiles[key] = {
+            progress,
+            total
         }
+        Sync.sendStatus();
+    }
 
-        Sync.updateStatus({
-            status: "syncing",
-            keys: Array.from(Sync.keysSyncing.entries())
-        })
+    static removeLargeFileProgress(key){
+        delete Sync.status.largeFiles[key];
+        Sync.sendStatus();
     }
 
     static webSocketServer = new WebSocketServer({noServer: true});
     static ws = new Set<WebSocket>();
-    static updateStatus(status: SyncStatus){
-        Sync.status = status;
+    static sendStatus(){
+        if(Sync.status
+            && (!Sync.status?.syncing || Object.keys(Sync.status.syncing).length === 0)
+            && (!Sync.status?.conflicts || Object.keys(Sync.status.conflicts).length === 0)
+            && (!Sync.status?.largeFiles || Object.keys(Sync.status.largeFiles).length === 0))
+        {
+            Sync.status.lastSync = Date.now();
+        }
+
         const strigified = JSON.stringify(Sync.status);
         Sync.ws.forEach(ws => ws.send(strigified));
     }

@@ -10,16 +10,7 @@ export function fsInit(client, getBaseDir: () => string) {
 
     return {
         async readDir(key: string){
-            let readDir: fs.Dirent[];
-            try {
-                readDir = await initClient(client).readdir(filePath(key), {withFileTypes: true});
-            }catch (e) {
-                Sync.updateStatus({
-                    status: "error",
-                    message: e.message
-                });
-                return []
-            }
+            let readDir = await initClient(client).readdir(filePath(key), {withFileTypes: true});
 
             return readDir.map(item => ({
                     name: item.name,
@@ -31,39 +22,15 @@ export function fsInit(client, getBaseDir: () => string) {
             );
         },
         async getFileContents(key: string){
-            let data: Buffer;
-            try{
-                data = await initClient(client).readFile(filePath(key));
-            }catch (e){
-                Sync.updateStatus({
-                    status: "error",
-                    message: e.message
-                });
-                return "";
-            }
-
+            let data = await initClient(client).readFile(filePath(key));
             return data.toString();
         },
         updateFile(key: string, contents: string){
-            try{
-                return initClient(client).writeFile(filePath(key), contents);
-            }catch (e) {
-                Sync.updateStatus({
-                    status: "error",
-                    message: e.message
-                });
-            }
+            return initClient(client).writeFile(filePath(key), contents);
         },
         deleteFile(key: string){
             Sync.removeKey(key);
-            try{
-                return initClient(client).rm(filePath(key), {force: true, recursive: true});
-            }catch (e){
-                Sync.updateStatus({
-                    status: "error",
-                    message: e.message
-                });
-            }
+            return initClient(client).rm(filePath(key), {force: true, recursive: true});
         }
     }
 }

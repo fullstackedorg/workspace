@@ -41,6 +41,18 @@ export const fsCloud = {
 
     // pull files from cloud
     async sync(key: string, save = true) {
+        // already trying to do something
+        if(Sync.status.syncing && Sync.status.syncing[key])
+            return;
+
+        if(Sync.status.conflicts && Sync.status.conflicts[key]) {
+            const foundUnresolved = Object.keys(Sync.status.conflicts[key]).find(conflictingKey => !Sync.status.conflicts[key][conflictingKey])
+            if(foundUnresolved) {
+                Sync.sendStatus();
+                return;
+            }
+        }
+
         // make sure we are authorized, and get remote version for key
         let response, syncStart;
         try {
@@ -56,10 +68,8 @@ export const fsCloud = {
             )
             syncStart = await response.json();
         }catch(e){
-            Sync.updateStatus({
-                status: "error",
-                message: e.message
-            });
+            Sync.status.errors.push(e.message);
+            Sync.sendStatus();
             return;
         }
 
@@ -67,12 +77,12 @@ export const fsCloud = {
             throw Error(`[pull] Could not get remote version for key [${key}]`);
         }
 
-
         // make sure key exists
         try{
             await fsCloudClient.post().access(key);
         }catch (e) {
-            console.log(`Key [${key}] does not exists on remote`);
+            Sync.status.errors.push(`Key [${key}] does not exists on remote`);
+            Sync.sendStatus();
             return;
         }
 
@@ -91,15 +101,11 @@ export const fsCloud = {
             const currentSnapshot = await createSnapshot(resolve(getLocalBaseDir(), key), subFileKeys);
 
             const snapshotsDiffs = getSnapshotDiffs(previousSnapshot, currentSnapshot).diffs
-                // remove resolved one
-                .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey]));
+                // remove resolved conflicts
+                .filter(fileKey => !(Sync.status.conflicts && Sync.status.conflicts[key] && Sync.status.conflicts[key][fileKey]));
 
             if(snapshotsDiffs.length){
-
-                if(!Sync.conflicts[key])
-                    Sync.conflicts[key] = {};
-
-                snapshotsDiffs.forEach(fileKey => Sync.conflicts[key][fileKey] = false);
+                Sync.addConflicts(key, snapshotsDiffs);
                 return;
             }
         }
@@ -117,8 +123,9 @@ export const fsCloud = {
         const subFiles = subKeys
             .map(({path, name}) => normalizePath(join(path, name)))
             .filter(subKey => !subDirectories.includes(subKey) && !subKey.endsWith(".fullstacked-sync"))
-            // remove conflicts that has been resolved manually
-            .filter(fileKey => !(Sync.conflicts[key] && Sync.conflicts[key][fileKey.slice(key.length + 1)]));
+            // remove conflicts that has been resolved
+            // we won't pull the previously conflicting ones
+            .filter(fileKey => !(Sync.status.conflicts && Sync.status.conflicts[key] && Sync.status.conflicts[key][fileKey.slice(key.length + 1)]));
 
         await fs.promises.mkdir(resolve(getLocalBaseDir(), key), {recursive: true});
 
@@ -156,10 +163,7 @@ export const fsCloud = {
             const promise = new Promise<void>(async resolve => {
                 const parts = Math.ceil(contentLength / Sync.transferBlockSize);
                 for (let i = 0; i < parts; i++) {
-                    Sync.updateStatus({
-                        status: "large-file",
-                        message: `[${subFile} ${prettyBytes(contentLength)}] ${(i * Sync.transferBlockSize / contentLength * 100).toFixed(2)}%`
-                    })
+                    Sync.updateLargeFileProgress(subFile, i * Sync.transferBlockSize, contentLength);
 
                     const bufferPart = await fsCloudClient.post(true).readFilePart(subFile, i * Sync.transferBlockSize, (i + 1) * Sync.transferBlockSize)
                     if(i === 0)
@@ -167,6 +171,7 @@ export const fsCloud = {
                     else
                         await fs.promises.appendFile(filePath, Buffer.from(bufferPart))
                 }
+                Sync.removeLargeFileProgress(subFile);
                 resolve();
             });
             largeFiles.push(promise);
@@ -207,8 +212,8 @@ export const fsCloud = {
         if(save)
             Sync.addKey(key);
 
-        if(Sync.conflicts[key]) {
-            delete Sync.conflicts[key];
+        if(Sync.status.conflicts && Sync.status.conflicts[key]) {
+            Sync.removeResolvedConflictKey(key);
         }
 
         Sync.removeSyncingKey(key);

@@ -16,12 +16,21 @@ export const fsLocal = {
     resolveConflict(baseKey: string, key: string, contents: string){
         const filePath = resolve(getBaseDir(), baseKey, key);
         fs.writeFileSync(filePath, contents);
-        Sync.conflicts[baseKey][key] = true;
-        return fsCloud.sync.bind(this)(baseKey, false);
+        Sync.resolveConflict(baseKey, key);
+        fsCloud.sync.bind(this)(baseKey, false);
     },
 
     // push files to cloud
     async sync(key: string, save = true){
+        // already trying to do something
+        if(Sync.status.syncing && Sync.status.syncing[key])
+            return;
+
+        // simply can't push when conflicts, but try to pull to resolve
+        if(Sync.status.conflicts && Sync.status.conflicts[key]) {
+            return fsCloud.sync.bind(this)(key, save);
+        }
+
         // make sure key exists
         if(!fs.existsSync(resolve(getBaseDir(), key)))
             return;
@@ -44,10 +53,8 @@ export const fsLocal = {
             );
             syncStart = await response.json();
         } catch(e) {
-            Sync.updateStatus({
-                status: "error",
-                message: e.message
-            });
+            Sync.status.errors.push(e.message);
+            Sync.sendStatus();
             return;
         }
 
@@ -62,9 +69,9 @@ export const fsLocal = {
 
         localVersion = previousSnapshotWithVersion?.version || 0;
 
+        // mismatching versions, need pull first
         if(syncStart.version && syncStart.version !== localVersion) {
-            await fsCloud.sync.bind(this)(key, save);
-            return;
+            return fsCloud.sync.bind(this)(key, save);
         }
 
         const subKeys = walkAndIgnore(getBaseDir(), key);
@@ -81,7 +88,8 @@ export const fsLocal = {
                 missingInB, // deleted
                 diffs// modified
             } = getSnapshotDiffs(previousSnapshot, currentSnapshot);
-            if(!missingInA.length && !diffs.length){
+            // absolutely nothing changed
+            if(!missingInA.length && !missingInB.length && !diffs.length){
                 return;
             }
         }
@@ -128,10 +136,7 @@ export const fsLocal = {
                 const parts = Math.ceil(contents.byteLength / Sync.transferBlockSize);
 
                 for (let i = 0; i < parts; i++) {
-                    Sync.updateStatus({
-                        status: "large-file",
-                        message: `[${key}/${subFile} ${prettyBytes(contents.byteLength)}] ${(i * Sync.transferBlockSize / contents.byteLength * 100).toFixed(2)}%`
-                    });
+                    Sync.updateLargeFileProgress(subFile, i * Sync.transferBlockSize, contents.byteLength);
 
                     const bufferPart = contents.subarray(i * Sync.transferBlockSize, (i + 1) * Sync.transferBlockSize);
                     // write first part
@@ -144,6 +149,7 @@ export const fsLocal = {
                     }
                 }
 
+                Sync.removeLargeFileProgress(subFile);
                 resolve();
             });
             largeFiles.push(promise);
