@@ -12,7 +12,9 @@
 
 ![FullStacked](https://files.fullstacked.org/fullstacked-cloud.png)
 
-FullStacked is a web application providing a workspace for developers. It is so easy to spin up that you will feel like any device is good enough for you to jump into your dev environment. Run it locally when you use a powerful machine and access it from the cloud to leverage cloud computing.
+FullStacked is a web application that provides a workspace for developers. 
+It is so easy to spin up that you can jump into your dev environment with any device. 
+Run it locally to utilize the resources of a powerful machine or access it from the cloud to leverage cloud computing.
 
 ## Table of Contents
 
@@ -105,7 +107,9 @@ volumes:
 
 ## FullStacked Cloud
 
-FullStacked Cloud completely decouples computing and storage. Through a global network of servers, it provides syncing across all of your workspace instances and also provides access to ephemeral workspace instances. Meaning that every single device is a login or a `npm` command away from your entire workspace. 
+FullStacked Cloud completely decouples computing and storage. 
+Through a global network of servers, it provides syncing across all of your workspace instances and also provides access to ephemeral workspace instances. 
+Meaning that every single device is a login or a `npm` command away from your entire workspace. 
 
 Here's a little doodle to help comprehend
 
