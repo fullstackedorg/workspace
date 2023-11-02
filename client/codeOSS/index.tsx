@@ -64,7 +64,7 @@ class CodeOSS {
             const script = document.createElement("script");
 
             if(element.getAttribute("src")) {
-                script.src = element.getAttribute("src");
+                script.src = element.getAttribute("src") + "?v=" + process.env.VERSION + "-" + process.env.HASH ;
                 await new Promise(resolve => {
                     script.onload = resolve;
                     document.body.append(script);
