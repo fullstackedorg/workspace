@@ -72,7 +72,6 @@ export class Workspace extends Component {
     }
 
     addWindow(app: App){
-        console.log(app)
         const id = Math.floor(Math.random() * 100000).toString();
 
         (app as ActiveApp).id = id;
@@ -126,16 +125,20 @@ export class Workspace extends Component {
         const i = this.state.windows.findIndex(({id}) => id === window.id);
         if(i < 0) return;
 
+        // set our focusing window to the max zIndex
         this.state.windows[i].zIndex = this.state.windows.reduce((highest, {zIndex}) => zIndex > highest ? zIndex : highest, 0) + 1;
+
+        // sort and reset starting index at 0 to n, limiting the indexing from going to infinity
         const idOrder = new Map<string, number>();
         [...this.state.windows]
             .sort((winA, winB) => winA.zIndex - winB.zIndex)
-            .forEach(({id}, i) => idOrder.set(id, i + 1));
+            .forEach(({id}, i) => idOrder.set(id, i));
+
         this.topActiveApp = window;
         this.setState({
             windows: this.state.windows.map(win => ({
                 ...win,
-                order: idOrder.get(win.id)
+                zIndex: idOrder.get(win.id) + 1 // +1 to avoid starting at zIndex: 0
             }))
         }, () => {
             const activeApp = this.activeApps.get(window.id);
