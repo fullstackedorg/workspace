@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {SyncStatus} from "./status";
 import {createRoot} from "react-dom/client";
+import prettyBytes from "pretty-bytes";
 
-export function RenderSyncIndicator(onError: () => void){
+export function RenderSyncIndicator(){
     // render only once
     if(document.querySelector("#sync")) return;
 
@@ -13,7 +14,7 @@ export function RenderSyncIndicator(onError: () => void){
     root.render(<Indicator remove={() => {
         root.unmount();
         div.remove();
-    }} didError={onError} />);
+    }} />);
 }
 
 function initWS(cb) {
@@ -31,12 +32,12 @@ function initWS(cb) {
     };
 }
 
-function Indicator(props: {remove(): void, didError(): void}){
+function Indicator(props: {remove(): void}){
     const [status, setStatus] = useState<SyncStatus>();
     const [lastSyncInterval, setLastSyncInterval] = useState("");
 
     useEffect(() => {
-        let status: SyncStatus
+        let status: SyncStatus;
         initWS(message => {
             status = JSON.parse(message.data);
 
@@ -45,16 +46,12 @@ function Indicator(props: {remove(): void, didError(): void}){
                 return;
             }
 
-            if(status.status === "error"){
-                props.didError();
-            }
-
             setStatus(status);
             updateLastSyncInterval();
         })
 
         const updateLastSyncInterval = () => {
-            if(status?.status !== "synced") return;
+            if(!status?.lastSync) return;
             setLastSyncInterval(msDurationToHumanReadable(Date.now() - status.lastSync));
         }
 
@@ -68,29 +65,73 @@ function Indicator(props: {remove(): void, didError(): void}){
     if(!status)
         return <></>
 
-    return <div id={"sync-indicator"}>
-        {status.status === "synced"
-            ? lastSyncInterval && <div className={Date.now() - status.lastSync < 10000 ? "on-top" : ""}>Synced {lastSyncInterval} ago</div>
-            : status.status === "initializing"
-                ? <div>Initializing...</div>
-                : status.status === "syncing"
-                    ? <div className={"on-top"}>
-                        Syncing...
-                        <div>
-                            {status.keys.map(([key, way]) => <div>
-                                {key}&nbsp;
-                                {way === "pull" ? <span className={"green"}>↙</span> : <span className={"red"}>↗</span>}
-                            </div>)}
-                        </div>
-                    </div>
-                    : status.status === "conflicts"
-                        ? <div className={"on-top"}>
-                            Sync Conflicts
+    const isSynced =
+        (!status.syncing || Object.keys(status.syncing).length === 0)
+        && (!status.conflicts || Object.keys(status.conflicts).length === 0)
+        && (!status.largeFiles || Object.keys(status.largeFiles).length === 0)
+        && (!status.errors || status.errors.length === 0);
+
+    const keyHasUnresolvedConflict = (key) => status.conflicts
+        && Object.keys(status.conflicts[key]).length
+        && Object.keys(status.conflicts[key]).find(subKey => !status.conflicts[key][subKey])
+
+    const onTop = !isSynced || Date.now() - status.lastSync < 10000;
+
+    return <div id={"sync-indicator"} className={onTop ? "on-top" : ""}>
+        {isSynced && (!lastSyncInterval
+            ? <div>Initializing...</div>
+            : <div>Synced {lastSyncInterval} ago</div>)}
+
+        {status.syncing && !!(Object.keys(status.syncing).length)
+            && <div>
+                Syncing...
+                <div>
+                    {Object.keys(status.syncing).map(key => <div>
+                        {key}&nbsp;
+                        {status.syncing[key] === "pull" ? <span className={"green"}>↙</span> : <span className={"red"}>↗</span>}
+                    </div>)}
+                </div>
+            </div>}
+
+        {status.conflicts && !!(Object.keys(status.conflicts).length)
+            && Object.keys(status.conflicts).find(key => keyHasUnresolvedConflict(key))
+            && <div>
+                Conflicts
+                <div>
+                    {Object.keys(status.conflicts).map(key => {
+                        if(!keyHasUnresolvedConflict(key))
+                            return <></>;
+
+                        return <div>
+                            {key}
                             <div>
-                                {status.keys.map(key => <div>{key}</div>)}
+                                {Object.keys(status.conflicts[key])
+                                    .filter(subKey => !status.conflicts[key][subKey])
+                                    .map(subKey => <div>{subKey}</div>)}
                             </div>
                         </div>
-                        : <div className={"on-top"}>{status.message}</div>}
+                    })}
+                </div>
+            </div>}
+
+        {status.largeFiles && !!(Object.keys(status.largeFiles).length)
+            && <div>
+                Large Files
+                <div>
+                    {Object.keys(status.largeFiles).map(key => <div>
+                        {key} [{prettyBytes(status.largeFiles[key].total)}]&nbsp;
+                        {roundTwoDigits(status.largeFiles[key].progress / status.largeFiles[key].total * 100)}%
+                    </div>)}
+                </div>
+            </div>}
+
+        {status.errors && !!(status.errors.length)
+            && <div>
+                Errors
+                <div>
+                    {status.errors.map(error => <div>{error}</div>)}
+                </div>
+            </div>}
     </div>
 }
 
@@ -107,4 +148,9 @@ function msDurationToHumanReadable(ms: number){
     return (hours ? `${hours}h `: "") +
         (minutes ? `${minutes}m ` : "") +
         ((seconds || (!minutes && !hours)) ? `${seconds}s` : "");
+}
+
+
+function roundTwoDigits(num: number) {
+    return Math.floor(num * 100) / 100;
 }

@@ -47,8 +47,6 @@ export class Sync {
                 });
             });
 
-        RenderSyncIndicator(() => {
-            Sync.init()
-        });
+        RenderSyncIndicator();
     }
 }

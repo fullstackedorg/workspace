@@ -1,4 +1,4 @@
-#sync-indicator > div {
+#sync-indicator {
     position: fixed;
     top: 0;
     right: 0;
@@ -10,7 +10,7 @@
     text-align: right;
 }
 
-#sync-indicator > div.on-top {
+#sync-indicator.on-top {
     background-color: #1e293caa;
     opacity: 1;
     z-index: 1000000;

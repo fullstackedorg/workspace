@@ -1,24 +1,18 @@
-export type SyncStatus = null |
-    {
-        status: "synced",
-        lastSync: number
-    } |
-    {
-        status: "initializing"
-    } |
-    {
-        status: "syncing",
-        keys: [string, "push" | "pull"][]
-    } |
-    {
-        status: "conflicts",
-        keys: string[]
-    } |
-    {
-        status: "large-file",
-        message: string
-    } |
-    {
-        status: "error",
-        message: string
-    }
+export type SyncStatus = {
+    lastSync?: number, // no last sync === initializing
+    conflicts?: {
+        [baseKey: string] : {
+            [conflictingKey: string]: boolean // resolved
+        }
+    },
+    syncing?: {
+        [key: string]: "push" | "pull"
+    },
+    largeFiles?: {
+        [key: string]: {
+            progress: number,
+            total: number
+        }
+    },
+    errors?: string[]
+}

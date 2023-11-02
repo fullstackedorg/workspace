@@ -202,16 +202,15 @@ export const API = {
     getSyncDirectory(){
         return Sync.config?.directory;
     },
-    getSyncConflicts() {
-        return Sync.conflicts;
+    getSyncConflicts(){
+        return Sync.status?.conflicts;
     },
     async initSync(this: {req: IncomingMessage}){
         // init only once
-        if(Sync.status && Sync.status.status !== "error") return true;
+        if(Sync.status) return true;
+        Sync.status = {};
+        Sync.sendStatus();
 
-        Sync.updateStatus({
-            status: "initializing"
-        });
 
         // try to load beforehand
         await Sync.loadLocalConfigs();
@@ -219,7 +218,8 @@ export const API = {
         // start fs-cloud
         const start = await fsCloud.start.bind(this)();
         if(!start || (typeof start === "object" && start.error)) {
-            Sync.updateStatus(null);
+            Sync.status = null;
+            Sync.sendStatus();
             return start;
         }
 
@@ -248,53 +248,24 @@ export const API = {
             }));
         }
 
-        if(Sync.config?.keys)
-            await Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind(this)(key)));
-        else {
+        if(Sync.config?.keys) {
+            Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind(this)(key)))
+                .then(startSyncing);
+        }else {
             if(!Sync.config)
                 Sync.config = {}
 
             if(!Sync.config.keys)
                 Sync.config.keys = [];
+
+            startSyncing();
         }
 
-        const conflicts = Object.keys(Sync.conflicts);
-        if(conflicts.length){
-            Sync.updateStatus({
-                status: "conflicts",
-                keys: conflicts
-            })
-        }else{
-            Sync.updateStatus({
-                status: "synced",
-                lastSync: Date.now()
-            });
-        }
-
-        startSyncing();
-
+        Sync.sendStatus();
         return true;
     },
     sync(){
-        if(Sync.status.status !== "synced") return false;
-
-        sync(this.req).then(() => {
-            const conflicts = Object.keys(Sync.conflicts);
-            if(conflicts.length){
-                Sync.updateStatus({
-                    status: "conflicts",
-                    keys: conflicts
-                })
-            }else{
-                Sync.updateStatus({
-                    status: "synced",
-                    lastSync: Date.now()
-                });
-            }
-
-        });
-
-        return true;
+        sync(this.req);
     }
 }
 
@@ -478,24 +449,11 @@ function startSyncing(){
     server.addListener({
         prefix: "global",
         handler(req, res): any {
-            if(Sync.status?.status !== "synced" || req.url.startsWith("/oss-dev")) return;
+            if(req.url.startsWith("/oss-dev")) return;
 
             if(Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
 
-            sync(req).then(() => {
-                const conflicts = Object.keys(Sync.conflicts);
-                if(conflicts.length){
-                    Sync.updateStatus({
-                        status: "conflicts",
-                        keys: conflicts
-                    })
-                }else{
-                    Sync.updateStatus({
-                        status: "synced",
-                        lastSync: Date.now()
-                    });
-                }
-            });
+            sync(req);
         }
     });
 }
@@ -526,10 +484,13 @@ async function sync(req){
         }));
     }
 
-    if(!Sync.config?.keys?.length)
+    if(!Sync.config?.keys?.length) {
+        Sync.sendStatus();
         return;
+    }
 
-    await Promise.all(Sync.config?.keys.map(key => fsLocal.sync.bind({req: copiedCookie})(key)));
+    Promise.all(Sync.config?.keys.map(key => fsLocal.sync.bind({req: copiedCookie})(key)))
+        .then(Sync.sendStatus);
 }
 
 const proxyCodeOSS = httpProxy.createProxy({
