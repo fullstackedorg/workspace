@@ -44,19 +44,14 @@ document.querySelectorAll(".copy").forEach(element => {
     element.addEventListener("click", () => {
         var textArea = document.createElement("textarea");
         textArea.value = text;
-        textArea.style.top = "0";
-        textArea.style.left = "0";
-        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
       
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
         document.execCommand('copy');
-        setTimeout(() => {
-            if(document.activeElement === textArea)
-                textArea.blur();
-            textArea.remove();
-        }, 1)
+        textArea.blur();
+        textArea.remove();
 
         const icon = element.querySelector("svg");
         const originalIcon = icon.cloneNode(true);
@@ -65,3 +60,8 @@ document.querySelectorAll(".copy").forEach(element => {
         setTimeout(() => {element.replaceChild(originalIcon, successIconClone)}, 2000);
     })
 });
+
+const header = document.querySelector("header")
+document.querySelector("#menu-icon").addEventListener("click", () => {
+    header.classList.toggle("open");
+})
