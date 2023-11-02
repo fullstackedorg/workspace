@@ -1,4 +1,4 @@
-![FullStacked](https://files.fullstacked.org/app-icon-banner.jpg?v=2)
+![FullStacked](https://files.fullstacked.org/app-icon-banner.jpg?v=3)
 
 # FullStacked
 
