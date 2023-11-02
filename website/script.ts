@@ -52,6 +52,11 @@ document.querySelectorAll(".copy").forEach(element => {
         textArea.focus();
         textArea.select();
         document.execCommand('copy');
+        setTimeout(() => {
+            if(document.activeElement === textArea)
+                textArea.blur();
+            textArea.remove();
+        }, 1)
 
         const icon = element.querySelector("svg");
         const originalIcon = icon.cloneNode(true);
