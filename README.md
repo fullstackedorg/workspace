@@ -12,9 +12,10 @@
 
 ![FullStacked](https://files.fullstacked.org/fullstacked-cloud.png)
 
-FullStacked is a web application that provides a workspace for developers. 
-It is so easy to spin up that you will jump into your dev environment with any device. 
-Run FullStacked locally to utilize the resources of your powerful machine, or access it remotely to leverage cloud computing.
+FullStacked is a web application that provides a workspace for developers.
+It is so easy to spin up that you will jump into your dev environment with any device.
+FullStacked can run locally to utilize the resources of your powerful machine, 
+or can be accessed remotely to leverage cloud computing.
 
 ## Table of Contents
 
