@@ -10,7 +10,6 @@ if(fs.existsSync("dist"))
 fs.mkdirSync("dist/demo", {recursive: true});
 
 fs.writeFileSync("dist/index.html", buildHTMLPage("index.html"));
-fs.writeFileSync("dist/_index.html", buildHTMLPage("_index.html"));
 fs.writeFileSync("dist/demo/index.html", buildHTMLPage("demo/index.html"));
 
 fs.writeFileSync("dist/index.css", sass.compile("index.scss", {style: "compressed"}).css);
