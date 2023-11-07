@@ -22,6 +22,8 @@ const server = http.createServer((req, res) => {
         res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
         res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
         res.end(buildHTMLPage("demo/index.html"));
+    }else if(req.url === "/_index.html"){
+        res.end(buildHTMLPage("_index.html", watchScript));
     }else
         res.end(buildHTMLPage("index.html", watchScript));
 })
