@@ -206,47 +206,29 @@ export const API = {
         return Sync.status?.conflicts;
     },
     async initSync(this: {req: IncomingMessage}){
+        // always start when using cloud configs
+        if(process.env.USE_CLOUD_CONFIG){
+            await fsCloud.start.bind(this)();
+        }
+
         // init only once
         if(Sync.status) return true;
         Sync.status = {};
         Sync.sendStatus();
 
-
         // try to load beforehand
         await Sync.loadLocalConfigs();
 
-        // start fs-cloud
-        const start = await fsCloud.start.bind(this)();
-        if(!start || (typeof start === "object" && start.error)) {
-            Sync.status = null;
-            Sync.sendStatus();
-            return start;
+        // try to start fs-cloud
+        if(!process.env.USE_CLOUD_CONFIG){
+            const start = await fsCloud.start.bind(this)();
+            if(!start || (typeof start === "object" && start.error)) {
+                Sync.status = null;
+                Sync.sendStatus();
+                return start;
+            }
         }
 
-        // with cloud config, retry to load from the cloud once authenticated
-        if(process.env.USE_CLOUD_CONFIG){
-            await Sync.loadLocalConfigs();
-        }
-
-        // in docker, sync .xyz files since their mostly configs and stuff
-        // ie .profile
-        if(process.env.DOCKER_RUNTIME){
-            const ig = ignore();
-            ig.add(Sync.globalIgnore);
-
-            const dotKeys = (await fsCloud.readDir(""))
-                .filter(item => item.name.startsWith(".") && !ig.ignores(item.key));
-
-            await Promise.all(dotKeys.map(({key, isDirectory}) => {
-                return isDirectory
-                    ? fsCloud.sync.bind(this)(key, false)
-                    : new Promise(resolve => {
-                        fsCloud.getFileContents(key)
-                            .then(contents => fsLocal.updateFile(key, contents))
-                            .then(resolve)
-                    })
-            }));
-        }
 
         if(Sync.config?.keys) {
             Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind(this)(key)))
@@ -464,24 +446,6 @@ async function sync(req){
         headers: {
             cookie: req.headers.cookie
         }
-    }
-
-    if(process.env.DOCKER_RUNTIME){
-        const ig = ignore();
-        ig.add(Sync.globalIgnore);
-
-        const dotKeys = (await fsLocal.readDir(""))
-            .filter(item => item.name.startsWith(".") && !ig.ignores(item.key));
-
-        await Promise.all(dotKeys.map(({key, isDirectory}) => {
-            return isDirectory
-                ? fsLocal.sync.bind({req: copiedCookie})(key, false)
-                : new Promise(resolve => {
-                    fsLocal.getFileContents(key)
-                        .then(contents => fsCloud.updateFile(key, contents))
-                        .then(resolve)
-                })
-        }));
     }
 
     if(!Sync.config?.keys?.length) {

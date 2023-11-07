@@ -53,13 +53,20 @@ export const fsLocal = {
             );
             syncStart = await response.json();
         } catch(e) {
-            Sync.status.errors.push(e.message);
-            Sync.sendStatus();
+            Sync.sendError(e.message);
             return;
         }
 
         if(response.status >= 400 || syncStart?.version === undefined){
             throw Error(`[push] Could not get remote version for key [${key}]`);
+        }
+
+        // make sure key actually exists
+        let keyExistsOnRemote = true;
+        try{
+            await fsCloudClient.post().access(key);
+        }catch (e) {
+            keyExistsOnRemote = false;
         }
 
         let previousSnapshotWithVersion;
@@ -88,8 +95,8 @@ export const fsLocal = {
                 missingInB, // deleted
                 diffs// modified
             } = getSnapshotDiffs(previousSnapshot, currentSnapshot);
-            // absolutely nothing changed
-            if(!missingInA.length && !missingInB.length && !diffs.length){
+            // absolutely nothing changed and key already exists on remote, so should be synced
+            if(keyExistsOnRemote && !missingInA.length && !missingInB.length && !diffs.length){
                 return;
             }
         }

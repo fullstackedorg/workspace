@@ -6,7 +6,6 @@ import {Sync} from "./index";
 import {fsCloudClient} from "./fs-cloud-client";
 import {join, resolve} from "path";
 import {createSnapshot, getSnapshotDiffs, normalizePath, walkAndIgnore} from "./utils";
-import prettyBytes from "pretty-bytes";
 
 type CloudFSStartResponseType =
     // missing dependencies on local machine to run CloudFS operations
@@ -81,8 +80,7 @@ export const fsCloud = {
         try{
             await fsCloudClient.post().access(key);
         }catch (e) {
-            Sync.status.errors.push(`Key [${key}] does not exists on remote`);
-            Sync.sendStatus();
+            Sync.sendError(`Key [${key}] does not exists on remote`);
             return;
         }
 
