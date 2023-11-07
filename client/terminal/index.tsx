@@ -3,17 +3,18 @@ import { Terminal as Xterm } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { WebLinksAddon } from 'xterm-addon-web-links';
-import Browser from "../browser";
-import {createRoot} from "react-dom/client";
-import {createWindow, focusWindow} from "../app/WinStore";
-import {openCodeOSS} from "../codeOSS";
-import {openExplorer} from "../app/files";
 import {client} from "../client";
 import GithubDeviceFlow from "./github-device-flow";
+import { Workspace } from "../workspace";
+import terminalIcon from "../icons/terminal.svg";
+import {Browser} from "../browser";
+import githubLogo from "./github.svg";
 
-export default class Terminal extends Component<{ onFocus(): void }> {
+const usePort = await client.get(true).usePort();
+
+class Terminal extends Component {
     SESSION_ID: string;
-    githubDeviceFlow;
+    githubDeviceFlowWindowId;
     ws: WebSocket;
     xtermRef = createRef<HTMLDivElement>();
     xterm = new Xterm();
@@ -23,16 +24,20 @@ export default class Terminal extends Component<{ onFocus(): void }> {
             const url = new URL(uri);
 
             if(e.ctrlKey || e.metaKey){
-                const div = document.createElement("div");
-                const { id } = createWindow("Browser", {mount: div});
-                createRoot(div).render(<Browser id={id} port={url.port} path={url.pathname} />);
-                this.xterm.blur();
+                const browserApp = Workspace.instance.apps.find(({title}) => title === "Browser");
+                Workspace.instance.addWindow({
+                    ...browserApp,
+                    element: () => <Browser port={url.port} path={url.pathname} />
+                })
                 return;
             }
 
-            url.hostname = url.port + "." + window.location.hostname;
-            url.port = window.location.port;
-            url.protocol = window.location.protocol;
+            if(!usePort){
+                url.hostname = url.port + "." + window.location.hostname;
+                url.port = window.location.port;
+                url.protocol = window.location.protocol;
+            }
+
             uri = url.toString();
         }
 
@@ -64,36 +69,51 @@ export default class Terminal extends Component<{ onFocus(): void }> {
         this.ws.onopen = () => this.onResize();
 
         this.ws.onmessage = e => {
-            if(e.data.startsWith("SESSION_ID#")){
+            let {data} = e;
+            if(data.startsWith("SESSION_ID#")){
                 this.SESSION_ID = e.data.split("#").pop();
                 return;
-            } else if(e.data.startsWith("CODE#")){
-                openCodeOSS(e.data.split("#").pop());
-                this.xterm.blur();
-                return;
-            } else if(e.data.startsWith("OPEN#")){
-                openExplorer(e.data.split("#").pop());
-                this.xterm.blur();
-                return;
-            }else if(e.data.startsWith("GITHUB_DEVICE_FLOW#")){
-                const [_, verification_uri, device_code] = e.data.split("#");
+            }
+            else if(data.match(/CODE#.*/g) && data.split("\n").length < 3){
+                const command = data.match(/CODE#.*/g).at(0);
+                const codeOSS = Workspace.instance.apps.find(app => app.title === "Code");
+                if(!codeOSS) return;
+                Workspace.instance.addWindow({
+                    ...codeOSS,
+                    args: {
+                        folder: command.split("#").pop()
+                    }
+                });
+                data = data.replace(/CODE#.*/g, "").trim();
+            }
+            // else if(e.data.startsWith("OPEN#")){
+            //     openExplorer(e.data.split("#").pop());
+            //     this.xterm.blur();
+            //     return;
+            // }
+            else if(data.startsWith("GITHUB_DEVICE_FLOW#")){
+                const [_, verification_uri, device_code] = data.split("#");
 
-                const mount = document.createElement("div");
-                this.githubDeviceFlow = createWindow("GitHub Auth", {mount});
-                createRoot(mount).render(<GithubDeviceFlow
-                    verificationUri={verification_uri}
-                    deviceCode={device_code}
-                />)
-                focusWindow(this.githubDeviceFlow.id);
+                Workspace.instance.addWindow({
+                    title: "GitHub",
+                    icon: githubLogo,
+                    element: ({id}) => {
+                        this.githubDeviceFlowWindowId = id;
 
+                        return <GithubDeviceFlow
+                            verificationUri={verification_uri}
+                            deviceCode={device_code}
+                        />
+                    }
+                });
                 return;
-            }else if(this.githubDeviceFlow && e.data === "GITHUB_DEVICE_FLOW_DONE"){
-                this.githubDeviceFlow.winBox.close();
-                this.githubDeviceFlow = null;
+            }else if(this.githubDeviceFlowWindowId && data === "GITHUB_DEVICE_FLOW_DONE"){
+                const activeApp = Workspace.instance.activeApps.get(this.githubDeviceFlowWindowId);
+                Workspace.instance.removeWindow(activeApp);
                 return;
             }
 
-            this.xterm.write(e.data);
+            this.xterm.write(data);
         }
     }
 
@@ -103,13 +123,12 @@ export default class Terminal extends Component<{ onFocus(): void }> {
     }
 
     onFocus() {
-        this.props.onFocus();
-
         if(this.ws.readyState === WebSocket.CLOSED){
             this.connect();
         }
     }
 
+    pasteInterval;
     componentDidMount() {
         this.xterm.loadAddon(this.fitAddon);
         this.xterm.loadAddon(this.webLinks);
@@ -122,14 +141,29 @@ export default class Terminal extends Component<{ onFocus(): void }> {
                 this.ws.send('\x03');
                 return;
             }
+
+            // let debugBinaryValues = [];
+            // for (var i = 0; i < key.length; i++) {
+            //     debugBinaryValues.push(key[i].charCodeAt(0).toString(16));
+            // }
+            // console.log(debugBinaryValues)
+            if(this.pasteInterval)
+                clearInterval(this.pasteInterval);
+            this.pasteInterval = null;
             this.ws.send(key);
         });
 
         this.xterm.attachCustomKeyEventHandler((arg) => {
             if ((arg.metaKey || arg.ctrlKey) && arg.code === "KeyV" && arg.type === "keydown") {
-                navigator.clipboard.readText().then(text => {
-                    this.ws.send(text)
-                });
+                this.pasteInterval = setInterval(() => {
+                    if(this.xterm.textarea.value.trim()){
+                        this.ws.send(this.xterm.textarea.value);
+                        this.xterm.textarea.value = "";
+                        clearInterval(this.pasteInterval);
+                        this.pasteInterval = null;
+                    }
+                }, 10);
+                return false;
             }
             return true;
         });
@@ -147,5 +181,19 @@ export default class Terminal extends Component<{ onFocus(): void }> {
     render(){
         return <div ref={this.xtermRef} className={"terminal"} />
     }
-
 }
+
+Workspace.addApp({
+    title: "Terminal",
+    icon: terminalIcon,
+    order: 0,
+    element: (win) => {
+        const terminalRef = createRef<Terminal>();
+        win.callbacks = {
+            onWindowResize: () => terminalRef.current.onResize(),
+            onFocus: () => terminalRef.current.xterm.focus(),
+            onClose: () => client.delete().killTerminalSession(terminalRef.current.SESSION_ID)
+        }
+        return <Terminal ref={terminalRef} />
+    }
+})

@@ -1,0 +1,134 @@
+.explorer-with-tabs > .tabs {
+    color: white;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    text-align: center;
+    background-color: #4b5567;
+    border-radius: 5px;
+}
+
+.explorer-with-tabs > .tabs > div {
+    flex: 1;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.explorer-with-tabs > .tabs > div.active {
+    background-color: #2d4c86;
+}
+
+
+.explorer-with-tabs{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.explorer-with-tabs > div:last-child {
+    flex: 1;
+    overflow: auto;
+}
+
+
+.rc-tree-list {
+    color: #ced9ec;
+}
+
+.rc-tree-switcher {
+    display: none!important;
+}
+
+.rc-tree-treenode {
+    display: flex;
+}
+
+.rc-tree-node-content-wrapper{
+    padding: 0 5px!important;
+    flex-grow: 1;
+    display: inline-flex!important;
+    align-items: center;
+    width: 100%;
+}
+
+.rc-tree-title{
+    height: 100%;
+    display: inline-flex!important;
+    flex: 1;
+    justify-content: space-between;
+    overflow: hidden;
+}
+.rc-tree-title > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    width: 100%
+}
+
+.rc-tree-title .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rc-tree-title .buttons {
+    display: flex;
+    align-items: center;
+}
+
+.rc-tree-title .buttons > button:not(:first-child) {
+    margin-left: 3px;
+}
+
+.rc-tree-node-selected {
+    background-color: transparent!important;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode-selected {
+    background-color: #0a85b5 !important;
+    color: white;
+    box-shadow: none!important;
+    border-radius: 5px;
+}
+
+.rc-tree-treenode:nth-child(even){
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+
+.explorer-with-tabs > .options {
+    display: flex;
+    justify-content: space-between;
+}
+
+.explorer-with-tabs .checkbox {
+    color: white;
+    font-weight: bold;
+    font-size: small;
+    padding: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-left: 10px;
+}
+
+.prepare-fs-remote {
+    color: white;
+    text-align: center;
+    height: 100%;
+    padding: 20px 5px;
+}
+.prepare-fs-remote > div:first-child {
+    margin-bottom: 20px;
+}
+.prepare-fs-remote input {
+    padding: 8px 5px;
+    width: 280px;
+    border-radius: 3px;
+    border: 1px solid #cccccc;
+}
+.prepare-fs-remote button{
+    margin-left: 10px;
+}

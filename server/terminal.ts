@@ -1,6 +1,11 @@
 import {WebSocket, WebSocketServer} from "ws";
 import PTy, {IPty} from "node-pty";
 import {IncomingMessage} from "http";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import {homedir, platform} from "os";
+import {Sync} from "./sync";
+import {execSync} from "child_process";
 
 
 type Session = {
@@ -10,11 +15,28 @@ type Session = {
     data: string[]
 }
 
+const isWin = platform() === "win32";
+const isMac = platform() === "darwin";
+const shell = isWin
+    ? "powershell.exe"
+    : isMac
+        ? "/bin/zsh"
+        : "/bin/bash";
+const args  = isWin ? [] : ['-l'];
+process.env.PATH += isWin
+    ? ";" + dirname(fileURLToPath(import.meta.url)) + "\\bat"
+    : ":" + dirname(fileURLToPath(import.meta.url)) + "/bin";
+
+if(!isWin){
+    execSync(`chmod +x ${dirname(fileURLToPath(import.meta.url)) + "/bin/*"}`);
+}
+
 export class Terminal {
     static killTimeout = 1000 * 60 * 15 // 15 minutes
 
     webSocketServer = new WebSocketServer({noServer: true});
     sessions: Map<string, Session> = new Map();
+    onDataListeners: Set<() => void> = new Set();
 
     constructor() {
         this.startCleanupInterval();
@@ -24,7 +46,7 @@ export class Terminal {
     startCleanupInterval(){
         setInterval(() => {
             for(const [SESSION_ID, {pty, ws, lastActivity}] of this.sessions.entries()){
-                if(lastActivity - Date.now() > Terminal.killTimeout){
+                if(Date.now() - lastActivity > Terminal.killTimeout){
                     pty.kill();
                     ws.close()
                     this.sessions.delete(SESSION_ID);
@@ -47,11 +69,11 @@ export class Terminal {
         // create new
         if(!session) {
             SESSION_ID = Math.floor(Math.random() * 1000000).toString();
-            const pty = PTy.spawn("/bin/sh", ["-l"], {
+            const pty = PTy.spawn(shell, args, {
                 name: '',
                 cols: 80,
                 rows: 30,
-                cwd: process.cwd(),
+                cwd: Sync.config?.directory || homedir(),
                 env: {
                     ...process.env,
                     SESSION_ID
@@ -60,12 +82,16 @@ export class Terminal {
 
             pty.onData((data) => {
                 const terminalSession = this.sessions.get(SESSION_ID);
+                if(!terminalSession) return;
+
                 if(terminalSession.ws.readyState === terminalSession.ws.CLOSED) {
                     terminalSession.data.push(data);
                 }else{
                     terminalSession.ws.send(data);
                     terminalSession.lastActivity = Date.now();
                 }
+
+                this.onDataListeners.forEach(listener => listener());
             });
 
             session = {
@@ -97,3 +123,8 @@ export class Terminal {
         });
     }
 }
+
+
+// C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\nodejs\;C:\Program Files\PowerShell\7\;C:\Users\CP\AppData\Local\Microsoft\WindowsApps;C:\Users\CP\.deno\bin;C:\Users\CP\AppData\Local\Programs\Python\Python311;C:\Users\CP\.dotnet\tools;C:\Users\CP\AppData\Roaming\npm
+// C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\nodejs\;C:\Program Files\PowerShell\7\;C:\Users\CP\AppData\Local\Microsoft\WindowsApps;C:\Users\CP\.deno\bin;C:\Users\CP\AppData\Local\Programs\Python\Python311;C:\Users\CP\.dotnet\tools;C:\Users\CP\AppData\Roaming\npm;C:\Users\CP\Desktop\Projets\fullstackedorg\workspace\node_modules\.bin
+// C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\dotnet\;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\nodejs\;C:\Program Files\PowerShell\7\;C:\Users\CP\AppData\Local\Microsoft\WindowsApps;C:\Users\CP\.deno\bin;C:\Users\CP\AppData\Local\Programs\Python\Python311;C:\Users\CP\.dotnet\tools;C:\Users\CP\AppData\Roaming\npm;C:\Users\CP\Desktop\Projets\fullstackedorg\workspace\node_modules\.bin

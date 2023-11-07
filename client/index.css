@@ -10,15 +10,16 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: sans-serif;
+    overflow: hidden;
+}
+body{
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 250px;
 }
 
-html, body, .wb-body {
+html, body {
     background-color: #1e293c;
-}
-
-.wb-body > div {
-    height: 100%;
-    width: 100%;
 }
 
 .button-icon,
@@ -29,6 +30,12 @@ html, body, .wb-body {
 
 pre {
     margin: 0;
+}
+
+iframe {
+    border: 0;
+    height: 100%;
+    width: 100%;
 }
 
 #root {
@@ -42,46 +49,6 @@ pre {
     border: 1px solid #9dd1ec;
     background-color: #9dd1ec30;
     z-index: 100;
-}
-
-.winbox {
-    background-color: #0a85b5;
-    border-radius: 6px 6px 0 0;
-}
-
-.rc-tree-list {
-    color: #ced9ec;
-}
-
-.rc-tree-switcher {
-    display: none!important;
-}
-
-.rc-tree-treenode {
-    display: flex;
-}
-
-.rc-tree-node-content-wrapper{
-    padding: 0 5px!important;
-    flex-grow: 1;
-}
-
-.rc-tree-node-selected {
-    background-color: transparent!important;
-    box-shadow: none!important;
-    border-radius: 5px;
-}
-
-.rc-tree-treenode-selected {
-    background-color: #0a85b5 !important;
-    color: white;
-    box-shadow: none!important;
-    border-radius: 5px;
-}
-
-.rc-tree-treenode:nth-child(even){
-    background-color: rgba(0,0,0,0.2);
-    border-radius: 5px;
 }
 
 .background {
@@ -329,6 +296,10 @@ button {
     line-height: 1;
 }
 
+button.small {
+    padding: 2px 4px;
+}
+
 button:hover {
     background-color: #0f688a;
     border-color: #20718f;
@@ -398,4 +369,25 @@ button.danger:active {
     background-color: #161B22;
     color: white;
     gap: 20px;
+}
+
+.cm-mergeView,
+.cm-mergeViewEditors,
+.cm-mergeViewEditor,
+.cm-editor {
+    min-height: 100%;
+}
+
+.cm-merge-revert button {
+    padding: 4px 0;
+}
+
+.logout {
+    color: white;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
 }

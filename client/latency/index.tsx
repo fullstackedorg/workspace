@@ -1,7 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {client} from "../client";
+import { Workspace } from "../workspace";
+import latencyIcon from "../icons/stopwatch.svg"
 
-export default function () {
+function Latency() {
     const [tests, setTests] = useState([]);
     const [avg, setAvg] = useState(null);
 
@@ -30,3 +32,10 @@ export default function () {
         </div>}
     </div>
 }
+
+Workspace.addApp({
+    title: "Latency",
+    icon: latencyIcon,
+    order: 30,
+    element: () => <Latency />
+})

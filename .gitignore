@@ -5,3 +5,6 @@ dist
 .fullstacked
 *.tgz
 vscode*
+code-oss
+.fullstacked-sync
+.wrangler

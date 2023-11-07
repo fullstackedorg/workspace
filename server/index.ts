@@ -1,9 +1,7 @@
 import Server from '@fullstacked/webapp/server';
-import fs from "fs";
-import {extname} from "path";
-import createListener from "@fullstacked/webapp/rpc/createListener";
+import createListener, {createHandler} from "@fullstacked/webapp/rpc/createListener";
 import {WebSocketServer} from "ws";
-import httpProxy from "http-proxy";
+import httpProxy, {createProxy} from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
 import Auth from "./auth";
@@ -13,8 +11,24 @@ import Share from "@fullstacked/share";
 import randStr from "@fullstacked/cli/utils/randStr"
 import {Terminal} from "./terminal";
 import {initInternalRPC} from "./internal";
+import open from "open";
+import {homedir, platform} from "os";
+import fs from "fs";
+import {Sync} from "./sync";
+import {fsCloud} from "./sync/fs-cloud";
+import {fsLocal} from "./sync/fs-local";
+import ignore from "ignore";
+import path from "path";
 
 const server = new Server();
+
+if(process.env.NODE_ENV !== 'development' // we're production
+    && !process.env.NEUTRALINO // we're not running in neutralino
+    && !process.env.NPX_START) // it's not a NPX start
+    server.staticFilesCacheControl = "max-age=900";
+
+if(process.env.FULLSTACKED_PORT)
+    server.port = parseInt(process.env.FULLSTACKED_PORT);
 
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
@@ -27,6 +41,14 @@ server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-title" content="Fu
 server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/app-icons/app-icon.png">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
+
+const injectionFileURL = new URL(import.meta.url);
+const pathComponents = injectionFileURL.pathname.split("/");
+pathComponents.splice(-1, 1, "html", "injection.html");
+injectionFileURL.pathname = pathComponents.join("/");
+if(fs.existsSync(injectionFileURL)){
+    server.pages["/"].addInBody(fs.readFileSync(injectionFileURL).toString());
+}
 
 server.addListener({
     prefix: "global",
@@ -46,40 +68,66 @@ let auth: Auth;
 if((process.env.PASS || process.env.AUTH_URL) && !WATCH_MODE)
     auth = initAuth(server);
 
+
 if(!WATCH_MODE)
     initPortProxy(server);
 
 const terminal = new Terminal();
 
-if(process.env.DOCKER_HOST !== undefined && !WATCH_MODE)
+if(process.env.DOCKER_RUNTIME) {
     initInternalRPC(terminal);
+}
+
+// auto shutdown
+if(process.env.AUTO_SHUTDOWN){
+    const shutdownDelay = parseInt(process.env.AUTO_SHUTDOWN) * 1000;
+    let lastActivity = Date.now();
+    setInterval(() => {
+        if(Date.now() - lastActivity > shutdownDelay)
+            process.exit();
+    }, 1000);
+
+    server.addListener({
+        prefix: "global",
+        handler(): any {
+            lastActivity = Date.now();
+        }
+    });
+
+    terminal.onDataListeners.add(() => lastActivity = Date.now());
+}
 
 server.start();
+console.log(`FullStacked running at http://localhost:${server.port}`);
+if(process.env.NPX_START){
+    open(`http://localhost:${server.port}`);
+}
 
 export default server.serverHTTP;
 
 export const API = {
     ping(){
-        return (Math.random() * 100000).toFixed(0);
+        return Date.now();
     },
-    papercups(){
-        return {
-            accountId: process.env.PAPERCUPS_ACCOUNT_ID,
-            publicKey: process.env.PAPERCUPS_PUBLIC_KEY,
-            token: process.env.PAPERCUPS_TOKEN,
-            inbox: process.env.PAPERCUPS_INBOX,
-            baseUrl: process.env.PAPERCUPS_BASE_URL
-        };
-    },
-    async hasCodeOSS(){
+    async portCodeOSS(){
+        if(!process.env.CODE_OSS_PORT)
+            return null;
+
         try{
-           await fetch("http://0.0.0.0:8888");
+           await fetch(`http://0.0.0.0:${process.env.CODE_OSS_PORT}`);
         }catch (e){
-            return false
+            return null;
         }
-        return true;
+        return process.env.CODE_OSS_PORT;
     },
-    logout(this: {req: IncomingMessage, res: ServerResponse}){
+    isInNeutralinoRuntime(){
+        return process.env.NEUTRALINO === "1";
+    },
+    usePort(){
+        // if forced, or is not in docker
+        return process.env.FORCE_PORT_USAGE === "1" || process.env.DOCKER_RUNTIME !== "1";
+    },
+    async logout(this: {req: IncomingMessage, res: ServerResponse}){
         const cookies = cookie.parse(this.req.headers.cookie ?? "");
 
         if(auth){
@@ -101,23 +149,26 @@ export const API = {
                 expires: new Date(0)
             })
         ]);
+
+        if(process.env.REVOKE_URL) {
+            return fetch(process.env.REVOKE_URL, {
+                headers: {
+                    cookie: this.req.headers.cookie
+                }
+            });
+        }
     },
-    readDir(dirPath: string){
-        return fs.readdirSync(dirPath).map(name => {
-            const path = (dirPath === "." ? "" : (dirPath + "/")) + name;
-            return {
-                name,
-                path,
-                extension: extname(name),
-                isDirectory: fs.statSync(path).isDirectory(),
-            }
-        });
+    homeDir(){
+        return homedir() + path.sep
     },
-    getFileContents(fileName: string){
-        return fs.readFileSync(fileName).toString();
-    },
-    updateFile(filename: string, contents: string){
-        fs.writeFileSync(filename, contents);
+    currentDir(){
+        let path = Sync.config?.directory || process.cwd();
+
+        //windows
+        if(platform() === "win32")
+            return path.split(":").pop().replace(/\\/g, "/");
+
+        return path;
     },
     share(port: string, password: string){
         const share = new Share();
@@ -141,10 +192,76 @@ export const API = {
             session.ws.close();
             terminal.sessions.delete(SESSION_ID);
         }
+    },
+    openBrowserNative(url: string){
+        open(url);
+    },
+    getSyncedKeys(): string[] {
+        return Sync.config?.keys;
+    },
+    getSyncDirectory(){
+        return Sync.config?.directory;
+    },
+    getSyncConflicts(){
+        return Sync.status?.conflicts;
+    },
+    async initSync(this: {req: IncomingMessage}){
+        // always start when using cloud configs
+        if(process.env.USE_CLOUD_CONFIG){
+            await fsCloud.start.bind(this)();
+        }
+
+        // init only once
+        if(Sync.status) return true;
+        Sync.status = {};
+        Sync.sendStatus();
+
+        // try to load beforehand
+        await Sync.loadLocalConfigs();
+
+        // try to start fs-cloud
+        if(!process.env.USE_CLOUD_CONFIG){
+            const start = await fsCloud.start.bind(this)();
+            if(!start || (typeof start === "object" && start.error)) {
+                Sync.status = null;
+                Sync.sendStatus();
+                return start;
+            }
+        }
+
+
+        if(Sync.config?.keys) {
+            Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind(this)(key)))
+                .then(startSyncing);
+        }else {
+            if(!Sync.config)
+                Sync.config = {}
+
+            if(!Sync.config.keys)
+                Sync.config.keys = [];
+
+            startSyncing();
+        }
+
+        Sync.sendStatus();
+        return true;
+    },
+    sync(){
+        sync(this.req);
     }
 }
 
 server.addListener(createListener(API));
+
+server.addListener({
+    prefix: "/fs-local",
+    handler: createHandler(fsLocal)
+});
+
+server.addListener({
+    prefix: "/fs-cloud",
+    handler: createHandler(fsCloud)
+});
 
 const shareWSS = new WebSocketServer({noServer: true});
 const activeShare = new Set<Share>();
@@ -208,7 +325,7 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
                 proxy.ws(req, socket, head, {target: `http://0.0.0.0:${cookies.port}`}, resolve);
             })
         }
-    
+
         const domainParts = req.headers.host.split(".");
         const firstDomainPart = domainParts.shift();
         const maybePort = parseInt(firstDomainPart);
@@ -222,6 +339,12 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
     if(req.url.startsWith("/fullstacked-terminal")){
         terminal.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
             terminal.webSocketServer.emit('connection', ws, req);
+        });
+    }else if(req.url.startsWith("/oss-dev")){
+        proxyCodeOSS.ws(req, socket, head);
+    }else if(req.url.startsWith("/fullstacked-sync")){
+        Sync.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
+            Sync.webSocketServer.emit('connection', ws);
         });
     }else if(req.url.split("?").shift() === "/fullstacked-share"){
         shareWSS.handleUpgrade(req, socket, head, (ws) => {
@@ -253,7 +376,7 @@ function initAuth(server: Server){
 }
 
 
-function initPortProxy(server: Server){
+function initPortProxy(server: Server) {
     server.addListener({
         prefix: "global",
         handler(req, res) {
@@ -263,7 +386,7 @@ function initPortProxy(server: Server){
                 res.end(`<script>window.parent.postMessage({credentialless: ${cookies.test !== "credentialless"}}); </script>`)
                 return;
             }
-    
+
             if (queryString.port) {
                 res.setHeader("Set-Cookie", cookie.serialize("port", queryString.port));
                 res.end(`<script>
@@ -273,7 +396,7 @@ function initPortProxy(server: Server){
                 </script>`);
                 return;
             }
-    
+
             if (cookies.port) {
                 return new Promise<void>(resolve => {
                     proxy.web(req, res, {target: `http://0.0.0.0:${cookies.port}`}, () => {
@@ -285,7 +408,7 @@ function initPortProxy(server: Server){
                     });
                 })
             }
-    
+
             const domainParts = req.headers.host.split(".");
             const firstDomainPart = domainParts.shift();
             const maybePort = parseInt(firstDomainPart);
@@ -302,3 +425,51 @@ function initPortProxy(server: Server){
         }
     });
 }
+
+
+function startSyncing(){
+    server.addListener({
+        prefix: "global",
+        handler(req, res): any {
+            if(req.url.startsWith("/oss-dev")) return;
+
+            if(Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
+
+            sync(req);
+        }
+    });
+}
+
+async function sync(req){
+    // better copy the cookie before request gets modified
+    const copiedCookie = {
+        headers: {
+            cookie: req.headers.cookie
+        }
+    }
+
+    if(!Sync.config?.keys?.length) {
+        Sync.sendStatus();
+        return;
+    }
+
+    Promise.all(Sync.config?.keys.map(key => fsLocal.sync.bind({req: copiedCookie})(key)))
+        .then(Sync.sendStatus);
+}
+
+const proxyCodeOSS = httpProxy.createProxy({
+    target: `http://0.0.0.0:${process.env.CODE_OSS_PORT}`
+})
+server.addListener({
+    prefix: "/oss-dev",
+    handler(req: IncomingMessage, res: ServerResponse): any {
+        if(req.url)
+            req.url = "/oss-dev" + req.url;
+        return new Promise(resolve => {
+            proxyCodeOSS.web(req, res, undefined, resolve)
+        });
+    }
+});
+
+// throws on windows
+proxyCodeOSS.removeAllListeners("error");

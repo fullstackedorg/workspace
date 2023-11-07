@@ -1,0 +1,330 @@
+#move-overlay {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 100000;
+    display: none;
+}
+body.moving #move-overlay,
+body.resizing #move-overlay {
+    display: block;
+}
+
+.window {
+    height: 400px;
+    width: 400px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 10px 0 0 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: 0.1s all;
+    user-select: none;
+    font-size: initial;
+}
+.window.moving,
+.window.resizing {
+    transition: none!important;
+}
+.window.full {
+    height: 100%!important;
+    width: 100%!important;
+    top: 0!important;
+    left: 0!important;
+    border: 0;
+    border-radius: 0;
+}
+.window.full > div:nth-child(2) {
+  border-radius: 0;
+}
+.window > div:nth-child(2) {
+    background-color: #0a85b5;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 4px;
+}
+.window > div:nth-child(3) {
+    position: relative;
+    background-color: #1e293c;
+    overflow: auto;
+    height: 100%;
+    border-radius: 5px;
+}
+
+.window-options {
+    height: 10px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 5px;
+    overflow: visible;
+    transition: 0.1s all;
+    text-align: left;
+}
+
+.window-options > div {
+    height: 100%;
+}
+
+.window-options > div > button {
+    vertical-align: top;
+    background-color: #1e293c;
+    height: calc(100% - 2px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 0;
+    overflow: hidden;
+    padding: 2px;
+    margin-top: 1px;
+    margin-left: 3px;
+    transition: 0.1s all;
+}
+.window-options > div > button:hover {
+    background-color: #0f1724;
+}
+.window-options > div > button:first-child {
+    background-color: #b22a2a;
+}
+.window-options > div > button:first-child:hover {
+    background-color: #8c2020;
+}
+
+.window-options > div > button svg {
+    height: 100%;
+    width: 100%;
+    max-width: 25px;
+}
+
+.window-options.open {
+    height: 150px;
+    padding: 50px;
+    top: -50px;
+    left: -50px;
+}
+
+.window-options.open button {
+    box-shadow: 0 2px 10px 2px #050a1170;
+}
+
+.window > .resizer {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.window > .resizer > div {
+    /* background-color: red; */
+    height: 50px;
+    width: 50px;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: 0.3s opacity;
+}
+.window > .resizer > div:hover {
+    opacity: 1;
+}
+
+.window > .resizer > div > div {
+    /* background-color: blue; */
+    position: absolute;
+    border-color: white;
+    border-style: solid;
+    border-width: 0;
+}
+.window > .resizer > div > div::before,
+.window > .resizer > div > div::after {
+    content: '';
+    background-color: white;
+    height: 5px;
+    width: 5px;
+    border-radius: 50%;
+    position: absolute;
+}
+
+.window > .resizer > div:first-child {
+    top: 0;
+    left: 0;
+}
+.window > .resizer > div:first-child > div{
+    height: 40px;
+    width: 40px;
+    bottom: 0;
+    right: 0;
+    border-top-width: 5px;
+    border-left-width: 5px;
+    border-top-left-radius: 20px;
+}
+.window > .resizer > div:first-child > div::before {
+    top: -5px;
+    right: -3px;
+}
+.window > .resizer > div:first-child > div::after {
+    bottom: -3px;
+    left: -5px;
+}
+
+
+
+.window > .resizer > div:nth-child(2) {
+    top: 0;
+    left: 50%;
+}
+.window > .resizer > div:nth-child(2) > div{
+    height: 40px;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    border-top-width: 5px;
+}
+.window > .resizer > div:nth-child(2) > div::before {
+    top: -5px;
+    left: -3px;
+}
+.window > .resizer > div:nth-child(2) > div::after {
+    top: -5px;
+    right: -3px;
+}
+
+
+.window > .resizer > div:nth-child(3) {
+    top: 0;
+    left: 100%;
+}
+.window > .resizer > div:nth-child(3) > div{
+    height: 40px;
+    width: 40px;
+    bottom: 0;
+    left: 0;
+    border-top-width: 5px;
+    border-right-width: 5px;
+    border-top-right-radius: 20px;
+}
+.window > .resizer > div:nth-child(3) > div::before {
+    top: -5px;
+    left: -3px;
+}
+.window > .resizer > div:nth-child(3) > div::after {
+    bottom: -3px;
+    right: -5px;
+}
+
+
+.window > .resizer > div:nth-child(4) {
+    top: 50%;
+    left: 100%;
+}
+.window > .resizer > div:nth-child(4) > div{
+    height: 100%;
+    width: 40px;
+    top: 0;
+    left: 0;
+    border-right-width: 5px;
+}
+.window > .resizer > div:nth-child(4) > div::before {
+    right: -5px;
+    top: -3px;
+}
+.window > .resizer > div:nth-child(4) > div::after {
+    right: -5px;
+    bottom: -3px;
+}
+
+
+.window > .resizer > div:nth-child(5) {
+    top: 100%;
+    left: 100%;
+}
+.window > .resizer > div:nth-child(5) > div{
+    height: 40px;
+    width: 40px;
+    top: 0;
+    left: 0;
+    border-bottom-width: 5px;
+    border-right-width: 5px;
+    border-bottom-right-radius: 20px;
+}
+.window > .resizer > div:nth-child(5) > div::before {
+    right: -5px;
+    top: -3px;
+}
+.window > .resizer > div:nth-child(5) > div::after {
+    left: -3px;
+    bottom: -5px;
+}
+
+
+.window > .resizer > div:nth-child(6) {
+    top: 100%;
+    left: 50%;
+}
+
+.window > .resizer > div:nth-child(6) > div{
+    height: 40px;
+    width: 100%;
+    top: 0;
+    left: 0;
+    border-bottom-width: 5px;
+}
+.window > .resizer > div:nth-child(6) > div::before {
+    bottom: -5px;
+    left: -3px;
+}
+.window > .resizer > div:nth-child(6) > div::after {
+    bottom: -5px;
+    right: -3px;
+}
+
+
+.window > .resizer > div:nth-child(7) {
+    top: 100%;
+    left: 0%;
+}
+
+.window > .resizer > div:nth-child(7) > div{
+    height: 40px;
+    width: 40px;
+    top: 0;
+    right: 0;
+    border-left-width: 5px;
+    border-bottom-width: 5px;
+    border-bottom-left-radius: 20px;
+}
+.window > .resizer > div:nth-child(7) > div::before {
+    left: -5px;
+    top: -3px;
+}
+.window > .resizer > div:nth-child(7) > div::after {
+    right: -3px;
+    bottom: -5px;
+}
+
+
+.window > .resizer > div:nth-child(8) {
+    top: 50%;
+    left: 0%;
+}
+.window > .resizer > div:nth-child(8) > div{
+    height: 100%;
+    width: 40px;
+    top: 0;
+    right: 0;
+    border-left-width: 5px;
+}
+.window > .resizer > div:nth-child(8) > div::before {
+    left: -5px;
+    top: -3px;
+}
+.window > .resizer > div:nth-child(8) > div::after {
+    left: -5px;
+    bottom: -3px;
+}
