@@ -1,13 +1,26 @@
 import React, {useEffect, useRef, useState} from "react";
 import Console from "./console";
 import Share from "./share";
+import browserIcon from "../icons/browser.svg";
+import {client} from "../client";
+import {Workspace} from "../workspace";
+
+Workspace.addApp({
+    title: "Browser",
+    icon: browserIcon,
+    order: 10,
+    element: () => <Browser />
+});
 
 declare global {
     interface Window {
         hasCredentialless: boolean
     }
 }
-export default function (props: {id: string, port?: string, path?: string}) {
+
+const usePort = await client.get(true).usePort();
+
+export function Browser(props: {port?: string, path?: string}) {
     const [openShare, setOpenShare] = useState(false);
     const openShareRef = useRef<boolean>();
 
@@ -20,8 +33,8 @@ export default function (props: {id: string, port?: string, path?: string}) {
     const shareTooltipRef = useRef<HTMLSpanElement>();
 
     let closeShareTooltip = (e) => {
-        const bb = shareTooltipRef.current.getBoundingClientRect();
-        if(bb.width === 0)
+        const bb = shareTooltipRef.current?.getBoundingClientRect();
+        if(!bb || bb.width === 0)
             window.removeEventListener("click", closeShareTooltip);
 
         if(!openShareRef.current || shareTooltipRef.current.contains(e.target))
@@ -30,7 +43,7 @@ export default function (props: {id: string, port?: string, path?: string}) {
         setOpenShare(false);
     };
 
-    const checkIfInIframe = () =>{
+    const checkIfInIframe = () => {
         if(!openShareRef.current) return;
 
         window.requestAnimationFrame(checkIfInIframe);
@@ -56,24 +69,23 @@ export default function (props: {id: string, port?: string, path?: string}) {
     }, []);
 
     const load = () => {
-        console.log(path)
         let url = new URL(window.location.href);
         url.searchParams.forEach((value, param) =>
             url.searchParams.delete(param));
 
         url.pathname = path;
 
-        const urlSubDomain = new URL(url);
-
         // webcontainer setup
         if(url.host.includes("-8000-")){
-            urlSubDomain.host = urlSubDomain.host.replace(/-8000-/, `-${port}-`);
+            url.host = url.host.replace(/-8000-/, `-${port}-`);
+        }else if(usePort){
+            url.host = url.hostname + ":" + port;
         }else{
-            urlSubDomain.host = port + "." + urlSubDomain.host;
+            url.host = port + "." + url.host;
         }
 
-        iframeRef.current.src = urlSubDomain.toString();
-        eTabRef.current.href = urlSubDomain.toString();
+        iframeRef.current.src = url.toString();
+        eTabRef.current.href = url.toString();
     }
 
     return <div className={"browser"}>
@@ -96,8 +108,13 @@ export default function (props: {id: string, port?: string, path?: string}) {
             </form>
             {window.hasCredentialless && <button onClick={() => consoleRef.current.setState({show: !consoleRef.current.state.show})}>Console</button>}
             <div>
-                <a ref={eTabRef} href={"#"} target={"_blank"} onClick={e => {
+                <a ref={eTabRef} target={"_blank"} onClick={async e => {
                     if(!port) e.preventDefault();
+                    const url = e.currentTarget.getAttribute("href");
+                    if(usePort && await client.get(true).isInNeutralinoRuntime()){
+                        client.post().openBrowserNative(url);
+                        e.preventDefault();
+                    }
                 }}>
                     <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 3}}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
@@ -106,28 +123,29 @@ export default function (props: {id: string, port?: string, path?: string}) {
                         </svg>
                     </button>
                 </a>
-                <span ref={shareTooltipRef} style={{position: "relative"}}>
-                    <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 2}} onClick={() => {
-                        if(!port) return;
-                        setOpenShare(true)
-                    }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
-                             stroke="currentColor" >
-                            <path strokeLinecap="round" strokeLinejoin="round"
-                                  d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15"/>
-                        </svg>
-                    </button>
-                    <div className={"tooltip"} style={{display: openShare ? "block" : "none"}}>
-                        <Share port={port} close={() => setOpenShare(false)} />
-                    </div>
-                </span>
+
+                {/*<span ref={shareTooltipRef} style={{position: "relative"}}>*/}
+                {/*    <button className={"icon-btn " + (!port ? "disabled" : "")} style={{padding: 2}} onClick={() => {*/}
+                {/*        if(!port) return;*/}
+                {/*        setOpenShare(true)*/}
+                {/*    }}>*/}
+                {/*        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"*/}
+                {/*             stroke="currentColor" >*/}
+                {/*            <path strokeLinecap="round" strokeLinejoin="round"*/}
+                {/*                  d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15"/>*/}
+                {/*        </svg>*/}
+                {/*    </button>*/}
+                {/*    <div className={"tooltip"} style={{display: openShare ? "block" : "none"}}>*/}
+                {/*        <Share port={port} close={() => setOpenShare(false)} />*/}
+                {/*    </div>*/}
+                {/*</span>*/}
 
             </div>
             {/*<small>*/}
             {/*    Credentialless <div className={"dot"} style={{backgroundColor: window.hasCredentialless ? "green" : "red"}} />*/}
             {/*</small>*/}
         </div>
-        <iframe ref={iframeRef} id={props.id} />
+        <iframe ref={iframeRef} />
         {window.hasCredentialless && <Console ref={consoleRef} iframeRef={iframeRef} />}
     </div>
 }

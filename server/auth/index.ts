@@ -2,8 +2,7 @@ import {randomUUID} from "crypto";
 import cookie from "cookie";
 import password from "./password";
 import external from "./external";
-import type {ServerResponse} from "http";
-import {IncomingMessage} from "http";
+import type {IncomingMessage, ServerResponse} from "http";
 
 export default class {
     private readonly authenticator = process.env.PASS
@@ -11,8 +10,8 @@ export default class {
         : external;
 
     private readonly accessTokenDuration = 1000 * 60 * 15; // 15 minutes
-    private readonly refreshTokenDuration = 1000 * 60 * 60 * 24 * 7; // 1 week
-    private readonly cookieExpirationDuration = 1000 * 60 * 60 * 24 * 7 * 2 // 2 week
+    private readonly refreshTokenDuration = 1000 * 60 * 60 * 24 * 2; // 2 days
+    private readonly cookieExpirationDuration = 1000 * 60 * 60 * 24 * 7 // 1 week
 
     // RefreshToken => Set<AccessToken>
     private tokenIssued: Map<string, Set<string>> = new Map();

@@ -1,28 +1,95 @@
 import "./sw";
-import {createRoot} from "react-dom/client";
-import React from "react";
-import App from "./app";
-import "winbox/dist/css/winbox.min.css";
-import "winbox/dist/css/themes/modern.min.css";
 import "./index.css";
-import Credentialless from "./credentialless";
-import {inIframe} from "./utils";
+import {createRoot} from "react-dom/client";
+import React, {useEffect} from "react";
 import Cookies from "js-cookie";
+import {Workspace} from "./workspace";
+import logo from "./icons/fullstacked-logo.svg";
 import {client} from "./client";
+import logoutIcon from "./icons/log-out.svg";
+import {Sync} from "./sync";
 
-// Will need a nonce protocol to use this
-// Too unsafe to put session_token in query params
-// if(!inIframe())
-//     await Credentialless();
+(() => {
+    const hasAuth = hasAuthToken();
 
-let rootDiv = document.querySelector("#root") as HTMLDivElement;
-if(!rootDiv){
-    rootDiv = document.createElement("div");
-    rootDiv.setAttribute("id", "root");
-    document.body.append(rootDiv);
+    if(hasAuth){
+        if(hasLogoutFlag()){
+            return logout();
+        }else{
+            addLogoutIcon();
+
+            keepAccessTokenValid();
+            setInterval(keepAccessTokenValid, 1000);
+        }
+    }
+
+    setBackground();
+
+    main();
+})()
+
+function hasAuthToken(){
+    return Cookies.get("fullstackedAccessToken")
 }
 
-createRoot(rootDiv).render(<App />);
+function hasLogoutFlag(){
+    const url = new URL(window.location.href);
+    return !!url.searchParams.get("logout");
+}
+
+async function logout(){
+    if(Sync.isInit){
+        await client.get().sync();
+        const conflicts = await client.get().getSyncConflicts();
+        if(conflicts && Object.keys(conflicts).length)
+            return;
+    }
+
+    await client.get().logout();
+    window.location.href = "/?logout=1";
+}
+
+function LogoutComponent(){
+    useEffect(() => {
+        logout()
+    }, []);
+
+    return <div className={"logout"}>Logging out...</div>
+}
+
+function addLogoutIcon(){
+    Workspace.addApp({
+        title: "Logout",
+        order: 100,
+        icon: logoutIcon,
+        element: () => {
+            return <LogoutComponent />
+        }
+    });
+}
+
+function setBackground(){
+    document.body.style.backgroundImage = `url(${logo})`;
+}
+
+async function main(){
+    let rootDiv = document.querySelector("#root") as HTMLDivElement;
+    if(!rootDiv){
+        rootDiv = document.createElement("div");
+        rootDiv.setAttribute("id", "root");
+        document.body.append(rootDiv);
+    }
+
+    createRoot(rootDiv).render(<Workspace />);
+
+    Sync.init();
+
+    [import("./terminal"),
+    import("./explorer"),
+    import("./browser"),
+    import("./latency"),
+    import("./codeOSS")]
+}
 
 async function keepAccessTokenValid(){
     const accessToken = Cookies.get("fullstackedAccessToken");
@@ -46,7 +113,3 @@ async function keepAccessTokenValid(){
 
     window.location.reload();
 }
-
-
-keepAccessTokenValid();
-setInterval(keepAccessTokenValid, 1000);
