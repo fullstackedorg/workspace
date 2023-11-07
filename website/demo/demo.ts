@@ -19,7 +19,7 @@ const webContainer = await WebContainer.boot();
 
 const installCommand = [
     "i",
-    "fullstacked@alpha"
+    "fullstacked"
 ]
 xterm.write(`\r\nnpm ${installCommand.join(" ")}\r\n`);
 const installProcess = await webContainer.spawn('npm', installCommand);
