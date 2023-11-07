@@ -18,7 +18,7 @@ export class Sync {
         "core"
     ]
     static transferBlockSize = 5242880; // 5 MiB
-    static endpoint = process.env.STORAGE_ENDPOINT || "https://auth2.fullstacked.cloud/storages";
+    static endpoint = process.env.STORAGE_ENDPOINT || "https://auth.fullstacked.cloud/storages";
     static config: {
         authorization?: string,
         directory?: string,
@@ -180,6 +180,14 @@ export class Sync {
 
     static removeLargeFileProgress(key){
         delete Sync.status.largeFiles[key];
+        Sync.sendStatus();
+    }
+
+    static sendError(error: string){
+        if(!Sync.status.errors)
+            Sync.status.errors = [];
+
+        Sync.status.errors.push(error);
         Sync.sendStatus();
     }
 

@@ -57,7 +57,7 @@ export default function Explorer(props: {client: any, action: (item: File) => an
                     files[parentKey || "fileTreeRoot"] = await props.client.get().readDir(parentKey);
                     setFiles({...files});
                 }}>Delete</button>}
-                {syncedKeys && item.isDir && !item.key.startsWith(".") && !syncedKeys.find(key => {
+                {syncedKeys && item.isDir && !syncedKeys.find(key => {
                         const keyParts = key.split("/");
                         const itemKeyParts = item.key.split("/");
                         for (let i = 0; i < keyParts.length; i++){

@@ -38,6 +38,17 @@ await webContainer.fs.writeFile("node_modules/fullstacked/dist/server/html/injec
     while(!window.Workspace){
         await new Promise(res => setTimeout(res, 100));
     }
+    
+    window.Workspace.addApp({
+        icon: "https://files.fullstacked.org/app-icon.png",
+        order: 100,
+        title: "Website",
+        element: (app) => {
+            window.open("https://fullstacked.org")
+            window.Workspace.instance.removeWindow(app);
+        }
+    });
+    
     window.Workspace.addApp({
         icon: "https://files.fullstacked.org/x-logo.svg",
         order:99,
