@@ -1,8 +1,18 @@
 {
   "name": "fullstacked",
   "description": "A Ubiquitous Workspace for Developers",
-  "version": "0.11.0",
+  "version": "0.11.2",
   "author": "cplepage",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstackedorg/workspace.git"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/fullstacked"
+  },
+  "homepage": "https://fullstacked.org",
   "dependencies": {
     "node-pty": "^0.10.1"
   },
