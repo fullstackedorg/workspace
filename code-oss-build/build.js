@@ -17,6 +17,9 @@ await new Promise(resolve => {
     });
 });
 
+if(fs.existsSync("vscode"))
+    fs.rmSync("vscode", {recursive: true});
+
 await decompress("vscode.zip", "vscode")
 
 const versionedDir = fs.readdirSync("vscode").at(0)
@@ -54,7 +57,7 @@ if(codeBlockMatch){
 // comment out setting the page title
 const windowTitleFile = "vscode/src/vs/workbench/browser/parts/titlebar/windowTitle.ts";
 const windowTitle = fs.readFileSync(windowTitleFile).toString();
-fs.writeFileSync(windowTitleFile, windowTitle.replace(/window\.document\.title = /g, `// window.document.title = `))
+fs.writeFileSync(windowTitleFile, windowTitle.replace(/this\.targetWindow\.document\.title = /g, `// this.targetWindow.document.title = `))
 
 execSync(`cd vscode && yarn && yarn gulp vscode-reh-web-${platform}-min`, {stdio: "inherit"});
 
@@ -69,7 +72,6 @@ fs.writeFileSync(`vscode-reh-web-${platform}/package.json`, JSON.stringify({
 }, null, 2));
 
 fs.rmSync("vscode.zip");
-fs.rmSync("vscode", {recursive: true});
 
 if(fs.existsSync("../code-oss"))
     fs.rmSync("../code-oss", {recursive: true});
