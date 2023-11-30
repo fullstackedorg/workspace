@@ -1,33 +1,53 @@
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
-import {fsCloud} from "../explorer/clients/cloud";
-import React, {useEffect, useRef, useState} from "react";
-import {client} from "../client";
+import { fsCloud } from "../explorer/clients/cloud";
+import React, { useEffect, useRef, useState } from "react";
+import { client } from "../client";
+import { AddSyncApp, RenderSyncIndicator } from "./Indicator";
 
-export function PrepareFsRemote({onSuccess}) {
-    const [start, refreshStart] = useAPI(fsCloud.get().start);
+export function PrepareCloudStorage({ onSuccess }) {
+    const [response, retryInit] = useAPI(client.get().initSync);
 
-    if(start === null) return <></>;
+    useEffect(() => {
+        if (response) {
+            RenderSyncIndicator();
 
-    return typeof start === "object"
+            if (typeof response === "boolean") {
+                AddSyncApp();
+            }
+        }
+    }, [response])
+
+    if (!response) return <></>;
+
+    return typeof response === "object"
         ? (() => {
-            switch (start.error){
+            switch (response.error) {
+                case "no_configs":
                 case "directory":
-                    return <Directory didSelectDirectory={refreshStart} />
+                    return <Directory
+                        message={(response as any).reason}
+                        didSelectDirectory={retryInit}
+                    />
                 case "authorization":
-                    return <AuthFlow url={start.url} didAuthenticate={refreshStart} />;
+                    switch (response.type) {
+                        case "password":
+                            return <div>Password Auth</div>;
+                        case "external":
+                            return <AuthFlow url={response.url} didAuthenticate={retryInit} />;
+                    }
                 case "endpoint_selection":
-                    return <EndpointSelection url={start.url} didSelectEndpoint={refreshStart} />;
+                    return <EndpointSelection url={response.url} didSelectEndpoint={retryInit} />;
                 default:
-                    return <div>Uh oh. Unknown response: [{JSON.stringify(start)}]</div>
+                    return <div style={{color: "white"}}>Uh oh. Unknown response: [{JSON.stringify(response)}]</div>
             }
         })()
-        : typeof start === "boolean" && start
+        : typeof response === "boolean" && response
             ? onSuccess()
-            : <div>Uh oh. Unknown response: [{start}]</div>
+            : <div style={{color: "white"}}>Uh oh. Unknown response: [{response}]</div>
 }
 
 let body = {}, win;
-export function AuthFlow({url, didAuthenticate}){
+export function AuthFlow({ url, didAuthenticate }) {
     const [code, setCode] = useState("");
     const [failedOpened, setFailedOpen] = useState(false);
 
@@ -36,7 +56,7 @@ export function AuthFlow({url, didAuthenticate}){
     };
 
     useEffect(() => {
-        const catchArgs = ({data}) => {
+        const catchArgs = ({ data }) => {
             body = {
                 ...body,
                 ...data
@@ -47,7 +67,7 @@ export function AuthFlow({url, didAuthenticate}){
 
         openPopup();
 
-        if(!win) setFailedOpen(true);
+        if (!win) setFailedOpen(true);
 
         return () => {
             win = null;
@@ -75,14 +95,14 @@ export function AuthFlow({url, didAuthenticate}){
             : <>
                 <div>Enter the code or the token to authenticate this device</div>
                 <form onSubmit={submit}>
-                    <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)}/>
+                    <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)} />
                     <button>Submit</button>
                 </form>
             </>}
     </div>
 }
 
-function EndpointSelection({url, didSelectEndpoint}){
+function EndpointSelection({ url, didSelectEndpoint }) {
     const [failedOpen, setFailedOpen] = useState(false);
 
     const openPopup = () => {
@@ -90,8 +110,8 @@ function EndpointSelection({url, didSelectEndpoint}){
     };
 
     useEffect(() => {
-        const catchEndpoint = ({data}) => {
-            if(data.endpoint){
+        const catchEndpoint = ({ data }) => {
+            if (data.endpoint) {
                 fsCloud.post().setEndpoint(data.endpoint).then(() => {
                     win.close();
                     didSelectEndpoint();
@@ -103,7 +123,7 @@ function EndpointSelection({url, didSelectEndpoint}){
 
         openPopup();
 
-        if(!win) setFailedOpen(true);
+        if (!win) setFailedOpen(true);
 
         return () => {
             win = null;
@@ -122,13 +142,13 @@ function EndpointSelection({url, didSelectEndpoint}){
     </div>
 }
 
-function Directory({didSelectDirectory}){
+function Directory({ message, didSelectDirectory }) {
     const inputRef = useRef<HTMLInputElement>();
     const [value, setValue] = useState(null);
 
     useEffect(() => {
-        client.get().homeDir().then(homeDir => {
-            setValue(homeDir + "FullStacked");
+        client.get().homeDir().then(({ dir, sep }) => {
+            setValue(dir + sep + "FullStacked");
             inputRef.current.focus()
         });
     }, [])
@@ -141,19 +161,20 @@ function Directory({didSelectDirectory}){
 
     return <div className={"prepare-fs-remote"}>
         <div>Choose a directory where FullStacked will sync</div>
+        {message && <div>{message}</div>}
         <form onSubmit={submit}>
-            <input ref={inputRef} type={"text"} value={value} onChange={e => setValue(e.currentTarget.value)}  />
+            <input ref={inputRef} type={"text"} value={value} onChange={e => setValue(e.currentTarget.value)} />
             <button>Submit</button>
         </form>
     </div>
 }
 
 
-function centeredPopupFeatures(){
+function centeredPopupFeatures() {
     const w = 500;
     const h = 600;
-    const dualScreenLeft = window.screenLeft !==  undefined ? window.screenLeft : window.screenX;
-    const dualScreenTop = window.screenTop !==  undefined   ? window.screenTop  : window.screenY;
+    const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+    const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
 
     const width = window.outerWidth ? window.outerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
     const height = window.outerHeight ? window.outerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;

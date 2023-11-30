@@ -195,6 +195,7 @@ export default class CommandPalette extends Component<{workspace: Workspace}> {
                         <div className={"subtitle"}>Opened</div>
                         <div className={"apps"}>
                             {activeApps.map(app => <div
+                                key={app.id}
                                 className={app.id === this.state.focus ? "focus" : ""}
                                 onClick={() => {
                                     this.setState({
@@ -212,6 +213,7 @@ export default class CommandPalette extends Component<{workspace: Workspace}> {
                     {!!activeApps.length && <div className={"subtitle"}>All</div>}
                     <div className="apps">
                         {filteredApps.map((app, i) => <div
+                            key={"app-" + i}
                             onClick={() => {
                                 this.setState({
                                     show: false,

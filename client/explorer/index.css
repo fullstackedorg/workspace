@@ -120,7 +120,7 @@
     height: 100%;
     padding: 20px 5px;
 }
-.prepare-fs-remote > div:first-child {
+.prepare-fs-remote > div {
     margin-bottom: 20px;
 }
 .prepare-fs-remote input {

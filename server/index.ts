@@ -14,22 +14,43 @@ import {initInternalRPC} from "./internal";
 import open from "open";
 import {homedir, platform} from "os";
 import fs from "fs";
-import {Sync} from "./sync";
+import {RemoteStorageResponseType, Sync} from "./sync";
 import {fsCloud} from "./sync/fs-cloud";
 import {fsLocal} from "./sync/fs-local";
-import ignore from "ignore";
 import path from "path";
+import { normalizePath } from './sync/utils';
 
 const server = new Server();
 
-if(process.env.NODE_ENV !== 'development' // we're production
-    && !process.env.NEUTRALINO // we're not running in neutralino
-    && !process.env.NPX_START) // it's not a NPX start
-    server.staticFilesCacheControl = "max-age=900";
+let auth: Auth;
 
-if(process.env.FULLSTACKED_PORT)
-    server.port = parseInt(process.env.FULLSTACKED_PORT);
+// when not in watch mode
+// watch mode is when developping the workspace
+const WATCH_MODE = process.argv.includes("watch");
+if(!WATCH_MODE) {
+    // and production mode
+    if(process.env.FULLSTACKED_ENV === "production"){
+        // remove request logger
+        server.logger = null;
 
+        // cache static file when not started from the CLI
+        if(!process.env.NPX_START)
+            server.staticFilesCacheControl = "max-age=900";
+    }
+
+    // check for Auth to add
+    if(process.env.PASS || process.env.AUTH_URL)
+        auth = initAuth(server);
+
+    // set the port defined by main process
+    if(process.env.FULLSTACKED_PORT)
+        server.port = parseInt(process.env.FULLSTACKED_PORT);
+
+    // init the subdomain proxy listeners
+    initPortProxy(server);
+}
+
+// HTML Head stuff
 server.pages["/"].addInHead(`
 <link rel="icon" type="image/png" href="/pwa/app-icons/favicon.png">
 <link rel="manifest" href="/pwa/manifest.json" crossorigin="use-credentials">
@@ -42,6 +63,7 @@ server.pages["/"].addInHead(`<link rel="apple-touch-startup-image" href="/pwa/ap
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-capable" content="yes">`);
 server.pages["/"].addInHead(`<meta name="apple-mobile-web-app-status-bar-style" content="#2c2f33">`);
 
+// try to load the html injection
 const injectionFileURL = new URL(import.meta.url);
 const pathComponents = injectionFileURL.pathname.split("/");
 pathComponents.splice(-1, 1, "html", "injection.html");
@@ -50,6 +72,7 @@ if(fs.existsSync(injectionFileURL)){
     server.pages["/"].addInBody(fs.readFileSync(injectionFileURL).toString());
 }
 
+// respond dumb service-worker to enable PWA install
 server.addListener({
     prefix: "global",
     handler(req, res) {
@@ -59,72 +82,36 @@ server.addListener({
     }
 }, true);
 
-const WATCH_MODE = process.argv.includes("watch");
-
-if(process.env.FULLSTACKED_ENV === "production" && !WATCH_MODE)
-    server.logger = null;
-
-let auth: Auth;
-if((process.env.PASS || process.env.AUTH_URL) && !WATCH_MODE)
-    auth = initAuth(server);
-
-
-if(!WATCH_MODE)
-    initPortProxy(server);
-
 const terminal = new Terminal();
 
+// ATM, only useful for GitHub device flow
+// usually host machine will have something for this already
 if(process.env.DOCKER_RUNTIME) {
     initInternalRPC(terminal);
 }
 
-// auto shutdown
-if(process.env.AUTO_SHUTDOWN){
-    const shutdownDelay = parseInt(process.env.AUTO_SHUTDOWN) * 1000;
-    let lastActivity = Date.now();
-    setInterval(() => {
-        if(Date.now() - lastActivity > shutdownDelay)
-            process.exit();
-    }, 1000);
-
-    server.addListener({
-        prefix: "global",
-        handler(): any {
-            lastActivity = Date.now();
-        }
-    });
-
-    terminal.onDataListeners.add(() => lastActivity = Date.now());
-}
-
+// start it up!
 server.start();
 console.log(`FullStacked running at http://localhost:${server.port}`);
-if(process.env.NPX_START){
+
+// open browser directly from CLI start
+if(process.env.NPX_START && !WATCH_MODE){
     open(`http://localhost:${server.port}`);
 }
 
+// only useful for `fsc watch`
 export default server.serverHTTP;
+
 
 export const API = {
     ping(){
         return Date.now();
     },
     async portCodeOSS(){
-        if(!process.env.CODE_OSS_PORT)
-            return null;
-
-        try{
-           await fetch(`http://0.0.0.0:${process.env.CODE_OSS_PORT}`);
-        }catch (e){
-            return null;
-        }
-        return process.env.CODE_OSS_PORT;
-    },
-    isInNeutralinoRuntime(){
-        return process.env.NEUTRALINO === "1";
+        return !!process.env.CODE_OSS_PORT;
     },
     usePort(){
-        // if forced, or is not in docker
+        // check if forced port, or is not in docker
         return process.env.FORCE_PORT_USAGE === "1" || process.env.DOCKER_RUNTIME !== "1";
     },
     async logout(this: {req: IncomingMessage, res: ServerResponse}){
@@ -159,16 +146,13 @@ export const API = {
         }
     },
     homeDir(){
-        return homedir() + path.sep
+        return {
+            dir: homedir(),
+            sep: path.sep
+        }
     },
     currentDir(){
-        let path = Sync.config?.directory || process.cwd();
-
-        //windows
-        if(platform() === "win32")
-            return path.split(":").pop().replace(/\\/g, "/");
-
-        return path;
+        return normalizePath(Sync.config?.directory || process.cwd());
     },
     share(port: string, password: string){
         const share = new Share();
@@ -196,6 +180,62 @@ export const API = {
     openBrowserNative(url: string){
         open(url);
     },
+    async initSync(): Promise<RemoteStorageResponseType>{
+        // init status only id null/undefined
+        if(!Sync.status)
+            Sync.status = {};
+        Sync.sendStatus(false);
+
+        // try to load the configs
+        let response = await Sync.loadConfigs();
+        if(response){
+
+            // dont force a user without configs to init
+            if(typeof response === "object" && response.error === "no_configs"){
+                Sync.status = null;
+                Sync.sendStatus(false);
+            }
+
+            return response;
+        }
+
+        // make sure local directory is fine
+        response = Sync.directoryCheck();
+        if(response)
+            return response;
+
+        // try to reach the storage endpoint
+        try {
+            const helloResponse = await fetch(`${Sync.endpoint}/hello`, {
+                method: "POST"
+            });
+            response = await helloResponse.text();
+        } catch(e) {
+            return {
+                error: "storage_endpoint_unreachable"
+            }
+        }
+
+        if(response)
+            return JSON.parse(response);
+
+        // pull all saved keys
+        if(Sync.config?.keys?.length){
+            const copiedCookie = {
+                headers: {
+                    cookie: this.req.headers.cookie
+                }
+            }
+
+            Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind({req: copiedCookie})(key)))
+                .then(startSyncing);
+        }
+        else {
+            startSyncing()
+        }
+
+        return true;
+    },
     getSyncedKeys(): string[] {
         return Sync.config?.keys;
     },
@@ -205,64 +245,33 @@ export const API = {
     getSyncConflicts(){
         return Sync.status?.conflicts;
     },
-    async initSync(this: {req: IncomingMessage}){
-        // always start when using cloud configs
-        if(process.env.USE_CLOUD_CONFIG){
-            await fsCloud.start.bind(this)();
-        }
-
-        // init only once
-        if(Sync.status) return true;
-        Sync.status = {};
+    dismissSyncError(errorIndex: number){
+        Sync.status.errors.splice(errorIndex, 1);
         Sync.sendStatus();
-
-        // try to load beforehand
-        await Sync.loadLocalConfigs();
-
-        // try to start fs-cloud
-        if(!process.env.USE_CLOUD_CONFIG){
-            const start = await fsCloud.start.bind(this)();
-            if(!start || (typeof start === "object" && start.error)) {
-                Sync.status = null;
-                Sync.sendStatus();
-                return start;
-            }
-        }
-
-
-        if(Sync.config?.keys) {
-            Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind(this)(key)))
-                .then(startSyncing);
-        }else {
-            if(!Sync.config)
-                Sync.config = {}
-
-            if(!Sync.config.keys)
-                Sync.config.keys = [];
-
-            startSyncing();
-        }
-
-        Sync.sendStatus();
-        return true;
     },
     sync(){
         sync(this.req);
     }
 }
 
+// register main API
 server.addListener(createListener(API));
 
+// register local fs methods
 server.addListener({
     prefix: "/fs-local",
     handler: createHandler(fsLocal)
 });
 
+// register remote fs methods
 server.addListener({
     prefix: "/fs-cloud",
     handler: createHandler(fsCloud)
 });
 
+// Port sharing
+// currently downed
+// will come back at it soon
 const shareWSS = new WebSocketServer({noServer: true});
 const activeShare = new Set<Share>();
 shareWSS.on('connection', (ws, req) => {
@@ -304,38 +313,38 @@ shareWSS.on('connection', (ws, req) => {
     share.run();
 });
 
-const proxy = httpProxy.createProxy();
+const subdomainPortProxy = httpProxy.createProxy();
 
-proxy.on('proxyRes', function (proxyRes, req, res) {
+subdomainPortProxy.on('proxyRes', function (proxyRes, req, res) {
+    // remove those headers that block iframe display
     delete proxyRes.headers["content-security-policy"];
     delete proxyRes.headers["x-frame-options"];
 });
 
+// proxy websockets
 server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => {
+    // auth
     if(auth && !auth.isRequestAuthenticated(req)){
         socket.end();
         return;
     }
 
+    // a url will look like : https://8080.fullstacked.cloud
+    // grab the first part [8080]
+    // and reverse proxy there
     if(!WATCH_MODE) {
-        const cookies = cookie.parse(req.headers.cookie ?? "");
-
-        if(cookies.port){
-            return new Promise(resolve => {
-                proxy.ws(req, socket, head, {target: `http://0.0.0.0:${cookies.port}`}, resolve);
-            })
-        }
-
         const domainParts = req.headers.host.split(".");
         const firstDomainPart = domainParts.shift();
         const maybePort = parseInt(firstDomainPart);
-        if(maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535){
+        // only allow from 3000 to max possible port (8-bytes) (65535)
+        if(maybePort.toString() === firstDomainPart && maybePort >= 3000 && maybePort <= 65535){
             return new Promise(resolve => {
-                proxy.ws(req, socket, head, {target: `http://0.0.0.0:${firstDomainPart}`}, resolve);
+                subdomainPortProxy.ws(req, socket, head, {target: `http://0.0.0.0:${firstDomainPart}`}, resolve);
             });
         }
     }
 
+    // check for other websocket servers
     if(req.url.startsWith("/fullstacked-terminal")){
         terminal.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
             terminal.webSocketServer.emit('connection', ws, req);
@@ -375,46 +384,19 @@ function initAuth(server: Server){
     return auth;
 }
 
-
+// a url will look like : https://8080.fullstacked.cloud
+// grab the first part [8080]
+// and reverse proxy there
 function initPortProxy(server: Server) {
     server.addListener({
         prefix: "global",
         handler(req, res) {
-            const queryString = fastQueryString.parse(req.url.split("?").pop());
-            const cookies = cookie.parse(req.headers.cookie ?? "");
-            if (queryString.test === "credentialless") {
-                res.end(`<script>window.parent.postMessage({credentialless: ${cookies.test !== "credentialless"}}); </script>`)
-                return;
-            }
-
-            if (queryString.port) {
-                res.setHeader("Set-Cookie", cookie.serialize("port", queryString.port));
-                res.end(`<script>
-                    const url = new URL(window.location.href); 
-                    url.searchParams.delete("port"); 
-                    window.location.href = url.toString();
-                </script>`);
-                return;
-            }
-
-            if (cookies.port) {
-                return new Promise<void>(resolve => {
-                    proxy.web(req, res, {target: `http://0.0.0.0:${cookies.port}`}, () => {
-                        if (!res.headersSent) {
-                            res.setHeader("Set-Cookie", cookie.serialize("port", cookies.port, {expires: new Date(0)}));
-                            res.end(`Port ${cookies.port} is down.`);
-                        }
-                        resolve();
-                    });
-                })
-            }
-
             const domainParts = req.headers.host.split(".");
             const firstDomainPart = domainParts.shift();
             const maybePort = parseInt(firstDomainPart);
-            if (maybePort.toString() === firstDomainPart && maybePort > 2999 && maybePort < 65535) {
+            if (maybePort.toString() === firstDomainPart && maybePort >= 3000 && maybePort <= 65535) {
                 return new Promise<void>(resolve => {
-                    proxy.web(req, res, {target: `http://0.0.0.0:${firstDomainPart}`}, () => {
+                    subdomainPortProxy.web(req, res, {target: `http://0.0.0.0:${firstDomainPart}`}, () => {
                         if (!res.headersSent) {
                             res.end(`Port ${firstDomainPart} is down.`);
                         }
@@ -426,8 +408,14 @@ function initPortProxy(server: Server) {
     });
 }
 
-
+let addedSyncingListener = false;
 function startSyncing(){
+    // really add only once!
+    if(addedSyncingListener) 
+        return;
+    addedSyncingListener = true;
+
+
     server.addListener({
         prefix: "global",
         handler(req, res): any {
@@ -453,10 +441,16 @@ async function sync(req){
         return;
     }
 
-    Promise.all(Sync.config?.keys.map(key => fsLocal.sync.bind({req: copiedCookie})(key)))
-        .then(Sync.sendStatus);
+    Sync.config?.keys.map(key => fsLocal.sync.bind({req: copiedCookie})(key))
 }
 
+// reverse proxy code OSS
+//
+// I used to simply display it in an iframe and it was working great!
+// But on iPad Pro, scrolling in iframes is very shitty,
+// so scrolling in the code editor wasnt working -.-
+// Managed to sort of hack a way to lazy load Code OSS on premise within the main window
+// by reverse proxying and merging it's html response to main app HTML
 const proxyCodeOSS = httpProxy.createProxy({
     target: `http://0.0.0.0:${process.env.CODE_OSS_PORT}`
 })
@@ -471,5 +465,5 @@ server.addListener({
     }
 });
 
-// throws on windows
+// throws on windows...
 proxyCodeOSS.removeAllListeners("error");
