@@ -2,6 +2,11 @@ import React, {useEffect, useState} from "react";
 import {SyncStatus} from "./status";
 import {createRoot} from "react-dom/client";
 import prettyBytes from "pretty-bytes";
+import { Workspace } from "../workspace";
+import syncIcon from "../icons/sync.svg";
+import { client } from "../client";
+import { fsCloud } from "../explorer/clients/cloud";
+import { compareAndResolveKey, hasUnresolvedConflict, resolveAllKey } from "./conflicts";
 
 export function RenderSyncIndicator(){
     // render only once
@@ -17,19 +22,22 @@ export function RenderSyncIndicator(){
     }} />);
 }
 
-function initWS(cb) {
-    const wsURL = "ws" +
-        (window.location.protocol === "https:" ? "s" : "") +
-        "://" + window.location.host + "/fullstacked-sync";
+export class SyncWS {
+    static subscribers = new Set<(status: SyncStatus) => void>();
+    static init() {
+        const wsURL = "ws" +
+            (window.location.protocol === "https:" ? "s" : "") +
+            "://" + window.location.host + "/fullstacked-sync";
 
-    const ws = new WebSocket(wsURL);
+        const ws = new WebSocket(wsURL);
 
-    ws.onmessage = cb;
-    ws.onclose = () => {
-        if(!document.querySelector("#sync")) return;
+        ws.onmessage = message => this.subscribers.forEach(callback => callback(JSON.parse(message.data)));
+        ws.onclose = () => {
+            if(!document.querySelector("#sync")) return;
 
-        setTimeout(() => initWS(cb), 2000);
-    };
+            setTimeout(() => SyncWS.init(), 2000);
+        };
+    }
 }
 
 function Indicator(props: {remove(): void}){
@@ -37,9 +45,16 @@ function Indicator(props: {remove(): void}){
     const [lastSyncInterval, setLastSyncInterval] = useState("");
 
     useEffect(() => {
-        let status: SyncStatus;
-        initWS(message => {
-            status = JSON.parse(message.data);
+        let weakStatus: SyncStatus;
+
+        const updateLastSyncInterval = () => {
+            if(!weakStatus?.lastSync) return;
+            setLastSyncInterval(msDurationToHumanReadable(Date.now() - weakStatus.lastSync));
+        }
+
+        SyncWS.init();
+        const cb = (status: SyncStatus) => {
+            weakStatus = status;
 
             if(status === null){
                 props.remove();
@@ -48,16 +63,13 @@ function Indicator(props: {remove(): void}){
 
             setStatus(status);
             updateLastSyncInterval();
-        })
-
-        const updateLastSyncInterval = () => {
-            if(!status?.lastSync) return;
-            setLastSyncInterval(msDurationToHumanReadable(Date.now() - status.lastSync));
         }
+        SyncWS.subscribers.add(cb);
 
         const interval = setInterval(updateLastSyncInterval, 10000);
 
         return () => {
+            SyncWS.subscribers.delete(cb);
             clearInterval(interval);
         }
     }, []);
@@ -66,21 +78,17 @@ function Indicator(props: {remove(): void}){
         return <></>
 
     const isSynced =
-        (!status.syncing || Object.keys(status.syncing).length === 0)
+        Object.keys(status).length !== 0
+        && (!status.syncing || Object.keys(status.syncing).length === 0)
         && (!status.conflicts || Object.keys(status.conflicts).length === 0)
-        && (!status.largeFiles || Object.keys(status.largeFiles).length === 0)
         && (!status.errors || status.errors.length === 0);
-
-    const keyHasUnresolvedConflict = (key) => status.conflicts
-        && Object.keys(status.conflicts[key]).length
-        && Object.keys(status.conflicts[key]).find(subKey => !status.conflicts[key][subKey])
 
     const onTop = !isSynced || Date.now() - status.lastSync < 10000;
 
     return <div id={"sync-indicator"} className={onTop ? "on-top" : ""}>
-        {isSynced && (!lastSyncInterval
+        {Object.keys(status).length === 0 
             ? <div>Initializing...</div>
-            : <div>Synced {lastSyncInterval} ago</div>)}
+            : (isSynced && <div>Synced {lastSyncInterval} ago</div>)}
 
         {status.syncing && !!(Object.keys(status.syncing).length)
             && <div>
@@ -88,40 +96,54 @@ function Indicator(props: {remove(): void}){
                 <div>
                     {Object.keys(status.syncing).map(key => <div>
                         {key}&nbsp;
-                        {status.syncing[key] === "pull" ? <span className={"green"}>↙</span> : <span className={"red"}>↗</span>}
+                        {status.syncing[key].direction === "pull" ? <span className={"green"}>↙</span> : <span className={"red"}>↗</span>}
                     </div>)}
                 </div>
+                <button className="small" onClick={() => {
+                    Workspace.instance.addWindow(Workspace.instance.apps.find(({title}) => title === "Sync"));
+                }}>progress</button>
             </div>}
 
         {status.conflicts && !!(Object.keys(status.conflicts).length)
-            && Object.keys(status.conflicts).find(key => keyHasUnresolvedConflict(key))
             && <div>
                 Conflicts
                 <div>
                     {Object.keys(status.conflicts).map(key => {
-                        if(!keyHasUnresolvedConflict(key))
-                            return <></>;
-
                         return <div>
-                            {key}
+                            <div>{hasUnresolvedConflict(status.conflicts[key])
+                                ? <button 
+                                    onClick={() => resolveAllKey(key, status.conflicts[key])} 
+                                    className="small danger"
+                                >
+                                    Resolve All
+                                </button>
+                                : <button 
+                                    onClick={() => fsCloud.post().sync(key)} 
+                                    className="small"
+                                >
+                                    Pull
+                                </button>} <b>{key}</b>
+                            </div>
                             <div>
                                 {Object.keys(status.conflicts[key])
-                                    .filter(subKey => !status.conflicts[key][subKey])
-                                    .map(subKey => <div>{subKey}</div>)}
+                                    .map(subKey => <div>
+                                        {!status.conflicts[key][subKey] 
+                                            ? <button 
+                                                onClick={() => compareAndResolveKey(key, subKey)} 
+                                                className="small danger"
+                                            >
+                                                Resolve
+                                            </button>
+                                            : <button 
+                                                onClick={() => compareAndResolveKey(key, subKey)} 
+                                                className="small"
+                                            >
+                                                Compare
+                                            </button> } {subKey}
+                                    </div>)}
                             </div>
                         </div>
                     })}
-                </div>
-            </div>}
-
-        {status.largeFiles && !!(Object.keys(status.largeFiles).length)
-            && <div>
-                Large Files
-                <div>
-                    {Object.keys(status.largeFiles).map(key => <div>
-                        {key} [{prettyBytes(status.largeFiles[key].total)}]&nbsp;
-                        {roundTwoDigits(status.largeFiles[key].progress / status.largeFiles[key].total * 100)}%
-                    </div>)}
                 </div>
             </div>}
 
@@ -129,7 +151,9 @@ function Indicator(props: {remove(): void}){
             && <div>
                 Errors
                 <div>
-                    {status.errors.map(error => <div>{error}</div>)}
+                    {status.errors.map((error, i) => <div>
+                        {error} <button onClick={() => client.delete().dismissSyncError(i)} className="small">dismiss</button> 
+                    </div>)}
                 </div>
             </div>}
     </div>
@@ -150,7 +174,58 @@ function msDurationToHumanReadable(ms: number){
         ((seconds || (!minutes && !hours)) ? `${seconds}s` : "");
 }
 
+export function AddSyncApp(){
+    Workspace.addApp({
+        title: "Sync",
+        icon: syncIcon,
+        order: 7,
+        element: (app) => {
+            return <SyncProgressView />
+        }
+    });
+}
 
-function roundTwoDigits(num: number) {
-    return Math.floor(num * 100) / 100;
+function SyncProgressView() {
+    const [status, setStatus] = useState<SyncStatus>();
+
+    useEffect(() => {
+        SyncWS.subscribers.add(setStatus);
+        client.post().sync();
+        return () => {SyncWS.subscribers.delete(setStatus)}
+    }, [])
+
+    if(!status?.syncing) return <></>
+
+    const syncingKeys = Object.keys(status.syncing);
+
+    return <div className="sync-progress-view">
+
+        {syncingKeys.length
+            ? syncingKeys.map(key => {
+                const syncingKey = status.syncing[key];
+                const items = status.syncing[key].progress?.items;
+                const streams = status.syncing[key].progress?.streams;
+    
+                return <div>
+                    <div>
+                        <b>{key}</b> 
+                        {syncingKey.direction === "pull" 
+                            ? <span className={"green"}>↙</span> 
+                            : <span className={"red"}>↗</span>}
+                    </div>
+                    
+                    {items && <div>{items.completed}/{items.total}</div>}
+                    
+                    {streams && Object.keys(streams).map(stream => {
+                        const progress = streams[stream].transfered / streams[stream].total * 100;
+                        if(!progress || isNaN(progress))
+                            return <></>;
+    
+                        return <div>{progress.toFixed(2)} ({prettyBytes(streams[stream].total)}) {streams[stream].itemPath}</div>
+                    })}
+                </div>
+            })
+            : <div>Syncing Done</div>
+        }
+    </div>
 }
