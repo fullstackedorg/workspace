@@ -36,7 +36,7 @@ const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
         ...process.env,
         FULLSTACKED_PORT: portFullStacked,
         CODE_OSS_PORT: portCodeOSS,
-        FULLSTACKED_ENV: "production",
+        FULLSTACKED_ENV: process.env.FULLSTACKED_ENV || "production",
         RUNTIME_PATH: process.env.PATH,
         NPX_START: lastArg.endsWith("fullstacked") || lastArg.endsWith("fullstacked\\index.js")
             ? "1"

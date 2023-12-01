@@ -44,7 +44,7 @@
     "@fullstacked/build": "^0.10.10",
     "@fullstacked/cli": "^0.10.14",
     "@fullstacked/share": "^0.10.9",
-    "@fullstacked/sync": "^0.10.0-alpha.4",
+    "@fullstacked/sync": "^0.10.0-alpha.8",
     "@fullstacked/watch": "^0.10.23",
     "@fullstacked/webapp": "^0.10.15",
     "@types/cookie": "^0.5.1",

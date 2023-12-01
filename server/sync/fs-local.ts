@@ -3,7 +3,7 @@ import {fsInit} from "./fs-init";
 import {homedir} from "os";
 import {Sync} from "./index";
 import {resolve} from "path";
-import { RsyncHTTP2Client } from "@fullstacked/sync/http2/client";
+import { SyncClient } from "./client";
 
 const getBaseDir = () => Sync.config?.directory || homedir();
 
@@ -30,10 +30,14 @@ export const fsLocal = {
             return;
         }
 
-        const syncClient = new RsyncHTTP2Client(Sync.endpoint);
-        syncClient.baseDir = getBaseDir();
+        // just to be safe, reset those values
+        SyncClient.rsync.baseDir = getBaseDir();
+        if (Sync.config.authorization)
+            SyncClient.rsync.headers.authorization = Sync.config.authorization;
+
+            
         Sync.addSyncingKey(key, "push");
-        const response = await syncClient.push(key, {
+        const response = await SyncClient.rsync.push(key, {
             filters: [".gitignore"],
             progress(info){
                 Sync.updateSyncingKeyProgress(key, info)
