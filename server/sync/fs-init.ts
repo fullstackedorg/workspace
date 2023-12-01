@@ -2,7 +2,6 @@ import fs from "fs";
 import {join} from "path";
 import {normalizePath} from "./utils";
 import {Sync} from "./index";
-import { fsCloudClient } from "./fs-cloud-client";
 
 const initClient: (client: any) => typeof fs.promises = client => client instanceof Function ? client() : client
 
@@ -11,8 +10,12 @@ export function fsInit(client, getBaseDir: () => string) {
 
     return {
         async readDir(key: string){
-            console.log(fsCloudClient.origin)
-            let readDir = await initClient(client).readdir(filePath(key), {withFileTypes: true});
+            const readDir = await initClient(client).readdir(filePath(key), {withFileTypes: true});
+
+            if(readDir instanceof Error){
+                throw readDir;
+            }
+
             return readDir.map(item => ({
                     name: item.name,
                     key: (key ? key + "/" : "") + item.name,

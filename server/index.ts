@@ -1,24 +1,25 @@
 import Server from '@fullstacked/webapp/server';
-import createListener, {createHandler} from "@fullstacked/webapp/rpc/createListener";
-import {WebSocketServer} from "ws";
-import httpProxy, {createProxy} from "http-proxy";
+import createListener, { createHandler } from "@fullstacked/webapp/rpc/createListener";
+import { WebSocketServer } from "ws";
+import httpProxy from "http-proxy";
 import * as fastQueryString from "fast-querystring";
 import cookie from "cookie";
 import Auth from "./auth";
-import {IncomingMessage, ServerResponse} from "http";
-import {Socket} from "net";
+import { IncomingMessage, ServerResponse } from "http";
+import { Socket } from "net";
 import Share from "@fullstacked/share";
 import randStr from "@fullstacked/cli/utils/randStr"
-import {Terminal} from "./terminal";
-import {initInternalRPC} from "./internal";
+import { Terminal } from "./terminal";
+import { initInternalRPC } from "./internal";
 import open from "open";
-import {homedir, platform} from "os";
+import { homedir } from "os";
 import fs from "fs";
-import {RemoteStorageResponseType, Sync} from "./sync";
-import {fsCloud} from "./sync/fs-cloud";
-import {fsLocal} from "./sync/fs-local";
+import { RemoteStorageResponseType, Sync } from "./sync";
+import { fsCloud } from "./sync/fs-cloud";
+import { fsLocal } from "./sync/fs-local";
 import path from "path";
 import { normalizePath } from './sync/utils';
+import { SyncClient } from './sync/client';
 
 const server = new Server();
 
@@ -27,23 +28,23 @@ let auth: Auth;
 // when not in watch mode
 // watch mode is when developping the workspace
 const WATCH_MODE = process.argv.includes("watch");
-if(!WATCH_MODE) {
+if (!WATCH_MODE) {
     // and production mode
-    if(process.env.FULLSTACKED_ENV === "production"){
+    if (process.env.FULLSTACKED_ENV === "production") {
         // remove request logger
         server.logger = null;
 
         // cache static file when not started from the CLI
-        if(!process.env.NPX_START)
+        if (!process.env.NPX_START)
             server.staticFilesCacheControl = "max-age=900";
     }
 
     // check for Auth to add
-    if(process.env.PASS || process.env.AUTH_URL)
+    if (process.env.PASS || process.env.AUTH_URL)
         auth = initAuth(server);
 
     // set the port defined by main process
-    if(process.env.FULLSTACKED_PORT)
+    if (process.env.FULLSTACKED_PORT)
         server.port = parseInt(process.env.FULLSTACKED_PORT);
 
     // init the subdomain proxy listeners
@@ -68,7 +69,7 @@ const injectionFileURL = new URL(import.meta.url);
 const pathComponents = injectionFileURL.pathname.split("/");
 pathComponents.splice(-1, 1, "html", "injection.html");
 injectionFileURL.pathname = pathComponents.join("/");
-if(fs.existsSync(injectionFileURL)){
+if (fs.existsSync(injectionFileURL)) {
     server.pages["/"].addInBody(fs.readFileSync(injectionFileURL).toString());
 }
 
@@ -76,7 +77,7 @@ if(fs.existsSync(injectionFileURL)){
 server.addListener({
     prefix: "global",
     handler(req, res) {
-        if(req.url !== "/service-worker.js") return;
+        if (req.url !== "/service-worker.js") return;
         res.setHeader("Content-Type", "application/javascript");
         res.end(`self.addEventListener('fetch', (event) => {});`);
     }
@@ -86,7 +87,7 @@ const terminal = new Terminal();
 
 // ATM, only useful for GitHub device flow
 // usually host machine will have something for this already
-if(process.env.DOCKER_RUNTIME) {
+if (process.env.DOCKER_RUNTIME) {
     initInternalRPC(terminal);
 }
 
@@ -95,7 +96,7 @@ server.start();
 console.log(`FullStacked running at http://localhost:${server.port}`);
 
 // open browser directly from CLI start
-if(process.env.NPX_START && !WATCH_MODE){
+if (!process.env.DOCKER_RUNTIME) {
     open(`http://localhost:${server.port}`);
 }
 
@@ -104,20 +105,20 @@ export default server.serverHTTP;
 
 
 export const API = {
-    ping(){
+    ping() {
         return Date.now();
     },
-    async portCodeOSS(){
+    async portCodeOSS() {
         return !!process.env.CODE_OSS_PORT;
     },
-    usePort(){
+    usePort() {
         // check if forced port, or is not in docker
         return process.env.FORCE_PORT_USAGE === "1" || process.env.DOCKER_RUNTIME !== "1";
     },
-    async logout(this: {req: IncomingMessage, res: ServerResponse}){
+    async logout(this: { req: IncomingMessage, res: ServerResponse }) {
         const cookies = cookie.parse(this.req.headers.cookie ?? "");
 
-        if(auth){
+        if (auth) {
             auth.invalidateRefreshToken(cookies.fullstackedRefreshToken);
         }
 
@@ -137,7 +138,7 @@ export const API = {
             })
         ]);
 
-        if(process.env.REVOKE_URL) {
+        if (process.env.REVOKE_URL) {
             return fetch(process.env.REVOKE_URL, {
                 headers: {
                     cookie: this.req.headers.cookie
@@ -145,16 +146,16 @@ export const API = {
             });
         }
     },
-    homeDir(){
+    homeDir() {
         return {
             dir: homedir(),
             sep: path.sep
         }
     },
-    currentDir(){
+    currentDir() {
         return normalizePath(Sync.config?.directory || process.cwd());
     },
-    share(port: string, password: string){
+    share(port: string, password: string) {
         const share = new Share();
         share.config = {
             ...share.config,
@@ -164,34 +165,38 @@ export const API = {
         }
         activeShare.add(share);
     },
-    stopShare(port: string){
+    stopShare(port: string) {
         const share = Array.from(activeShare).find(share => share.config.port.toString() === port);
         share.stop();
         activeShare.delete(share);
     },
-    killTerminalSession(SESSION_ID: string){
+    killTerminalSession(SESSION_ID: string) {
         const session = terminal.sessions.get(SESSION_ID);
-        if(session){
+        if (session) {
             session.pty.kill()
             session.ws.close();
             terminal.sessions.delete(SESSION_ID);
         }
     },
-    openBrowserNative(url: string){
+    openBrowserNative(url: string) {
         open(url);
     },
-    async initSync(): Promise<RemoteStorageResponseType>{
-        // init status only id null/undefined
-        if(!Sync.status)
+    async initSync(this: { req: IncomingMessage }): Promise<RemoteStorageResponseType> {
+        // init status only if null or undefined
+        if (!Sync.status)
             Sync.status = {};
         Sync.sendStatus(false);
 
+        // copy this request cookie so we can maybe put the authorization in there
+        SyncClient.fs.headers.cookie = this.req.headers.cookie;
+        SyncClient.rsync.headers.cookie = this.req.headers.cookie;
+
         // try to load the configs
         let response = await Sync.loadConfigs();
-        if(response){
+        if (response) {
 
-            // dont force a user without configs to init
-            if(typeof response === "object" && response.error === "no_configs"){
+            // dont force a user without configs to init sync
+            if (typeof response === "object" && response.error === "no_configs") {
                 Sync.status = null;
                 Sync.sendStatus(false);
             }
@@ -201,57 +206,61 @@ export const API = {
 
         // make sure local directory is fine
         response = Sync.directoryCheck();
-        if(response)
+        if (response)
             return response;
 
         // try to reach the storage endpoint
-        try {
-            const helloResponse = await fetch(`${Sync.endpoint}/hello`, {
-                method: "POST"
-            });
-            response = await helloResponse.text();
-        } catch(e) {
-            return {
-                error: "storage_endpoint_unreachable"
-            }
-        }
+        response = await Sync.hello();
+        if (response)
+            return response;
 
-        if(response)
-            return JSON.parse(response);
+        if (Sync.config.authorization)
+            Sync.setAuthorization(Sync.config.authorization)
 
         // pull all saved keys
-        if(Sync.config?.keys?.length){
-            const copiedCookie = {
-                headers: {
-                    cookie: this.req.headers.cookie
-                }
-            }
+        if (Sync.config.keys?.length) {
+            
 
-            Promise.all(Sync.config?.keys.map(key => fsCloud.sync.bind({req: copiedCookie})(key)))
+            Promise.all(Sync.config?.keys.map(key => fsCloud.sync(key)))
                 .then(startSyncing);
         }
         else {
+            Sync.config.keys = [];
             startSyncing()
         }
 
+        // sync files at the root of /home
+        // that starts with .git* 
+        // and .profile file
+        if (process.env.USE_CLOUD_CONFIG) {
+            const dotFiles = await SyncClient.fs.post().readdir(Sync.config.directory, {withFileTypes: true});
+            dotFiles.forEach(({name}) => {
+                if ( name !== ".profile" && !name.startsWith(".git") )
+                    return;
+
+                fsCloud.sync(name, false);
+            });
+        }
+
+        // in case there's nothing to pull, send the current status
+        // to switch from initializing... to something else
+        Sync.sendStatus();
         return true;
     },
     getSyncedKeys(): string[] {
         return Sync.config?.keys;
     },
-    getSyncDirectory(){
+    getSyncDirectory() {
         return Sync.config?.directory;
     },
-    getSyncConflicts(){
+    getSyncConflicts() {
         return Sync.status?.conflicts;
     },
-    dismissSyncError(errorIndex: number){
+    dismissSyncError(errorIndex: number) {
         Sync.status.errors.splice(errorIndex, 1);
         Sync.sendStatus();
     },
-    sync(){
-        sync(this.req);
-    }
+    sync
 }
 
 // register main API
@@ -272,12 +281,12 @@ server.addListener({
 // Port sharing
 // currently downed
 // will come back at it soon
-const shareWSS = new WebSocketServer({noServer: true});
+const shareWSS = new WebSocketServer({ noServer: true });
 const activeShare = new Set<Share>();
 shareWSS.on('connection', (ws, req) => {
-    const {port} = fastQueryString.parse(req.url.split("?").pop());
+    const { port } = fastQueryString.parse(req.url.split("?").pop());
     const share = Array.from(activeShare).find(share => share.config.port.toString() === port);
-    if(!share) {
+    if (!share) {
         ws.close();
         return;
     }
@@ -293,19 +302,19 @@ shareWSS.on('connection', (ws, req) => {
     share.listeners.add(shareEvent => {
         switch (shareEvent.type) {
             case "url":
-                ws.send(JSON.stringify({url: shareEvent.url}));
+                ws.send(JSON.stringify({ url: shareEvent.url }));
                 return;
             case "password":
                 const id = randStr();
                 awaitingPasswords.set(id, shareEvent.callback)
-                ws.send(JSON.stringify({id, password: true}));
+                ws.send(JSON.stringify({ id, password: true }));
                 return;
             case "login":
-                ws.send(JSON.stringify({login: shareEvent.url}));
+                ws.send(JSON.stringify({ login: shareEvent.url }));
                 return;
             case "end":
                 activeShare.delete(share);
-                ws.send(JSON.stringify({end: true}));
+                ws.send(JSON.stringify({ end: true }));
                 return;
         }
     });
@@ -324,7 +333,7 @@ subdomainPortProxy.on('proxyRes', function (proxyRes, req, res) {
 // proxy websockets
 server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => {
     // auth
-    if(auth && !auth.isRequestAuthenticated(req)){
+    if (auth && !auth.isRequestAuthenticated(req)) {
         socket.end();
         return;
     }
@@ -332,30 +341,30 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
     // a url will look like : https://8080.fullstacked.cloud
     // grab the first part [8080]
     // and reverse proxy there
-    if(!WATCH_MODE) {
+    if (!WATCH_MODE) {
         const domainParts = req.headers.host.split(".");
         const firstDomainPart = domainParts.shift();
         const maybePort = parseInt(firstDomainPart);
         // only allow from 3000 to max possible port (8-bytes) (65535)
-        if(maybePort.toString() === firstDomainPart && maybePort >= 3000 && maybePort <= 65535){
+        if (maybePort.toString() === firstDomainPart && maybePort >= 3000 && maybePort <= 65535) {
             return new Promise(resolve => {
-                subdomainPortProxy.ws(req, socket, head, {target: `http://0.0.0.0:${firstDomainPart}`}, resolve);
+                subdomainPortProxy.ws(req, socket, head, { target: `http://0.0.0.0:${firstDomainPart}` }, resolve);
             });
         }
     }
 
     // check for other websocket servers
-    if(req.url.startsWith("/fullstacked-terminal")){
+    if (req.url.startsWith("/fullstacked-terminal")) {
         terminal.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
             terminal.webSocketServer.emit('connection', ws, req);
         });
-    }else if(req.url.startsWith("/oss-dev")){
+    } else if (req.url.startsWith("/oss-dev")) {
         proxyCodeOSS.ws(req, socket, head);
-    }else if(req.url.startsWith("/fullstacked-sync")){
+    } else if (req.url.startsWith("/fullstacked-sync")) {
         Sync.webSocketServer.handleUpgrade(req, socket, head, (ws) => {
             Sync.webSocketServer.emit('connection', ws);
         });
-    }else if(req.url.split("?").shift() === "/fullstacked-share"){
+    } else if (req.url.split("?").shift() === "/fullstacked-share") {
         shareWSS.handleUpgrade(req, socket, head, (ws) => {
             shareWSS.emit('connection', ws, req);
         });
@@ -363,7 +372,7 @@ server.serverHTTP.on('upgrade', (req: IncomingMessage, socket: Socket, head) => 
 });
 
 
-function initAuth(server: Server){
+function initAuth(server: Server) {
     const auth = new Auth();
 
     const publicFiles = [
@@ -375,8 +384,8 @@ function initAuth(server: Server){
 
     server.addListener({
         prefix: "global",
-        handler(req, res){
-            if(publicFiles.includes(req.url)) return;
+        handler(req, res) {
+            if (publicFiles.includes(req.url)) return;
             return auth.handler(req, res);
         }
     });
@@ -396,7 +405,7 @@ function initPortProxy(server: Server) {
             const maybePort = parseInt(firstDomainPart);
             if (maybePort.toString() === firstDomainPart && maybePort >= 3000 && maybePort <= 65535) {
                 return new Promise<void>(resolve => {
-                    subdomainPortProxy.web(req, res, {target: `http://0.0.0.0:${firstDomainPart}`}, () => {
+                    subdomainPortProxy.web(req, res, { target: `http://0.0.0.0:${firstDomainPart}` }, () => {
                         if (!res.headersSent) {
                             res.end(`Port ${firstDomainPart} is down.`);
                         }
@@ -409,9 +418,9 @@ function initPortProxy(server: Server) {
 }
 
 let addedSyncingListener = false;
-function startSyncing(){
+function startSyncing() {
     // really add only once!
-    if(addedSyncingListener) 
+    if (addedSyncingListener)
         return;
     addedSyncingListener = true;
 
@@ -419,29 +428,35 @@ function startSyncing(){
     server.addListener({
         prefix: "global",
         handler(req, res): any {
-            if(req.url.startsWith("/oss-dev")) return;
+            if (req.url.startsWith("/oss-dev")) return;
 
-            if(Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
+            if (Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
 
-            sync(req);
+            sync();
         }
     });
 }
 
-async function sync(req){
-    // better copy the cookie before request gets modified
-    const copiedCookie = {
-        headers: {
-            cookie: req.headers.cookie
-        }
+async function sync() {
+    // sync files at the root of /home
+    // that starts with .git* 
+    // and .profile file
+    if (process.env.USE_CLOUD_CONFIG) {
+        const dotFiles = fs.readdirSync(Sync.config.directory)
+            .filter(file => {
+                if ( file !== ".profile" && !file.startsWith(".git") )
+                    return;
+
+                fsLocal.sync(file, false);
+            });
     }
 
-    if(!Sync.config?.keys?.length) {
+    if (!Sync.config?.keys?.length) {
         Sync.sendStatus();
         return;
     }
 
-    Sync.config?.keys.map(key => fsLocal.sync.bind({req: copiedCookie})(key))
+    Sync.config?.keys.forEach(key => fsLocal.sync(key))
 }
 
 // reverse proxy code OSS
@@ -457,7 +472,7 @@ const proxyCodeOSS = httpProxy.createProxy({
 server.addListener({
     prefix: "/oss-dev",
     handler(req: IncomingMessage, res: ServerResponse): any {
-        if(req.url)
+        if (req.url)
             req.url = "/oss-dev" + req.url;
         return new Promise(resolve => {
             proxyCodeOSS.web(req, res, undefined, resolve)

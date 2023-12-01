@@ -1,9 +1,9 @@
 import { homedir } from "os";
 import fs, { existsSync } from "fs";
-import { SyncEndpoint, fsCloudClient } from "./fs-cloud-client";
 import { WebSocket, WebSocketServer } from "ws";
 import { SyncStatus } from "../../client/sync/status";
 import type { ProgressInfo } from "@fullstacked/sync/constants";
+import { SyncClient } from "./client";
 
 export type RemoteStorageResponseType =
     // if theres is no config file nor USE_CLOUD_CONFIG
@@ -16,7 +16,7 @@ export type RemoteStorageResponseType =
         error: "directory",
         reason: string
     } |
-    // user needs authenticate with password
+    // user needs to authenticate with password
     {
         error: "authorization",
         type: "password"
@@ -28,6 +28,7 @@ export type RemoteStorageResponseType =
         url: string
     } |
     // needs to launch the endpoint selection
+    // for when using a cluster of storage servers
     {
         error: "endpoint_selection",
         url: string
@@ -38,7 +39,8 @@ export type RemoteStorageResponseType =
         filePath: string
     } |
     {
-        error: "storage_endpoint_unreachable"
+        error: "storage_endpoint_unreachable",
+        message?: string
     } |
     // auth is all good. proceed
     true |
@@ -48,15 +50,40 @@ export type RemoteStorageResponseType =
 export class Sync {
     static status: SyncStatus;
     static syncInterval = 1000 * 60 * 2; // 2 minutes
-    static endpoint = SyncEndpoint;
     static config: {
         authorization?: string,
         directory?: string,
         keys?: string[]
     } = {
-            directory: process.env.DOCKER_RUNTIME ? "/home" : undefined
-        };
+        directory: process.env.DOCKER_RUNTIME ? "/home" : undefined
+    };
     static configFile = process.env.CONFIG_FILE || `${homedir()}/.fullstacked-config`;
+
+    // this method pokes the Sync endpoint to check if we're in the clear
+    static async hello(): Promise<RemoteStorageResponseType>{
+        let response: RemoteStorageResponseType;
+        try {
+            const helloResponse = await fetch(`${SyncClient.fs.origin}/hello`, {
+                method: "POST",
+                headers: {
+                    ...SyncClient.fs.headers,
+                    authorization: Sync.config.authorization
+                }
+            });
+            response = await helloResponse.text();
+        } catch(e) {
+            return {
+                error: "storage_endpoint_unreachable",
+                message: `endpoint [${SyncClient.fs.origin}] response [${response}]`
+            }
+        }
+
+        try {
+            response = JSON.parse(response);
+        } catch(e) { }
+
+        return response;
+    }
 
     static setDirectory(directory: string) {
         const exists = existsSync(directory);
@@ -75,13 +102,15 @@ export class Sync {
 
     static setAuthorization(token: string) {
         token = token.trim();
+
+        SyncClient.fs.headers.authorization = token;
+        SyncClient.rsync.headers.authorization = token;
+
         Sync.config.authorization = token;
         Sync.saveConfigs();
     }
 
     static addKey(key: string) {
-        if (key === Sync.configFile) return;
-
         if (!Sync.config.keys)
             Sync.config.keys = [];
 
@@ -98,13 +127,18 @@ export class Sync {
         Sync.saveConfigs();
     }
 
-    static async saveConfigs() {
+    static async saveConfigs(retryCloudConfigSave = true) {
         if (process.env.USE_CLOUD_CONFIG) {
             const { authorization, ...configs } = Sync.config;
 
             // save configs to cloud config, never send authorization
-            if (fsCloudClient.origin)
-                fsCloudClient.post().writeFile(Sync.configFile, JSON.stringify(configs, null, 2));
+            SyncClient.fs.post().writeFile(Sync.configFile, JSON.stringify(configs, null, 2))
+                .catch(() => {
+                    if(retryCloudConfigSave)
+                        Sync.saveConfigs(false);
+                    else
+                        Sync.sendError("Unable to save Cloud Configs");
+                });
 
             // save authorization locally
             if (authorization)
@@ -164,15 +198,17 @@ export class Sync {
 
         // from cloud
         if (process.env.USE_CLOUD_CONFIG) {
-            let cloudConfigs;
-            try {
-                cloudConfigs = (await fsCloudClient.post().readFile(Sync.configFile)).toString();
-            } catch (e) {
-                response = {
-                    error: "storage_endpoint_unreachable"
-                }
-            }
+            response = await Sync.hello();
+            if(response)
+                return response;
 
+            // when first time connecting to cloud storage, 
+            // file doesn't exists and fails read
+            let cloudConfigs = "{}";
+            try{
+                cloudConfigs = (await SyncClient.fs.post().readFile(Sync.configFile)).toString();
+            } catch(e) { }
+            
             try {
                 configData = {
                     ...configData,

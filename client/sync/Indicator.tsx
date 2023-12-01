@@ -101,7 +101,7 @@ function Indicator(props: {remove(): void}){
                 </div>
                 <button className="small" onClick={() => {
                     Workspace.instance.addWindow(Workspace.instance.apps.find(({title}) => title === "Sync"));
-                }}>progress</button>
+                }}>Progress</button>
             </div>}
 
         {status.conflicts && !!(Object.keys(status.conflicts).length)
@@ -175,6 +175,9 @@ function msDurationToHumanReadable(ms: number){
 }
 
 export function AddSyncApp(){
+    if ( Workspace.instance.apps.find(({title}) => title === "Sync") )
+        return;
+
     Workspace.addApp({
         title: "Sync",
         icon: syncIcon,
