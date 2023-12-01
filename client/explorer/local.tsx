@@ -1,5 +1,5 @@
 import Explorer, {ExplorerOptions} from "./explorer";
-import React, { useEffect, useState } from "react";
+import React, { RefObject, useEffect, useState } from "react";
 import { fsLocal } from "./clients/local";
 import { compareAndResolveKey, hasUnresolvedConflict, keyIsConflicted, resolveAllKey } from "../sync/conflicts";
 import { SyncWS } from "../sync/Indicator";
@@ -7,7 +7,7 @@ import { client } from "../client";
 import type { SyncStatus } from "../sync/status";
 import { fsCloud } from "./clients/cloud";
 
-export default function (props: {options: ExplorerOptions}) {
+export default function (props: {explorerRef: RefObject<Explorer>, options: ExplorerOptions}) {
     const [conflicts, setConflicts] = useState<SyncStatus['conflicts']>(null);
 
     useEffect(() => {
@@ -16,11 +16,12 @@ export default function (props: {options: ExplorerOptions}) {
         const callback = (status: SyncStatus) => {
             setConflicts(status.conflicts);
         }
+
         SyncWS.subscribers.add(callback);
         return () => {SyncWS.subscribers.delete(callback)}
     }, [])
 
-    return <Explorer client={fsLocal} action={(item) => {
+    return <Explorer ref={props.explorerRef} client={fsLocal} action={(item) => {
         if(!conflicts)
             return <></>;
 
