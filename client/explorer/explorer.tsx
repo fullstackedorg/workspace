@@ -1,88 +1,124 @@
-import React, {useEffect, useState} from "react";
-import {Workspace} from "../workspace";
+import React, { Component, useState } from "react";
+import { Workspace } from "../workspace";
 import editorIcon from "../icons/editor.svg";
 import Editor from "../editor";
 import Tree from "rc-tree";
 import fileIcons2 from "../icons/file-icons-2.svg";
 import fileIcons from "../icons/file-icons.svg";
-import type {EventDataNode} from "rc-tree/es/interface";
+import type { EventDataNode } from "rc-tree/es/interface";
 import "rc-tree/assets/index.css"
-import type {fsLocal} from "../../server/sync/fs-local";
-import useAPI from "@fullstacked/webapp/client/react/useAPI";
-import {client as mainClient} from "../client";
+import type { fsLocal } from "../../server/sync/fs-local";
+import { client } from "../client";
+import type { API } from "../../server";
 
 export type ExplorerOptions = {
     showHiddenFiles: boolean,
     showDeleteButtons: boolean
 }
 
-export default function Explorer(props: {client: any, action: (item: File) => any, options: ExplorerOptions}) {
-    const [syncedKeys, refreshSyncedKeys] = useAPI(mainClient.get().getSyncedKeys);
-    const [files, setFiles] = useState<FlatFileTree>();
+export default class Explorer extends Component<{
+    client: any,
+    action: (item: File) => any,
+    options: ExplorerOptions
+}> {
+    state: {
+        syncedKeys: ReturnType<typeof API.getSyncedKeys>,
+        files: FlatFileTree
+    } = {
+            syncedKeys: [],
+            files: null
+        }
 
-    useEffect(() => {
-        props.client.get().readDir("")
+    componentDidMount() {
+        this.props.client.get().readDir("")
             .then(async fileTreeRoot => {
-                let files = {fileTreeRoot}
-                setFiles(files);
+                let files = { fileTreeRoot }
+                this.setState({ files });
             });
-    }, []);
 
-    const openFileEditor = (filename) => {
+        this.refreshSyncedKeys();
+    }
+
+    reloadOpenedDirectories = () => {
+        if (!this.state.files) return;
+
+        Object.keys(this.state.files).forEach(async dir => {
+            const files = await this.props.client.get().readDir(dir === "fileTreeRoot" ? "" : dir);
+            this.setState((prevState: Explorer["state"]) => ({
+                ...prevState,
+                files: {
+                    ...prevState.files,
+                    [dir]: files
+                }
+            }), () => { console.log(this.state) })
+        });
+    }
+
+    refreshSyncedKeys = () => {
+        client.get().getSyncedKeys()
+            .then(syncedKeys => this.setState({ syncedKeys }));
+    }
+
+    openFileEditor = (filename: string) => {
         Workspace.instance.addWindow({
             title: filename.length > 8 ? "..." + filename.slice(-8) : filename,
             icon: editorIcon,
-            element: () => <Editor client={props.client} filename={filename} />
+            element: () => <Editor client={this.props.client} filename={filename} />
         })
     }
 
-    if(!files) return <></>;
+    render() {
+        if (!this.state.files)
+            return <></>;
 
-    return <Tree
-        treeData={flatFileTreeToTreeData(files, props.options.showHiddenFiles)}
-        icon={item => <svg style={{fill: "white", width: 16, height: 16}}>
-            <use xlinkHref={(item.data as File).isDir
-                ? fileIcons2 + "#folder"
-                : fileIcons + "#" + iconForFilename(item.data.title as string)}>
-            </use>
-        </svg>}
-        titleRender={item => <div>
-            <div className={"title"}>{item.title}</div>
-            <div className={"buttons"}>
-                {props.action && props.action(item)}
-                {props.options.showDeleteButtons && <button className={"small danger"} onClick={async (e) => {
-                    e.stopPropagation();
-                    await props.client.delete().deleteFile(item.key)
-                    let parentKey = item.key.split("/").slice(0, -1).join("/");
-                    files[parentKey || "fileTreeRoot"] = await props.client.get().readDir(parentKey);
-                    setFiles({...files});
-                }}>Delete</button>}
-                {syncedKeys && item.isDir && !syncedKeys.find(key => {
+        return <Tree
+            treeData={flatFileTreeToTreeData(this.state.files, this.props.options.showHiddenFiles)}
+            icon={item => <svg style={{ fill: "white", width: 16, height: 16 }}>
+                <use xlinkHref={(item.data as File).isDir
+                    ? fileIcons2 + "#folder"
+                    : fileIcons + "#" + iconForFilename(item.data.title as string)}>
+                </use>
+            </svg>}
+            titleRender={item => <div>
+                <div className={"title"}>{item.title}</div>
+                <div className={"buttons"}>
+                    {this.props.action && this.props.action(item)}
+
+                    {this.props.options.showDeleteButtons && <button className={"small danger"} onClick={async (e) => {
+                        e.stopPropagation();
+                        await this.props.client.delete().deleteFile(item.key)
+                        let parentKey = item.key.split("/").slice(0, -1).join("/");
+                        this.state.files[parentKey || "fileTreeRoot"] = await this.props.client.get().readDir(parentKey);
+                        this.setState({ files: { ...this.state.files } });
+                    }}>Delete</button>}
+
+                    {this.state.syncedKeys && item.isDir && !this.state.syncedKeys.find(key => {
                         const keyParts = key.split("/");
                         const itemKeyParts = item.key.split("/");
-                        for (let i = 0; i < keyParts.length; i++){
-                            if(keyParts[i] !== itemKeyParts[i])
+                        for (let i = 0; i < keyParts.length; i++) {
+                            if (keyParts[i] !== itemKeyParts[i])
                                 return false;
                         }
                         return true;
-                    }) && <SyncButton itemKey={item.key} client={props.client} didSync={refreshSyncedKeys}/> }
-            </div>
-        </div>}
-        onExpand={async (keys: string[], {node, expanded}) => {
-            if(!keys?.length || !expanded || !node.isDir) return;
-            files[node.key] = await props.client.get().readDir(node.key);
-            setFiles( {...files});
-        }}
-        onSelect={(selectedKeys, data: {node: File, nativeEvent}) => {
-            if(data.node.isDir || (data.nativeEvent as PointerEvent).pointerType === "mouse") return;
-            openFileEditor(data.node.key);
-        }}
-        onDoubleClick={(_, file: EventDataNode<File>) => {
-            if(file.isDir) return;
-            openFileEditor(file.key);
-        }}
-        expandAction={"click"}
-    />
+                    }) && <SyncButton itemKey={item.key} client={this.props.client} didSync={this.refreshSyncedKeys} />}
+                </div>
+            </div>}
+            onExpand={async (keys: string[], { node, expanded }) => {
+                if (!keys?.length || !expanded || !node.isDir) return;
+                this.state.files[node.key] = await this.props.client.get().readDir(node.key);
+                this.setState({ files: { ...this.state.files } });
+            }}
+            onSelect={(selectedKeys, data: { node: File, nativeEvent }) => {
+                if (data.node.isDir || (data.nativeEvent as PointerEvent).pointerType === "mouse") return;
+                this.openFileEditor(data.node.key);
+            }}
+            onDoubleClick={(_, file: EventDataNode<File>) => {
+                if (file.isDir) return;
+                this.openFileEditor(file.key);
+            }}
+            expandAction={"click"}
+        />
+    }
 }
 
 
@@ -102,9 +138,9 @@ type File = {
     isDir: boolean
 }
 
-function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFileTree, showHidden): File[] | [PlaceholderFile]{
-    if(!flatFileTree[fileName])
-        return [{key: Math.floor(Math.random() * 100000).toString(), title: "Loading..."}];
+function flatFileTreeToTreeDataRecursive(fileName: string, flatFileTree: FlatFileTree, showHidden): File[] | [PlaceholderFile] {
+    if (!flatFileTree[fileName])
+        return [{ key: Math.floor(Math.random() * 100000).toString(), title: "Loading..." }];
 
     return flatFileTree[fileName]
         .filter(file => showHidden || (!file.name.startsWith(".") && file.name !== "core"))
@@ -134,11 +170,11 @@ function flatFileTreeToTreeData(files: FlatFileTree, showHidden): File[] {
 }
 
 
-function iconForFilename(filename: string){
-    if(filename.endsWith("compose.yml") || filename.startsWith("Dockerfile"))
+function iconForFilename(filename: string) {
+    if (filename.endsWith("compose.yml") || filename.startsWith("Dockerfile"))
         return "docker";
     const extension = filename.split(".").at(-1);
-    switch (extension){
+    switch (extension) {
         case "ts":
             return "typescript";
         case "tsx":
@@ -161,7 +197,7 @@ function iconForFilename(filename: string){
     }
 }
 
-function SyncButton(props: {client, itemKey: string, didSync}){
+function SyncButton(props: { client, itemKey: string, didSync }) {
     const [syncing, setSyncing] = useState(false)
 
     return syncing ? <small>Syncing...</small> : <button className={"small"} onClick={(e) => {

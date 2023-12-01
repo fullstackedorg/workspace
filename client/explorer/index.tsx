@@ -1,11 +1,12 @@
-import React, {useState} from "react";
+import React, {RefObject, createRef, useState} from "react";
 import explorerIcon from "../icons/explorer.svg";
 import "./index.css";
 import Cloud from "./cloud";
 import Local from "./local";
 import {Workspace} from "../workspace";
+import Explorer from "./explorer";
 
-function Explorers() {
+function Explorers(props: { explorerRef: RefObject<Explorer> }) {
     const [activeTab, setActiveTab] = useState(0);
     const [showHiddenFiles, setShowHiddenFiles] = useState(false);
     const [showDeleteButtons, setShowDeleteButtons] = useState(false);
@@ -38,8 +39,8 @@ function Explorers() {
         </div>
         <div>
             {activeTab === 0
-                ? <Local options={{showDeleteButtons, showHiddenFiles}} />
-                : <Cloud options={{showDeleteButtons, showHiddenFiles}} />}
+                ? <Local explorerRef={props.explorerRef} options={{showDeleteButtons, showHiddenFiles}} />
+                : <Cloud explorerRef={props.explorerRef} options={{showDeleteButtons, showHiddenFiles}} />}
         </div>
     </div>
 }
@@ -47,5 +48,17 @@ Workspace.addApp({
     title: "Explorer",
     icon: explorerIcon,
     order: 1,
-    element: () => <Explorers />
+    element: (app) => {
+        const explorerRef = createRef<Explorer>();
+
+        app.callbacks = {
+            onFocus: () => {
+                if(!explorerRef.current) return;
+                explorerRef.current.reloadOpenedDirectories();
+            }
+        }
+        
+
+        return <Explorers explorerRef={explorerRef} />
+    }
 });
