@@ -17,7 +17,7 @@ export const fsLocal = {
     },
 
     // push files to cloud
-    async sync(key: string, save = true){
+    async sync(key: string, options: { save: boolean, progress: boolean } = { save: true, progress: true }){
         // cannot push/pull at same time
         if(Sync.status?.syncing && Sync.status.syncing[key]) return;
 
@@ -36,15 +36,17 @@ export const fsLocal = {
             SyncClient.rsync.headers.authorization = Sync.config.authorization;
 
             
-        Sync.addSyncingKey(key, "push");
+        Sync.addSyncingKey(key, "push", !options.progress);
         const response = await SyncClient.rsync.push(key, {
             filters: [".gitignore"],
             progress(info){
-                Sync.updateSyncingKeyProgress(key, info)
+                if(options.progress)
+                    Sync.updateSyncingKeyProgress(key, info)
             }
         });
         Sync.removeSyncingKey(key);
-        if(save)
+
+        if(options.save)
             Sync.addKey(key);
 
         if(response.status === "error")

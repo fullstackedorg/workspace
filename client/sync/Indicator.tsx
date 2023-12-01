@@ -94,10 +94,12 @@ function Indicator(props: {remove(): void}){
             && <div>
                 Syncing...
                 <div>
-                    {Object.keys(status.syncing).map(key => <div>
-                        {key}&nbsp;
-                        {status.syncing[key].direction === "pull" ? <span className={"green"}>↙</span> : <span className={"red"}>↗</span>}
-                    </div>)}
+                    {Object.keys(status.syncing).map(key => status.syncing[key].hide
+                        ? <></>
+                        : <div>
+                            {key}&nbsp;
+                            {status.syncing[key].direction === "pull" ? <span className={"green"}>↙</span> : <span className={"red"}>↗</span>}
+                        </div>)}
                 </div>
                 <button className="small" onClick={() => {
                     Workspace.instance.addWindow(Workspace.instance.apps.find(({title}) => title === "Sync"));
@@ -206,6 +208,9 @@ function SyncProgressView() {
         {syncingKeys.length
             ? syncingKeys.map(key => {
                 const syncingKey = status.syncing[key];
+                if(syncingKey.hide)
+                    return <></>;
+
                 const items = status.syncing[key].progress?.items;
                 const streams = status.syncing[key].progress?.streams;
     

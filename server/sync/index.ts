@@ -269,7 +269,7 @@ export class Sync {
         Sync.sendStatus();
     }
 
-    static addSyncingKey(key: string, direction: "pull" | "push") {
+    static addSyncingKey(key: string, direction: "pull" | "push", hide: boolean = false) {
         if (Sync.status.syncing && Object.keys(Sync.status.syncing).includes(key)) {
             return false;
         }
@@ -278,7 +278,8 @@ export class Sync {
             Sync.status.syncing = {};
 
         Sync.status.syncing[key] = {
-            direction
+            direction,
+            hide
         };
         Sync.sendStatus();
         return true;
