@@ -10,7 +10,8 @@ export type SyncStatus = {
     syncing?: {
         [key: string]: {
             direction: "push" | "pull",
-            progress?: ProgressInfo
+            progress?: ProgressInfo,
+            hide?: boolean
         }
     },
     errors?: string[]

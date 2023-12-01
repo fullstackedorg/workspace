@@ -238,7 +238,10 @@ export const API = {
                 if ( name !== ".profile" && !name.startsWith(".git") )
                     return;
 
-                fsCloud.sync(name, false);
+                fsCloud.sync(name,  {
+                    save: false,
+                    progress: false
+                });
             });
         }
 
@@ -428,9 +431,11 @@ function startSyncing() {
     server.addListener({
         prefix: "global",
         handler(req, res): any {
-            if (req.url.startsWith("/oss-dev")) return;
+            if (req.url.startsWith("/oss-dev")) 
+                return;
 
-            if (Date.now() - Sync.status.lastSync <= Sync.syncInterval) return;
+            if (Date.now() - Sync.status.lastSync <= Sync.syncInterval) 
+                return;
 
             sync();
         }
@@ -447,7 +452,10 @@ async function sync() {
                 if ( file !== ".profile" && !file.startsWith(".git") )
                     return;
 
-                fsLocal.sync(file, false);
+                fsLocal.sync(file, {
+                    save: false,
+                    progress: false
+                });
             });
     }
 

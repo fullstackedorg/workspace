@@ -10,7 +10,7 @@ export const fsCloud = {
     ...fsInit(SyncClient.fs.post.bind(SyncClient.fs), () => "./"),
 
     // pull files from cloud
-    async sync(key: string, save = true) {
+    async sync(key: string, options: { save: boolean, progress: boolean } = { save: true, progress: true }) {
         // cannot push/pull at same time
         if (Sync.status?.syncing && Sync.status.syncing[key]) return;
 
@@ -44,15 +44,16 @@ export const fsCloud = {
         if (Sync.config.authorization)
             SyncClient.rsync.headers.authorization = Sync.config.authorization;
 
-        Sync.addSyncingKey(key, "pull");
+        Sync.addSyncingKey(key, "pull", !options.progress);
         const response = await SyncClient.rsync.pull(key, {
             exclude: resolvedConflicts,
             progress(info) {
-                Sync.updateSyncingKeyProgress(key, info)
+                if(options.progress)
+                    Sync.updateSyncingKeyProgress(key, info)
             }
         });
         Sync.removeSyncingKey(key);
-        if (save)
+        if (options.save)
             Sync.addKey(key);
 
         if (conflicts)
