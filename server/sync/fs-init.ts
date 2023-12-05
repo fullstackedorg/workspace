@@ -10,7 +10,11 @@ export function fsInit(client, getBaseDir: () => string) {
 
     return {
         async readDir(key: string){
-            let readDir = await initClient(client).readdir(filePath(key), {withFileTypes: true});
+            const readDir = await initClient(client).readdir(filePath(key), {withFileTypes: true});
+
+            if(readDir instanceof Error){
+                throw readDir;
+            }
 
             return readDir.map(item => ({
                     name: item.name,

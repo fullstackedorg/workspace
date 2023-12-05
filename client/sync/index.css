@@ -33,3 +33,7 @@
 .red {
     color: #ea614f;
 }
+.sync-progress-view {
+    color: white;
+    padding: 10px;
+}

@@ -7,14 +7,13 @@ import {fsCloud} from "../explorer/clients/cloud";
 async function initMerge(container: HTMLDivElement, {baseKey, fileKey}) {
     const extensions = await getExtensions(fileKey);
 
-    const path = baseKey + "/" + fileKey;
     return new MergeView({
         a: {
-            doc: await fsLocal.get().getFileContents(path),
+            doc: await fsLocal.get().getFileContents(fileKey),
             extensions
         },
         b: {
-            doc: await fsCloud.get().getFileContents(path),
+            doc: await fsCloud.get().getFileContents(fileKey),
             extensions
         },
         revertControls: "b-to-a",

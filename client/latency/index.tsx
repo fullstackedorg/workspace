@@ -23,7 +23,7 @@ function Latency() {
     return <div style={{padding: 5, color: "white"}}>
         <div>Page load: {performance.timing.loadEventEnd - performance.timing.navigationStart}ms</div>
         <hr />
-        {tests.map(test => <div>
+        {tests.map((test, i) => <div key={"test-" + i}>
             Response time: {test.toFixed(2)}ms
         </div>)}
         <hr />

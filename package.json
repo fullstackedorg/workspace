@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "description": "A Ubiquitous Workspace for Developers",
-  "version": "0.11.4",
+  "version": "0.12.0-alpha",
   "author": "cplepage",
   "license": "MIT",
   "repository": {
@@ -44,6 +44,7 @@
     "@fullstacked/build": "^0.10.10",
     "@fullstacked/cli": "^0.10.14",
     "@fullstacked/share": "^0.10.9",
+    "@fullstacked/sync": "^0.10.0-alpha.8",
     "@fullstacked/watch": "^0.10.23",
     "@fullstacked/webapp": "^0.10.15",
     "@types/cookie": "^0.5.1",
@@ -76,4 +77,3 @@
     "node-pty"
   ]
 }
-
