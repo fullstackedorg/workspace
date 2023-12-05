@@ -169,7 +169,7 @@ export default function (props: {
         <div className="resizer">
             {new Array(8).fill(null).map((_, index) => {
                 let x: -1 | 0 | 1 = 0, y: -1 | 0 | 1 = 0;
-                switch(index){
+                switch (index) {
                     case 0:
                         x = -1;
                         y = -1;
@@ -204,7 +204,7 @@ export default function (props: {
                         break;
                 }
                 let resizeBinding = e => resizestart(e.nativeEvent, x, y);
-                return <div onMouseDown={resizeBinding} onTouchStart={resizeBinding} ><div /></div>})
+                return <div key={"resizer-" + index} onMouseDown={resizeBinding} onTouchStart={resizeBinding} ><div /></div>})
             }
         </div>
         <div
@@ -251,13 +251,17 @@ export function OptionButtons(props: {buttons: {
         style={{maxWidth: enlarge ? 56 * 2 + 100 : 14 * 2}}
     >
         <div>
-            {props.buttons.map(button => <button onClick={() => {
-                if(!enlarge) return;
-                button.onClick()
-                setEnlarge(false);
-            }}>
-                {button.icon}
-            </button>)}
+            {props.buttons.map((button, i) => 
+                <button key={"button-" + i} 
+                    onClick={() => {
+                        if(!enlarge) return;
+                        button.onClick()
+                        setEnlarge(false);
+                    }}
+                >
+                    {button.icon}
+                </button>
+            )}
         </div>
     </div>
 }

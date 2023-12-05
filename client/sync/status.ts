@@ -1,17 +1,17 @@
+import type { ProgressInfo } from "@fullstacked/sync/constants"
+
 export type SyncStatus = {
-    lastSync?: number, // no last sync === initializing
+    lastSync?: number,
     conflicts?: {
         [baseKey: string] : {
             [conflictingKey: string]: boolean // resolved
         }
     },
     syncing?: {
-        [key: string]: "push" | "pull"
-    },
-    largeFiles?: {
         [key: string]: {
-            progress: number,
-            total: number
+            direction: "push" | "pull",
+            progress?: ProgressInfo,
+            hide?: boolean
         }
     },
     errors?: string[]

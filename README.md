@@ -96,7 +96,6 @@ volumes:
 | Variable | Description | Type | Default Value |
 |---|---|---|---|
 | `FULLSTACKED_PORT` | Define a port where FullStacked will listen to | `number` | 8000 |
-| `AUTO_SHUTDOWN` | Inactivity duration before ending process, never shutdowns if undefined | `number` | - |
 | `PASS` | Password to access the workspace | `string` | - |
 | `AUTH_URL` | URL against which to authorize token generation | `string` | - |
 | `REVOKE_URL` | URL to poke on logout | `string` | - |
