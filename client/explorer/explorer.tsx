@@ -186,6 +186,8 @@ function iconForFilename(filename: string) {
         case "css":
             return "css";
         case "js":
+        case "mjs":
+        case "cjs":
             return "javascript";
         case "map":
             return "javascript-map";
