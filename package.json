@@ -1,7 +1,7 @@
 {
   "name": "fullstacked",
   "description": "A Ubiquitous Workspace for Developers",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "author": "cplepage",
   "license": "MIT",
   "repository": {
@@ -20,9 +20,10 @@
     "fullstacked": "index.js"
   },
   "scripts": {
-    "start": "fsc watch",
-    "cp": "node cp",
-    "build": "fsc build --production && npm run cp",
+    "typecheck": "tsc --noEmit --skipLibCheck",
+    "start": "fsc watch -c src/main/client/index.tsx -s src/main/server/index.ts",
+    "cp": "node src/main/cp",
+    "build": "fsc build --production -c src/lite/client/index.tsx -s src/lite/server/index.ts && npm run cp",
     "predocker": "npm run build",
     "docker": "docker build . -f docker/Dockerfile -t fullstackedorg/workspace:test",
     "prepack": "npm run build"
@@ -65,6 +66,7 @@
     "pretty-bytes": "^6.1.1",
     "rc-tree": "^5.7.9",
     "react-dom": "^18.2.0",
+    "typescript": "^5.3.3",
     "ws": "^8.13.0",
     "xterm": "^5.2.1",
     "xterm-addon-fit": "^0.7.0",
