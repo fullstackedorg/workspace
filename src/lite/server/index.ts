@@ -1,9 +1,14 @@
+import "./env";
+import "./fetch";
 import Sync from "../../main/server/sync";
 import Auth from "../../main/server/auth";
 import Backend from "../../main/server/backend";
 import PWA from "../../main/server/pwa";
 import Basic from "../../main/server/basic";
 import Proxy from "../../main/server/proxy";
+
+if(process.env.FULLSTACKED_PORT)
+    Backend.server.port = parseInt(process.env.FULLSTACKED_PORT);
 
 // start it up!
 Backend.server.start();
