@@ -70,7 +70,7 @@
 			children = (
 				9C8484A22B27B01200A7AE6D /* lite */,
 				33C0B29E20512ECA006376A9 /* NodeMobile.framework */,
-				33C0B28720512E17006376A9 /* native-xcode-node-folder */,
+				33C0B28720512E17006376A9 /* FullStacked */,
 				33C0B28620512E17006376A9 /* Products */,
 				9C2C13D52B277243001BF156 /* Frameworks */,
 			);
@@ -84,7 +84,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		33C0B28720512E17006376A9 /* native-xcode-node-folder */ = {
+		33C0B28720512E17006376A9 /* FullStacked */ = {
 			isa = PBXGroup;
 			children = (
 				33C0B28820512E17006376A9 /* AppDelegate.h */,
@@ -99,7 +99,7 @@
 				33C0B2A4205132CA006376A9 /* NodeRunner.h */,
 				33C0B2A52051331A006376A9 /* NodeRunner.mm */,
 			);
-			path = "native-xcode-node-folder";
+			path = FullStacked;
 			sourceTree = "<group>";
 		};
 		9C2C13D52B277243001BF156 /* Frameworks */ = {
@@ -137,6 +137,9 @@
 		33C0B27D20512E17006376A9 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				KnownAssetTags = (
+					New,
+				);
 				LastUpgradeCheck = 0910;
 				ORGANIZATIONNAME = "Janea Systems";
 				TargetAttributes = {
@@ -328,7 +331,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/NodeMobile",
 				);
-				INFOPLIST_FILE = "native-xcode-node-folder/Info.plist";
+				INFOPLIST_FILE = FullStacked/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.fullstacked.testtesttesttest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -346,7 +349,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/NodeMobile",
 				);
-				INFOPLIST_FILE = "native-xcode-node-folder/Info.plist";
+				INFOPLIST_FILE = FullStacked/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.fullstacked.testtesttesttest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
