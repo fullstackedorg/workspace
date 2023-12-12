@@ -72,13 +72,15 @@ export const fsCloud = {
             data.url = data.url.replace(/(localhost|0.0.0.0)/, "host.docker.internal")
         }
 
-        const token = await (await fetch(data.url, {
+        const response = await fetch(data.url, {
             method: "POST",
             headers: {
                 "user-agent": this.req.headers["user-agent"]
             },
             body: JSON.stringify(data)
-        })).text();
+        });
+
+        const token = await response.text();
 
         Sync.setAuthorization(token);
     },

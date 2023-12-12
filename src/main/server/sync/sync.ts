@@ -1,6 +1,6 @@
 import { homedir } from "os";
 import fs, { existsSync } from "fs";
-import { WebSocket, WebSocketServer } from "ws";
+import { WebSocket } from "ws";
 import { SyncStatus } from "../../client/sync/status";
 import type { ProgressInfo } from "@fullstacked/sync/constants";
 import { SyncClient } from "./client";
@@ -54,13 +54,11 @@ export class Sync {
         authorization?: string,
         directory?: string,
         keys?: string[]
-    } = {
-        directory: process.env.DOCKER_RUNTIME ? "/home" : undefined
-    };
-    static configFile = process.env.CONFIG_FILE || `${homedir()}/.fullstacked-config`;
+    } = null;
+    static configFile = process.env.CONFIG_FILE || `${process.env.MAIN_DIRECTORY || homedir()}/.fullstacked-config`;
 
     // singleton class
-    private constructor() {}
+    private constructor() { }
 
     // this method pokes the Sync endpoint to check if we're in the clear
     static async hello(): Promise<RemoteStorageResponseType> {
@@ -152,6 +150,8 @@ export class Sync {
     }
 
     static directoryCheck() {
+        const mainDir = process.env.MAIN_DIRECTORY || homedir();
+
         if (!Sync.config?.directory) {
             return {
                 error: "directory",
@@ -164,10 +164,10 @@ export class Sync {
             } as const;
         } else if (!process.env.DOCKER_RUNTIME // not in docker
             // not in home or is shorter than home dir path
-            && (!Sync.config.directory.startsWith(homedir()) || homedir().length >= Sync.config.directory.length)) {
+            && (!Sync.config.directory.startsWith(mainDir) || mainDir.length > Sync.config.directory.length)) {
             return {
                 error: "directory",
-                reason: `Must be under home [${homedir()}] directory`
+                reason: `Must be under [${mainDir}] main directory`
             } as const;
         }
     }
@@ -176,7 +176,18 @@ export class Sync {
     // we store the authorization in container volume and uses sync keys from cloud
     // we never save authorization in cloud storage
     static async loadConfigs(): Promise<RemoteStorageResponseType> {
-        if (!existsSync(Sync.configFile) && !process.env.USE_CLOUD_CONFIG) {
+
+        // in iOS, we start without any config file,
+        // but we start the process with the right MAIN_DIRECTORY to 
+        // use.
+        if(process.env.MAIN_DIRECTORY && Sync.config === null){
+            Sync.config = {
+                directory: process.env.MAIN_DIRECTORY
+            }
+        }
+
+
+        if (Sync.config === null && !existsSync(Sync.configFile) && !process.env.USE_CLOUD_CONFIG) {
             return {
                 error: "no_configs"
             }

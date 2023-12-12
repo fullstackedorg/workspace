@@ -14,6 +14,7 @@
   },
   "homepage": "https://fullstacked.org",
   "dependencies": {
+    "dotenv": "^16.3.1",
     "node-pty": "^0.10.1"
   },
   "bin": {
@@ -23,7 +24,7 @@
     "typecheck": "tsc --noEmit --skipLibCheck",
     "start": "fsc watch -c src/main/client/index.tsx -s src/main/server/index.ts",
     "cp": "node src/main/cp",
-    "build": "fsc build --production -c src/lite/client/index.tsx -s src/lite/server/index.ts && npm run cp",
+    "build": "node build && npm run cp",
     "predocker": "npm run build",
     "docker": "docker build . -f docker/Dockerfile -t fullstackedorg/workspace:test",
     "prepack": "npm run build"

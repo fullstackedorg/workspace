@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22155" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina6_72" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22131"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="430" height="932"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <wkWebView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="shs-kg-SaU">
+                                <rect key="frame" x="0.0" y="0.0" width="430" height="932"/>
+                                <color key="backgroundColor" red="0.36078431370000003" green="0.38823529410000002" blue="0.4039215686" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <wkWebViewConfiguration key="configuration">
+                                    <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
+                                    <wkPreferences key="preferences" javaScriptCanOpenWindowsAutomatically="YES"/>
+                                </wkWebViewConfiguration>
+                            </wkWebView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zbC-aW-1wJ">
+                                <rect key="frame" x="154.66666666666666" y="59" width="120.99999999999997" height="30"/>
+                                <state key="normal" title="Open FullStacked"/>
+                                <connections>
+                                    <action selector="myButtonAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ItD-Eu-UAI"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="zbC-aW-1wJ" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="OTm-sZ-6cs"/>
+                            <constraint firstItem="shs-kg-SaU" firstAttribute="width" secondItem="8bC-Xf-vdC" secondAttribute="width" id="ert-g4-I5B"/>
+                            <constraint firstItem="shs-kg-SaU" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="fYc-BO-xpz"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="top" secondItem="zbC-aW-1wJ" secondAttribute="top" id="jZI-vG-ZyJ"/>
+                            <constraint firstItem="shs-kg-SaU" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="n5C-MF-LgS"/>
+                            <constraint firstAttribute="bottom" secondItem="shs-kg-SaU" secondAttribute="bottom" id="pWl-f6-byM"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="myButton" destination="zbC-aW-1wJ" id="MAq-0N-Z5n"/>
+                        <outlet property="webView" destination="shs-kg-SaU" id="rgH-ab-U9r"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="117.59999999999999" y="118.29085457271366"/>
+        </scene>
+    </scenes>
+</document>
