@@ -22,7 +22,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "start": "fsc watch -c src/main/client/index.tsx -s src/main/server/index.ts",
+    "start": "fsc watch -c ./src/main/client/index.tsx -s src/main/server/index.ts",
     "cp": "node src/main/cp",
     "build": "node build && npm run cp",
     "predocker": "npm run build",

@@ -1,11 +1,12 @@
-import {WebSocket} from "ws";
-import PTy, {IPty} from "node-pty";
-import {IncomingMessage} from "http";
+import { WebSocket } from "ws";
+import PTy, { IPty } from "node-pty";
+import { IncomingMessage } from "http";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import {homedir, platform} from "os";
-import {Sync} from "../sync/sync";
-import {execSync} from "child_process";
+import { homedir, platform } from "os";
+import { Sync } from "../sync/sync";
+import { execSync } from "child_process";
+import { existsSync } from "fs"
 
 type Session = {
     pty: IPty,
@@ -21,13 +22,14 @@ const shell = isWin
     : isMac
         ? "/bin/zsh"
         : "/bin/bash";
-const args  = isWin ? [] : ['-l'];
+const args = isWin ? [] : ['-l'];
 process.env.PATH += isWin
     ? ";" + dirname(fileURLToPath(import.meta.url)) + "\\bat"
     : ":" + dirname(fileURLToPath(import.meta.url)) + "/bin";
 
-if(!isWin){
-    execSync(`chmod +x ${dirname(fileURLToPath(import.meta.url)) + "/bin/*"}`);
+const binPath = dirname(fileURLToPath(import.meta.url)) + "/bin";
+if (!isWin && existsSync(binPath)) {
+    execSync(`chmod +x ${binPath}/*`);
 }
 
 
@@ -37,17 +39,17 @@ export class TerminalPTy {
     static sessions: Map<string, Session> = new Map();
 
     // singleton class
-    private constructor () {}
+    private constructor() { }
 
     private static cleanupIntervalRunning = false;
-    static startCleanupInterval(){
-        if(TerminalPTy.cleanupIntervalRunning) 
+    static startCleanupInterval() {
+        if (TerminalPTy.cleanupIntervalRunning)
             return;
         TerminalPTy.cleanupIntervalRunning = true;
 
         setInterval(() => {
-            for(const [SESSION_ID, {pty, ws, lastActivity}] of TerminalPTy.sessions.entries()){
-                if(Date.now() - lastActivity > TerminalPTy.killTimeout){
+            for (const [SESSION_ID, { pty, ws, lastActivity }] of TerminalPTy.sessions.entries()) {
+                if (Date.now() - lastActivity > TerminalPTy.killTimeout) {
                     pty.kill();
                     ws.close()
                     TerminalPTy.sessions.delete(SESSION_ID);
@@ -56,7 +58,7 @@ export class TerminalPTy {
         }, 1000 * 60) // check every minute
     }
 
-    static startOrResumeSessionWithRequest(ws: WebSocket, request: IncomingMessage){
+    static startOrResumeSessionWithRequest(ws: WebSocket, request: IncomingMessage) {
         TerminalPTy.startCleanupInterval();
 
         let SESSION_ID: string;
@@ -64,13 +66,13 @@ export class TerminalPTy {
         // find existing
         const reqComponents = request.url.split("/").filter(Boolean);
         let session: Session;
-        if(reqComponents.length > 1) {
+        if (reqComponents.length > 1) {
             SESSION_ID = reqComponents.pop();
             session = TerminalPTy.sessions.get(SESSION_ID);
         }
 
         // create new
-        if(!session) {
+        if (!session) {
             SESSION_ID = Math.floor(Math.random() * 1000000).toString();
             const pty = PTy.spawn(shell, args, {
                 name: '',
@@ -85,11 +87,11 @@ export class TerminalPTy {
 
             pty.onData((data) => {
                 const terminalSession = TerminalPTy.sessions.get(SESSION_ID);
-                if(!terminalSession) return;
+                if (!terminalSession) return;
 
-                if(terminalSession.ws.readyState === terminalSession.ws.CLOSED) {
+                if (terminalSession.ws.readyState === terminalSession.ws.CLOSED) {
                     terminalSession.data.push(data);
-                }else{
+                } else {
                     terminalSession.ws.send(data);
                     terminalSession.lastActivity = Date.now();
                 }
@@ -101,7 +103,7 @@ export class TerminalPTy {
                 lastActivity: Date.now(),
                 data: []
             }
-        }else{
+        } else {
             session.ws = ws;
         }
 
@@ -115,7 +117,7 @@ export class TerminalPTy {
 
         ws.on('message', data => {
             const dataStr = data.toString();
-            if(dataStr.startsWith("SIZE#")){
+            if (dataStr.startsWith("SIZE#")) {
                 const [_, cols, rows] = dataStr.split("#");
                 session.pty.resize(parseInt(cols), parseInt(rows));
                 return;

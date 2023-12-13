@@ -180,6 +180,20 @@ export function AddSyncApp(){
     if ( Workspace.instance.apps.find(({title}) => title === "Sync") )
         return;
 
+
+    client.get().listApps().then(apps => {
+        apps.forEach(app => {
+            Workspace.addApp({
+                title: app.title,
+                icon: app.icon,
+                element: () => {
+                    client.post().runApp(app.entrypoint);
+                    return <div>Hello</div>
+                }
+            })
+        })
+    })
+
     Workspace.addApp({
         title: "Sync",
         icon: syncIcon,

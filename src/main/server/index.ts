@@ -9,6 +9,7 @@ import GitHubDeviceFlow from './github';
 import Basic from './basic';
 import Proxy from "./proxy"
 import PWA from './pwa';
+import Apps from "./apps";
 
 // when not in watch mode
 // watch mode is when developing the workspace
@@ -54,6 +55,7 @@ export const api = Backend.register(
     new PWA(),
     (process.env.PASS || process.env.AUTH_URL) && new Auth(),
     new Basic(),
+    new Apps(),
     !WATCH_MODE && new Proxy(),
     new CodeOSS(),
     process.env.DOCKER_RUNTIME && new GitHubDeviceFlow(),

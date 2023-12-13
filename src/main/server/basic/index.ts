@@ -1,6 +1,10 @@
 import open from "open";
 import { BackendTool, WebSocketRegisterer } from "../backend";
 import { Listener } from "@fullstacked/webapp/server";
+import fs from "fs";
+import path from "path";
+import { normalizePath } from "../sync/utils";
+import { Sync } from "../sync/sync";
 
 // Basic api methods
 export default class extends BackendTool {
@@ -22,5 +26,4 @@ export default class extends BackendTool {
 
     listeners: (Listener & { prefix?: string; })[];
     websocket: WebSocketRegisterer;
-
 }
