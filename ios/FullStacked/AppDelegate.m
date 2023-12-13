@@ -12,6 +12,7 @@
     NSString *documentsDirectory = [paths objectAtIndex:0];
     
     NSString* srcPath = [[NSBundle mainBundle] pathForResource:@"lite/server/index.mjs" ofType:@""];
+    NSLog(@"%@", srcPath);
     NSArray* nodeArguments = [NSArray arrayWithObjects:
                                 @"node",
                                 @"--no-experimental-fetch",

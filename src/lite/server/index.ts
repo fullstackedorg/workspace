@@ -6,6 +6,7 @@ import Backend from "../../main/server/backend";
 import PWA from "../../main/server/pwa";
 import Basic from "../../main/server/basic";
 import Proxy from "../../main/server/proxy";
+import Apps from "../../main/server/apps";
 
 if(process.env.FULLSTACKED_PORT)
     Backend.server.port = parseInt(process.env.FULLSTACKED_PORT);
@@ -18,6 +19,7 @@ export const api = Backend.register(
     new PWA(),
     (process.env.PASS || process.env.AUTH_URL) && new Auth(),
     new Basic(),
+    new Apps(),
     new Proxy(),
     new Sync()
 );

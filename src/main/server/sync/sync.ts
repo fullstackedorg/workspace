@@ -145,7 +145,12 @@ export class Sync {
             if (authorization)
                 fs.writeFileSync(Sync.configFile, JSON.stringify({ authorization }, null, 2));
         } else {
-            fs.writeFileSync(Sync.configFile, JSON.stringify(Sync.config, null, 2));
+            if(Sync.config.directory === process.env.MAIN_DIRECTORY){
+                const {directory, ...rest} = Sync.config;
+                fs.writeFileSync(Sync.configFile, JSON.stringify(rest, null, 2));
+            }else{
+                fs.writeFileSync(Sync.configFile, JSON.stringify(Sync.config, null, 2));
+            }
         }
     }
 

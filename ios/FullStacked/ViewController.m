@@ -1,5 +1,5 @@
 #import "ViewController.h"
-
+#import <WebKit/WKNavigationAction.h>
 
 @interface ViewController ()
 @property (weak, nonatomic) IBOutlet UIButton *myButton;
@@ -32,12 +32,19 @@
     
     [newWebView loadRequest:navigationAction.request];
     
-    dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5);
-    dispatch_after(delay, dispatch_get_main_queue(), ^(void){
-        [newWebView removeFromSuperview];
-    });
+    UIButton *closeBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 70, 100, 70)];
+    [closeBtn setTitle:@"Close" forState:UIControlStateNormal];
+    [closeBtn addTarget:self action:@selector(event_button_click:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:closeBtn];
     
     return newWebView;
+}
+
+-(void)event_button_click:(id)sender
+{
+    UIButton *closeBtn = sender;
+    [closeBtn removeFromSuperview];
+    [self.view.subviews.lastObject removeFromSuperview];
 }
 
 - (void)didReceiveMemoryWarning {

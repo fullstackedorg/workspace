@@ -1,16 +1,16 @@
-import { Listener } from "@fullstacked/webapp/server";
+import Server, { Listener } from "@fullstacked/webapp/server";
 import { BackendTool, WebSocketRegisterer } from "../backend";
 import { Sync } from "../sync/sync";
 import { normalizePath } from "../sync/utils";
 import fs from "fs";
 import path from "path";
 import mime from "mime";
-import { fork } from "child_process";
 
 export default class extends BackendTool {
     api = {
-        runApp(entrypoint: string){
-            fork(path.join(Sync.config.directory, entrypoint), {stdio: "inherit"});
+        async runApp(entrypoint: string){
+            const server = (await import(path.join(Sync.config.directory, entrypoint))).default as Server;
+            return `http://localhost:${server.port}`;
         },
         listApps(){
             return findAllPackageJSON(Sync.config.directory)

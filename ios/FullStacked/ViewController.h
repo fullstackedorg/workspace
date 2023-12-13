@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import <WebKit/WKWebView.h>
 #import <WebKit/WKUIDelegate.h>
-#import <WebKit/WKNavigationAction.h>
 
 @interface ViewController : UIViewController<WKUIDelegate>
 

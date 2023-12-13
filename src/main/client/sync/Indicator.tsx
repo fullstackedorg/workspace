@@ -7,6 +7,7 @@ import syncIcon from "../icons/sync.svg";
 import { client } from "../client";
 import { fsCloud } from "../explorer/clients/cloud";
 import { compareAndResolveKey, hasUnresolvedConflict, resolveAllKey } from "./conflicts";
+import { Browser } from "../browser";
 
 export function RenderSyncIndicator(){
     // render only once
@@ -176,6 +177,32 @@ function msDurationToHumanReadable(ms: number){
         ((seconds || (!minutes && !hours)) ? `${seconds}s` : "");
 }
 
+function AppLauncher(props: {app}){
+    const [failedOpen, setFailedOpen] = useState(false);
+    const [url, setUrl] = useState(null);
+
+    const openApp = url => {
+        const win = window.open(url, "", centeredPopupFeatures());
+        setFailedOpen(!win);
+    }
+
+    useEffect(() => {
+        client.post().runApp(props.app.entrypoint)
+            .then(url => {
+                setUrl(url);
+                openApp(url);
+            })
+    }, [])
+
+    return <div className={"prepare-fs-remote"}>
+        {url 
+            ? failedOpen 
+                ? <button onClick={() => openApp(url)}>Open {props.app.title}</button>
+                : <div>{props.app.title} Running</div>
+            : <div>Loading {props.app.title}</div>}
+    </div>
+}
+
 export function AddSyncApp(){
     if ( Workspace.instance.apps.find(({title}) => title === "Sync") )
         return;
@@ -186,10 +213,7 @@ export function AddSyncApp(){
             Workspace.addApp({
                 title: app.title,
                 icon: app.icon,
-                element: () => {
-                    client.post().runApp(app.entrypoint);
-                    return <div>Hello</div>
-                }
+                element: () => <AppLauncher app={app} />
             })
         })
     })
@@ -250,4 +274,26 @@ function SyncProgressView() {
             : <div>Syncing Done</div>
         }
     </div>
+}
+
+
+export function centeredPopupFeatures() {
+    const w = 500;
+    const h = 600;
+    const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+    const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+
+    const width = window.outerWidth ? window.outerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+    const height = window.outerHeight ? window.outerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+    const systemZoom = width / window.screen.availWidth;
+    const left = (width - w) / 2 / systemZoom + dualScreenLeft;
+    const top = (height - h) / 2 / systemZoom + dualScreenTop;
+
+    return `scrollbars=yes,
+      width=${w / systemZoom}, 
+      height=${h / systemZoom}, 
+      top=${top}, 
+      left=${left}
+      `
 }
