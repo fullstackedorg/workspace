@@ -2,26 +2,49 @@
 #import <WebKit/WKNavigationAction.h>
 
 @interface ViewController ()
-@property (weak, nonatomic) IBOutlet UIButton *myButton;
-@property (weak, nonatomic) IBOutlet WKWebView *webView;
+@property (strong, nonatomic) IBOutlet WKWebView *webView;
+@property (strong, nonatomic) NSURL *endpoint;
 
 - (IBAction)myButtonAction:(id)sender;
 @end
-
 
 @implementation ViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    _endpoint = [NSURL URLWithString:@"http://127.0.0.1:8000"];
+    
+    _webView = [[WKWebView alloc] init];
     [_webView setUIDelegate:self];
+    
+    [self start];
 }
 
-- (IBAction)myButtonAction:(id)sender
-{
+- (void) start {
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *dataTask = [session dataTaskWithURL:_endpoint completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if(error)
+        {
+            [self start];
+            return;
+        }
+        
+        [self launchWorkspace];
+    }];
+    [dataTask resume];
+}
+
+- (void) launchWorkspace {
     dispatch_async(dispatch_get_main_queue(), ^{
+        [_webView setFrame:self.view.frame];
+        
+        [[self.view.subviews firstObject] removeFromSuperview];
+        
         NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://127.0.0.1:8000"]];
         [_webView loadRequest:request];
-        [_myButton removeFromSuperview];
+        
+        [self.view addSubview:_webView];
     });
 }
 
@@ -52,5 +75,8 @@
     // Dispose of any resources that can be recreated.
 }
 
+
+- (void)myButtonAction:(id)sender __attribute__((ibaction)) {
+}
 
 @end
