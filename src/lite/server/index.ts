@@ -12,7 +12,7 @@ if(process.env.FULLSTACKED_PORT)
     Backend.server.port = parseInt(process.env.FULLSTACKED_PORT);
 
 // start it up!
-Backend.server.start();
+await Backend.server.start(true);
 console.log(`FullStacked running at http://localhost:${Backend.server.port}`);
 
 export const api = Backend.register(
@@ -23,3 +23,5 @@ export const api = Backend.register(
     new Proxy(),
     new Sync()
 );
+
+export default Backend.server;

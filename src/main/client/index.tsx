@@ -88,7 +88,8 @@ async function main() {
     import("./explorer"),
     import("./browser"),
     import("./latency"),
-    import("./codeOSS")]
+    import("./codeOSS"),
+    import("./apps")]
 }
 
 async function keepAccessTokenValid() {

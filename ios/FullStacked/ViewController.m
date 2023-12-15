@@ -13,8 +13,6 @@
 @property (strong, nonatomic) IBOutlet WKWebView *webView;
 @property (strong, nonatomic) NSURL *endpoint;
 @property (strong, nonatomic) NSMutableArray<NSURL *>* urls;
-
-- (IBAction)myButtonAction:(id)sender;
 @end
 
 @implementation ViewController
@@ -81,7 +79,7 @@
     closeBtn.layer.borderWidth = 0.5f;
     closeBtn.layer.cornerRadius = 3.0f;
     closeBtn.titleLabel.font = [UIFont systemFontOfSize:12];
-    [closeBtn addTarget:self action:@selector(event_button_click:) forControlEvents:UIControlEventTouchUpInside];
+    [closeBtn addTarget:self action:@selector(close:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:closeBtn];
     
     UIButton *safariBtn = [[UIButton alloc] initWithFrame:CGRectMake(15 + 50 + 10, self.view.frame.size.height - bottomPadding - 25, 60, 30)];
@@ -103,7 +101,7 @@
     [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:^(BOOL success) {}];
 }
 
--(void)event_button_click:(id)sender
+-(void)close:(id)sender
 {
     UIButton *closeBtn = sender;
     [closeBtn removeFromSuperview];

@@ -14,11 +14,17 @@ export const fsCloud = {
         // cannot push/pull at same time
         if (Sync.status?.syncing && Sync.status.syncing[key]) return;
 
+        // just to be safe, reset those values
+        SyncClient.rsync.baseDir = getLocalBaseDir();
+        if (Sync.config.authorization){
+            SyncClient.rsync.headers.authorization = Sync.config.authorization;
+            SyncClient.fs.headers.authorization = Sync.config.authorization;
+        }
+
         // make sure key exists on remote
         try {
             await SyncClient.fs.post().access(key)
         } catch (e) {
-            Sync.removeKey(key);
             Sync.sendError(`Key [${key}] does not exists on cloud storage.`);
             return;
         }
@@ -38,11 +44,6 @@ export const fsCloud = {
         const resolvedConflicts = conflicts
             ? Object.keys(conflicts)
             : undefined;
-
-        // just to be safe, reset those values
-        SyncClient.rsync.baseDir = getLocalBaseDir();
-        if (Sync.config.authorization)
-            SyncClient.rsync.headers.authorization = Sync.config.authorization;
 
         Sync.addSyncingKey(key, "pull", !options.progress);
         const response = await SyncClient.rsync.pull(key, {

@@ -7,7 +7,6 @@ import syncIcon from "../icons/sync.svg";
 import { client } from "../client";
 import { fsCloud } from "../explorer/clients/cloud";
 import { compareAndResolveKey, hasUnresolvedConflict, resolveAllKey } from "./conflicts";
-import { Browser } from "../browser";
 
 export function RenderSyncIndicator(){
     // render only once
@@ -39,6 +38,12 @@ export class SyncWS {
             setTimeout(() => SyncWS.init(), 2000);
         };
     }
+
+    static isSynced = (status: SyncStatus) => 
+        Object.keys(status).length !== 0
+        && (!status.syncing || Object.keys(status.syncing).length === 0)
+        && (!status.conflicts || Object.keys(status.conflicts).length === 0)
+        && (!status.errors || status.errors.length === 0);
 }
 
 function Indicator(props: {remove(): void}){
@@ -77,12 +82,8 @@ function Indicator(props: {remove(): void}){
 
     if(!status)
         return <></>
-
-    const isSynced =
-        Object.keys(status).length !== 0
-        && (!status.syncing || Object.keys(status.syncing).length === 0)
-        && (!status.conflicts || Object.keys(status.conflicts).length === 0)
-        && (!status.errors || status.errors.length === 0);
+        
+    const isSynced = SyncWS.isSynced(status);
 
     const onTop = !isSynced || Date.now() - status.lastSync < 10000;
 
@@ -177,46 +178,9 @@ function msDurationToHumanReadable(ms: number){
         ((seconds || (!minutes && !hours)) ? `${seconds}s` : "");
 }
 
-function AppLauncher(props: {app}){
-    const [failedOpen, setFailedOpen] = useState(false);
-    const [url, setUrl] = useState(null);
-
-    const openApp = url => {
-        const win = window.open(url, "", centeredPopupFeatures());
-        setFailedOpen(!win);
-    }
-
-    useEffect(() => {
-        client.post().runApp(props.app.entrypoint)
-            .then(url => {
-                setUrl(url);
-                openApp(url);
-            })
-    }, [])
-
-    return <div className={"prepare-fs-remote"}>
-        {url 
-            ? failedOpen 
-                ? <button onClick={() => openApp(url)}>Open {props.app.title}</button>
-                : <div>{props.app.title} Running</div>
-            : <div>Loading {props.app.title}</div>}
-    </div>
-}
-
 export function AddSyncApp(){
     if ( Workspace.instance.apps.find(({title}) => title === "Sync") )
         return;
-
-
-    client.get().listApps().then(apps => {
-        apps.forEach(app => {
-            Workspace.addApp({
-                title: app.title,
-                icon: app.icon,
-                element: () => <AppLauncher app={app} />
-            })
-        })
-    })
 
     Workspace.addApp({
         title: "Sync",

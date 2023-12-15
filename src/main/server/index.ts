@@ -40,7 +40,7 @@ if (fs.existsSync(injectionFileURL)) {
 }
 
 // start it up!
-Backend.server.start();
+await Backend.server.start(true);
 console.log(`FullStacked running at http://localhost:${Backend.server.port}`);
 
 // open browser directly from CLI start
@@ -48,8 +48,8 @@ if (process.env.NPX_START) {
     open(`http://localhost:${Backend.server.port}`);
 }
 
-// only useful for `fsc watch`
-export default Backend.server.serverHTTP;
+// useful for `fsc watch` and electron import
+export default Backend.server;
 
 export const api = Backend.register(
     new PWA(),

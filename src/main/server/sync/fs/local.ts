@@ -32,9 +32,10 @@ export const fsLocal = {
 
         // just to be safe, reset those values
         SyncClient.rsync.baseDir = getBaseDir();
-        if (Sync.config.authorization)
+        if (Sync.config.authorization){
             SyncClient.rsync.headers.authorization = Sync.config.authorization;
-
+            SyncClient.fs.headers.authorization = Sync.config.authorization;
+        }
             
         Sync.addSyncingKey(key, "push", !options.progress);
         const response = await SyncClient.rsync.push(key, {
