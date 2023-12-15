@@ -5,22 +5,22 @@ import { normalizePath } from "../sync/utils";
 import fs from "fs";
 import path from "path";
 import mime from "mime";
-import {pathToFileURL} from "url";
+import { pathToFileURL } from "url";
 
 export default class extends BackendTool {
     api = {
-        async runApp(entrypoint: string){
+        async runApp(entrypoint: string) {
             const server = (await import(pathToFileURL(path.join(Sync.config.directory, entrypoint)).toString())).default as Server;
             return `http://localhost:${server.port}`;
         },
-        listApps(){
+        listApps() {
             return findAllPackageJSON(Sync.config.directory)
                 .map(packageJSONPath => ({
                     directory: packageJSONPath.slice(Sync.config.directory.length + 1, - "/package.json".length),
                     packageJSON: JSON.parse(fs.readFileSync(packageJSONPath).toString())
                 }))
                 .filter(app => app.packageJSON.main)
-                .map(({directory, packageJSON}) => ({
+                .map(({ directory, packageJSON }) => ({
                     title: packageJSON.title || packageJSON.name,
                     icon: packageJSON.icon ? "/" + normalizePath(path.join("app-icon", directory, packageJSON.icon)) : undefined,
                     entrypoint: normalizePath(path.join(directory, packageJSON.main))
@@ -49,13 +49,13 @@ export default class extends BackendTool {
     websocket: WebSocketRegisterer;
 }
 
-function findAllPackageJSON(dir: string, packageJSONs: string[] = []){
-    const items = fs.readdirSync(dir, {withFileTypes: true});
+function findAllPackageJSON(dir: string, packageJSONs: string[] = []) {
+    const items = fs.readdirSync(dir, { withFileTypes: true });
     items.forEach(item => {
         const itemPath = path.join(item.path, item.name)
-        if(item.isDirectory() && item.name !== "node_modules" && item.name !== "code-oss")
+        if (item.isDirectory() && item.name !== "node_modules" && item.name !== "code-oss")
             findAllPackageJSON(itemPath, packageJSONs);
-        else if(item.name === "package.json")
+        else if (item.name === "package.json")
             packageJSONs.push(normalizePath(itemPath));
     })
     return packageJSONs;
