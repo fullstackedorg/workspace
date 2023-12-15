@@ -8,14 +8,14 @@ const main = new Build();
 main.config.client = "src/main/client/index.tsx";
 main.config.server = "src/main/server/index.ts";
 // main.config.production = true;
-main.config.outputDir = "dist/main";
 
 
 const lite = new Build();
 lite.config.client = "src/lite/client/index.tsx";
 lite.config.server = "src/lite/server/index.ts";
 // lite.config.production = true;
-lite.config.outputDir = "dist/lite";
+lite.config.outputDir = "electron/dist";
+
 
 await Promise.all([
     main.run(), 

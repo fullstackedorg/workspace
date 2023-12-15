@@ -16,7 +16,7 @@
 		33C0B2A020512ECA006376A9 /* NodeMobile.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 33C0B29E20512ECA006376A9 /* NodeMobile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		33C0B2A62051331A006376A9 /* NodeRunner.mm in Sources */ = {isa = PBXBuildFile; fileRef = 33C0B2A52051331A006376A9 /* NodeRunner.mm */; };
 		9C2C13D82B27724A001BF156 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C13D72B27724A001BF156 /* WebKit.framework */; };
-		9C8484A32B27B01200A7AE6D /* lite in Resources */ = {isa = PBXBuildFile; fileRef = 9C8484A22B27B01200A7AE6D /* lite */; };
+		9C8484A32B27B01200A7AE6D /* dist in Resources */ = {isa = PBXBuildFile; fileRef = 9C8484A22B27B01200A7AE6D /* dist */; };
 		9CAC22B62B2B992C00F75976 /* app-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 9CAC22B52B2B992C00F75976 /* app-icon.png */; };
 /* End PBXBuildFile section */
 
@@ -48,7 +48,7 @@
 		33C0B2A4205132CA006376A9 /* NodeRunner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NodeRunner.h; sourceTree = "<group>"; };
 		33C0B2A52051331A006376A9 /* NodeRunner.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = NodeRunner.mm; sourceTree = "<group>"; };
 		9C2C13D72B27724A001BF156 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
-		9C8484A22B27B01200A7AE6D /* lite */ = {isa = PBXFileReference; lastKnownFileType = folder; name = lite; path = ../dist/lite; sourceTree = "<group>"; };
+		9C8484A22B27B01200A7AE6D /* dist */ = {isa = PBXFileReference; lastKnownFileType = folder; name = dist; path = ../electron/dist; sourceTree = "<group>"; };
 		9CAC22B52B2B992C00F75976 /* app-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "app-icon.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -68,7 +68,7 @@
 		33C0B27C20512E17006376A9 = {
 			isa = PBXGroup;
 			children = (
-				9C8484A22B27B01200A7AE6D /* lite */,
+				9C8484A22B27B01200A7AE6D /* dist */,
 				33C0B29E20512ECA006376A9 /* NodeMobile.framework */,
 				33C0B28720512E17006376A9 /* FullStacked */,
 				33C0B28620512E17006376A9 /* Products */,
@@ -173,7 +173,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				33C0B29220512E17006376A9 /* Assets.xcassets in Resources */,
-				9C8484A32B27B01200A7AE6D /* lite in Resources */,
+				9C8484A32B27B01200A7AE6D /* dist in Resources */,
 				9CAC22B62B2B992C00F75976 /* app-icon.png in Resources */,
 				33C0B29020512E17006376A9 /* Main.storyboard in Resources */,
 			);
