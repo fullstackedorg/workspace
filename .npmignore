@@ -6,32 +6,20 @@
 *.tsx
 !*.d.ts
 
-
 /client
 /server
 /pwa
-/code-oss-build
-/neutralino
 /code-oss-build
 /docker
 /code-oss/bin
 /code-oss/node_modules
 /code-oss/package-lock.json
 
-cp.js
+src
 
-dist/docker-compose.yml
 dist/server/index.mjs.map
 
 *.tgz
-code-server-config.yml
-Dockerfile
-Dockerfile-dev
 
-install.js
+build.js
 tsconfig.json
-
-gitconfig-base
-github-credential.js
-
-website
