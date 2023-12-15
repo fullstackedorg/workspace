@@ -5,11 +5,12 @@ import { normalizePath } from "../sync/utils";
 import fs from "fs";
 import path from "path";
 import mime from "mime";
+import {pathToFileURL} from "url";
 
 export default class extends BackendTool {
     api = {
         async runApp(entrypoint: string){
-            const server = (await import(path.join(Sync.config.directory, entrypoint))).default as Server;
+            const server = (await import(pathToFileURL(path.join(Sync.config.directory, entrypoint)).toString())).default as Server;
             return `http://localhost:${server.port}`;
         },
         listApps(){
