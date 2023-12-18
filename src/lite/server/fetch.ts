@@ -7,14 +7,12 @@ import https from "https"
 // https://github.com/nodejs-mobile/nodejs-mobile/issues/71
 // @ts-ignore
 global.fetch = global.fetch || function(input: string, init?: RequestInit) {
-    console.log("======= FAKE FETCH =======")
     const client = input.startsWith("http:")
         ? http
         : https;
 
     let headers;
     if(init?.headers){
-        console.log(init.headers);
         headers = {};
         Object.entries(init.headers).forEach(([key, value]) => {
             if(value)
