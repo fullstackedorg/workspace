@@ -9,7 +9,6 @@ import GitHubDeviceFlow from './github';
 import Basic from './basic';
 import Proxy from "./proxy"
 import PWA from './pwa';
-import Apps from "./apps";
 
 // when not in watch mode
 // watch mode is when developing the workspace
@@ -44,7 +43,7 @@ await Backend.server.start(true);
 console.log(`FullStacked running at http://localhost:${Backend.server.port}`);
 
 // open browser directly from CLI start
-if (process.env.NPX_START) {
+if (process.env.NPX_START && !process.env.DOCKER_RUNTIME) {
     open(`http://localhost:${Backend.server.port}`);
 }
 
@@ -55,7 +54,6 @@ export const api = Backend.register(
     new PWA(),
     (process.env.PASS || process.env.AUTH_URL) && new Auth(),
     new Basic(),
-    new Apps(),
     !WATCH_MODE && new Proxy(),
     new CodeOSS(),
     process.env.DOCKER_RUNTIME && new GitHubDeviceFlow(),

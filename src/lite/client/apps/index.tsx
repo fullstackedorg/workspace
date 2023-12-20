@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { client } from "../client"
-import { SyncWS, centeredPopupFeatures } from "../sync/Indicator";
-import { Workspace } from "../workspace";
+import { SyncWS, centeredPopupFeatures } from "../../../main/client/sync/Indicator";
+import { Workspace } from "../../../main/client/workspace";
 
 function AppLauncher(props: {app, didSpawn}){
     const [failedOpen, setFailedOpen] = useState(false);

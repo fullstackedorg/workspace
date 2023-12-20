@@ -73,6 +73,7 @@ export class Sync {
             });
             response = await helloResponse.text();
         } catch (e) {
+            console.log(e)
             return {
                 error: "storage_endpoint_unreachable",
                 message: `endpoint [${SyncClient.fs.origin}] response [${response}]`
@@ -95,6 +96,9 @@ export class Sync {
 
         if (!exists)
             fs.mkdirSync(directory, { recursive: true });
+
+        if(!Sync.config)
+            Sync.config = {};
 
         Sync.config.directory = directory;
         Sync.config.keys = Sync.config.keys || [];

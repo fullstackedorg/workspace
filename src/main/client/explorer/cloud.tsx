@@ -7,7 +7,7 @@ import { PrepareCloudStorage } from "../sync/prepare";
 export default function (props: {explorerRef: RefObject<Explorer>, options: ExplorerOptions}){
     return Sync.isInit
         ? <Explorer ref={props.explorerRef} client={fsCloud} action={(item) => undefined} options={props.options}/>
-        : <PrepareCloudStorage onSuccess={() => {
+        : <PrepareCloudStorage addSyncApp onSuccess={() => {
                 Sync.isInit = true; 
                 return <Explorer ref={props.explorerRef} client={fsCloud} action={(item) => undefined} options={props.options}/>
             }}/>

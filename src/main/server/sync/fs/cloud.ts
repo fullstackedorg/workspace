@@ -4,7 +4,7 @@ import { homedir } from "os";
 import { Sync } from "../sync";
 import { SyncClient } from "../client";
 
-const getLocalBaseDir = () => Sync.config?.directory || homedir();
+export const getLocalBaseDir = () => Sync.config?.directory || homedir();
 
 export const fsCloud = {
     ...fsInit(SyncClient.fs.post.bind(SyncClient.fs), () => "./"),
@@ -25,6 +25,7 @@ export const fsCloud = {
         try {
             await SyncClient.fs.post().access(key)
         } catch (e) {
+            console.log(e);
             Sync.sendError(`Key [${key}] does not exists on cloud storage.`);
             return;
         }

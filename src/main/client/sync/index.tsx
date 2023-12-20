@@ -8,16 +8,17 @@ import { AddSyncApp, RenderSyncIndicator } from "./Indicator";
 
 export class Sync {
     static isInit: boolean = false;
-    static async init() {
+    static async init(addSyncApp = true, force = false) {
         RenderSyncIndicator();
 
         const initResponse = await client.get().initSync();
         // if user has no config, don't force him into Cloud Sync
-        if(typeof initResponse === "object" && initResponse.error === "no_configs")
+        if(typeof initResponse === "object" && (initResponse.error === "no_configs" && !force))
             return;
         else if(typeof initResponse === "boolean" && initResponse){
             Sync.isInit = true;
-            AddSyncApp();
+            if(addSyncApp)
+                AddSyncApp();
             return;
         }
 
@@ -25,7 +26,7 @@ export class Sync {
             title: "Sync",
             icon: syncIcon,
             element: (app) => {
-                return <PrepareCloudStorage onSuccess={() => Workspace.instance.removeWindow(app)} />
+                return <PrepareCloudStorage addSyncApp={addSyncApp} onSuccess={() => Workspace.instance.removeWindow(app)} />
             }
         })
     }

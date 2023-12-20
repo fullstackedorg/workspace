@@ -9,7 +9,7 @@ import { client } from "./client";
 import logoutIcon from "./icons/log-out.svg";
 import { Sync } from "./sync";
 
-(() => {
+export function init() {
     const hasAuth = hasAuthToken();
 
     if (hasAuth) {
@@ -26,7 +26,7 @@ import { Sync } from "./sync";
     setBackground();
 
     main();
-})()
+}
 
 function hasAuthToken() {
     return Cookies.get("fullstackedAccessToken")
@@ -81,15 +81,6 @@ async function main() {
     }
 
     createRoot(rootDiv).render(<Workspace />);
-
-    Sync.init();
-
-    [import("./terminal"),
-    import("./explorer"),
-    import("./browser"),
-    import("./latency"),
-    import("./codeOSS"),
-    import("./apps")]
 }
 
 async function keepAccessTokenValid() {

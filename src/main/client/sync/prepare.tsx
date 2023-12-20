@@ -4,14 +4,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { client } from "../client";
 import { AddSyncApp, RenderSyncIndicator, centeredPopupFeatures } from "./Indicator";
 
-export function PrepareCloudStorage({ onSuccess }) {
+export function PrepareCloudStorage({ onSuccess, addSyncApp }) {
     const [response, retryInit] = useAPI(client.get().initSync);
 
     useEffect(() => {
         if (response) {
             RenderSyncIndicator();
 
-            if (typeof response === "boolean") {
+            if (typeof response === "boolean" && addSyncApp) {
                 AddSyncApp();
             }
         }

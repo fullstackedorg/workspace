@@ -21,7 +21,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "start": "fsc watch -c ./src/main/client/index.tsx -s src/main/server/index.ts",
+    "start": "fsc watch -c ./src/main/client/index.ts -s src/main/server/index.ts",
     "cp": "node src/main/cp",
     "build": "node build && npm run cp",
     "predocker": "npm run build",
@@ -47,7 +47,7 @@
     "@fullstacked/build": "^0.10.12",
     "@fullstacked/cli": "^0.10.14",
     "@fullstacked/share": "^0.10.9",
-    "@fullstacked/sync": "^0.10.1",
+    "@fullstacked/sync": "^0.10.2-alpha.1",
     "@fullstacked/watch": "^0.10.24",
     "@fullstacked/webapp": "^0.10.18",
     "@types/cookie": "^0.5.1",
