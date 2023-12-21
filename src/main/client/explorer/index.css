@@ -113,22 +113,3 @@
     justify-content: flex-end;
     margin-left: 10px;
 }
-
-.prepare-fs-remote {
-    color: white;
-    text-align: center;
-    height: 100%;
-    padding: 20px 5px;
-}
-.prepare-fs-remote > div {
-    margin-bottom: 20px;
-}
-.prepare-fs-remote input {
-    padding: 8px 5px;
-    width: 280px;
-    border-radius: 3px;
-    border: 1px solid #cccccc;
-}
-.prepare-fs-remote button{
-    margin-left: 10px;
-}
