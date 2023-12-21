@@ -4,7 +4,7 @@ import decompress from "decompress";
 import {execSync} from "child_process";
 
 const platform = "linux-x64";
-const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.85.0";
+const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.85.1";
 
 const file = fs.createWriteStream("vscode.zip");
 await new Promise(resolve => {
@@ -66,6 +66,10 @@ fs.rmSync(`vscode-reh-web-${platform}/node_modules`, {recursive: true});
 
 const remotePackageJSON = JSON.parse(fs.readFileSync("vscode/remote/package.json").toString());
 const outPackageJSON = JSON.parse(fs.readFileSync(`vscode-reh-web-${platform}/package.json`).toString());
+
+// TODO: remove when bumped in vscode repo
+remotePackageJSON.dependencies["@vscode/spdlog"] = "^0.14.0";
+
 fs.writeFileSync(`vscode-reh-web-${platform}/package.json`, JSON.stringify({
     ...outPackageJSON,
     dependencies: remotePackageJSON.dependencies

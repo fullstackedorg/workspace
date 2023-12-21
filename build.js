@@ -1,0 +1,23 @@
+import Build from "@fullstacked/build";
+
+Build.fullstackedNodeDockerComposeSpec = null;
+
+delete process.env.FULLSTACKED_PORT;
+
+const main = new Build();
+main.config.client = "src/main/client/index.ts";
+main.config.server = "src/main/server/index.ts";
+// main.config.production = true;
+
+
+const lite = new Build();
+lite.config.client = "src/lite/client/index.ts";
+lite.config.server = "src/lite/server/index.ts";
+// lite.config.production = true;
+lite.config.outputDir = "electron/dist";
+
+
+await Promise.all([
+    main.run(), 
+    lite.run()
+]);

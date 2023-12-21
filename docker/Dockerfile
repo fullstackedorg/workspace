@@ -2,7 +2,7 @@ FROM docker:dind
 
 # install basic tools
 RUN apk add --update bash make g++ nodejs npm git python3 curl vim gcompat tini \
-    krb5-dev curl-dev openssl-dev libxml2-dev sqlite-dev oniguruma-dev rsync sshpass
+    curl-dev openssl-dev krb5-dev
 
 # Bun and Deno (and probably other binaries) glibc dependency
 # source https://github.com/oven-sh/bun/issues/3075#issuecomment-1565069263
@@ -14,9 +14,9 @@ RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/s
     rm -rf glibc-2.35-r1.apk glibc-bin-2.35-r1.apk
 
 # github device flow setup
-COPY github-credential.js /root/github-credential
+COPY docker/github-credential.js /root/github-credential
 RUN chmod +x /root/github-credential
-COPY gitconfig-base /home/.gitconfig
+COPY docker/gitconfig-base /home/.gitconfig
 
 # add current fullstacked build
 COPY dist /fullstacked/dist

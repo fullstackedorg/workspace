@@ -1,20 +1,20 @@
 #!/usr/bin/env node
-import {existsSync} from "fs";
-import {execSync, fork} from "child_process";
-import {fileURLToPath} from "url";
-import {dirname} from "path"
-import {Socket} from "net";
+import { existsSync } from "fs";
+import { execSync, fork } from "child_process";
+import { fileURLToPath } from "url";
+import { dirname } from "path"
+import { Socket } from "net";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const lastArg = process.argv.at(-1);
 
 const dirCodeOSS = `${currentDir}/code-oss`
-const entrypointCodeOSS =  `${dirCodeOSS}/out/server-main.js`;
+const entrypointCodeOSS = `${dirCodeOSS}/out/server-main.js`;
 
 let portCodeOSS, processCodeOSS;
-if(existsSync(entrypointCodeOSS)){
+if (existsSync(entrypointCodeOSS)) {
 
-    if(!existsSync(dirCodeOSS + "/node_modules")){
+    if (!existsSync(dirCodeOSS + "/node_modules")) {
         console.log("Installing Code OSS node_modules");
         execSync("npm i --legacy-peer-deps", {
             stdio: "inherit",
@@ -27,17 +27,18 @@ if(existsSync(entrypointCodeOSS)){
         "--without-connection-token",
         "--host", "0.0.0.0",
         "--port", portCodeOSS.toString()
-    ], {stdio: "inherit"});
+    ], { stdio: "inherit" });
 }
 
 const portFullStacked = process.env.FULLSTACKED_PORT || await getNextAvailablePort(8000);
-const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
+const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`, {
     env: {
         ...process.env,
         FULLSTACKED_PORT: portFullStacked,
         CODE_OSS_PORT: portCodeOSS,
         FULLSTACKED_ENV: process.env.FULLSTACKED_ENV || "production",
         RUNTIME_PATH: process.env.PATH,
+        MAIN_DIRECTORY: process.env.DOCKER_RUNTIME ? "/home" : undefined,
         NPX_START: lastArg.endsWith("fullstacked") || lastArg.endsWith("fullstacked\\index.js")
             ? "1"
             : ""
@@ -45,7 +46,7 @@ const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`,  {
 });
 
 processFullStacked.on("exit", () => {
-    if(processCodeOSS)
+    if (processCodeOSS)
         processCodeOSS.kill();
     process.exit();
 });
