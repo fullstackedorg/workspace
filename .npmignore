@@ -2,22 +2,20 @@
 .github
 
 *.js.map
+*.mjs.map
 *.ts
 *.tsx
 !*.d.ts
 
-/client
-/server
 /pwa
+/ios
+/electron
+/src
 /code-oss-build
 /docker
 /code-oss/bin
 /code-oss/node_modules
 /code-oss/package-lock.json
-
-src
-
-dist/server/index.mjs.map
 
 *.tgz
 
