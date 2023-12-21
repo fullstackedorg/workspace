@@ -5,7 +5,7 @@ import { Sync } from "../sync";
 import path, { resolve } from "path";
 import { SyncClient } from "../client";
 import { normalizePath } from "../utils";
-import { ProgressInfo } from "@fullstacked/sync/constants";
+import { scan } from "@fullstacked/sync/utils"
 
 const getBaseDir = () => Sync.config?.directory || homedir();
 
@@ -71,16 +71,10 @@ export const fsLocal = {
     }
 }
 
-function findAllPackageJSON(baseDir: string, dir: string, packageJSONs: string[] = []) {
-    const items = fs.readdirSync(path.resolve(baseDir, dir), { withFileTypes: true });
-    items.forEach(item => {
-        const itemPath = dir + "/" + item.name;
-        if (item.isDirectory() && item.name !== "node_modules" && item.name !== "code-oss")
-            findAllPackageJSON(baseDir, itemPath, packageJSONs);
-        else if (item.name === "package.json")
-            packageJSONs.push(itemPath);
-    })
-    return packageJSONs;
+function findAllPackageJSON(baseDir: string, dir: string) {
+    return scan(baseDir, dir, [".gitignore"])
+        .filter(([itemPath]) => itemPath.endsWith("/package.json"))
+        .map(([packageJSONPath]) => packageJSONPath);
 }
 
 async function syncApp (packageJSON: string) {
