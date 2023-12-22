@@ -79,9 +79,9 @@ async function getAppInfosAndMaybePull([packagePath, remoteVersion]){
         return null;
 
     const pathComponents = packagePath.split("/").slice(0, -1);
-    let version = null, directory = "";
+    const directory = pathComponents.join("/");
+    let version = null;
     while(pathComponents.length && !version){
-        directory = pathComponents.join("/")
         version = SyncClient.rsync.getSavedSnapshotAndVersion(directory)?.version;
         pathComponents.pop();
     }
@@ -95,7 +95,7 @@ async function getAppInfosAndMaybePull([packagePath, remoteVersion]){
 
     if (version !== remoteVersion) {
         const toSync = files.map(item => normalizePath(path.join(directory, item)));
-        
+
         Sync.addSyncingKey(title, "pull");
         await Promise.all(toSync.map(item => SyncClient.rsync.pull(item, {
             force: true,

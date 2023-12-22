@@ -11,7 +11,7 @@
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentsDirectory = [paths objectAtIndex:0];
     
-    NSString* srcPath = [[NSBundle mainBundle] pathForResource:@"dist/server/index.mjs" ofType:@""];
+    NSString* srcPath = [[NSBundle mainBundle] pathForResource:@"lite/server/index.mjs" ofType:@""];
     NSArray* nodeArguments = [NSArray arrayWithObjects:
                                 @"node",
                                 @"--no-experimental-fetch",
