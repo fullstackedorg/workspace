@@ -1,4 +1,4 @@
-import Server from "./dist/server/index.mjs";
+import Server from "../src/lite/server";
 import { app, BrowserWindow } from "electron";
 
 const createWindow = () => {

@@ -19,16 +19,18 @@
   "bin": {
     "fullstacked": "index.js"
   },
+  "workspaces": [
+    "electron"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit --skipLibCheck",
     "start": "fsc watch -c ./src/main/client/index.ts -s src/main/server/index.ts",
-    "cp": "node src/main/cp",
-    "build": "node build && npm run cp",
+    "build": "node build",
     "predocker": "npm run build",
     "docker": "docker build . -f docker/Dockerfile -t fullstackedorg/workspace:test",
     "prepack": "npm run build",
     "preelectron": "npm run build",
-    "electron": "electron electron/index.mjs"
+    "electron": "npm start --workspace=electron"
   },
   "type": "module",
   "devDependencies": {
@@ -60,7 +62,6 @@
     "cookie": "^0.5.0",
     "decompress": "^4.2.1",
     "dotenv": "^16.3.1",
-    "electron": "^28.0.0",
     "eslint-linter-browserify": "^8.46.0",
     "fast-querystring": "^1.1.2",
     "http-proxy": "^1.18.1",
@@ -75,8 +76,5 @@
     "xterm": "^5.2.1",
     "xterm-addon-fit": "^0.7.0",
     "xterm-addon-web-links": "^0.8.0"
-  },
-  "externalModules": [
-    "node-pty"
-  ]
+  }
 }

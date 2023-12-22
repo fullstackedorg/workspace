@@ -1,9 +1,9 @@
 {
-  "name": "fullstacked-electron",
-  "description": "FullStacked Cloud Lite",
+  "name": "fullstacked-lite",
+  "description": "FullStacked Lite",
   "version": "0.0.0",
   "author": "cplepage",
-  "main": "index.mjs",
+  "main": "dist/server/index.mjs",
   "devDependencies": {
     "@electron-forge/cli": "^7.2.0",
     "@electron-forge/maker-deb": "^7.2.0",

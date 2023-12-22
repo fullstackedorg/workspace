@@ -19,7 +19,7 @@ RUN chmod +x /root/github-credential
 COPY docker/gitconfig-base /home/.gitconfig
 
 # add current fullstacked build
-COPY dist /fullstacked/dist
+COPY dist/main /fullstacked/dist/main
 COPY index.js /fullstacked/index.mjs
 RUN cd /fullstacked && npm i node-pty
 

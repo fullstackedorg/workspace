@@ -17,6 +17,8 @@
 /code-oss/node_modules
 /code-oss/package-lock.json
 
+/dist/lite
+
 *.tgz
 
 build.js

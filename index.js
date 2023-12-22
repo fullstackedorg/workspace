@@ -31,7 +31,7 @@ if (existsSync(entrypointCodeOSS)) {
 }
 
 const portFullStacked = process.env.FULLSTACKED_PORT || await getNextAvailablePort(8000);
-const processFullStacked = fork(`${currentDir}/dist/server/index.mjs`, {
+const processFullStacked = fork(`${currentDir}/dist/main/server/index.mjs`, {
     env: {
         ...process.env,
         FULLSTACKED_PORT: portFullStacked,
