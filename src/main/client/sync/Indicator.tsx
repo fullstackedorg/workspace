@@ -104,7 +104,12 @@ function Indicator(props: {remove(): void}){
                         </div>)}
                 </div>
                 <button className="small" onClick={() => {
-                    Workspace.instance.addWindow(Workspace.instance.apps.find(({title}) => title === "Sync"));
+                    const syncApp = Workspace.instance.apps.find(({title}) => title === "Sync");
+                    Workspace.instance.addWindow(syncApp || {
+                        title: "Sync",
+                        icon: syncIcon,
+                        element: () => <SyncProgressView />
+                    });
                 }}>Progress</button>
             </div>}
 
