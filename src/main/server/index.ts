@@ -44,7 +44,7 @@ await Backend.server.start(true);
 console.log(`FullStacked running at http://localhost:${Backend.server.port}`);
 
 // open browser directly from CLI start
-if (process.env.NPX_START && !process.env.DOCKER_RUNTIME) {
+if (!WATCH_MODE && process.env.NPX_START && !process.env.DOCKER_RUNTIME) {
     open(`http://localhost:${Backend.server.port}`);
 }
 

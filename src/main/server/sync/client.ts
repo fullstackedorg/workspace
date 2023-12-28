@@ -1,11 +1,11 @@
 import { RsyncHTTP2Client } from "@fullstacked/sync/http2/client";
 import createClient from "@fullstacked/webapp/rpc/createClient";
-import type { promises } from "fs";
-import { RemoteStorageResponseType } from "./sync";
+import fs from "fs";
+import type { RemoteStorageResponseType } from "./sync";
 import http2 from "http2";
 
 export class SyncClient {
-    fs: ReturnType<typeof createClient<typeof promises & { hello: RemoteStorageResponseType }>>;
+    fs: ReturnType<typeof createClient<typeof fs.promises & { hello(): Promise<RemoteStorageResponseType> }>>;
     rsync: RsyncHTTP2Client;
 
     constructor(endpoint: string) {
@@ -82,6 +82,24 @@ export class SyncClient {
                 })
             }
         }
+    }
+
+    async hello(): Promise<RemoteStorageResponseType>{
+        let response: RemoteStorageResponseType;
+        try {
+            // hello responds 200 with empty body if OK
+            response = await this.fs.get().hello();
+        } catch (e) {
+            return {
+                error: "storage_endpoint_unreachable",
+                message: `endpoint [${this.fs.origin}] response [${response}]`
+            }
+        }
+
+        if(response)
+            return response
+
+        return true;
     }
 
     set authorization(token: string) {

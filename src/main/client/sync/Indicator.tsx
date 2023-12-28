@@ -5,7 +5,6 @@ import prettyBytes from "pretty-bytes";
 import { Workspace } from "../workspace";
 import syncIcon from "../icons/sync.svg";
 import { client } from "../client";
-import { fsCloud } from "../explorer/clients/cloud";
 import { compareAndResolveKey, hasUnresolvedConflict, resolveAllKey } from "./conflicts";
 
 export function RenderSyncIndicator(){
@@ -127,7 +126,6 @@ function Indicator(props: {remove(): void}){
                                     Resolve All
                                 </button>
                                 : <button 
-                                    onClick={() => fsCloud.post().sync(key)} 
                                     className="small"
                                 >
                                     Pull

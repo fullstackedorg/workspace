@@ -1,17 +1,16 @@
 import { homedir } from "os";
-import fs, { existsSync } from "fs";
+import fs from "fs";
+import path from "path";
 import { WebSocket } from "ws";
 import { SyncStatus } from "../../client/sync/status";
 import type { ProgressInfo } from "@fullstacked/sync/constants";
 import { SyncClient } from "./client";
-import { RsyncHTTP2Client } from "@fullstacked/sync/http2/client";
-import createClient from "@fullstacked/webapp/rpc/createClient";
 
 export type RemoteStorageResponseType =
-    // if theres is no config file nor USE_CLOUD_CONFIG
+    // if theres is no config file nor CLOUD_CONFIG
     // don't force user into setting up Sync
     {
-        error: "no_configs"
+        error: "no_config"
     } |
     // user needs to define a local directory to sync files
     {
@@ -50,6 +49,9 @@ export type RemoteStorageResponseType =
     string;
 
 export class Sync {
+    static DEFAULT_STORAGE_ENDPOINT = process.env.STORAGE_ENDPOINT || "https://auth.fullstacked.cloud/storages";
+    static defaultSyncClient = new SyncClient(Sync.DEFAULT_STORAGE_ENDPOINT);
+
     static status: SyncStatus;
     static syncInterval = 1000 * 60 * 2; // 2 minutes
     static config: {
@@ -57,8 +59,9 @@ export class Sync {
         storages?: {
             [endpoint: string]: {
                 name?: string,
-                clients?: SyncClient,
-                keys?: string[]
+                client?: SyncClient,
+                keys?: string[],
+                cluster?: string
             }
         }
     } = null;
@@ -68,7 +71,7 @@ export class Sync {
     private constructor() { }
 
     static setDirectory(directory: string) {
-        const exists = existsSync(directory);
+        const exists = fs.existsSync(directory);
         const isFile = exists && fs.statSync(directory).isFile();
 
         if (isFile)
@@ -84,11 +87,44 @@ export class Sync {
         Sync.saveConfigs();
     }
 
-    static setAuthorization(token: string) {
+    static getSyncClient(origin: string) {
+        if(origin === Sync.defaultSyncClient.fs.origin)
+            return Sync.defaultSyncClient;
+
+        if (!Sync.config.storages || !Sync.config.storages[origin]) 
+            return null;
+
+        return Sync.config.storages[origin].client;
+    }
+
+    static setAuthorization(origin: string, token: string) {
         token = token.trim();
 
-        SyncClient.fs.headers.authorization = token;
-        SyncClient.rsync.headers.authorization = token;
+        const syncClient = Sync.getSyncClient(origin);
+
+        if (!Sync.config.storages)
+            Sync.config.storages = {};
+
+        if (!Sync.config.storages[origin])
+            Sync.config.storages[origin] = {};
+
+        if (!syncClient)
+            Sync.config.storages[origin].client = new SyncClient(origin);
+
+        syncClient.authorization = token;
+        Sync.config.storages[origin].client = syncClient;
+
+        Sync.saveConfigs();
+    }
+
+    static setStorageName(origin: string, name: string){
+        if (!Sync.config.storages)
+            Sync.config.storages = {};
+
+        if (!Sync.config.storages[origin])
+            Sync.config.storages[origin] = {};
+
+        Sync.config.storages[origin].name = name;
 
         Sync.saveConfigs();
     }
@@ -97,10 +133,10 @@ export class Sync {
         if (!Sync.config.storages)
             Sync.config.storages = {};
 
-        if(!Sync.config.storages[origin])
+        if (!Sync.config.storages[origin])
             Sync.config.storages[origin] = {};
 
-        if(!Sync.config.storages[origin].keys)
+        if (!Sync.config.storages[origin].keys)
             Sync.config.storages[origin].keys = []
 
         Sync.config.storages[origin].keys.push(key);
@@ -109,8 +145,10 @@ export class Sync {
     }
 
     static removeKey(key: string) {
-        if (!Sync.config?.storages[origin] 
-            || Sync.config.storages[origin].keys?.includes(key)) return;
+        if (!Sync.config?.storages[origin]
+            || !Sync.config.storages[origin].keys?.includes(key)) {
+            return;
+        }
 
         const indexOf = Sync.config.storages[origin].keys.indexOf(key);
         Sync.config.storages[origin].keys.splice(indexOf, 1);
@@ -122,17 +160,11 @@ export class Sync {
 
         // save to a cloud
         if (process.env.CLOUD_CONFIG) {
-            
 
-        } 
+        }
         // save locally
         else {
-            const configs = {
-                ...Sync.config,
-                storages: {
-
-                }
-            }
+            fs.writeFileSync(Sync.configFile, JSON.stringify(Sync.config || {}, null, 2));
         }
     }
 
@@ -144,7 +176,7 @@ export class Sync {
                 error: "directory",
                 reason: "No directory defined"
             } as const;
-        } else if (!existsSync(Sync.config.directory)) {
+        } else if (!fs.existsSync(Sync.config.directory)) {
             return {
                 error: "directory",
                 reason: "Does not exists"
@@ -159,79 +191,72 @@ export class Sync {
         }
     }
 
-    // in self hosted docker
-    // we store the authorization in container volume and uses sync keys from cloud
-    // we never save authorization in cloud storage
-    static async loadConfigs(): Promise<RemoteStorageResponseType> {
+    private static loadConfigLocal(): RemoteStorageResponseType {
+        const exists = fs.existsSync(Sync.configFile);
 
-        // in iOS, we start without any config file,
-        // but we start the process with the right MAIN_DIRECTORY to 
-        // use.
-        if (process.env.MAIN_DIRECTORY && Sync.config === null) {
-            Sync.config = {
-                directory: process.env.MAIN_DIRECTORY
+        if (Sync.config === null) {
+
+            // in iOS, we start without any config file,
+            // but we start the process with the right MAIN_DIRECTORY to 
+            // use.
+            if (process.env.MAIN_DIRECTORY) {
+                Sync.config = {
+                    directory: process.env.MAIN_DIRECTORY
+                }
+            }
+
+            // no file at all
+            else if(!exists) {
+                return {
+                    error: "no_config"
+                }
             }
         }
 
-
-        if (Sync.config === null && !existsSync(Sync.configFile) && !process.env.USE_CLOUD_CONFIG) {
+        // make sure it's a file
+        const isFile = fs.statSync(Sync.configFile).isFile();
+        if(!isFile){
             return {
-                error: "no_configs"
+                error: "corrupt_file",
+                filePath: Sync.configFile
             }
         }
 
-        let response: RemoteStorageResponseType;
-        let configData = {};
+        // let's try to JSON parse it
+        const contents = fs.readFileSync(Sync.configFile).toString();
+        try {
+            Sync.config = JSON.parse(contents);
+        } catch (e) {
+            return {
+                error: "corrupt_file",
+                filePath: Sync.configFile
+            }
+        }
 
-        // from local
-        if (existsSync(Sync.configFile) && fs.statSync(Sync.configFile).isFile()) {
-            const contents = fs.readFileSync(Sync.configFile).toString();
+        // init all of our storage clients
+        if(Sync.config.storages) {
+            Object.entries(Sync.config.storages).forEach(([origin, storage]) => {
+                const authorization = Sync.config.storages[origin].client?.authorization;
 
-            try {
-                configData = JSON.parse(contents);
-            } catch (e) {
-                response = {
-                    error: "corrupt_file",
-                    filePath: Sync.configFile
+                Sync.config.storages[origin] = {
+                    ...storage,
+                    client: new SyncClient(origin)
                 }
-            }
+
+                if(authorization)
+                    Sync.config.storages[origin].client.authorization = authorization
+            })
         }
+    }
 
-        // from cloud
-        if (process.env.USE_CLOUD_CONFIG) {
-            response = await Sync.hello();
-            if (response)
-                return response;
+    private static loadConfigCloud(): Promise<RemoteStorageResponseType> {
+        return null;
+    }
 
-            // when first time connecting to cloud storage, 
-            // file doesn't exists and fails read
-            let cloudConfigs = "{}";
-            try {
-                cloudConfigs = (await SyncClient.fs.post().readFile(Sync.configFile)).toString();
-            } catch (e) { }
-
-            try {
-                configData = {
-                    ...configData,
-                    ...JSON.parse(cloudConfigs)
-                };
-            } catch (e) {
-                response = {
-                    error: "corrupt_file",
-                    filePath: "Cloud " + Sync.configFile
-                }
-            }
-        }
-
-        if (!Sync.config)
-            Sync.config = {}
-
-        Sync.config = {
-            ...Sync.config,
-            ...configData
-        }
-
-        return response;
+    static async loadConfigs(): Promise<RemoteStorageResponseType> {
+        return process.env.CLOUD_CONFIG
+            ? this.loadConfigCloud()
+            : this.loadConfigLocal();
     }
 
     static addConflicts(baseKey, conflictingKeys) {

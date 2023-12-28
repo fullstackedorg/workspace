@@ -7,43 +7,55 @@ import fileIcons2 from "../icons/file-icons-2.svg";
 import fileIcons from "../icons/file-icons.svg";
 import type { EventDataNode } from "rc-tree/es/interface";
 import "rc-tree/assets/index.css"
-import type { fsLocal } from "../../server/sync/fs/local";
+import createClient from "@fullstacked/webapp/rpc/createClient";
+import type fsType from "../../server/sync/fs";
 import { client } from "../client";
-import type { api } from "../../server";
 
 export type ExplorerOptions = {
     showHiddenFiles: boolean,
     showDeleteButtons: boolean
 }
 
+export const fsClient = createClient<typeof fsType>(window.location.protocol + "//" + window.location.host + "/fs");
+
 export default class Explorer extends Component<{
-    client: any,
+    origin: string,
     action: (item: File) => any,
     options: ExplorerOptions
 }> {
     state: {
-        syncedKeys: ReturnType<typeof api.savedSyncKeys>,
         files: FlatFileTree
     } = {
-            syncedKeys: [],
             files: null
         }
 
-    componentDidMount() {
-        this.props.client.get().readDir("")
-            .then(async fileTreeRoot => {
-                let files = { fileTreeRoot }
-                this.setState({ files });
-            });
+    loadNewOrigin() {
+        const loadRoot = () => {
+            fsClient.get().readDir(this.props.origin, "")
+                .then(async fileTreeRoot => {
+                    let files = { fileTreeRoot }
+                    this.setState({ files });
+                });
+        }
+        this.setState({ files: null }, loadRoot)
+    }
 
-        this.refreshSyncedKeys();
+    componentDidMount() {
+        this.loadNewOrigin()
+    }
+
+    componentDidUpdate(prevProps: Readonly<{ origin: string; action: (item: File) => any; options: ExplorerOptions; }>, prevState: Readonly<{}>, snapshot?: any): void {
+        // new origin
+        if (prevProps.origin !== this.props.origin) {
+            this.loadNewOrigin();
+        }
     }
 
     reloadOpenedDirectories = () => {
         if (!this.state.files) return;
 
         Object.keys(this.state.files).forEach(async dir => {
-            const files = await this.props.client.get().readDir(dir === "fileTreeRoot" ? "" : dir);
+            const files = await fsClient.get().readDir(this.props.origin, dir === "fileTreeRoot" ? "" : dir);
             this.setState((prevState: Explorer["state"]) => ({
                 ...prevState,
                 files: {
@@ -54,17 +66,12 @@ export default class Explorer extends Component<{
         });
     }
 
-    refreshSyncedKeys = () => {
-        client.get().savedSyncKeys()
-            .then(syncedKeys => this.setState({ syncedKeys }));
-    }
-
     openFileEditor = (filename: string) => {
-        Workspace.instance.addWindow({
-            title: filename.length > 8 ? "..." + filename.slice(-8) : filename,
-            icon: editorIcon,
-            element: () => <Editor client={this.props.client} filename={filename} />
-        })
+        // Workspace.instance.addWindow({
+        //     title: filename.length > 8 ? "..." + filename.slice(-8) : filename,
+        //     icon: editorIcon,
+        //     element: () => <Editor fsClient={this.props.fsClient} filename={filename} />
+        // });
     }
 
     render() {
@@ -86,26 +93,16 @@ export default class Explorer extends Component<{
 
                     {this.props.options.showDeleteButtons && <button className={"small danger"} onClick={async (e) => {
                         e.stopPropagation();
-                        await this.props.client.delete().deleteFile(item.key)
+                        await fsClient.delete().deleteFile(this.props.origin, item.key)
                         let parentKey = item.key.split("/").slice(0, -1).join("/");
-                        this.state.files[parentKey || "fileTreeRoot"] = await this.props.client.get().readDir(parentKey);
+                        this.state.files[parentKey || "fileTreeRoot"] = await fsClient.get().readDir(this.props.origin, parentKey);
                         this.setState({ files: { ...this.state.files } });
                     }}>Delete</button>}
-
-                    {this.state.syncedKeys && item.isDir && !this.state.syncedKeys.find(key => {
-                        const keyParts = key.split("/");
-                        const itemKeyParts = item.key.split("/");
-                        for (let i = 0; i < keyParts.length; i++) {
-                            if (keyParts[i] !== itemKeyParts[i])
-                                return false;
-                        }
-                        return true;
-                    }) && <SyncButton itemKey={item.key} client={this.props.client} didSync={this.refreshSyncedKeys} />}
                 </div>
             </div>}
             onExpand={async (keys: string[], { node, expanded }) => {
                 if (!keys?.length || !expanded || !node.isDir) return;
-                this.state.files[node.key] = await this.props.client.get().readDir(node.key);
+                this.state.files[node.key] = await fsClient.get().readDir(this.props.origin, node.key);
                 this.setState({ files: { ...this.state.files } });
             }}
             onSelect={(selectedKeys, data: { node: File, nativeEvent }) => {
@@ -123,7 +120,7 @@ export default class Explorer extends Component<{
 
 
 type FlatFileTree = {
-    [filePath: string]: Awaited<ReturnType<typeof fsLocal.readDir>>
+    [filePath: string]: Awaited<ReturnType<typeof fsType.readDir>>
 }
 
 type PlaceholderFile = {
@@ -197,17 +194,4 @@ function iconForFilename(filename: string) {
         default:
             return "file";
     }
-}
-
-function SyncButton(props: { client, itemKey: string, didSync }) {
-    const [syncing, setSyncing] = useState(false)
-
-    return syncing ? <small>Syncing...</small> : <button className={"small"} onClick={(e) => {
-        e.stopPropagation();
-        setSyncing(true)
-        props.client.post().sync(props.itemKey).then(() => {
-            setSyncing(false);
-            props.didSync();
-        });
-    }}>Sync</button>
 }

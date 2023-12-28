@@ -1,5 +1,4 @@
 .explorer-with-tabs > .tabs {
-    color: white;
     display: flex;
     width: 100%;
     justify-content: space-between;
@@ -8,11 +7,31 @@
     border-radius: 5px;
 }
 
+.explorer-with-tabs > .tabs  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .explorer-with-tabs > .tabs > div {
     flex: 1;
-    padding: 5px;
+    padding: 5px 10px;
     border-radius: 5px;
     cursor: pointer;
+    position: relative;
+}
+
+.explorer-with-tabs > .tabs > div:nth-last-child(2) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.explorer-with-tabs > .tabs > div:last-child {
+    max-width: 30px;
+    padding: 5px 2px;
+    background-color: #0a85b5;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .explorer-with-tabs > .tabs > div.active {
@@ -20,14 +39,55 @@
 }
 
 
+.explorer-with-tabs > .tabs > div.unavailable {
+    flex: 0;
+    white-space: nowrap;
+    color: #9fa4ad;
+}
+
+.explorer-with-tabs > .tabs > div svg {
+    height: 15px;
+    vertical-align: middle;
+    margin: 0 3px;
+}
+
+.explorer-with-tabs > .tabs > div .edit > svg {
+    height: 12px;
+    opacity: 0;
+}
+
+.explorer-with-tabs > .tabs > div.active .edit > svg {
+    opacity: 1;
+}
+
 .explorer-with-tabs{
     display: flex;
     flex-direction: column;
     height: 100%;
+    color: white;
 }
 .explorer-with-tabs > div:last-child {
     flex: 1;
     overflow: auto;
+}
+
+.explorer-with-tabs > .tabs .rename {
+    position: absolute;
+    top: calc(100% + 10px);
+    background-color: #2d4c86;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 10;
+}
+
+.explorer-with-tabs > .tabs .rename:before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: -10px;
+    border-bottom: 10px solid #2d4c86;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
 }
 
 

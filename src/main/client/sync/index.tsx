@@ -13,7 +13,7 @@ export class Sync {
 
         const initResponse = await client.get().initSync();
         // if user has no config, don't force him into Cloud Sync
-        if(typeof initResponse === "object" && (initResponse.error === "no_configs" && !force))
+        if(typeof initResponse === "object" && (initResponse.error === "no_config" && !force))
             return;
         else if(typeof initResponse === "boolean" && initResponse){
             Sync.isInit = true;

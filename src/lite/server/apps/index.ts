@@ -1,6 +1,6 @@
 import Server, { Listener } from "@fullstacked/webapp/server";
 import { BackendTool, WebSocketRegisterer } from "../../../main/server/backend";
-import { Sync, hello } from "../../../main/server/sync/sync";
+import { Sync } from "../../../main/server/sync/sync";
 import { normalizePath } from "../../../main/server/sync/utils";
 import fs from "fs";
 import path from "path";
@@ -8,7 +8,6 @@ import mime from "mime";
 import { pathToFileURL } from "url";
 import http2 from "http2";
 import { SyncClient } from "../../../main/server/sync/client";
-import { getLocalBaseDir } from "../../../main/server/sync/fs/cloud";
 import { syncFileName } from "@fullstacked/sync/constants";
 import { RsyncHTTP2Client } from "@fullstacked/sync/http2/client";
 import createClient from "@fullstacked/webapp/rpc/createClient";

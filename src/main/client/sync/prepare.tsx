@@ -1,19 +1,14 @@
 import useAPI from "@fullstacked/webapp/client/react/useAPI";
-import { fsCloud } from "../explorer/clients/cloud";
 import React, { useEffect, useRef, useState } from "react";
 import { client } from "../client";
-import { AddSyncApp, RenderSyncIndicator, centeredPopupFeatures } from "./Indicator";
+import { RenderSyncIndicator, centeredPopupFeatures } from "./Indicator";
 
-export function PrepareCloudStorage({ onSuccess, addSyncApp }) {
+export function PrepareCloudStorage() {
     const [response, retryInit] = useAPI(client.get().initSync);
 
     useEffect(() => {
         if (response) {
             RenderSyncIndicator();
-
-            if (typeof response === "boolean" && addSyncApp) {
-                AddSyncApp();
-            }
         }
     }, [response])
 
@@ -22,7 +17,7 @@ export function PrepareCloudStorage({ onSuccess, addSyncApp }) {
     return typeof response === "object"
         ? (() => {
             switch (response.error) {
-                case "no_configs":
+                case "no_config":
                 case "directory":
                     return <Directory
                         message={(response as any).reason}
@@ -35,14 +30,12 @@ export function PrepareCloudStorage({ onSuccess, addSyncApp }) {
                         case "external":
                             return <AuthFlow url={response.url} didAuthenticate={retryInit} />;
                     }
-                case "endpoint_selection":
-                    return <EndpointSelection url={response.url} didSelectEndpoint={retryInit} />;
                 default:
                     return <div style={{color: "white"}}>Uh oh. Unknown response: [{JSON.stringify(response)}]</div>
             }
         })()
         : typeof response === "boolean" && response
-            ? onSuccess()
+            ? <div>Success</div>
             : <div style={{color: "white"}}>Uh oh. Unknown response: [{response}]</div>
 }
 
@@ -76,13 +69,13 @@ export function AuthFlow({ url, didAuthenticate }) {
     }, []);
 
     const submit = async (e) => {
-        e.preventDefault();
-        await fsCloud.post().authenticate({
-            ...body,
-            code: code.trim()
-        });
-        win?.close();
-        didAuthenticate();
+        // e.preventDefault();
+        // await fsCloud.post().authenticate({
+        //     ...body,
+        //     code: code.trim()
+        // });
+        // win?.close();
+        // didAuthenticate();
     }
 
     return <div className={"prepare-fs-remote"}>
@@ -112,10 +105,10 @@ function EndpointSelection({ url, didSelectEndpoint }) {
     useEffect(() => {
         const catchEndpoint = ({ data }) => {
             if (data.endpoint) {
-                fsCloud.post().setEndpoint(data.endpoint).then(() => {
-                    win.close();
-                    didSelectEndpoint();
-                })
+                // fsCloud.post().setEndpoint(data.endpoint).then(() => {
+                //     win.close();
+                //     didSelectEndpoint();
+                // })
             }
         };
 
@@ -155,7 +148,7 @@ function Directory({ message, didSelectDirectory }) {
 
     const submit = async e => {
         e.preventDefault();
-        await fsCloud.post().setDirectory(value);
+        await client.post().setDirectory(value);
         didSelectDirectory();
     }
 
