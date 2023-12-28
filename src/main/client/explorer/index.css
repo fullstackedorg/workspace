@@ -113,3 +113,43 @@
     justify-content: flex-end;
     margin-left: 10px;
 }
+
+.copy {
+    border: 1px solid rgba(250,251,251,.3);
+    display: inline-flex;
+    border-radius: 5px;
+    background-color: rgba(250,251,251,.1);
+    cursor: pointer;
+    position: relative;
+    align-items: center;
+    padding-left: 10px;
+    padding-right: 62px;
+    max-width: 100%;
+}
+
+.copy > span {
+    padding: 20px 0;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: auto;
+}
+
+.copy > svg {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 40px;
+    width: 40px;
+    padding: 10px;
+    border: 1px solid #00b0df;
+    border-radius: 3px;
+    background-color: rgba(0,176,223,.05);
+    color: #00b0df;
+}
+
+.copy > svg.success {
+    color: rgb(87, 184, 123);
+    border: 1px solid rgba(87, 184, 123, 1);
+    background-color: rgba(87, 184, 123, 0.2)!important;
+}

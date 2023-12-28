@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { client } from "../client"
 import { SyncWS, centeredPopupFeatures } from "../../../main/client/sync/Indicator";
 import { Workspace } from "../../../main/client/workspace";
+import install from "../../../main/client/icons/install.svg";
 
 function AppLauncher(props: {app, didSpawn}){
     const [failedOpen, setFailedOpen] = useState(false);
@@ -48,5 +49,28 @@ function loadLocalApps(){
 
 SyncWS.subscribers.add(status => {
     if(SyncWS.isSynced(status))
-        loadLocalApps();
+        client.get().updateApps().then(loadLocalApps);
 });
+
+
+function AddApp(){
+    const [url, setUrl] = useState("");
+
+    const submit = (e) => {
+        e.preventDefault();
+        client.post().addApp(url).then(loadLocalApps);
+    }
+
+    return <form onSubmit={submit} className="prepare-fs-remote">
+        <input value={url} onChange={e => setUrl(e.currentTarget.value)} />
+        <button>Add</button>
+    </form>
+}
+
+Workspace.addApp({
+    title: "Add App",
+    icon: install,
+    element(app) {
+        return <AddApp />
+    }
+})

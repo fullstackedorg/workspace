@@ -4,6 +4,8 @@ import { WebSocket } from "ws";
 import { SyncStatus } from "../../client/sync/status";
 import type { ProgressInfo } from "@fullstacked/sync/constants";
 import { SyncClient } from "./client";
+import { RsyncHTTP2Client } from "@fullstacked/sync/http2/client";
+import createClient from "@fullstacked/webapp/rpc/createClient";
 
 export type RemoteStorageResponseType =
     // if theres is no config file nor USE_CLOUD_CONFIG
@@ -30,8 +32,8 @@ export type RemoteStorageResponseType =
     // needs to launch the endpoint selection
     // for when using a cluster of storage servers
     {
-        error: "endpoint_selection",
-        url: string
+        error: "storages_cluster",
+        endpoints: string[] | { name: string, url: string }[]
     } |
     // when failing to JSON.parse
     {
@@ -51,41 +53,19 @@ export class Sync {
     static status: SyncStatus;
     static syncInterval = 1000 * 60 * 2; // 2 minutes
     static config: {
-        authorization?: string,
         directory?: string,
-        keys?: string[]
+        storages?: {
+            [endpoint: string]: {
+                name?: string,
+                clients?: SyncClient,
+                keys?: string[]
+            }
+        }
     } = null;
     static configFile = process.env.CONFIG_FILE || `${process.env.MAIN_DIRECTORY || homedir()}/.fullstacked-config`;
 
     // singleton class
     private constructor() { }
-
-    // this method pokes the Sync endpoint to check if we're in the clear
-    static async hello(): Promise<RemoteStorageResponseType> {
-        let response: RemoteStorageResponseType;
-        try {
-            const helloResponse = await fetch(`${SyncClient.fs.origin}/hello`, {
-                method: "POST",
-                headers: {
-                    ...SyncClient.fs.headers,
-                    authorization: Sync.config.authorization
-                }
-            });
-            response = await helloResponse.text();
-        } catch (e) {
-            console.log(e)
-            return {
-                error: "storage_endpoint_unreachable",
-                message: `endpoint [${SyncClient.fs.origin}] response [${response}]`
-            }
-        }
-
-        try {
-            response = JSON.parse(response);
-        } catch (e) { }
-
-        return response;
-    }
 
     static setDirectory(directory: string) {
         const exists = existsSync(directory);
@@ -97,11 +77,10 @@ export class Sync {
         if (!exists)
             fs.mkdirSync(directory, { recursive: true });
 
-        if(!Sync.config)
+        if (!Sync.config)
             Sync.config = {};
 
         Sync.config.directory = directory;
-        Sync.config.keys = Sync.config.keys || [];
         Sync.saveConfigs();
     }
 
@@ -111,49 +90,48 @@ export class Sync {
         SyncClient.fs.headers.authorization = token;
         SyncClient.rsync.headers.authorization = token;
 
-        Sync.config.authorization = token;
         Sync.saveConfigs();
     }
 
-    static addKey(key: string) {
-        if (!Sync.config.keys)
-            Sync.config.keys = [];
+    static addKey(origin: string, key: string) {
+        if (!Sync.config.storages)
+            Sync.config.storages = {};
 
-        if (Sync.config.keys.includes(key)) return;
+        if(!Sync.config.storages[origin])
+            Sync.config.storages[origin] = {};
 
-        Sync.config.keys.push(key);
+        if(!Sync.config.storages[origin].keys)
+            Sync.config.storages[origin].keys = []
+
+        Sync.config.storages[origin].keys.push(key);
+
         Sync.saveConfigs();
     }
 
     static removeKey(key: string) {
-        if (!Sync.config?.keys?.includes(key)) return;
+        if (!Sync.config?.storages[origin] 
+            || Sync.config.storages[origin].keys?.includes(key)) return;
 
-        Sync.config.keys.splice(Sync.config.keys.indexOf(key), 1);
+        const indexOf = Sync.config.storages[origin].keys.indexOf(key);
+        Sync.config.storages[origin].keys.splice(indexOf, 1);
+
         Sync.saveConfigs();
     }
 
     static async saveConfigs(retryCloudConfigSave = true) {
-        if (process.env.USE_CLOUD_CONFIG) {
-            const { authorization, ...configs } = Sync.config;
 
-            // save configs to cloud config, never send authorization
-            SyncClient.fs.post().writeFile(Sync.configFile, JSON.stringify(configs, null, 2))
-                .catch(() => {
-                    if (retryCloudConfigSave)
-                        Sync.saveConfigs(false);
-                    else
-                        Sync.sendError("Unable to save Cloud Configs");
-                });
+        // save to a cloud
+        if (process.env.CLOUD_CONFIG) {
+            
 
-            // save authorization locally
-            if (authorization)
-                fs.writeFileSync(Sync.configFile, JSON.stringify({ authorization }, null, 2));
-        } else {
-            if(Sync.config.directory === process.env.MAIN_DIRECTORY){
-                const {directory, ...rest} = Sync.config;
-                fs.writeFileSync(Sync.configFile, JSON.stringify(rest, null, 2));
-            }else{
-                fs.writeFileSync(Sync.configFile, JSON.stringify(Sync.config, null, 2));
+        } 
+        // save locally
+        else {
+            const configs = {
+                ...Sync.config,
+                storages: {
+
+                }
             }
         }
     }
@@ -189,7 +167,7 @@ export class Sync {
         // in iOS, we start without any config file,
         // but we start the process with the right MAIN_DIRECTORY to 
         // use.
-        if(process.env.MAIN_DIRECTORY && Sync.config === null){
+        if (process.env.MAIN_DIRECTORY && Sync.config === null) {
             Sync.config = {
                 directory: process.env.MAIN_DIRECTORY
             }

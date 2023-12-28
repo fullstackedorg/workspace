@@ -20,6 +20,7 @@ export default class extends BackendTool {
             dir: normalizePath(Sync.config?.directory || homedir()),
             sep: path.sep
         }),
+        storageEndpoint: () => SyncClient.rsync.endpoint,
         savedSyncKeys: () => Sync.config?.keys,
         syncConflicts: () => Sync.status?.conflicts,
         dismissSyncError(errorIndex: number) {

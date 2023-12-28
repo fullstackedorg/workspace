@@ -391,3 +391,10 @@ button.danger:active {
     align-items: center;
     justify-content: center;
 }
+
+.basic-window {
+    color: white;
+    text-align: center;
+    height: 100%;
+    padding: 20px 5px;
+}
