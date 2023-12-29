@@ -1,46 +1,55 @@
-import useAPI from "@fullstacked/webapp/client/react/useAPI";
 import React, { useEffect, useRef, useState } from "react";
 import { client } from "../client";
 import { RenderSyncIndicator, centeredPopupFeatures } from "./Indicator";
+import type { RemoteStorageResponseType } from "../../server/sync/sync";
 
-export function PrepareCloudStorage() {
-    const [response, retryInit] = useAPI(client.get().initSync);
+export function PrepareCloudStorage(props: {
+    endpoint?: string,
+    initialHelloResponse?: RemoteStorageResponseType
+}) {
+    const [helloResponse, setHelloResponse] = useState<RemoteStorageResponseType>(props.initialHelloResponse);
 
     useEffect(() => {
-        if (response) {
-            RenderSyncIndicator();
+        if (!props.initialHelloResponse)
+            retry();
+    }, []);
+
+    useEffect(() => {
+        setHelloResponse(props.initialHelloResponse)
+    }, [props.endpoint])
+
+    const retry = async () => {
+        if (props.endpoint)
+            setHelloResponse(await client.post().storageHello(props.endpoint));
+        else
+            setHelloResponse(await client.post().initSync());
+    }
+
+    if (!helloResponse)
+        return <></>;
+
+    if (typeof helloResponse === "object") {
+        switch (helloResponse.error) {
+            case "authorization":
+                switch (helloResponse.type) {
+                    case "password":
+                        return <div>Password Auth</div>;
+                    case "external":
+                        return <AuthFlow endpoint={props.endpoint} url={helloResponse.url} didAuthenticate={retry} />;
+                }
+            default:
+                return <div style={{ color: "white" }}>Uh oh. Unknown response: [{JSON.stringify(helloResponse)}]</div>
+
         }
-    }, [response])
+    }
 
-    if (!response) return <></>;
-
-    return typeof response === "object"
-        ? (() => {
-            switch (response.error) {
-                case "no_config":
-                case "directory":
-                    return <Directory
-                        message={(response as any).reason}
-                        didSelectDirectory={retryInit}
-                    />
-                case "authorization":
-                    switch (response.type) {
-                        case "password":
-                            return <div>Password Auth</div>;
-                        case "external":
-                            return <AuthFlow url={response.url} didAuthenticate={retryInit} />;
-                    }
-                default:
-                    return <div style={{color: "white"}}>Uh oh. Unknown response: [{JSON.stringify(response)}]</div>
-            }
-        })()
-        : typeof response === "boolean" && response
-            ? <div>Success</div>
-            : <div style={{color: "white"}}>Uh oh. Unknown response: [{response}]</div>
+    return typeof helloResponse === "boolean" && helloResponse
+        ? <div>Success</div>
+        : <div style={{ color: "white" }}>Uh oh. Unknown response: [{helloResponse}]</div>
 }
 
 let body = {}, win;
-export function AuthFlow({ url, didAuthenticate }) {
+export function AuthFlow({ endpoint, url, didAuthenticate }) {
     const [code, setCode] = useState("");
     const [failedOpened, setFailedOpen] = useState(false);
 
@@ -69,13 +78,14 @@ export function AuthFlow({ url, didAuthenticate }) {
     }, []);
 
     const submit = async (e) => {
-        // e.preventDefault();
-        // await fsCloud.post().authenticate({
-        //     ...body,
-        //     code: code.trim()
-        // });
-        // win?.close();
-        // didAuthenticate();
+        e.preventDefault();
+        await client.post().authenticate(endpoint,
+        {
+            ...body,
+            code: code.trim()
+        });
+        win?.close();
+        didAuthenticate();
     }
 
     return <div className={"prepare-fs-remote"}>
@@ -92,46 +102,6 @@ export function AuthFlow({ url, didAuthenticate }) {
                     <button>Submit</button>
                 </form>
             </>}
-    </div>
-}
-
-function EndpointSelection({ url, didSelectEndpoint }) {
-    const [failedOpen, setFailedOpen] = useState(false);
-
-    const openPopup = () => {
-        win = window.open(url, "", centeredPopupFeatures())
-    };
-
-    useEffect(() => {
-        const catchEndpoint = ({ data }) => {
-            if (data.endpoint) {
-                // fsCloud.post().setEndpoint(data.endpoint).then(() => {
-                //     win.close();
-                //     didSelectEndpoint();
-                // })
-            }
-        };
-
-        window.addEventListener("message", catchEndpoint);
-
-        openPopup();
-
-        if (!win) setFailedOpen(true);
-
-        return () => {
-            win = null;
-            window.removeEventListener("message", catchEndpoint)
-        }
-    }, []);
-
-    return <div className={"prepare-fs-remote"}>
-        {failedOpen
-            ? <button onClick={() => {
-                openPopup()
-                if (win)
-                    setFailedOpen(false);
-            }}>Select Storage</button>
-            : <div>Selecting Storage</div>}
     </div>
 }
 

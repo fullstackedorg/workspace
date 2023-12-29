@@ -6,7 +6,7 @@ import { SyncStatus } from "../../client/sync/status";
 import type { ProgressInfo } from "@fullstacked/sync/constants";
 import { SyncClient } from "./client";
 
-export type RemoteStorageResponseType =
+export type SyncInitResponse = 
     // if theres is no config file nor CLOUD_CONFIG
     // don't force user into setting up Sync
     {
@@ -17,6 +17,15 @@ export type RemoteStorageResponseType =
         error: "directory",
         reason: string
     } |
+    // when failing to JSON.parse
+    {
+        error: "corrupt_file",
+        filePath: string
+    } |
+    // everything good
+    true;
+
+export type RemoteStorageResponseType =
     // user needs to authenticate with password
     {
         error: "authorization",
@@ -28,16 +37,11 @@ export type RemoteStorageResponseType =
         type: "external",
         url: string
     } |
-    // needs to launch the endpoint selection
-    // for when using a cluster of storage servers
+    // clusters
     {
         error: "storages_cluster",
+        name?: string,
         endpoints: string[] | { name: string, url: string }[]
-    } |
-    // when failing to JSON.parse
-    {
-        error: "corrupt_file",
-        filePath: string
     } |
     {
         error: "storage_endpoint_unreachable",
@@ -129,6 +133,16 @@ export class Sync {
         Sync.saveConfigs();
     }
 
+    static removeStorage(origin: string) {
+        if (!Sync.config.storages)
+            Sync.config.storages = {};
+
+        if (Sync.config.storages[origin])
+            delete Sync.config.storages[origin];
+
+        Sync.saveConfigs();
+    }
+
     static addKey(origin: string, key: string) {
         if (!Sync.config.storages)
             Sync.config.storages = {};
@@ -191,7 +205,7 @@ export class Sync {
         }
     }
 
-    private static loadConfigLocal(): RemoteStorageResponseType {
+    private static loadConfigLocal(): SyncInitResponse {
         const exists = fs.existsSync(Sync.configFile);
 
         if (Sync.config === null) {
@@ -238,9 +252,13 @@ export class Sync {
             Object.entries(Sync.config.storages).forEach(([origin, storage]) => {
                 const authorization = Sync.config.storages[origin].client?.authorization;
 
+                const client = origin === this.DEFAULT_STORAGE_ENDPOINT
+                    ? Sync.defaultSyncClient 
+                    : new SyncClient(origin);
+
                 Sync.config.storages[origin] = {
                     ...storage,
-                    client: new SyncClient(origin)
+                    client
                 }
 
                 if(authorization)
@@ -249,11 +267,11 @@ export class Sync {
         }
     }
 
-    private static loadConfigCloud(): Promise<RemoteStorageResponseType> {
+    private static loadConfigCloud(): Promise<SyncInitResponse> {
         return null;
     }
 
-    static async loadConfigs(): Promise<RemoteStorageResponseType> {
+    static async loadConfigs(): Promise<SyncInitResponse> {
         return process.env.CLOUD_CONFIG
             ? this.loadConfigCloud()
             : this.loadConfigLocal();

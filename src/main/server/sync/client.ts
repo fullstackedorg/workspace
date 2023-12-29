@@ -16,7 +16,13 @@ export class SyncClient {
         // fetch API won't work with a not secured storage server (http)
         // so here we will override the fetch method of our client
         if (endpoint.startsWith("http:")) {
+            let useHttp2Client = true;
+
             this.fs.fetch = (urlStr: string, options?: RequestInit) => {
+                if(!useHttp2Client) {
+                    return fetch(urlStr, options);
+                }
+                
                 const url = new URL(urlStr, this.fs.origin);
 
                 return new Promise<Response>((resolve, reject) => {
@@ -33,7 +39,10 @@ export class SyncClient {
                     })
 
                     const request = client.request(outHeaders);
-                    request.on("error", () => reject("Overriden fetch failed at request."));
+                    request.on("error", () => {
+                        useHttp2Client = false;
+                        resolve(this.fs.fetch(urlStr, options));
+                    });
 
                     const responsePromise = new Promise<Buffer>((responseResolve) => {
                         let chunks = [];

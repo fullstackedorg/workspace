@@ -25,9 +25,7 @@ export class Sync {
         Workspace.instance.addWindow({
             title: "Sync",
             icon: syncIcon,
-            element: (app) => {
-                return <PrepareCloudStorage addSyncApp={addSyncApp} onSuccess={() => Workspace.instance.removeWindow(app)} />
-            }
+            element: (app) => <PrepareCloudStorage />
         })
     }
 }

@@ -1,7 +1,7 @@
 import { Listener } from "@fullstacked/webapp/server";
 import { createHandler } from "@fullstacked/webapp/rpc/createListener";
 import { BackendTool, WebSocketRegisterer } from "../backend";
-import { RemoteStorageResponseType, Sync } from "./sync";
+import { RemoteStorageResponseType, Sync, SyncInitResponse } from "./sync";
 import { IncomingMessage } from "http";
 import { homedir } from "os";
 import path from "path"
@@ -10,49 +10,101 @@ import fsAPI from "./fs";
 import fs from "fs";
 import { Status } from "@fullstacked/sync/constants";
 
+export type Endpoint = {
+    origin: string,
+    cluster?: string,
+    name?: string,
+    helloResponse?: RemoteStorageResponseType
+}
+
 export default class extends BackendTool {
     api = {
-        async storageEndpoints() {
-            const endpoints : {
-                endpoint: string,
-                name: string,
-                helloResponse: RemoteStorageResponseType
-            }[] = [];
+        async storageEndpoints(all = false): Promise<Endpoint[]> {
+            if(!Sync.config)
+                return [];
 
-            if(!Sync.config?.directory)
-                return endpoints;
 
-            let defaultSyncClient = {
-                endpoint: Sync.defaultSyncClient.fs.origin,
-                name: Sync.defaultSyncClient.fs.origin,
-                helloResponse: await Sync.defaultSyncClient.hello()
+            const storagesOrigins: {
+                [origin: string]: string
+            } = {
+                [Sync.DEFAULT_STORAGE_ENDPOINT]: ""
             };
 
-            if(Sync.config.storages) {
-                const knownStorages = Object.entries(Sync.config.storages);
-                for (const [endpoint, storage] of knownStorages) {
-                    const syncClient = Sync.getSyncClient(endpoint);
+            if (Sync.config.storages) {
+                Object.keys(Sync.config.storages)
+                    .forEach(origin => {
+                        if (!storagesOrigins[origin])
+                            storagesOrigins[origin] = Sync.config.storages[origin].name;
+                    });
+            }
 
-                    // we might have named the default storage
-                    if(syncClient === Sync.defaultSyncClient && storage.name) {
-                        defaultSyncClient.name = storage.name;
-                        continue;
+            const storagesOriginsArr = Object.keys(storagesOrigins);
+            const endpoints: Endpoint[] = [];
+            for (let i = 0; i < storagesOriginsArr.length; i++) {
+                const origin = storagesOriginsArr[i];
+
+                let name = storagesOrigins[origin] || origin;
+
+                const syncClient = Sync.getSyncClient(origin);
+
+                const helloResponse = syncClient ? await syncClient.hello() : null;
+
+                if (helloResponse && typeof helloResponse === "object" && helloResponse.error === "storages_cluster") {
+                    name = helloResponse.name || origin;
+
+                    for (const clusterEndpoint of helloResponse.endpoints) {
+                        const clusterEndpointOrigin = typeof clusterEndpoint === "string"
+                            ? clusterEndpoint
+                            : clusterEndpoint.url;
+
+                        if (!storagesOriginsArr.includes(clusterEndpointOrigin)) {
+                            if (typeof clusterEndpoint !== "string")
+                                storagesOrigins[clusterEndpointOrigin] = clusterEndpoint.name;
+
+                            storagesOriginsArr.push(clusterEndpointOrigin);
+                        }
                     }
 
+                    if(!all)
+                        continue;
+                }
 
+                if (syncClient || all) {
                     endpoints.push({
-                        name: storage.name,
-                        endpoint,
-                        helloResponse: await syncClient.hello()
+                        name,
+                        origin,
+                        helloResponse
                     })
                 }
             }
 
-            // don't show storage cluster endpoint as a storage
-            if (typeof defaultSyncClient.helloResponse !== "object" || defaultSyncClient.helloResponse.error !== "storages_cluster")
-                endpoints.push(defaultSyncClient);
-
             return endpoints;
+        },
+        storageHello(endpoint: string) {
+            const syncClient = Sync.getSyncClient(endpoint);
+
+            if (!syncClient)
+                throw new Error(`No sync client for [${endpoint}]`);
+
+            return syncClient.hello();
+        },
+        async authenticate(origin: string, data: any) {
+            // host.docker.internal represents your host machine localhost
+            if (process.env.DOCKER_RUNTIME) {
+                data.url = data.url.replace(/(localhost|0.0.0.0)/, "host.docker.internal")
+            }
+
+            const response = await fetch(data.url, {
+                method: "POST",
+                headers: {
+                    "user-agent": this.req.headers["user-agent"]
+                },
+                body: JSON.stringify(data)
+            });
+
+            const token = await response.text();
+
+            Sync.setAuthorization(origin, token);
         },
         initSync(this: { req: IncomingMessage }) {
             return initSync(this.req.headers?.cookie);
@@ -63,6 +115,9 @@ export default class extends BackendTool {
         updateStorageName(origin: string, name: string) {
             Sync.setStorageName(origin, name)
         },
+        removeStorage(origin: string) {
+            Sync.removeStorage(origin);
+        },
         mainDirectory: () => ({
             dir: normalizePath(Sync.config?.directory || homedir()),
             sep: path.sep
@@ -72,7 +127,7 @@ export default class extends BackendTool {
             Sync.status.errors.splice(errorIndex, 1);
             Sync.sendStatus();
         },
-        push(key: string, origin: string){
+        push(key: string, origin: string) {
             // make sure key exists
             if (!fs.existsSync(path.resolve(Sync.config.directory, key))) {
                 Sync.sendError(`Trying to push [${key}], but does not exists`);
@@ -81,7 +136,7 @@ export default class extends BackendTool {
 
             // get sync client for endpoint
             const syncClient = Sync.getSyncClient(origin);
-            if(!syncClient){
+            if (!syncClient) {
                 Sync.sendError(`Cannot find any SyncClient for origin [${origin}]`);
                 return;
             }
@@ -109,7 +164,7 @@ export default class extends BackendTool {
         async pull(origin: string, key: string) {
             // get sync client for endpoint
             const syncClient = Sync.getSyncClient(origin);
-            if(!syncClient){
+            if (!syncClient) {
                 Sync.sendError(`Cannot find any SyncClient for origin [${origin}]`);
                 return;
             }
@@ -156,7 +211,7 @@ export default class extends BackendTool {
     };
 }
 
-async function initSync(cookie: string) {
+async function initSync(cookie: string): Promise<SyncInitResponse> {
     // init status only if null or undefined
     if (!Sync.status)
         Sync.status = {};
@@ -221,15 +276,15 @@ async function initSync(cookie: string) {
 }
 
 let syncingIntervalRunning = false;
-function startSyncingInterval(){
+function startSyncingInterval() {
     // start only once
-    if(syncingIntervalRunning) return;
+    if (syncingIntervalRunning) return;
     syncingIntervalRunning = true;
 
     setInterval(sync, Sync.syncInterval);
 }
 
-function sync(){
+function sync() {
     // sync files at the root of /home
     // that starts with .git* 
     // and .profile file
