@@ -2,31 +2,46 @@ import "./index.css";
 import React from "react";
 import {client} from "../client";
 import {Workspace} from "../workspace";
-import syncIcon from "../icons/sync.svg";
-import { PrepareCloudStorage } from "./prepare";
 import { AddSyncApp, RenderSyncIndicator } from "./Indicator";
+import { Setup } from "./setup";
+import type { SyncDirection } from "../../server/sync/types";
 
 export class Sync {
     static isInit: boolean = false;
-    static async init(addSyncApp = true, force = false) {
-        RenderSyncIndicator();
-
-        const initResponse = await client.get().initSync();
-        // if user has no config, don't force him into Cloud Sync
-        if(typeof initResponse === "object" && (initResponse.error === "no_configs" && !force))
+    static async init(addSyncApp = true) {
+        const initResponse = await client.post().syncInit();
+        
+        if(initResponse?.error === "no_config")
             return;
-        else if(typeof initResponse === "boolean" && initResponse){
+
+        const onReady = () => {
             Sync.isInit = true;
+            RenderSyncIndicator();
+            client.post().storages.initialize()
+                .then(() => client.post().sync.sync("pull" as SyncDirection.PULL));
+            
             if(addSyncApp)
                 AddSyncApp();
+        }
+
+        if(initResponse.error !== "already_initialized"){
+            Sync.openSetup(onReady);
             return;
         }
 
+        onReady();
+    }
+    static openSetup(onReady: () => void){
         Workspace.instance.addWindow({
             title: "Sync",
-            icon: syncIcon,
-            element: (app) => {
-                return <PrepareCloudStorage addSyncApp={addSyncApp} onSuccess={() => Workspace.instance.removeWindow(app)} />
+            icon: "",
+            element(app) {
+                return <Setup 
+                    didInit={() => {
+                        Workspace.instance.removeWindow(app);
+                        onReady();
+                    }} 
+                />
             }
         })
     }

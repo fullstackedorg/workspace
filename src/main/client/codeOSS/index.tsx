@@ -11,14 +11,16 @@ import {OptionButtons} from "../workspace/Window";
 class CodeOSS {
     static loaded = false;
     static element: HTMLDivElement;
-    static folder;
-    static windowId;
+    static folder: string;
+    static windowId: string;
+
     private static async waitForElement(){
         while(!CodeOSS.element){
             CodeOSS.element = document.querySelector(".monaco-workbench");
             await sleep(100);
         }
     }
+    
     static async load(id, zIndex, folder) {
         if(folder && CodeOSS.folder && folder !== CodeOSS.folder){
             window.location.href = window.location.href + `?folder=${folder}`;
@@ -107,11 +109,12 @@ class CodeOSS {
 
 const codeOSSAvailable = await client.get(true).hasCodeOSS();
 if(codeOSSAvailable) {
+    const mainDir = await client.get(true).directory.main(); 
     Workspace.addApp({
         title: "Code",
         icon: CodeOSSIcon,
         order: 20,
-        element: ({id, args: {folder}}) => {
+        element: ({id, args: { folder }}) => {
             const {zIndex} = Workspace.instance.state.windows.find(win => win.id === id);
             CodeOSS.load(id, zIndex, folder);
             return <div className={"code-oss-loading"}>
@@ -121,7 +124,7 @@ if(codeOSSAvailable) {
             </div>;
         },
         args: {
-            folder: await client.get(true).mainDirectory()
+            folder: mainDir.dir.split(mainDir.sep).join("/")
         }
     });
 

@@ -391,3 +391,23 @@ button.danger:active {
     align-items: center;
     justify-content: center;
 }
+
+.basic-window {
+    color: white;
+    text-align: center;
+    height: 100%;
+    padding: 20px 5px;
+}
+
+code {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 20px);
+    padding: 10px;
+    background-color: #ffffff30;
+    margin: 10px;
+    border-radius: 5px;
+    border: 1px solid #ffffff40;
+    user-select: all;
+}

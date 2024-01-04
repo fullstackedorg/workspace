@@ -1,151 +1,180 @@
 import { Listener } from "@fullstacked/webapp/server";
-import { fsLocal } from "./fs/local";
-import { fsCloud } from "./fs/cloud";
 import { createHandler } from "@fullstacked/webapp/rpc/createListener";
 import { BackendTool, WebSocketRegisterer } from "../backend";
-import { Sync } from "./sync";
-import { IncomingMessage } from "http";
-import { SyncClient } from "./client";
-import fs from "fs";
-import { homedir } from "os";
 import path from "path"
-import { normalizePath } from "./utils";
+import fsAPI from "./fs";
+import { SyncService, getStorageByOrigin, pull, push } from "./service";
+import os from "os";
+import Storage from "./storage";
+import { SyncDirection } from "./types";
 
-export default class extends BackendTool {
+export default class Sync extends BackendTool {
+    static DEFAULT_STORAGE_ENDPOINT = process.env.STORAGE_ENDPOINT || "https://auth.fullstacked.cloud/storages";
+
     api = {
-        initSync(this: { req: IncomingMessage }) {
-            return initSync(this.req.headers?.cookie);
+        syncInit() {
+            return SyncService.initialize();
         },
-        mainDirectory: () => ({
-            dir: normalizePath(Sync.config?.directory || homedir()),
-            sep: path.sep
-        }),
-        savedSyncKeys: () => Sync.config?.keys,
-        syncConflicts: () => Sync.status?.conflicts,
-        dismissSyncError(errorIndex: number) {
-            Sync.status.errors.splice(errorIndex, 1);
-            Sync.sendStatus();
+        directory: {
+            main() {
+                return {
+                    dir: process.env.MAIN_DIRECTORY || os.homedir(),
+                    sep: path.sep
+                }
+            },
+            check() {
+                return SyncService.config.directoryCheck();
+            },
+            set(directory: string) {
+                SyncService.config.directory = directory;
+                return SyncService.config.directoryCheck(directory);
+            }
         },
-        sync,
+        storages: {
+            initialize() {
+                if (!SyncService.config || !SyncService.status)
+                    throw new Error("Sync isn't initialized");
+
+                if (Sync.DEFAULT_STORAGE_ENDPOINT && !SyncService.config.storages.find(({ origin }) => origin === Sync.DEFAULT_STORAGE_ENDPOINT)) {
+                    SyncService.config.storages.push(new Storage({ origin: Sync.DEFAULT_STORAGE_ENDPOINT }))
+                }
+
+                const storageHello = (storage: Storage) => new Promise<void>(resolve => {
+                    storage.hello().then(helloResponse => {
+                        if (helloResponse && helloResponse?.error !== "storages_cluster" && !isRandomClusterChild(storage))
+                            SyncService.status.sendError(`Cannot initialized [${storage.name || storage.origin}]`);
+
+                        resolve();
+                    })
+                });
+
+                Promise.all(SyncService.config.storages.map(storageHello))
+                    .then(() => SyncService.status.sendStatus(true));
+            },
+            list() {
+                const getStorage = async (storage: Storage) => {
+                    const hello = await storage.hello();
+                    return {
+                        ...storage,
+                        hello
+                    }
+                }
+
+                return Promise.all(SyncService.config?.storages?.map(getStorage));
+            },
+            hello(origin: string) {
+                const storage = getStorageByOrigin(origin);
+                return storage.hello(false);
+            },
+            async auth(origin: string, { url, ...body }: any) {
+                const storage = getStorageByOrigin(origin);
+
+                // host.docker.internal represents your host machine localhost
+                if (process.env.DOCKER_RUNTIME) {
+                    url = url.replace(/(localhost|0.0.0.0)/, "host.docker.internal")
+                }
+
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "user-agent": this.req.headers["user-agent"]
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const authorization = await response.text();
+
+                storage.client.authorization = authorization;
+
+                // use same authorization for all child storages
+                if (storage.isCluster) {
+                    SyncService.config.storages
+                        .filter(({ cluster }) => cluster === storage.origin)
+                        .forEach(storage => storage.client.authorization = authorization)
+                }
+
+                SyncService.config.save();
+            },
+            add(origin: string) {
+                const storage = getStorageByOrigin(origin, false);
+
+                if (storage)
+                    storage.keys = [];
+                else
+                    SyncService.addStorage({ origin });
+
+                SyncService.config.save();
+            },
+            update(origin: string, name: string) {
+                const storage = getStorageByOrigin(origin);
+
+                storage.name = name;
+                SyncService.config.save();
+            },
+            remove(origin: string) {
+                const storage = getStorageByOrigin(origin);
+
+                if (storage.cluster)
+                    delete storage.keys;
+                else {
+                    const index = SyncService.config.storages.findIndex(storage => storage.origin === origin);
+                    SyncService.config.storages.splice(index, 1);
+                }
+
+                SyncService.config.save();
+            },
+        },
+        sync: {
+            sync(direction: SyncDirection) {
+                if (!SyncService.config || !SyncService.status)
+                    throw new Error("Sync isn't initialized");
+
+                SyncService.sync(direction);
+            },
+            push,
+            pull,
+            keys: {
+                list() {
+                    let syncedKeys = {};
+                    SyncService.config.storages
+                        .forEach(({ keys, origin }) => {
+                            if (keys?.length)
+                                syncedKeys[origin] = keys;
+                        });
+
+                    return syncedKeys;
+                }
+            },
+            conflicts: {
+                list() { },
+                resolve() { }
+            },
+            errors: {
+                dismiss(errorIndex: number) {
+                    SyncService.status.dismissError(errorIndex);
+                }
+            },
+            apps: {
+                async list(origin: string) {
+                    const storage = getStorageByOrigin(origin);
+                    return (await storage.listApps()).map(([key]) => key.slice(0, -"/package.json".length));
+                }
+            }
+        }
     };
+
     listeners: (Listener & { prefix?: string; })[] = [
         {
-            prefix: "/fs-local",
-            handler: createHandler(fsLocal)
-        },
-        {
-            prefix: "/fs-cloud",
-            handler: createHandler(fsCloud)
+            prefix: "/fs",
+            handler: createHandler(fsAPI)
         }
     ];
     websocket: WebSocketRegisterer = {
         path: "/fullstacked-sync",
         onConnection(ws) {
-            Sync.ws.add(ws);
-            ws.send(JSON.stringify(Sync.status))
-            ws.on("close", () => Sync.ws.delete(ws));
+            SyncService.status?.addWS(ws)
         }
     };
 }
 
-
-async function initSync(cookie: string) {
-    // init status only if null or undefined
-    if (!Sync.status)
-        Sync.status = {};
-    Sync.sendStatus(false);
-
-    // copy this request cookie so we can maybe put the authorization in there
-    SyncClient.fs.headers.cookie = cookie;
-    SyncClient.rsync.headers.cookie = cookie;
-
-    // try to load the configs
-    let response = await Sync.loadConfigs();
-    if (response) {
-        // dont force a user without configs to init sync
-        if (typeof response === "object" && response.error === "no_configs") {
-            Sync.status = null;
-            Sync.sendStatus(false);
-        }
-
-        return response;
-    }
-
-    // make sure local directory is fine
-    response = Sync.directoryCheck();
-    if (response)
-        return response;
-
-    // try to reach the storage endpoint
-    response = await Sync.hello();
-    if (response)
-        return response;
-
-    if (Sync.config.authorization)
-        Sync.setAuthorization(Sync.config.authorization)
-
-    // pull all saved keys
-    if (Sync.config.keys?.length) {
-        Promise.all(Sync.config?.keys.map(key => fsCloud.sync(key)))
-            .then(startSyncingInterval);
-    }
-    else {
-        Sync.config.keys = [];
-        startSyncingInterval()
-    }
-
-    // sync files at the root of /home
-    // that starts with .git* 
-    // and .profile file
-    if (process.env.USE_CLOUD_CONFIG) {
-        const dotFiles = await SyncClient.fs.post().readdir(Sync.config.directory, { withFileTypes: true });
-        dotFiles.forEach(({ name }) => {
-            if (name !== ".profile" && !name.startsWith(".git"))
-                return;
-
-            fsCloud.sync(name, {
-                save: false,
-                progress: false
-            });
-        });
-    }
-
-    // in case there's nothing to pull, send the current status
-    // to switch from initializing... to something else
-    Sync.sendStatus();
-    return true;
-}
-
-let syncingIntervalRunning = false;
-function startSyncingInterval(){
-    // start only once
-    if(syncingIntervalRunning) return;
-    syncingIntervalRunning = true;
-
-    setInterval(sync, Sync.syncInterval);
-}
-
-function sync(){
-    // sync files at the root of /home
-    // that starts with .git* 
-    // and .profile file
-    if (process.env.USE_CLOUD_CONFIG) {
-        fs.readdirSync(Sync.config.directory).forEach(file => {
-            if (file !== ".profile" && !file.startsWith(".git"))
-                return;
-
-            fsLocal.sync(file, {
-                save: false,
-                progress: false
-            });
-        });
-    }
-
-    if (!Sync.config?.keys?.length) {
-        Sync.sendStatus();
-        return;
-    }
-
-    Sync.config?.keys.forEach(key => fsLocal.sync(key))
-}
-
+const isRandomClusterChild = (storage: Storage) => storage.cluster && !storage.keys;
