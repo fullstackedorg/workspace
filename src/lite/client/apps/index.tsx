@@ -71,4 +71,7 @@ Workspace.addApp({
     }
 });
 
-client.get().updateApps().then(loadLocalApps);
+SyncWS.subscribers.add((status) => {
+    if(SyncWS.isSynced(status))
+        client.get().updateApps().then(loadLocalApps);
+})

@@ -6,18 +6,16 @@ import path from "path";
 import mime from "mime";
 import { pathToFileURL } from "url";
 import http2 from "http2";
-import { syncFileName } from "@fullstacked/sync/constants";
 import { SyncService } from "../../../main/server/sync/service";
-import { getStorageByOrigin } from "../../../main/server/sync";
 import Storage from "../../../main/server/sync/storage";
-import { StorageResponse, SyncDirection } from "../../../main/server/sync/types";
+import { StorageErrorType, StorageResponse, SyncDirection } from "../../../main/server/sync/types";
+import AdmZip from "adm-zip";
 
 export type App = {
     package: string,
     title?: string,
     icon?: string,
-    main?: string,
-    files?: string[]
+    main?: string
 }
 
 export default class extends BackendTool {
@@ -34,28 +32,34 @@ export default class extends BackendTool {
             }))
         },
         async updateApps() {
-            const apps = listApps();
-            const origins = Object.keys(apps);
-            const updatePromises = origins.map(origin => {
-                const storage = getStorageByOrigin(origin, false);
-                if (!storage)
-                    return [];
-
-                return apps[origin].map((app => maybePull(storage, app)))
+            SyncService.config.storages.forEach((storage) => {
+                if(!storage.keys) 
+                    return;
+                
+                storage.keys.forEach(artifactKey => maybeDecompress(storage, artifactKey))
             });
-
-            Promise.all(updatePromises.flat());
         },
         async addApp(urlStr: string): Promise<StorageResponse> {
             const url = new URL(urlStr);
             const storage = SyncService.addStorage({ origin: url.origin });
 
-            const helloResponse = await storage.hello();
-            if (helloResponse)
-                return helloResponse;
+            let response = await storage.hello();
+            if (response)
+                return response;
 
-            const packagePath = url.pathname.slice(1);
-            return maybePull(storage, { package: packagePath });
+            const appKey = url.pathname.slice(1);
+            const artefactKey = appKey + "/.build.zip";
+            try {
+                await storage.client.fs.post().access(artefactKey)
+            } catch (e) {
+                return {
+                    error: StorageErrorType.UNREACHEABLE,
+                    message: `Acces not authorized for [${appKey}] from [${origin}]. Response [${e.message}]`
+                }
+            }
+
+            storage.addKey(artefactKey);
+            SyncService.sync(SyncDirection.PULL);
         }
     };
     listeners: (Listener & { prefix?: string; })[] = [{
@@ -82,29 +86,30 @@ export default class extends BackendTool {
 }
 
 function listApps() {
-    const packages: { [origin: string]: App[] } = {};
-    SyncService.config?.storages?.forEach(({ origin, keys }) => {
-        if (!keys)
-            return;
+    let packagesJSONs: { [origin: string]: App[] } = {};
 
-        packages[origin] = keys
-            .filter(itemKey => itemKey.endsWith("/package.json"))
-            .map(parsePackageJSON);
+    SyncService.config.storages.forEach(({ keys, origin }) => {
+        if (!keys) return;
+
+        packagesJSONs[origin] = keys
+            .map(artifactKey => {
+                const appKey = path.dirname(artifactKey);
+                return parsePackageJSON(path.join(appKey, "package.json"))
+            })
+            .filter(Boolean);
     });
 
-    return packages;
+    return packagesJSONs;
 }
 
 function parsePackageJSON(packageJSONPath: string) {
-    let packageJSON: any;
+    let packageJSON;
     try {
         const contents = fs.readFileSync(path.resolve(SyncService.config.dir, packageJSONPath));
         packageJSON = JSON.parse(contents.toString());
     } catch (e) {
         SyncService.status?.sendError(`Failed to parse [${packageJSONPath}]`)
-        return {
-            package: packageJSONPath
-        };
+        return null;
     }
 
     const directory = path.dirname(packageJSONPath);
@@ -115,60 +120,29 @@ function parsePackageJSON(packageJSONPath: string) {
         title: packageJSON.title || packageJSON.name,
         icon: packageJSON.icon ? updatePath(packageJSON.icon) : undefined,
         main: packageJSON.main ? updatePath(packageJSON.main) : undefined,
-        files: packageJSON.files?.map(updatePath)
     }
 }
 
-async function maybePull(storage: Storage, app: App) {
+async function maybeDecompress(storage: Storage, artifactKey: string) {
     if (await storage.hello())
         return null;
 
-    const remoteVersion = await getRemoteVersion(storage, path.dirname(app.package));
 
-    const pathComponents = app.package.split("/").slice(0, -1);
-    const directory = pathComponents.join("/");
-    let version = null;
-    while (pathComponents.length && !version) {
-        version = storage.client.rsync.getSavedSnapshotAndVersion(directory)?.version;
-        pathComponents.pop();
+    const artifactPathAbsolute = path.resolve(SyncService.config.dir, artifactKey);
+    if (!fs.existsSync(artifactPathAbsolute)) {
+        SyncService.status.sendError(`Cannot find build artifact [${artifactKey}]`);
+        return null;
     }
 
+    storage.client.rsync.baseDir = SyncService.config.dir;
+
+    const appKey = path.dirname(artifactKey);
+    const remoteVersion = await getRemoteVersion(storage, appKey);
+    const version = storage.client.rsync.getSavedSnapshotAndVersion(appKey)?.version;
+
     if (!version || version !== remoteVersion) {
-        fs.mkdirSync(path.join(SyncService.config.dir, directory), { recursive: true });
-
-        // update package
-        await storage.client.rsync.pull(app.package, { force: true });
-        app = parsePackageJSON(app.package);
-
-        if (!app)
-            return null
-
-        const files = app.files || [];
-
-        if (app.icon) {
-            fs.mkdirSync(path.resolve(SyncService.config.dir, path.dirname(app.icon)), { recursive: true });
-            files.push(app.icon);
-        }
-
-        storage.client.rsync.baseDir = SyncService.config.dir;
-
-        SyncService.status.addSyncingKey(app.title, SyncDirection.PULL, storage.origin);
-        const pullPromises = app.files.map(item => storage.client.rsync.pull(item, {
-            force: true,
-            progress(info) {
-                SyncService.status.updateSyncProgress(app.title, info)
-            }
-        }));
-
-        const onFinish = () => {
-            fs.writeFileSync(path.resolve(SyncService.config.dir, directory, syncFileName), JSON.stringify({ version: remoteVersion }));
-            SyncService.status.removeSyncingKey(app.title);
-
-            storage.addKey(app.package);
-            SyncService.config.save();
-        }
-
-        Promise.all(pullPromises).then(onFinish);
+        decompress(artifactPathAbsolute, path.resolve(path.join(SyncService.config.dir, appKey)));
+        fs.writeFileSync(path.resolve(SyncService.config.dir, appKey, ".fullstacked-sync"), JSON.stringify({ version: remoteVersion }))
     }
 }
 
@@ -194,4 +168,12 @@ function getRemoteVersion(storage: Storage, itemPath: string) {
             resolve(JSON.parse(data).version);
         });
     });
+}
+
+function decompress(archivePath: string, outputPath: string) {
+    if (!fs.existsSync(archivePath))
+        return;
+
+    const zip = new AdmZip(archivePath);
+    zip.extractAllTo(outputPath, true);
 }

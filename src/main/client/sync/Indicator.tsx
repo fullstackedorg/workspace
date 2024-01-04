@@ -83,7 +83,7 @@ function Indicator(props: {remove(): void}){
         
     const isSynced = SyncWS.isSynced(status);
 
-    const onTop = !isSynced || Date.now() - status.lastSync < 10000;
+    const onTop = !isSynced || status.errors?.length || Date.now() - status.lastSync < 10000;
 
     return <div id={"sync-indicator"} className={onTop ? "on-top" : ""}>
         {status.lastSync

@@ -30,7 +30,7 @@ export default class {
                 reason: DirectoryCheck.UNDEFINED
             }
         } 
-        else if (!directory.startsWith(homeDir) || homeDir.length > directory.length) {
+        else if (!process.env.MAIN_DIRECTORY && (!directory.startsWith(homeDir) || homeDir.length > directory.length)) {
             return {
                 error: "directory",
                 reason: DirectoryCheck.NOT_UNDER_HOME
@@ -85,7 +85,7 @@ export default class {
             }
         }
 
-        this.dir = config.directory;
+        this.dir = process.env.MAIN_DIRECTORY || config.directory;
         config.storages?.forEach(serializedStorage => Storage.addStorage(serializedStorage));
     }
 
@@ -95,7 +95,9 @@ export default class {
 
     toJSON(){
         return {
-            directory: this.dir,
+            // avoid overriding MAIN_DIRECTORY at all cost
+            directory: process.env.MAIN_DIRECTORY ? undefined : this.dir,
+
             storages: this.storages
                 .filter(storage => !storage.cluster // not from cluster
                     || (storage.isCluster && storage.client.authorization) // cluster with auth

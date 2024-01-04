@@ -27,7 +27,7 @@ function Explorers(props: { explorerRef: RefObject<Explorer> }) {
     const [syncedKeys, reloadSyncedKeys] = useAPI(client.get().sync.keys.list);
     const [syncingKeys, setSyncingKeys] = useState({});
 
-    const [appsKeys, setAppsKeys] = useState<[string, number][]>([])
+    const [appsKeys, setAppsKeys] = useState<string[]>([])
 
 
     const changeTab = (index: number) => {
@@ -55,7 +55,6 @@ function Explorers(props: { explorerRef: RefObject<Explorer> }) {
 
     const allSyncedKeys = Object.values<string[]>(syncedKeys || {}).flat();
     const availableStorages = endpoints?.filter(({ isCluster, cluster, keys }) => !isCluster && (!cluster || keys));
-    const apps = appsKeys?.map(([key]) => key);
 
     return <div className={"explorer-with-tabs"}>
 
@@ -164,7 +163,7 @@ function Explorers(props: { explorerRef: RefObject<Explorer> }) {
                             options={{ showDeleteButtons, showHiddenFiles }}
                             origin={endpoints.at(currentTab).origin}
                             action={item => 
-                                apps?.includes(item.key)
+                                appsKeys?.includes(item.key)
                                     ? <Share 
                                         origin={endpoints.at(currentTab).origin}
                                         itemKey={item.key} 
