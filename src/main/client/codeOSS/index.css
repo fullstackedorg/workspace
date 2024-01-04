@@ -23,14 +23,3 @@
     color: white;
     flex-direction: column;
 }
-.code-oss-loading > code {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: calc(100% - 20px);
-    padding: 10px;
-    background-color: #ffffff30;
-    margin: 10px;
-    border-radius: 5px;
-    border: 1px solid #ffffff40;
-}

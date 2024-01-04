@@ -1,11 +1,11 @@
 import "./env";
 import "./fetch";
-import Sync from "../../main/server/sync";
 import Auth from "../../main/server/auth";
 import Backend from "../../main/server/backend";
 import PWA from "../../main/server/pwa";
 import Basic from "../../main/server/basic";
 import Proxy from "../../main/server/proxy";
+import Sync from "../../main/server/sync"
 import Apps from "./apps";
 
 if(process.env.FULLSTACKED_PORT)
@@ -15,11 +15,13 @@ if(process.env.FULLSTACKED_PORT)
 await Backend.server.start(true);
 console.log(`FullStacked running at http://localhost:${Backend.server.port}`);
 
+Sync.DEFAULT_STORAGE_ENDPOINT = null;
+
 export const api = Backend.register(
     new PWA(),
     (process.env.PASS || process.env.AUTH_URL) && new Auth(),
     new Basic(),
-    // new Apps(),
+    new Apps(),
     new Proxy(),
     new Sync()
 );

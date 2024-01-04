@@ -6,6 +6,7 @@ import { Workspace } from "../workspace";
 import syncIcon from "../icons/sync.svg";
 import { client } from "../client";
 import { compareAndResolveKey, hasUnresolvedConflict, resolveAllKey } from "./conflicts";
+import type { SyncDirection } from "../../server/sync/types";
 
 export function RenderSyncIndicator(){
     // render only once
@@ -39,10 +40,8 @@ export class SyncWS {
     }
 
     static isSynced = (status: SyncStatus) => 
-        Object.keys(status).length !== 0
-        && (!status.syncing || Object.keys(status.syncing).length === 0)
-        && (!status.conflicts || Object.keys(status.conflicts).length === 0)
-        && (!status.errors || status.errors.length === 0);
+        Object.keys(status.syncing).length === 0
+        && Object.keys(status.conflicts).length === 0;
 }
 
 function Indicator(props: {remove(): void}){
@@ -87,9 +86,9 @@ function Indicator(props: {remove(): void}){
     const onTop = !isSynced || Date.now() - status.lastSync < 10000;
 
     return <div id={"sync-indicator"} className={onTop ? "on-top" : ""}>
-        {Object.keys(status).length === 0 
-            ? <div>Initializing...</div>
-            : (isSynced && <div>Synced {lastSyncInterval} ago</div>)}
+        {status.lastSync
+            ? (isSynced && <div>Synced {lastSyncInterval} ago</div>)
+            : <div>Initializing...</div>}
 
         {status.syncing && !!(Object.keys(status.syncing).length)
             && <div>
@@ -159,7 +158,7 @@ function Indicator(props: {remove(): void}){
                 Errors
                 <div>
                     {status.errors.map((error, i) => <div>
-                        {error} <button onClick={() => client.delete().dismissSyncError(i)} className="small">dismiss</button> 
+                        {error} <button onClick={() => client.delete().sync.errors.dismiss(i)} className="small">dismiss</button> 
                     </div>)}
                 </div>
             </div>}
@@ -200,7 +199,7 @@ function SyncProgressView() {
 
     useEffect(() => {
         SyncWS.subscribers.add(setStatus);
-        client.post().sync();
+        client.post().sync.sync("push" as SyncDirection.PUSH);
         return () => {SyncWS.subscribers.delete(setStatus)}
     }, [])
 

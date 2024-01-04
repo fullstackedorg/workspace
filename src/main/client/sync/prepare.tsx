@@ -1,32 +1,23 @@
 import React, { useEffect, useRef, useState } from "react";
 import { client } from "../client";
 import { RenderSyncIndicator, centeredPopupFeatures } from "./Indicator";
-import type { RemoteStorageResponseType } from "../../server/sync/sync";
+import type { StorageResponse } from "../../server/sync/types";
 
 export function PrepareCloudStorage(props: {
-    endpoint?: string,
-    initialHelloResponse?: RemoteStorageResponseType
+    origin: string,
+    isReady: () => void
 }) {
-    const [helloResponse, setHelloResponse] = useState<RemoteStorageResponseType>(props.initialHelloResponse);
+    const [helloResponse, setHelloResponse] = useState<StorageResponse>(null);
 
-    useEffect(() => {
-        if (!props.initialHelloResponse)
-            retry();
-    }, []);
-
-    useEffect(() => {
-        setHelloResponse(props.initialHelloResponse)
-    }, [props.endpoint])
+    useEffect(() => {retry()}, [props.origin]);
+    useEffect(() => {if(!helloResponse) props.isReady()}, [helloResponse]);
 
     const retry = async () => {
-        if (props.endpoint)
-            setHelloResponse(await client.post().storageHello(props.endpoint));
-        else
-            setHelloResponse(await client.post().initSync());
+        setHelloResponse(await client.get().storages.hello(props.origin))
     }
 
-    if (!helloResponse)
-        return <></>;
+    if(!helloResponse)
+        return <></>
 
     if (typeof helloResponse === "object") {
         switch (helloResponse.error) {
@@ -35,10 +26,20 @@ export function PrepareCloudStorage(props: {
                     case "password":
                         return <div>Password Auth</div>;
                     case "external":
-                        return <AuthFlow endpoint={props.endpoint} url={helloResponse.url} didAuthenticate={retry} />;
+                        return <AuthFlow origin={props.origin} url={helloResponse.url} didAuthenticate={retry} />;
                 }
+            case "storage_endpoint_unreachable":
+                return <div className="basic-window">
+                    Cannot reach storage
+                    <code>{props.origin}</code>
+                </div>
             default:
-                return <div style={{ color: "white" }}>Uh oh. Unknown response: [{JSON.stringify(helloResponse)}]</div>
+                return <div>
+                        Uh oh. Unknown response: 
+                        {typeof helloResponse === "object"
+                            ? <pre>{JSON.stringify(helloResponse, null, 2)}</pre>
+                            : <div>[{helloResponse}]</div>}
+                    </div>
 
         }
     }
@@ -49,12 +50,13 @@ export function PrepareCloudStorage(props: {
 }
 
 let body = {}, win;
-export function AuthFlow({ endpoint, url, didAuthenticate }) {
+export function AuthFlow({ origin, url, didAuthenticate }) {
     const [code, setCode] = useState("");
-    const [failedOpened, setFailedOpen] = useState(false);
+    const [opened, setOpened] = useState(false);
 
     const openPopup = () => {
-        win = window.open(url, "", centeredPopupFeatures())
+        win = window.open(url, "", centeredPopupFeatures());
+        setOpened(!!win);
     };
 
     useEffect(() => {
@@ -67,10 +69,6 @@ export function AuthFlow({ endpoint, url, didAuthenticate }) {
 
         window.addEventListener("message", catchArgs);
 
-        openPopup();
-
-        if (!win) setFailedOpen(true);
-
         return () => {
             win = null;
             window.removeEventListener("message", catchArgs)
@@ -79,8 +77,7 @@ export function AuthFlow({ endpoint, url, didAuthenticate }) {
 
     const submit = async (e) => {
         e.preventDefault();
-        await client.post().authenticate(endpoint,
-        {
+        await client.post().storages.auth(origin, {
             ...body,
             code: code.trim()
         });
@@ -89,45 +86,14 @@ export function AuthFlow({ endpoint, url, didAuthenticate }) {
     }
 
     return <div className={"prepare-fs-remote"}>
-        {failedOpened
-            ? <button onClick={() => {
-                openPopup();
-                if (win)
-                    setFailedOpen(false)
-            }}>Authenticate</button>
-            : <>
+        {opened
+            ? <>
                 <div>Enter the code or the token to authenticate this device</div>
                 <form onSubmit={submit}>
                     <input type={"tel"} value={code} onChange={e => setCode(e.currentTarget.value)} />
                     <button>Submit</button>
                 </form>
-            </>}
-    </div>
-}
-
-function Directory({ message, didSelectDirectory }) {
-    const inputRef = useRef<HTMLInputElement>();
-    const [value, setValue] = useState(null);
-
-    useEffect(() => {
-        client.get().mainDirectory().then(({ dir, sep }) => {
-            setValue(dir + sep + "FullStacked");
-            inputRef.current.focus()
-        });
-    }, [])
-
-    const submit = async e => {
-        e.preventDefault();
-        await client.post().setDirectory(value);
-        didSelectDirectory();
-    }
-
-    return <div className={"prepare-fs-remote"}>
-        <div>Choose a directory where FullStacked will sync</div>
-        {message && <div>{message}</div>}
-        <form onSubmit={submit}>
-            <input ref={inputRef} type={"text"} value={value} onChange={e => setValue(e.currentTarget.value)} />
-            <button>Submit</button>
-        </form>
+            </>
+            : <button onClick={openPopup}>Authenticate</button>}
     </div>
 }

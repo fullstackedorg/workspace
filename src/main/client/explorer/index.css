@@ -160,7 +160,7 @@
 
 .explorer-with-tabs > .options {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
 }
 
 .explorer-with-tabs .checkbox {
@@ -212,4 +212,19 @@
     color: rgb(87, 184, 123);
     border: 1px solid rgba(87, 184, 123, 1);
     background-color: rgba(87, 184, 123, 0.2)!important;
+}
+
+.sync-storages {
+    background-color: #4b5567;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    padding: 3px;
+    z-index: 10;
+}
+
+.sync-storages svg {
+    height: 18px;
+    margin-left: 3px;
+    vertical-align: text-top;
 }

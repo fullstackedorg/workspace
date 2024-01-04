@@ -1,18 +1,19 @@
 import type { ProgressInfo } from "@fullstacked/sync/constants"
 
 export type SyncStatus = {
-    lastSync?: number,
-    conflicts?: {
+    lastSync: number,
+    conflicts: {
         [baseKey: string] : {
             [conflictingKey: string]: boolean // resolved
         }
     },
-    syncing?: {
+    syncing: {
         [key: string]: {
             direction: "push" | "pull",
+            origin: string,
             progress?: ProgressInfo,
             hide?: boolean
         }
     },
-    errors?: string[]
+    errors: string[]
 }

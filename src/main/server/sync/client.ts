@@ -1,12 +1,14 @@
 import { RsyncHTTP2Client } from "@fullstacked/sync/http2/client";
 import createClient from "@fullstacked/webapp/rpc/createClient";
 import fs from "fs";
-import type { RemoteStorageResponseType } from "./sync";
 import http2 from "http2";
+import { StorageResponse } from "./types";
 
 export class SyncClient {
-    fs: ReturnType<typeof createClient<typeof fs.promises & { hello(): Promise<RemoteStorageResponseType> }>>;
+    fs: ReturnType<typeof createClient<typeof fs.promises & { hello(): Promise<StorageResponse> }>>;
     rsync: RsyncHTTP2Client;
+
+    useHttp2Client = true;
 
     constructor(endpoint: string) {
         this.rsync = new RsyncHTTP2Client(endpoint);
@@ -16,10 +18,8 @@ export class SyncClient {
         // fetch API won't work with a not secured storage server (http)
         // so here we will override the fetch method of our client
         if (endpoint.startsWith("http:")) {
-            let useHttp2Client = true;
-
             this.fs.fetch = (urlStr: string, options?: RequestInit) => {
-                if(!useHttp2Client) {
+                if(!this.useHttp2Client) {
                     return fetch(urlStr, options);
                 }
                 
@@ -40,7 +40,7 @@ export class SyncClient {
 
                     const request = client.request(outHeaders);
                     request.on("error", () => {
-                        useHttp2Client = false;
+                        this.useHttp2Client = false;
                         resolve(this.fs.fetch(urlStr, options));
                     });
 
@@ -93,24 +93,9 @@ export class SyncClient {
         }
     }
 
-    async hello(): Promise<RemoteStorageResponseType>{
-        let response: RemoteStorageResponseType;
-        try {
-            // hello responds 200 with empty body if OK
-            response = await this.fs.get().hello();
-        } catch (e) {
-            return {
-                error: "storage_endpoint_unreachable",
-                message: `endpoint [${this.fs.origin}] response [${response}]`
-            }
-        }
-
-        if(response)
-            return response
-
-        return true;
+    get authorization(){
+        return this.fs.headers.authorization;
     }
-
     set authorization(token: string) {
         this.fs.headers.authorization = token;
         this.rsync.headers.authorization = token;

@@ -1,124 +1,68 @@
 import Server, { Listener } from "@fullstacked/webapp/server";
 import { BackendTool, WebSocketRegisterer } from "../../../main/server/backend";
-import { Sync } from "../../../main/server/sync/sync";
 import { normalizePath } from "../../../main/server/sync/utils";
 import fs from "fs";
 import path from "path";
 import mime from "mime";
 import { pathToFileURL } from "url";
 import http2 from "http2";
-import { SyncClient } from "../../../main/server/sync/client";
 import { syncFileName } from "@fullstacked/sync/constants";
-import { RsyncHTTP2Client } from "@fullstacked/sync/http2/client";
-import createClient from "@fullstacked/webapp/rpc/createClient";
-import { scan } from "@fullstacked/sync/utils";
+import { SyncService } from "../../../main/server/sync/service";
+import { getStorageByOrigin } from "../../../main/server/sync";
+import Storage from "../../../main/server/sync/storage";
+import { StorageResponse, SyncDirection } from "../../../main/server/sync/types";
 
-export function listRemoteApps() {
-    SyncClient.rsync.baseDir = getLocalBaseDir();
-    if (Sync.config.authorization) {
-        SyncClient.rsync.headers.authorization = Sync.config.authorization;
-        SyncClient.fs.headers.authorization = Sync.config.authorization;
-    }
-
-    const session = http2.connect(SyncClient.rsync.endpoint);
-    session.on('error', (err) => {
-        throw err;
-    });
-
-    const stream = session.request({
-        ':path': '/packages',
-        ':method': 'GET',
-        ...SyncClient.rsync.headers
-    });
-    stream.end();
-
-    stream.setEncoding('utf8')
-    return new Promise<[string, number][]>(resolve => {
-        let data = '';
-        stream.on('data', (chunk) => { data += chunk })
-        stream.on('end', () => {
-            resolve(JSON.parse(data));
-        });
-    });
-}
-
-function getRemoteVersion(itemPath: string, endpoint: string) {
-    SyncClient.rsync.baseDir = getLocalBaseDir();
-    if (Sync.config.authorization) {
-        SyncClient.rsync.headers.authorization = Sync.config.authorization;
-        SyncClient.fs.headers.authorization = Sync.config.authorization;
-    }
-
-    const session = http2.connect(endpoint);
-    session.on('error', (err) => {
-        throw err;
-    });
-
-    const stream = session.request({
-        ':path': '/version',
-        ':method': 'POST',
-        ...SyncClient.rsync.headers
-    });
-    stream.write(itemPath);
-    stream.end();
-
-    stream.setEncoding('utf8');
-    return new Promise<number>(resolve => {
-        let data = '';
-        stream.on('data', (chunk) => { data += chunk })
-        stream.on('end', () => {
-            resolve(JSON.parse(data).version);
-        });
-    });
+export type App = {
+    package: string,
+    title?: string,
+    icon?: string,
+    main?: string,
+    files?: string[]
 }
 
 export default class extends BackendTool {
     api = {
         async runApp(entrypoint: string) {
-            const server = (await import(pathToFileURL(path.join(Sync.config.directory, entrypoint)).toString())).default as Server;
+            const modulePathURL = pathToFileURL(path.join(SyncService.config.dir, entrypoint))
+            const server = (await import(modulePathURL.toString())).default as Server;
             return `http://localhost:${server.port}`;
         },
-        async listApps() {
-            return scan(SyncClient.rsync.baseDir, ".", [])
-                .filter(([packageJSONPath, version]) => packageJSONPath.endsWith("/package.json"))
-                .map(([packageJSONPath, version]) => {
-                    const packageJSON = JSON.parse(fs.readFileSync(path.resolve(SyncClient.rsync.baseDir, packageJSONPath)).toString());
-                    const directory = path.dirname(packageJSONPath);
-
-                    return {
-                        title: packageJSON.title || packageJSON.name,
-
-                        icon: packageJSON.icon
-                            // the /app-icon handler is used here
-                            ? "/" + normalizePath(path.join("app-icon", directory, packageJSON.icon))
-                            : undefined,
-
-                        entrypoint: packageJSON.main
-                            ? normalizePath(path.join(directory, packageJSON.main))
-                            : undefined
-                    }
-                })
+        listApps() {
+            return Object.values(listApps()).flat().map(app => ({
+                ...app,
+                icon: app.icon ? normalizePath(path.join("app-icon", app.icon)) : undefined
+            }))
         },
         async updateApps() {
-            const packages = await listRemoteApps();
-            return (await Promise.all(packages.map(getAppInfosAndMaybePull))).filter(Boolean);
+            const apps = listApps();
+            const origins = Object.keys(apps);
+            const updatePromises = origins.map(origin => {
+                const storage = getStorageByOrigin(origin, false);
+                if (!storage)
+                    return [];
+
+                return apps[origin].map((app => maybePull(storage, app)))
+            });
+
+            Promise.all(updatePromises.flat());
         },
-        async addApp(urlStr: string) {
+        async addApp(urlStr: string): Promise<StorageResponse> {
             const url = new URL(urlStr);
+            const storage = SyncService.addStorage({ origin: url.origin });
 
-            let response;
-            response = await hello(url.origin);
-            if (response)
-                return response;
+            const helloResponse = await storage.hello();
+            if (helloResponse)
+                return helloResponse;
 
-            return getAppInfosAndMaybePull([url.pathname.slice(1), null], url.origin);
+            const packagePath = url.pathname.slice(1);
+            return maybePull(storage, { package: packagePath });
         }
     };
     listeners: (Listener & { prefix?: string; })[] = [{
         name: "App Icon",
         prefix: "/app-icon",
         handler(req, res) {
-            const iconPath = Sync.config.directory + req.url;
+            const iconPath = SyncService.config.dir + req.url;
             if (!fs.existsSync(iconPath)) {
                 res.writeHead(404);
                 res.end();
@@ -137,74 +81,117 @@ export default class extends BackendTool {
     websocket: WebSocketRegisterer;
 }
 
-async function getAppInfosAndMaybePull([packagePath, remoteVersion], endpoint?: string | number) {
-    const fsClient = typeof endpoint === "string"
-        ? createClient<typeof fs.promises>(endpoint)
-        : SyncClient.fs;
+function listApps() {
+    const packages: { [origin: string]: App[] } = {};
+    SyncService.config?.storages?.forEach(({ origin, keys }) => {
+        if (!keys)
+            return;
 
-    let packageJSONData;
+        packages[origin] = keys
+            .filter(itemKey => itemKey.endsWith("/package.json"))
+            .map(parsePackageJSON);
+    });
+
+    return packages;
+}
+
+function parsePackageJSON(packageJSONPath: string) {
+    let packageJSON: any;
     try {
-        packageJSONData = (await fsClient.post().readFile(packagePath)).toString();
+        const contents = fs.readFileSync(path.resolve(SyncService.config.dir, packageJSONPath));
+        packageJSON = JSON.parse(contents.toString());
     } catch (e) {
-        console.log(`Failed to get package.json content [${packagePath}]`);
-        return null;
+        SyncService.status?.sendError(`Failed to parse [${packageJSONPath}]`)
+        return {
+            package: packageJSONPath
+        };
     }
 
-    let packageJSON;
-    try {
-        packageJSON = JSON.parse(packageJSONData);
-    } catch (e) {
-        console.log(`Failed to parse package.json [${packagePath}]`)
-        return null;
-    }
+    const directory = path.dirname(packageJSONPath);
+    const updatePath = (itemPath: string) => normalizePath(path.join(directory, itemPath));
 
-    const files = packageJSON.files;
-    if (!files)
-        return null;
-
-    if (remoteVersion === null && typeof endpoint === "string")
-        remoteVersion = await getRemoteVersion(packagePath, endpoint);
-
-    const rsyncClient = typeof endpoint === "string"
-        ? new RsyncHTTP2Client(endpoint)
-        : SyncClient.rsync;
-
-    rsyncClient.baseDir = SyncClient.rsync.baseDir;
-
-    fs.mkdirSync(path.resolve(rsyncClient.baseDir, path.dirname(packagePath)), { recursive: true });
-    fs.writeFileSync(path.resolve(rsyncClient.baseDir, packagePath), JSON.stringify({
+    return {
+        package: packageJSONPath,
         title: packageJSON.title || packageJSON.name,
-        files: packageJSON.files,
-        icon: packageJSON.icon,
-        main: packageJSON.main
-    }, null, 2))
+        icon: packageJSON.icon ? updatePath(packageJSON.icon) : undefined,
+        main: packageJSON.main ? updatePath(packageJSON.main) : undefined,
+        files: packageJSON.files?.map(updatePath)
+    }
+}
 
-    const pathComponents = packagePath.split("/").slice(0, -1);
+async function maybePull(storage: Storage, app: App) {
+    if (await storage.hello())
+        return null;
+
+    const remoteVersion = await getRemoteVersion(storage, path.dirname(app.package));
+
+    const pathComponents = app.package.split("/").slice(0, -1);
     const directory = pathComponents.join("/");
     let version = null;
     while (pathComponents.length && !version) {
-        version = rsyncClient.getSavedSnapshotAndVersion(directory)?.version;
+        version = storage.client.rsync.getSavedSnapshotAndVersion(directory)?.version;
         pathComponents.pop();
     }
 
-    if (packageJSON.icon) {
-        fs.mkdirSync(path.resolve(rsyncClient.baseDir, directory, path.dirname(packageJSON.icon)), { recursive: true });
-        files.push(packageJSON.icon);
-    }
+    if (!version || version !== remoteVersion) {
+        fs.mkdirSync(path.join(SyncService.config.dir, directory), { recursive: true });
 
-    const title = packageJSON.title || packageJSON.name;
+        // update package
+        await storage.client.rsync.pull(app.package, { force: true });
+        app = parsePackageJSON(app.package);
 
-    if (version !== remoteVersion) {
-        const toSync = files.map(item => normalizePath(path.join(directory, item)));
+        if (!app)
+            return null
 
-        Sync.addSyncingKey(title, "pull");
-        await Promise.all(toSync.map(item => rsyncClient.pull(item, {
+        const files = app.files || [];
+
+        if (app.icon) {
+            fs.mkdirSync(path.resolve(SyncService.config.dir, path.dirname(app.icon)), { recursive: true });
+            files.push(app.icon);
+        }
+
+        storage.client.rsync.baseDir = SyncService.config.dir;
+
+        SyncService.status.addSyncingKey(app.title, SyncDirection.PULL, storage.origin);
+        const pullPromises = app.files.map(item => storage.client.rsync.pull(item, {
             force: true,
             progress(info) {
-                Sync.updateSyncingKeyProgress(title, info)
+                SyncService.status.updateSyncProgress(app.title, info)
             }
-        })));
-        fs.writeFileSync(path.resolve(rsyncClient.baseDir, directory, syncFileName), JSON.stringify({ version: remoteVersion }));
-        Sync.removeSyncingKey(title);
+        }));
+
+        const onFinish = () => {
+            fs.writeFileSync(path.resolve(SyncService.config.dir, directory, syncFileName), JSON.stringify({ version: remoteVersion }));
+            SyncService.status.removeSyncingKey(app.title);
+
+            storage.addKey(app.package);
+            SyncService.config.save();
+        }
+
+        Promise.all(pullPromises).then(onFinish);
     }
+}
+
+function getRemoteVersion(storage: Storage, itemPath: string) {
+    const session = http2.connect(storage.origin);
+    session.on('error', (err) => {
+        throw err;
+    });
+
+    const stream = session.request({
+        ':path': '/version',
+        ':method': 'POST',
+        ...storage.client.rsync.headers
+    });
+    stream.write(itemPath);
+    stream.end();
+
+    stream.setEncoding('utf8');
+    return new Promise<number>(resolve => {
+        let data = '';
+        stream.on('data', (chunk) => { data += chunk })
+        stream.on('end', () => {
+            resolve(JSON.parse(data).version);
+        });
+    });
 }

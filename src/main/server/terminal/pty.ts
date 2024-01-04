@@ -4,9 +4,9 @@ import { IncomingMessage } from "http";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { homedir, platform } from "os";
-import { Sync } from "../sync/sync";
 import { execSync } from "child_process";
 import { existsSync } from "fs"
+import { SyncService } from "../sync/service";
 
 type Session = {
     pty: IPty,
@@ -78,7 +78,7 @@ export class TerminalPTy {
                 name: '',
                 cols: 80,
                 rows: 30,
-                cwd: Sync.config?.directory || homedir(),
+                cwd: SyncService.config?.dir || homedir(),
                 env: {
                     ...process.env,
                     SESSION_ID

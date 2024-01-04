@@ -1,4 +1,4 @@
-import React, { Component, useState } from "react";
+import React, { Component } from "react";
 import { Workspace } from "../workspace";
 import editorIcon from "../icons/editor.svg";
 import Editor from "../editor";
@@ -7,16 +7,13 @@ import fileIcons2 from "../icons/file-icons-2.svg";
 import fileIcons from "../icons/file-icons.svg";
 import type { EventDataNode } from "rc-tree/es/interface";
 import "rc-tree/assets/index.css"
-import createClient from "@fullstacked/webapp/rpc/createClient";
+import { fsClient } from "./fs";
 import type fsType from "../../server/sync/fs";
-import { client } from "../client";
 
 export type ExplorerOptions = {
     showHiddenFiles: boolean,
     showDeleteButtons: boolean
 }
-
-export const fsClient = createClient<typeof fsType>(window.location.protocol + "//" + window.location.host + "/fs");
 
 export default class Explorer extends Component<{
     origin: string,
@@ -30,13 +27,19 @@ export default class Explorer extends Component<{
         }
 
     loadNewOrigin() {
+        const weakOrigin = this.props.origin;
+
         const loadRoot = () => {
             fsClient.get().readDir(this.props.origin, "")
                 .then(async fileTreeRoot => {
                     let files = { fileTreeRoot }
+                    if(weakOrigin !== this.props.origin)
+                        return;
+
                     this.setState({ files });
                 });
         }
+
         this.setState({ files: null }, loadRoot)
     }
 
@@ -67,11 +70,11 @@ export default class Explorer extends Component<{
     }
 
     openFileEditor = (filename: string) => {
-        // Workspace.instance.addWindow({
-        //     title: filename.length > 8 ? "..." + filename.slice(-8) : filename,
-        //     icon: editorIcon,
-        //     element: () => <Editor fsClient={this.props.fsClient} filename={filename} />
-        // });
+        Workspace.instance.addWindow({
+            title: filename.length > 8 ? "..." + filename.slice(-8) : filename,
+            icon: editorIcon,
+            element: () => <Editor origin={this.props.origin} filename={filename} />
+        });
     }
 
     render() {
