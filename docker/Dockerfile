@@ -35,7 +35,7 @@ WORKDIR /home
 
 RUN rm -rf /home/dockremap && \
     npm config set prefix '/home/.npm/' && \
-    echo "export PATH=\$PATH:/home/.npm/bin:/fullstacked/dist/server/bin" >> /etc/profile && \
+    echo "export PATH=\$PATH:/home/.npm/bin:/fullstacked/dist/main/server/bin" >> /etc/profile && \
     echo "export DOCKER_HOST=\"\"" >> /etc/profile && \
     echo "export PS1='\w \$ '" >> /etc/profile && \
     echo "export DOCKER_RUNTIME=1" >> /etc/profile
