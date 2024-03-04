@@ -1,7 +1,7 @@
 {
   "name": "@fullstacked/workspace",
   "description": "A Ubiquitous Workspace for Developers",
-  "version": "0.12.6",
+  "version": "0.12.7",
   "author": "cplepage",
   "license": "MIT",
   "repository": {
@@ -17,7 +17,7 @@
     "node-pty": "^0.10.1"
   },
   "bin": {
-    "editor": "index.js"
+    "workspace": "index.js"
   },
   "workspaces": [
     "electron"
