@@ -4,7 +4,7 @@ import decompress from "decompress";
 import {execSync} from "child_process";
 
 const platform = "linux-x64";
-const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.86.2";
+const vscodeRelease = "https://codeload.github.com/microsoft/vscode/zip/refs/tags/1.87.0";
 
 const file = fs.createWriteStream("vscode.zip");
 await new Promise(resolve => {
