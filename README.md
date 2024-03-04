@@ -4,11 +4,8 @@
 
 **A Ubiquitous Workspace for Developers**
 
-[DEMO](https://fullstacked.org/demo) | [WEBSITE](https://fullstacked.org)
-
-[![npm version](https://img.shields.io/npm/v/fullstacked?logo=npm)](https://www.npmjs.com/package/fullstacked)
+[![npm version](https://img.shields.io/npm/v/fullstacked?logo=npm)](https://www.npmjs.com/package/@fullstacked/workspace)
 [![Follow FullStacked on X](https://img.shields.io/twitter/follow/get_fullstacked)](https://twitter.com/get_fullstacked)
-[![Roadmap](https://img.shields.io/badge/Roadmap-ffffff?logo=notion&logoColor=black)](https://fullstacked.notion.site/fullstacked/FullStacked-Roadmap-ebfcb685b77446c7a7898c05b219215e)
 
 ![FullStacked](https://files.fullstacked.org/fullstacked-cloud.png)
 
@@ -38,8 +35,8 @@ or can be accessed remotely to leverage cloud computing.
 * [NodeJS](https://nodejs.org/en) `>=18` with npm
 
 ```shell
-npm i -g fullstacked@latest
-fullstacked
+npm i -g @fullstacked/workspace@latest
+editor
 ```
 
 #### NPX
@@ -47,7 +44,7 @@ fullstacked
 If you want to spin up FullStacked only once, use `npx` to install and run it on the fly
 
 ```shell
-npx -y fullstacked@latest
+npx -y @fullstacked/workspace@latest
 ```
 
 ### Docker
@@ -99,7 +96,4 @@ volumes:
 | `AUTH_URL` | URL against which to authorize token generation | `string` | - |
 | `REVOKE_URL` | URL to poke on logout | `string` | - |
 | `LOGOUT_REDIRECT` | URL to redirect to after logout | `string` | - |
-| `STORAGE_ENDPOINT` | Endpoint to use for the storage Sync | `string` | `https://auth.fullstacked.cloud/storages` |
-| `USE_CLOUD_CONFIG` | Use the cloud config for storage Sync | `boolean` | `false` |
-| `CONFIG_FILE` | Path to file to save storage Sync configs | `string` | `$HOME/.fullstacked-config` |
 | `FORCE_PORT_USAGE` | Force the usage of direct port instead of port subdomain reverse-proxy (only useful in some docker installation edge cases) | `boolean` | `false` |
